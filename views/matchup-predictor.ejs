@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+    <h1 class="page-title">Matchup Predictor</h1>
+
+    <form
+      method="GET"
+      action="/matchup-predictor"
+      class="matchup-predictor-form"
+      id="matchupForm"
+      <% if (typeof selectedMatchup !== 'undefined' && selectedMatchup) { %>data-matchup-key="<%= selectedMatchup %>"<% } %>
+    >
+      <input type="hidden" name="awayMissing" id="awayMissing" value="<%= typeof awayMissingSerialized !== 'undefined' ? awayMissingSerialized : '' %>" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="<%= typeof homeMissingSerialized !== 'undefined' ? homeMissingSerialized : '' %>" />
+      <div class="matchup-predictor-controls">
+        <label for="view">
+          <strong>Date</strong>
+          <select id="view" name="view" onchange="this.form.matchup.value=''; this.form.submit()" style="min-width: 320px">
+            <% if (!scheduleOptions.length) { %>
+            <option value="">No dates available</option>
+            <% } %>
+            <% scheduleOptions.forEach((opt) => { %>
+            <option value="<%= opt.value %>" <%= opt.value === selectedView ? "selected" : "" %>>
+              <%= opt.label %>
+            </option>
+            <% }) %>
+          </select>
+        </label>
+
+        <label for="matchup">
+          <strong>Matchup</strong>
+          <select
+            id="matchup"
+            name="matchup"
+            onchange="this.form.submit()"
+            <%= matchupOptions.length ? "" : "disabled" %>
+          >
+            <option value="" <%= !selectedMatchup ? "selected" : "" %>>— Select a game —</option>
+            <% matchupOptions.forEach((opt) => { %>
+            <option value="<%= opt.value %>" <%= opt.value === selectedMatchup ? "selected" : "" %>>
+              <%= opt.label %>
+            </option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <noscript><button type="submit">Go</button></noscript>
+
+    <% if (scheduleSummary) { %>
+    <p class="matchup-predictor-summary"><%= scheduleSummary %></p>
+    <% } %>
+
+    <% if (prediction) { %>
+    <section class="matchup-prediction">
+      <h2>Model prediction</h2>
+      <p class="matchup-prediction-note">
+        <strong>Expected runs</strong> use roster offense, 2026 production, schedule <em>runs per game</em> and <em>runs against</em>,
+        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+      </p>
+
+      <% const awayWinPct = prediction.winPct.away; const homeWinPct = prediction.winPct.home; %>
+      <% const awayTeamName = prediction.awayLabel || (typeof selectedGame !== "undefined" && selectedGame ? selectedGame.away : "Away"); %>
+      <% const homeTeamName = prediction.homeLabel || (typeof selectedGame !== "undefined" && selectedGame ? selectedGame.home : "Home"); %>
+      <div class="matchup-pred-win-row">
+        <div class="matchup-pred-team matchup-pred-away">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span><%= awayTeamName %></span>
+          <span class="matchup-pred-pct"><%= awayWinPct %>%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= awayWinPct >= homeWinPct ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= awayWinPct %>%"></span></span>
+        </div>
+        <div class="matchup-pred-team matchup-pred-home">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span><%= homeTeamName %></span>
+          <span class="matchup-pred-pct"><%= homeWinPct %>%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= homeWinPct >= awayWinPct ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= homeWinPct %>%"></span></span>
+        </div>
+      </div>
+
+      <table class="matchup-pred-lines page-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th>Team</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% const finalScore = prediction.lines.finalScore || {}; %>
+          <% let winnerSide = finalScore.winnerSide; %>
+          <% if (!winnerSide) { winnerSide = homeWinPct > awayWinPct ? 'home' : (awayWinPct > homeWinPct ? 'away' : (homeWinPct >= awayWinPct ? 'home' : 'away')); } %>
+          <tr class="matchup-lines-row--final-score">
+            <td>Predicted final score</td>
+            <% if (winnerSide === 'away') { %>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span><%= awayTeamName %></td>
+            <% } else { %>
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span><%= homeTeamName %></td>
+            <% } %>
+            <td class="matchup-lines-value matchup-lines-score">
+              <span class="matchup-score-runs <%= winnerSide === 'away' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= prediction.projectedRuns.away %></span>
+              <span class="matchup-score-sep">–</span>
+              <span class="matchup-score-runs <%= winnerSide === 'home' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= prediction.projectedRuns.home %></span>
+            </td>
+          </tr>
+          <tr>
+            <td>Over / under (total runs)</td>
+            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
+            <td class="matchup-lines-value"><strong>O/U <%= prediction.lines.overUnder %></strong></td>
+          </tr>
+          <% const runLine = prediction.lines.runLine || {}; %>
+          <% let runLineSide = runLine.side; %>
+          <% if (!runLineSide) { runLineSide = homeWinPct > awayWinPct ? 'home' : (awayWinPct > homeWinPct ? 'away' : (homeWinPct >= awayWinPct ? 'home' : 'away')); } %>
+          <% let runLineValue = runLine.value; %>
+          <% if (!runLineValue || runLineValue === '—') {
+            const awayRunsNum = parseFloat(prediction.projectedRuns.away);
+            const homeRunsNum = parseFloat(prediction.projectedRuns.home);
+            if (!isNaN(awayRunsNum) && !isNaN(homeRunsNum)) {
+              let mag = Math.abs(homeRunsNum - awayRunsNum);
+              if (mag < 1e-9) mag = 0.5;
+              runLineValue = '+' + (Math.abs(mag % 1) < 1e-9 ? String(Math.round(mag)) : mag.toFixed(1));
+            } else {
+              runLineValue = '—';
+            }
+          } %>
+          <tr class="matchup-lines-row--runline">
+            <td>Run line</td>
+            <% if (runLineSide === 'away') { %>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span><%= awayTeamName %></td>
+            <% } else { %>
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span><%= homeTeamName %></td>
+            <% } %>
+            <td class="matchup-lines-value"><strong><%= runLineValue %></strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span><%= awayTeamName %></td>
+            <td class="matchup-lines-value"><strong><%= prediction.lines.moneylineAway %></strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span><%= homeTeamName %></td>
+            <td class="matchup-lines-value"><strong><%= prediction.lines.moneylineHome %></strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+    <% } %>
+
+    <% if (typeof lineupRuleAlerts !== 'undefined' && lineupRuleAlerts.length) { %>
+    <% const batsTwiceAlerts = lineupRuleAlerts.filter((a) => a.doubleBatter); %>
+    <% const rosterNoteAlerts = lineupRuleAlerts.filter((a) => !a.doubleBatter); %>
+    <% if (batsTwiceAlerts.length) { %>
+    <section class="matchup-lineup-alerts matchup-bats-twice-section" aria-label="Bats twice in the lineup">
+      <h2 class="matchup-lineup-alerts-title">Bats twice in the lineup</h2>
+      <% batsTwiceAlerts.forEach((alert) => { %>
+      <% const db = alert.doubleBatter; const imp = db && db.impact; %>
+      <div class="matchup-lineup-alert matchup-lineup-alert--rule matchup-lineup-alert--double-batter">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag"><%= alert.teamSide === 'away' ? 'Away' : 'Home' %></span> <%= alert.teamName %></p>
+        <p class="matchup-lineup-alert-heading"><strong><%= alert.title %></strong></p>
+        <p class="matchup-lineup-alert-msg"><%= alert.message %></p>
+        <div class="matchup-double-batter-card">
+          <p class="matchup-double-batter-who">
+            <span class="matchup-double-batter-badge">2× in lineup</span>
+            <strong><%= db.name %></strong>
+            <span class="matchup-double-batter-meta">(Round <%= db.round %> pick)</span>
+          </p>
+          <p class="matchup-double-batter-reason"><%= db.reason %></p>
+          <% if (imp) { %>
+          <% if (imp.missingNamesLabel) { %>
+          <p class="matchup-double-batter-missing"><strong>Out of lineup:</strong> <%= imp.missingNamesLabel %></p>
+          <% } %>
+          <dl class="matchup-double-batter-stats">
+            <div class="matchup-double-batter-stat">
+              <dt>Offensive +/-</dt>
+              <dd><%= imp.offensiveRatingLabel != null ? imp.offensiveRatingLabel : '—' %></dd>
+            </div>
+            <div class="matchup-double-batter-stat">
+              <dt>2026 run production</dt>
+              <dd><%= imp.runProdLabel != null ? imp.runProdLabel + ' R+RBI per PA' : '—' %></dd>
+            </div>
+            <% if (imp.lineupSharePctOneTurn != null && imp.lineupSharePctTwoTurns != null) { %>
+            <div class="matchup-double-batter-stat">
+              <dt>Lineup weight</dt>
+              <dd><%= imp.lineupSharePctOneTurn %>% → <strong><%= imp.lineupSharePctTwoTurns %>%</strong> of team offense</dd>
+            </div>
+            <% } %>
+          </dl>
+          <p class="matchup-double-batter-effect">
+            <strong>Prediction impact:</strong>
+            Missing players still hurt — the extra turn only partly fills the gap.
+            <% if (imp.replacementRatingLabel) { %>
+            Average offensive +/- of who's out: <strong><%= imp.replacementRatingLabel %></strong>.
+            <%= db.name %> is <strong><%= imp.offensiveRatingLabel || '—' %></strong> (gap <strong><%= imp.gapRatingLabel || '—' %></strong> vs missing).
+            <% } %>
+            The model credits <strong><%= imp.secondTurnPct %>%</strong> of a full extra lineup turn (not automatic 2×).
+            <% if (imp.comparisonVerdict === 'much-weaker' || imp.comparisonVerdict === 'weaker') { %>
+            <strong><%= db.name %> is not as strong as who's missing</strong> — batting twice does not make this lineup stronger overall.
+            <% } else if (imp.comparisonVerdict === 'much-better' || imp.comparisonVerdict === 'better') { %>
+            <strong><%= db.name %> is stronger than the missing hitters on average</strong> — the second turn helps offset some of the loss.
+            <% } else { %>
+            The second turn is roughly a wash compared to the production lost from missing players.
+            <% } %>
+            <% if (imp.offenseRatingBoost != null && imp.offenseRatingBoost > 0.005) { %>
+            Net change to projected offense: <strong>+<%= imp.offenseRatingBoostLabel && imp.offenseRatingBoostLabel.replace('+','') %></strong><% if (imp.runProdBoost != null && imp.runProdBoost > 0.0005) { %>, run production <strong><%= imp.runProdBoostLabel %></strong><% } %>.
+            <% } else if (imp.offenseRatingBoost != null && imp.offenseRatingBoost < -0.005) { %>
+            Net change to projected offense: <strong><%= imp.offenseRatingBoostLabel %></strong>.
+            <% } %>
+          </p>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+    </section>
+    <% } %>
+    <% if (rosterNoteAlerts.length) { %>
+    <section class="matchup-roster-notes" aria-label="Roster notes">
+      <h2 class="matchup-roster-notes-title">Roster notes</h2>
+      <% rosterNoteAlerts.forEach((alert) => { %>
+      <div class="matchup-lineup-alert matchup-lineup-alert--<%= alert.severity %>">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag"><%= alert.teamSide === 'away' ? 'Away' : 'Home' %></span> <%= alert.teamName %></p>
+        <p class="matchup-lineup-alert-heading"><strong><%= alert.title %></strong></p>
+        <p class="matchup-lineup-alert-msg"><%= alert.message %></p>
+      </div>
+      <% }) %>
+    </section>
+    <% } %>
+    <% } %>
+
+    <% if (selectedGame) { %>
+    <% const rosterAwayName = (awayRoster && awayRoster.teamName) || selectedGame.away; %>
+    <% const rosterHomeName = (homeRoster && homeRoster.teamName) || selectedGame.home; %>
+    <section class="matchup-predictor-rosters">
+      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Missing</strong> for each player. Lineups are saved for this matchup in your browser. The prediction recalculates using active players only (draft round matters).</p>
+      <h2 class="matchup-predictor-headline">
+        <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span><%= rosterAwayName %></span>
+        <span class="matchup-predictor-at">@</span>
+        <span class="matchup-headline-team matchup-headline-team--home"><span class="matchup-side-tag">Home</span><%= rosterHomeName %></span>
+      </h2>
+      <div class="schedule-roster-pair matchup-predictor-pair">
+        <%- include('partials/matchup-roster-col', { roster: awayRoster, side: 'away', teamName: rosterAwayName }) %>
+        <%- include('partials/matchup-roster-col', { roster: homeRoster, side: 'home', teamName: rosterHomeName }) %>
+      </div>
+    </section>
+    <% } else if (selectedView && matchupOptions.length && !selectedMatchup) { %>
+    <p class="matchup-predictor-prompt">Choose a matchup above to see both teams and their rosters.</p>
+    <% } else if (selectedView && !matchupOptions.length) { %>
+    <p class="matchup-predictor-prompt">No games listed for this date.</p>
+    <% } %>
+
+    </form>
+    </main>
+    <script>
+      (function () {
+        const form = document.getElementById("matchupForm");
+        const awayInput = document.getElementById("awayMissing");
+        const homeInput = document.getElementById("homeMissing");
+        if (!form || !awayInput || !homeInput) return;
+
+        const STORAGE_PREFIX = "mms-matchup-lineup:";
+        const matchupKey = form.getAttribute("data-matchup-key") || "";
+
+        function parseList(value) {
+          return value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+
+        function sortedKey(arr) {
+          return [...arr].sort().join(",");
+        }
+
+        function loadStored() {
+          if (!matchupKey) return { away: [], home: [] };
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + matchupKey);
+            if (!raw) return { away: [], home: [] };
+            const data = JSON.parse(raw);
+            return {
+              away: Array.isArray(data.away) ? data.away : [],
+              home: Array.isArray(data.home) ? data.home : [],
+            };
+          } catch {
+            return { away: [], home: [] };
+          }
+        }
+
+        function saveStored(away, home) {
+          if (!matchupKey) return;
+          localStorage.setItem(
+            STORAGE_PREFIX + matchupKey,
+            JSON.stringify({ away: [...away], home: [...home] })
+          );
+        }
+
+        function syncButtons(awaySet, homeSet) {
+          document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const missing = (side === "away" ? awaySet : homeSet).has(norm);
+            btn.textContent = missing ? "Missing" : "Active";
+            btn.classList.toggle("matchup-status-btn--active", !missing);
+            btn.classList.toggle("matchup-status-btn--missing", missing);
+            btn.setAttribute("aria-pressed", missing ? "true" : "false");
+            const row = btn.closest(".matchup-roster-item");
+            if (row) row.classList.toggle("matchup-roster-item--benched", missing);
+          });
+        }
+
+        let awaySet = new Set(parseList(awayInput.value));
+        let homeSet = new Set(parseList(homeInput.value));
+
+        if (matchupKey) {
+          const stored = loadStored();
+          const serverAway = sortedKey([...awaySet]);
+          const serverHome = sortedKey([...homeSet]);
+          const storedAway = sortedKey(stored.away);
+          const storedHome = sortedKey(stored.home);
+
+          if (storedAway !== serverAway || storedHome !== serverHome) {
+            awayInput.value = stored.away.join(",");
+            homeInput.value = stored.home.join(",");
+            form.requestSubmit();
+            return;
+          }
+        }
+
+        syncButtons(awaySet, homeSet);
+
+        document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const set = side === "away" ? awaySet : homeSet;
+            if (set.has(norm)) set.delete(norm);
+            else set.add(norm);
+            awayInput.value = [...awaySet].join(",");
+            homeInput.value = [...homeSet].join(",");
+            saveStored([...awaySet], [...homeSet]);
+            syncButtons(awaySet, homeSet);
+            form.requestSubmit();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+

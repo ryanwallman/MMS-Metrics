@@ -1,0 +1,19 @@
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="/" class="site-brand">Marlboro Men's Softball</a>
+    <nav class="site-nav" aria-label="Main">
+      <% (typeof siteNav !== "undefined" ? siteNav : []).forEach((item) => { %>
+      <a
+        href="<%= item.href %>"
+        class="site-nav-link<%= typeof navActive !== "undefined" && navActive === item.id ? " is-active" : "" %>"
+        <%= typeof navActive !== "undefined" && navActive === item.id ? 'aria-current="page"' : "" %>
+      >
+        <%= item.label %>
+      </a>
+      <% }) %>
+    </nav>
+  </div>
+  <% if (typeof generatedAt !== "undefined" && generatedAt) { %>
+  <p class="site-updated">Data updated <%= generatedAt %></p>
+  <% } %>
+</header>

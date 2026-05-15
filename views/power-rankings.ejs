@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.3, record: 0.5, sos: 0.2 }; %>
+    <h1 class="page-title">Power Rankings</h1>
+
+    <section class="rankings-explainer power-rankings-explainer">
+      <h2>How this works</h2>
+      <p>
+        <strong>Current power</strong> uses the same team blend as offensive rankings:
+        <strong><%= Math.round(teamBlend.player * 100) %>%</strong> roster talent (2026 PA–weighted player ratings),
+        <strong><%= Math.round(teamBlend.record * 100) %>%</strong> record (win % z-score),
+        <strong><%= Math.round(teamBlend.sos * 100) %>%</strong> strength of schedule (avg. opponent win %).
+      </p>
+      <p>
+        <strong>Season projections</strong> start from each team’s current W-L, then add
+        <em>expected</em> wins and losses on every remaining game. That uses the same underlying matchup model as the
+        <a href="/matchup-predictor">matchup predictor</a>, but with a <strong>sharper</strong> win curve (less pulled
+        toward 50/50) so strong teams can project toward records like 18–4 and weak teams toward heavier losses.
+        Projected win % keeps fractional expected wins; the W-L column rounds to whole numbers. Regular season length:
+        <strong><%= regularSeasonGames %> games</strong>.
+      </p>
+      <% if (remainingGamesTotal > 0) { %>
+      <p style="margin-bottom: 0;">
+        <strong><%= remainingGamesSimulated %></strong> of <strong><%= remainingGamesTotal %></strong> unplayed
+        schedule games were simulated (games missing roster data are skipped).
+      </p>
+      <% } %>
+    </section>
+
+    <section class="power-rankings-section">
+      <h2>Current power rankings</h2>
+      <p class="power-rankings-note">Sorted by blended team power rating (higher = stronger right now).</p>
+      <div class="rankings-table-wrap">
+        <table class="rankings-master-table page-table power-rankings-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Power</th>
+              <th>Record</th>
+              <th>Win %</th>
+              <th>SOS</th>
+              <th>Roster</th>
+              <th>GP</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% currentRankings.forEach((t) => { %>
+            <tr>
+              <td style="text-align: right"><%= t.rank %></td>
+              <td><%= t.teamName %> (#<%= t.teamId %>)</td>
+              <td style="text-align: right">
+                <strong><%= t.powerRating >= 0 ? "+" + t.powerRating.toFixed(2) : t.powerRating.toFixed(2) %></strong>
+              </td>
+              <td style="text-align: right"><%= t.wins %>-<%= t.losses %></td>
+              <td style="text-align: right">
+                <%= t.winPct != null ? (t.winPct * 100).toFixed(1) + "%" : "—" %>
+              </td>
+              <td style="text-align: right">
+                <%= t.sosOppWinPct != null ? (t.sosOppWinPct * 100).toFixed(1) + "%" : "—" %>
+              </td>
+              <td style="text-align: right">
+                <%= t.rosterRating >= 0 ? "+" + t.rosterRating.toFixed(2) : t.rosterRating.toFixed(2) %>
+              </td>
+              <td style="text-align: right"><%= t.gamesPlayed %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="power-rankings-section">
+      <h2>Projected final standings (<%= regularSeasonGames %>-game season)</h2>
+      <p class="power-rankings-note">
+        Sorted by projected wins. “Proj. W-L” rounds expected totals; “Proj. win %” uses fractional wins.
+      </p>
+      <div class="rankings-table-wrap">
+        <table class="rankings-master-table page-table power-rankings-table">
+          <thead>
+            <tr>
+              <th>Proj. rank</th>
+              <th>Team</th>
+              <th>Current</th>
+              <th>Proj. W-L</th>
+              <th>Proj. win %</th>
+              <th>Exp. rest</th>
+              <th>Left</th>
+              <th>Power now</th>
+              <th>Power rank now</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% projectionRows.forEach((t) => { %>
+            <tr>
+              <td style="text-align: right"><%= t.projectedRank %></td>
+              <td><%= t.teamName %> (#<%= t.teamId %>)</td>
+              <td style="text-align: right"><%= t.currentWins %>-<%= t.currentLosses %></td>
+              <td style="text-align: right"><strong><%= t.projectedRecord %></strong></td>
+              <td style="text-align: right">
+                <%= t.projectedWinPct != null ? t.projectedWinPct.toFixed(1) + "%" : "—" %>
+              </td>
+              <td style="text-align: right" title="Rounded projected W-L minus current record">
+                <%= t.expRestRecord %>
+              </td>
+              <td style="text-align: right"><%= t.scheduledRemaining %></td>
+              <td style="text-align: right">
+                <% if (t.powerRating != null) { %>
+                <%= t.powerRating >= 0 ? "+" + t.powerRating.toFixed(2) : t.powerRating.toFixed(2) %>
+                <% } else { %>—<% } %>
+              </td>
+              <td style="text-align: right"><%= t.currentPowerRank != null ? t.currentPowerRank : "—" %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    </main>
+  </body>
+</html>

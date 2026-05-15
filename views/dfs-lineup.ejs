@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+    <title>DFS Lineup — Marlboro Men's Softball</title>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main dfs-page<%= slate && !slate.canEdit ? ' dfs-page--readonly' : '' %>">
+      <div class="dfs-page-head">
+        <h1 class="page-title">DFS Lineup Builder</h1>
+        <p class="dfs-page-head-actions">
+          <a href="/dfs/leaderboard" class="dfs-btn dfs-btn--primary">Leaderboard</a>
+        </p>
+      </div>
+      <p class="page-note dfs-intro">
+        Build an <strong><%= lineupSize %>-player</strong> lineup for the next slate with a
+        <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight offensive rating (~72%),
+        opponent runs allowed (~18%), and the opposing primary pitcher (~10%) from
+        <a href="https://marlborosoftball.com/pitcher-stats/" target="_blank" rel="noopener">league pitcher stats</a>.
+        Scores use <code>Gamelogs (Google Sheet)</code> after games are played.
+        You can browse everything without an account. <strong>Sign in only on this page</strong> to save week slates (<code>W#</code>) to the cloud; Wednesday slates save in your browser.
+        Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
+        For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
+      </p>
+
+      <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
+      <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
+        <p>
+          <strong>Firebase is not configured on this server.</strong>
+          Locally, add web app keys to <code>.env</code>. In production, set the same <code>FIREBASE_*</code> names in your host’s environment (e.g. Render → Environment) and redeploy.
+        </p>
+      </section>
+      <% } %>
+
+      <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled) { %>
+      <section class="dfs-auth-bar" id="dfsAuthBar" aria-label="Account">
+        <p class="dfs-auth-status" id="dfsAuthStatus">Restoring sign-in…</p>
+        <div class="dfs-auth-actions" id="dfsAuthActions">
+          <button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>
+        </div>
+        <p class="dfs-auth-hint" id="dfsAuthHint" hidden>Week slates (<code>W#</code>) sync to your account when you save. Wednesday slates are stored on this device only.</p>
+      </section>
+      <% } %>
+
+      <div class="dfs-slate-form" id="dfsSlateForm">
+        <p class="dfs-slate-form-label"><strong>Slate</strong></p>
+        <nav class="dfs-slate-picker" aria-label="Choose slate">
+          <% slateOptions.forEach((opt) => { %>
+          <a
+            href="/dfs?slate=<%= encodeURIComponent(opt.value) %>"
+            class="dfs-slate-chip<%= opt.value === selectedSlate ? ' is-selected' : '' %><%= opt.canEdit ? ' dfs-slate-chip--open' : '' %><%= opt.isPast ? ' dfs-slate-chip--past' : '' %>"
+            <%= opt.value === selectedSlate ? 'aria-current="page"' : '' %>
+          ><%= opt.label %><% if (opt.canEdit) { %> · open<% } else if (opt.isPast) { %> · view<% } %></a>
+          <% }) %>
+        </nav>
+        <input type="hidden" name="lineup" id="lineupInput" value="<%= lineupNorms.join(',') %>" />
+      </div>
+
+      <% if (typeof allSlatesLocked !== 'undefined' && allSlatesLocked) { %>
+      <p class="dfs-slate-lock-notice dfs-slate-lock-notice--season" role="status">
+        The season schedule is complete — all slates are view only. Browse past weeks below or check the <a href="/dfs/leaderboard">leaderboard</a>.
+      </p>
+      <% } else if (slate && slate.isPast && !slate.canEdit) { %>
+      <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
+        <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
+        <% if (activeSlateToken) { %>
+        <a href="/dfs?slate=<%= encodeURIComponent(activeSlateToken) %>" class="dfs-slate-lock-link">Go to open slate</a>
+        <% } %>
+      </p>
+      <% } %>
+
+      <section class="dfs-slate-banner" aria-label="Current slate">
+        <h2 class="dfs-slate-title"><%= slate ? slate.label : 'No slate' %></h2>
+        <% if (!slate) { %>
+        <p class="dfs-slate-status">No slates on the schedule.</p>
+        <% } else if (slate.canEdit) { %>
+        <p class="dfs-slate-status dfs-slate-status--open">
+          Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong> (11:59 PM Eastern the night before games) ·
+          <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
+        </p>
+        <% } else if (slate.isPast) { %>
+        <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores use gamelog rows when available.</p>
+        <% } else { %>
+        <p class="dfs-slate-status dfs-slate-status--locked">This slate isn’t editable right now.</p>
+        <% } %>
+        <% if (slate.games && slate.games.length) { %>
+        <ul class="dfs-game-list">
+          <% slate.games.forEach((g) => { %>
+          <li><span class="matchup-side-tag">Away</span> <%= g.away %> <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> <%= g.home %></li>
+          <% }) %>
+        </ul>
+        <% } %>
+      </section>
+
+      <div class="dfs-layout">
+        <aside class="dfs-sidebar">
+          <section class="dfs-lineup-card">
+            <h2 class="section-heading">Your lineup</h2>
+            <p class="dfs-budget">
+              <span id="salaryUsedLabel">$<%= salaryUsed.toLocaleString() %></span>
+              <span class="dfs-budget-sep">/</span>
+              $<%= salaryCap.toLocaleString() %>
+              <span class="dfs-budget-remaining" id="salaryRemainingLabel">($<%= salaryRemaining.toLocaleString() %> left)</span>
+            </p>
+            <ol class="dfs-lineup-slots" id="lineupSlots">
+              <% for (let i = 0; i < lineupSize; i++) { %>
+              <% const norm = lineupNorms[i]; const p = norm ? playerPool.find((x) => x.norm === norm) : null; %>
+              <li class="dfs-lineup-slot<%= p ? ' dfs-lineup-slot--filled' : '' %>" data-slot="<%= i %>">
+                <span class="dfs-slot-num"><%= i + 1 %></span>
+                <% if (p) { %>
+                <span class="dfs-slot-name"><%= p.name %></span>
+                <span class="dfs-slot-meta"><%= p.teamName %> · $<%= p.salary.toLocaleString() %></span>
+                <button type="button" class="dfs-remove-btn" data-remove="<%= p.norm %>" aria-label="Remove <%= p.name %>">×</button>
+                <% } else { %>
+                <span class="dfs-slot-empty">Select a player</span>
+                <% } %>
+              </li>
+              <% } %>
+            </ol>
+            <p class="dfs-lineup-actions">
+              <button type="button" class="dfs-btn dfs-btn--primary" id="saveLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Save lineup to database</button>
+              <button type="button" class="dfs-btn" id="clearLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Clear</button>
+            </p>
+          </section>
+
+          <% if (typeof lastWeekPreview !== 'undefined' && lastWeekPreview) { %>
+          <section
+            class="dfs-last-week-card"
+            id="lastWeekPreviewCard"
+            hidden
+            aria-live="polite"
+            data-has-stats="<%= lastWeekPreview.hasStats ? '1' : '0' %>"
+          >
+            <h2 class="section-heading">If this was your lineup last week</h2>
+            <p class="dfs-last-week-slate"><%= lastWeekPreview.slateLabel %></p>
+            <% if (!lastWeekPreview.hasStats) { %>
+            <p class="dfs-last-week-empty">No gamelog stats in <code>Gamelogs (Google Sheet)</code> for that slate yet.</p>
+            <% } else { %>
+            <p class="dfs-last-week-total">
+              <span id="lastWeekTotal"><%= lastWeekPreview.scored ? lastWeekPreview.scored.total : 0 %></span>
+              <span class="dfs-score-pts">pts</span>
+            </p>
+            <ul class="dfs-last-week-breakdown" id="lastWeekBreakdown">
+              <% if (lastWeekPreview.scored) { %>
+              <% lastWeekPreview.scored.breakdown.forEach((row) => { %>
+              <li>
+                <span><%= row.name %></span>
+                <strong><%= row.points %></strong>
+                <span class="dfs-score-games"><%= row.games %> gm</span>
+              </li>
+              <% }) %>
+              <% } %>
+            </ul>
+            <% } %>
+          </section>
+          <script type="application/json" id="lastWeekPointsData"><%- JSON.stringify(lastWeekPreview.byNorm) %></script>
+          <% } %>
+
+          <section class="dfs-scoring-rules">
+            <h2 class="section-heading">Scoring (per game)</h2>
+            <ul class="dfs-rules-list">
+              <li>Single <strong>+<%= scoringRules.single %></strong></li>
+              <li>Double <strong>+<%= scoringRules.double %></strong></li>
+              <li>Triple <strong>+<%= scoringRules.triple %></strong></li>
+              <li>Home run <strong>+<%= scoringRules.hr %></strong></li>
+              <li>RBI <strong>+<%= scoringRules.rbi %></strong></li>
+              <li>Run <strong>+<%= scoringRules.run %></strong></li>
+              <li>Walk <strong>+<%= scoringRules.walk %></strong></li>
+            </ul>
+            <% if (!hasGamelogData) { %>
+            <p class="dfs-rules-note">Gamelog file not loaded yet.</p>
+            <% } %>
+          </section>
+
+          <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
+          <section class="dfs-score-card" id="slateScoreCard">
+            <h2 class="section-heading">Your lineup score</h2>
+            <% if (!slateStats || !slateStats.hasStats) { %>
+            <% if (typeof slateHasBoxScores !== 'undefined' && !slateHasBoxScores) { %>
+            <p class="dfs-rules-note">There are no game dates in <code>Gamelogs (Google Sheet)</code> that match this slate’s schedule yet — add box scores for those dates to see fantasy points (Sun 10-May ↔ <code>5/10/2026</code>, etc.).</p>
+            <% } else { %>
+            <p class="dfs-rules-note">No gamelog stats for this slate yet.</p>
+            <% } %>
+            <p class="dfs-score-total">
+              <span id="slateScoreTotal"><%= scored ? scored.total : '—' %></span>
+              <span class="dfs-score-pts">pts</span>
+            </p>
+            <ul class="dfs-score-breakdown" id="slateScoreBreakdown">
+              <% if (scored && scored.breakdown) { %>
+              <% scored.breakdown.forEach((row) => { %>
+              <li>
+                <span><%= row.name %></span>
+                <strong><%= row.points %></strong>
+                <span class="dfs-score-games"><%= row.games %> gm</span>
+              </li>
+              <% }) %>
+              <% } %>
+            </ul>
+            <% } %>
+          </section>
+          <% if (slateStats && slateStats.byNorm) { %>
+          <script type="application/json" id="slatePointsData"><%- JSON.stringify(slateStats.byNorm) %></script>
+          <% } %>
+          <% } %>
+        </aside>
+
+        <section class="dfs-pool-section">
+          <div class="dfs-pool-toolbar">
+            <h2 class="section-heading">Player pool</h2>
+            <div class="dfs-pool-toolbar-actions">
+              <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
+                <span class="dfs-sort-label">Sort</span>
+                <button type="button" class="dfs-sort-btn<%= (typeof showSlateStats !== 'undefined' && showSlateStats) ? '' : ' is-active' %>" data-sort="salary">Salary</button>
+                <button type="button" class="dfs-sort-btn" data-sort="team">Team</button>
+                <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
+                <button type="button" class="dfs-sort-btn is-active" data-sort="points">Points</button>
+                <% } %>
+              </div>
+              <label class="dfs-team-filter" id="teamFilterWrap" hidden>
+                <span class="dfs-team-filter-label">Team</span>
+                <select id="teamFilter" aria-label="Filter by team">
+                  <option value="">All teams</option>
+                </select>
+              </label>
+              <label class="dfs-search-label">
+                Search
+                <input type="search" id="poolSearch" placeholder="Name or team…" autocomplete="off" />
+              </label>
+            </div>
+          </div>
+          <div class="dfs-table-wrap">
+            <table class="dfs-player-table page-table" id="playerPoolTable">
+              <thead>
+                <tr>
+                  <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %><th></th><% } %>
+                  <th>Player</th>
+                  <th>Team</th>
+                  <th>Salary</th>
+                  <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
+                  <th>Pts</th>
+                  <th>Gm</th>
+                  <% } %>
+                  <th>vs</th>
+                  <th>Pitcher</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% playerPool.forEach((p) => { %>
+                <% const inLineup = lineupNorms.includes(p.norm); %>
+                <tr
+                  class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %>"
+                  data-norm="<%= p.norm %>"
+                  data-name="<%= p.name %>"
+                  data-team="<%= p.teamName %>"
+                  data-salary="<%= p.salary %>"
+                  data-points="<%= p.slatePoints != null ? p.slatePoints : 0 %>"
+                  data-games="<%= p.slateGames != null ? p.slateGames : 0 %>"
+                >
+                  <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %>
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn<%= inLineup ? ' dfs-add-btn--remove' : '' %>"
+                      data-toggle="<%= p.norm %>"
+                      aria-pressed="<%= inLineup ? 'true' : 'false' %>"
+                    ><%= inLineup ? '−' : '+' %></button>
+                  </td>
+                  <% } %>
+                  <td class="dfs-player-name"><%= p.name %></td>
+                  <td><%= p.teamName %></td>
+                  <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
+                  <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
+                  <td class="dfs-points-cell"><strong><%= p.slatePoints %></strong></td>
+                  <td class="dfs-games-cell"><%= p.slateGames %></td>
+                  <% } %>
+                  <td class="dfs-opp-cell"><%= p.opponentName %></td>
+                  <td class="dfs-pitcher-cell" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%= p.opposingPitcher %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+          <% if (!playerPool.length) { %>
+          <p class="dfs-empty-pool">No players in pool for this slate. Pick another date/week above.</p>
+          <% } %>
+        </section>
+      </div>
+    </main>
+
+    <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled && firebaseClientConfig) { %>
+    <script>
+      window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig) %>;
+    </script>
+    <script type="module" src="/js/dfs-firebase.js"></script>
+    <% } %>
+
+    <script>
+      (function () {
+        const LINEUP_SIZE = <%= lineupSize %>;
+        const SALARY_CAP = <%= salaryCap %>;
+        const CAN_EDIT = <%= slate && slate.canEdit ? 'true' : 'false' %>;
+        const SHOW_SLATE_STATS = <%= typeof showSlateStats !== 'undefined' && showSlateStats ? 'true' : 'false' %>;
+        const STORAGE_PREFIX = "mms-dfs-lineup:";
+        const slateKey = "<%= selectedSlate %>";
+        const form = document.getElementById("dfsSlateForm");
+        const lineupInput = document.getElementById("lineupInput");
+        const pool = new Map();
+        document.querySelectorAll(".dfs-player-row").forEach((row) => {
+          pool.set(row.getAttribute("data-norm"), {
+            norm: row.getAttribute("data-norm"),
+            name: row.getAttribute("data-name"),
+            team: row.getAttribute("data-team"),
+            salary: Number(row.getAttribute("data-salary")),
+          });
+        });
+
+        let lineup = lineupInput.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter((n) => pool.has(n));
+
+        function loadStored() {
+          if (!slateKey) return null;
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + slateKey);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            return Array.isArray(data.lineup) ? data.lineup.filter((n) => pool.has(n)) : null;
+          } catch {
+            return null;
+          }
+        }
+
+        function saveStored() {
+          if (!slateKey || !CAN_EDIT) return;
+          localStorage.setItem(
+            STORAGE_PREFIX + slateKey,
+            JSON.stringify({ lineup: [...lineup], updatedAt: Date.now() })
+          );
+        }
+
+        function persistLineup() {
+          saveStored();
+          lineupInput.value = lineup.join(",");
+        }
+
+        async function saveLineupToCloud() {
+          if (!CAN_EDIT) {
+            throw new Error("Lineups can only be edited for the slate that is currently open.");
+          }
+          if (!/^W\d+$/i.test(slateKey)) {
+            throw new Error("Cloud save is only for week slates (W1, W2, …). Wednesday slates are saved in your browser automatically.");
+          }
+          if (!window.DfsFirebase?.isReady?.()) {
+            throw new Error("Sign in with Google first to save your lineup to the database.");
+          }
+          if (lineup.length !== LINEUP_SIZE) {
+            throw new Error("Pick exactly " + LINEUP_SIZE + " players before saving.");
+          }
+          if (salaryTotal() > SALARY_CAP) {
+            throw new Error("Your lineup is over the salary cap.");
+          }
+          await window.DfsFirebase.saveLineup(slateKey, lineup, salaryTotal());
+        }
+
+        function salaryTotal() {
+          return lineup.reduce((s, n) => s + (pool.get(n)?.salary || 0), 0);
+        }
+
+        let lastWeekByNorm = null;
+        try {
+          const el = document.getElementById("lastWeekPointsData");
+          if (el) lastWeekByNorm = JSON.parse(el.textContent || "{}");
+        } catch {
+          lastWeekByNorm = null;
+        }
+
+        let slatePointsByNorm = null;
+        try {
+          const el = document.getElementById("slatePointsData");
+          if (el) slatePointsByNorm = JSON.parse(el.textContent || "{}");
+        } catch {
+          slatePointsByNorm = null;
+        }
+
+        function updateSlateScoreCard() {
+          const card = document.getElementById("slateScoreCard");
+          if (!card || !slatePointsByNorm) return;
+
+          const totalEl = document.getElementById("slateScoreTotal");
+          const list = document.getElementById("slateScoreBreakdown");
+          if (!totalEl || !list) return;
+
+          if (!lineup.length) {
+            totalEl.textContent = "—";
+            list.innerHTML = "";
+            return;
+          }
+
+          let total = 0;
+          list.innerHTML = "";
+          for (const norm of lineup) {
+            const row = slatePointsByNorm[norm] || { points: 0, games: 0 };
+            const p = pool.get(norm);
+            total += row.points;
+            const li = document.createElement("li");
+            li.innerHTML =
+              "<span>" +
+              (p ? p.name : norm) +
+              "</span><strong>" +
+              row.points +
+              '</strong><span class="dfs-score-games">' +
+              row.games +
+              " gm</span>";
+            list.appendChild(li);
+          }
+          totalEl.textContent = (Math.round(total * 10) / 10).toString();
+        }
+
+        function updateLastWeekPreview() {
+          const card = document.getElementById("lastWeekPreviewCard");
+          if (!card || !lastWeekByNorm) return;
+
+          if (!lineup.length) {
+            card.hidden = true;
+            return;
+          }
+          card.hidden = false;
+
+          if (card.getAttribute("data-has-stats") !== "1") return;
+
+          let total = 0;
+          const list = document.getElementById("lastWeekBreakdown");
+          const totalEl = document.getElementById("lastWeekTotal");
+          if (!list || !totalEl) return;
+
+          list.innerHTML = "";
+          for (const norm of lineup) {
+            const row = lastWeekByNorm[norm] || { points: 0, games: 0 };
+            const p = pool.get(norm);
+            total += row.points;
+            const li = document.createElement("li");
+            li.innerHTML =
+              "<span>" +
+              (p ? p.name : norm) +
+              "</span><strong>" +
+              row.points +
+              '</strong><span class="dfs-score-games">' +
+              row.games +
+              " gm</span>";
+            list.appendChild(li);
+          }
+          totalEl.textContent = (Math.round(total * 10) / 10).toString();
+        }
+
+        function syncUi() {
+          const used = salaryTotal();
+          const left = SALARY_CAP - used;
+          document.getElementById("salaryUsedLabel").textContent = "$" + used.toLocaleString();
+          const rem = document.getElementById("salaryRemainingLabel");
+          rem.textContent = "($" + left.toLocaleString() + " left)";
+          rem.classList.toggle("dfs-budget-over", left < 0);
+
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const norm = row.getAttribute("data-norm");
+            const on = lineup.includes(norm);
+            const salary = Number(row.getAttribute("data-salary")) || 0;
+            const overCap = !on && used + salary > SALARY_CAP;
+            row.classList.toggle("dfs-player-row--selected", on);
+            row.classList.toggle("dfs-player-row--over-cap", overCap);
+            const btn = row.querySelector(".dfs-add-btn");
+            if (btn) {
+              btn.textContent = on ? "−" : "+";
+              btn.classList.toggle("dfs-add-btn--remove", on);
+              btn.setAttribute("aria-pressed", on ? "true" : "false");
+              btn.disabled = overCap;
+              btn.title = overCap ? "Not enough salary cap remaining" : "";
+            }
+          });
+
+          const slots = document.getElementById("lineupSlots");
+          slots.innerHTML = "";
+          for (let i = 0; i < LINEUP_SIZE; i++) {
+            const norm = lineup[i];
+            const p = norm ? pool.get(norm) : null;
+            const li = document.createElement("li");
+            li.className = "dfs-lineup-slot" + (p ? " dfs-lineup-slot--filled" : "");
+            li.innerHTML =
+              '<span class="dfs-slot-num">' +
+              (i + 1) +
+              "</span>" +
+              (p
+                ? (function () {
+                    const pts = slatePointsByNorm && slatePointsByNorm[norm];
+                    const ptsLabel =
+                      pts && SHOW_SLATE_STATS ? " · " + pts.points + " pts" : "";
+                    const meta =
+                      p.team + " · $" + p.salary.toLocaleString() + ptsLabel;
+                    const removeBtn = CAN_EDIT
+                      ? '<button type="button" class="dfs-remove-btn" data-remove="' +
+                        p.norm +
+                        '" aria-label="Remove">×</button>'
+                      : "";
+                    return (
+                      '<span class="dfs-slot-name">' +
+                      p.name +
+                      '</span><span class="dfs-slot-meta">' +
+                      meta +
+                      "</span>" +
+                      removeBtn
+                    );
+                  })()
+                : '<span class="dfs-slot-empty">' +
+                  (CAN_EDIT ? "Select a player" : "No saved lineup") +
+                  "</span>");
+            slots.appendChild(li);
+          }
+
+          slots.querySelectorAll("[data-remove]").forEach((btn) => {
+            btn.addEventListener("click", () => togglePlayer(btn.getAttribute("data-remove")));
+          });
+
+          updateLastWeekPreview();
+          updateSlateScoreCard();
+        }
+
+        function togglePlayer(norm) {
+          if (!CAN_EDIT) return;
+          const ix = lineup.indexOf(norm);
+          if (ix >= 0) {
+            lineup.splice(ix, 1);
+          } else {
+            if (lineup.length >= LINEUP_SIZE) {
+              alert("Lineup is full (" + LINEUP_SIZE + " players). Remove someone first.");
+              return;
+            }
+            const nextTotal = salaryTotal() + (pool.get(norm)?.salary || 0);
+            if (nextTotal > SALARY_CAP) {
+              alert("Not enough salary cap remaining for this player.");
+              return;
+            }
+            lineup.push(norm);
+          }
+          persistLineup();
+          syncUi();
+        }
+
+        document.querySelectorAll("[data-toggle]").forEach((btn) => {
+          btn.addEventListener("click", () => togglePlayer(btn.getAttribute("data-toggle")));
+        });
+
+        document.getElementById("clearLineupBtn").addEventListener("click", () => {
+          if (!CAN_EDIT) return;
+          lineup = [];
+          persistLineup();
+          syncUi();
+        });
+
+        if (!CAN_EDIT) {
+          document.querySelectorAll(".dfs-add-btn").forEach((btn) => {
+            btn.disabled = true;
+          });
+        }
+
+        document.getElementById("saveLineupBtn").addEventListener("click", async () => {
+          const btn = document.getElementById("saveLineupBtn");
+          const status = document.getElementById("dfsAuthStatus");
+          try {
+            persistLineup();
+            btn.disabled = true;
+            const prevLabel = btn.textContent;
+            btn.textContent = "Saving…";
+            await saveLineupToCloud();
+            if (status) {
+              status.textContent =
+                "Lineup saved to the database for " + slateKey.toUpperCase() + ".";
+            }
+            btn.textContent = "Saved";
+            setTimeout(() => {
+              btn.textContent = prevLabel;
+              btn.disabled = false;
+            }, 2500);
+          } catch (err) {
+            console.error(err);
+            btn.disabled = false;
+            btn.textContent = "Save lineup";
+            alert(err.message || "Could not save to the database. Check that Firestore rules are published.");
+          }
+        });
+
+        const tbody = document.querySelector("#playerPoolTable tbody");
+        const teamFilterWrap = document.getElementById("teamFilterWrap");
+        const teamFilter = document.getElementById("teamFilter");
+        let currentSort = "salary";
+
+        function buildTeamRank() {
+          const maxByTeam = new Map();
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const team = row.getAttribute("data-team");
+            const sal = Number(row.getAttribute("data-salary"));
+            maxByTeam.set(team, Math.max(maxByTeam.get(team) || 0, sal));
+          });
+          const teams = [...maxByTeam.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+            .map(([name]) => name);
+          const rank = new Map(teams.map((name, i) => [name, i]));
+          return { teams, rank };
+        }
+
+        function refreshTeamFilterOptions() {
+          if (!teamFilter) return;
+          const { teams } = buildTeamRank();
+          const kept = teamFilter.value;
+          teamFilter.innerHTML = '<option value="">All teams</option>';
+          teams.forEach((name) => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            teamFilter.appendChild(opt);
+          });
+          if (kept && teams.includes(kept)) teamFilter.value = kept;
+        }
+
+        function applyPoolFilters() {
+          const q = (document.getElementById("poolSearch")?.value || "").trim().toLowerCase();
+          const teamVal = currentSort === "team" && teamFilter ? teamFilter.value : "";
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const hay = (row.getAttribute("data-name") + " " + row.getAttribute("data-team")).toLowerCase();
+            const matchesSearch = !q || hay.includes(q);
+            const matchesTeam = !teamVal || row.getAttribute("data-team") === teamVal;
+            row.hidden = !matchesSearch || !matchesTeam;
+          });
+        }
+
+        function sortPlayerPool(mode) {
+          if (!tbody) return;
+          const rows = Array.from(tbody.querySelectorAll(".dfs-player-row"));
+          if (mode === "team") {
+            const { rank } = buildTeamRank();
+            rows.sort((a, b) => {
+              const ta = a.getAttribute("data-team");
+              const tb = b.getAttribute("data-team");
+              const ra = rank.get(ta) ?? 999;
+              const rb = rank.get(tb) ?? 999;
+              if (ra !== rb) return ra - rb;
+              const sa = Number(a.getAttribute("data-salary"));
+              const sb = Number(b.getAttribute("data-salary"));
+              if (sb !== sa) return sb - sa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          } else if (mode === "points") {
+            rows.sort((a, b) => {
+              const pa = Number(a.getAttribute("data-points")) || 0;
+              const pb = Number(b.getAttribute("data-points")) || 0;
+              if (pb !== pa) return pb - pa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          } else if (mode === "points") {
+            rows.sort((a, b) => {
+              const pa = Number(a.getAttribute("data-points")) || 0;
+              const pb = Number(b.getAttribute("data-points")) || 0;
+              if (pb !== pa) return pb - pa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          } else {
+            rows.sort((a, b) => {
+              const sa = Number(a.getAttribute("data-salary"));
+              const sb = Number(b.getAttribute("data-salary"));
+              if (sb !== sa) return sb - sa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          }
+          rows.forEach((row) => tbody.appendChild(row));
+          applyPoolFilters();
+        }
+
+        function setSortMode(mode) {
+          currentSort = mode;
+          if (teamFilterWrap) {
+            const showTeam = mode === "team";
+            teamFilterWrap.hidden = !showTeam;
+            teamFilterWrap.setAttribute("aria-hidden", showTeam ? "false" : "true");
+          }
+          if (mode === "team") {
+            refreshTeamFilterOptions();
+          } else if (teamFilter) {
+            teamFilter.value = "";
+          }
+          sortPlayerPool(mode);
+        }
+
+        document.querySelectorAll(".dfs-sort-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".dfs-sort-btn").forEach((b) => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+            setSortMode(btn.getAttribute("data-sort"));
+          });
+        });
+
+        if (teamFilter) {
+          teamFilter.addEventListener("change", applyPoolFilters);
+        }
+
+        const search = document.getElementById("poolSearch");
+        if (search) {
+          search.addEventListener("input", applyPoolFilters);
+        }
+
+        function applyLineupFromArray(norms) {
+          lineup = (norms || []).filter((n) => pool.has(n)).slice(0, LINEUP_SIZE);
+          persistLineup();
+          syncUi();
+        }
+
+        async function loadCloudLineupIfSignedIn() {
+          if (!window.DfsFirebase?.isReady?.() || !/^W\d+$/i.test(slateKey)) return;
+          try {
+            const cloud = await window.DfsFirebase.loadLineup(slateKey);
+            if (cloud && cloud.length) applyLineupFromArray(cloud);
+          } catch (err) {
+            console.error("Cloud load failed:", err);
+          }
+        }
+
+        function setupFirebaseAuth() {
+          const status = document.getElementById("dfsAuthStatus");
+          const actions = document.getElementById("dfsAuthActions");
+          const hint = document.getElementById("dfsAuthHint");
+          const signInBtn = document.getElementById("dfsSignInBtn");
+          if (!window.DfsFirebase) {
+            if (status) status.textContent = "";
+            return;
+          }
+
+          window.DfsFirebase.onAuthChange(async (user) => {
+            if (!status || !actions) return;
+            if (user) {
+              status.textContent = "Signed in as " + (user.displayName || user.email || "Player");
+              actions.innerHTML =
+                '<button type="button" class="dfs-btn" id="dfsSignOutBtn">Sign out</button>' +
+                '<span class="dfs-auth-sync">Lineups sync for week slates (W#)</span>';
+              if (hint) hint.hidden = false;
+              document.getElementById("dfsSignOutBtn")?.addEventListener("click", () => {
+                window.DfsFirebase.signOut();
+              });
+              await loadCloudLineupIfSignedIn();
+            } else {
+              status.textContent = "Not signed in — you can still build a lineup here. Sign in to save it to the cloud.";
+              actions.innerHTML =
+                '<button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>';
+              if (hint) hint.hidden = true;
+              document.getElementById("dfsSignInBtn")?.addEventListener("click", () => {
+                window.DfsFirebase.signInWithGoogle().catch((err) => {
+                  console.error(err);
+                  status.textContent = "Sign-in failed. Enable Google in Firebase Authentication.";
+                });
+              });
+            }
+          });
+        }
+
+        function initLineupFromStorage() {
+          const stored = loadStored();
+          if (stored && stored.length) {
+            lineup = stored.slice(0, LINEUP_SIZE);
+          }
+          persistLineup();
+          syncUi();
+        }
+
+        initLineupFromStorage();
+        setSortMode(SHOW_SLATE_STATS ? "points" : "salary");
+
+        window.addEventListener(
+          "dfs-firebase-ready",
+          () => {
+            setupFirebaseAuth();
+            if (window.DfsFirebase?.isReady?.()) {
+              loadCloudLineupIfSignedIn();
+            }
+          },
+          { once: true }
+        );
+        if (window.DfsFirebase) {
+          setupFirebaseAuth();
+          if (window.DfsFirebase.isReady()) loadCloudLineupIfSignedIn();
+        }
+      })();
+    </script>
+  </body>
+</html>

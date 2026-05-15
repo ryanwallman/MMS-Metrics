@@ -1,0 +1,17 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Connect this GitHub repo in Render → New → Blueprint (or Web Service + Docker).
+# Add FIREBASE_* and FIREBASE_SERVICE_ACCOUNT_JSON in the dashboard (Environment).
+
+services:
+  - type: web
+    name: mms
+    runtime: docker
+    region: ohio
+    plan: free
+    branch: main
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production

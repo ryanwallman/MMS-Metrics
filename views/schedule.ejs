@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+      <h1 class="page-title">Schedule</h1>
+
+      <form method="GET" action="/schedule" class="schedule-view-form">
+        <label for="view"><strong>Date</strong></label>
+        <select id="view" name="view" onchange="this.form.submit()" class="schedule-view-select">
+          <% scheduleOptions.forEach((opt) => { %>
+          <option value="<%= opt.value %>" <%= opt.value === selectedView ? "selected" : "" %>>
+            <%= opt.label %>
+          </option>
+          <% }) %>
+        </select>
+        <noscript><button type="submit">Go</button></noscript>
+      </form>
+
+      <% if (scheduleSummary) { %>
+      <p class="page-note"><%= scheduleSummary %></p>
+      <% } %>
+
+      <% const scheduleGames = Array.isArray(locals.games) ? locals.games : []; %>
+      <% if (scheduleGames.length > 0) { %>
+      <p class="schedule-matchup-hint">Tip: click any matchup row to show both rosters below.</p>
+      <% } %>
+
+      <table class="schedule-table page-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Home</th>
+            <th>Away</th>
+            <th>Location</th>
+            <th>Time</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-matchup-tbody">
+          <% if (scheduleGames.length === 0) { %>
+          <tr>
+            <td colspan="6">No games found.</td>
+          </tr>
+          <% } %>
+          <% scheduleGames.forEach((game) => { %>
+          <tr
+            class="schedule-matchup-row"
+            tabindex="0"
+            role="button"
+            aria-expanded="false"
+            data-away-id="<%= game.awayTeamId || "" %>"
+            data-home-id="<%= game.homeTeamId || "" %>"
+            data-away-name="<%= game.away %>"
+            data-home-name="<%= game.home %>"
+          >
+            <td><%= game.date %></td>
+            <td><%= game.home %></td>
+            <td><%= game.away %></td>
+            <td><%= game.location %></td>
+            <td><%= game.time %></td>
+            <td><%= game.result || "-" %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+      <div id="schedule-matchup-detail" class="schedule-matchup-detail" hidden></div>
+
+      <script type="text/plain" id="schedule-rosters-b64" hidden><%= locals.scheduleRosterPayloadB64 || "" %></script>
+      <script>
+        (function () {
+          function base64Utf8ToString(b64) {
+            var binary = atob(b64);
+            var bytes = new Uint8Array(binary.length);
+            for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new TextDecoder("utf-8").decode(bytes);
+          }
+
+          var b64El = document.getElementById("schedule-rosters-b64");
+          var payload = {};
+          try {
+            if (b64El && b64El.textContent.trim()) {
+              payload = JSON.parse(base64Utf8ToString(b64El.textContent.trim()));
+            }
+          } catch (e) {
+            console.warn("schedule roster payload parse failed", e);
+          }
+
+          var rosterByTeamId = payload.rosterByTeamId || {};
+          var tbody = document.getElementById("schedule-matchup-tbody");
+          var detail = document.getElementById("schedule-matchup-detail");
+          if (!tbody || !detail) return;
+
+          function normalizeLabel(s) {
+            return (s || "").toLowerCase().replace(/\s+/g, " ").trim();
+          }
+
+          function pickRoster(teamId, displayName) {
+            var id = String(teamId || "").trim();
+            if (id && rosterByTeamId[id] && rosterByTeamId[id].players && rosterByTeamId[id].players.length) {
+              return rosterByTeamId[id];
+            }
+            var want = normalizeLabel(displayName);
+            for (var k in rosterByTeamId) {
+              if (!Object.prototype.hasOwnProperty.call(rosterByTeamId, k)) continue;
+              var entry = rosterByTeamId[k];
+              if (normalizeLabel(entry.teamName) === want && entry.players && entry.players.length) {
+                return entry;
+              }
+            }
+            return rosterByTeamId[id] || null;
+          }
+
+          function renderRosterBlock(label, roster) {
+            if (!roster || !roster.players || !roster.players.length) {
+              return '<div class="schedule-roster-block"><h4>' + label + '</h4><p class="schedule-roster-empty">No roster loaded.</p></div>';
+            }
+            var html =
+              '<div class="schedule-roster-block"><h4>' +
+              label +
+              " — " +
+              (roster.teamName || "") +
+              '</h4><ul class="schedule-roster-list">';
+            roster.players.forEach(function (p) {
+              html += "<li>" + p + "</li>";
+            });
+            html += "</ul></div>";
+            return html;
+          }
+
+          function clearSelection() {
+            tbody.querySelectorAll(".schedule-matchup-row").forEach(function (row) {
+              row.classList.remove("is-selected");
+              row.setAttribute("aria-expanded", "false");
+            });
+            detail.hidden = true;
+            detail.innerHTML = "";
+          }
+
+          tbody.addEventListener("click", function (ev) {
+            var row = ev.target.closest(".schedule-matchup-row");
+            if (!row) return;
+            if (row.classList.contains("is-selected")) {
+              clearSelection();
+              return;
+            }
+            clearSelection();
+            row.classList.add("is-selected");
+            row.setAttribute("aria-expanded", "true");
+            var awayId = row.getAttribute("data-away-id");
+            var homeId = row.getAttribute("data-home-id");
+            var awayName = row.getAttribute("data-away-name");
+            var homeName = row.getAttribute("data-home-name");
+            var awayRoster = pickRoster(awayId, awayName);
+            var homeRoster = pickRoster(homeId, homeName);
+            detail.innerHTML =
+              '<div class="schedule-matchup-detail-inner"><h3 class="schedule-matchup-detail-title">' +
+              awayName +
+              " @ " +
+              homeName +
+              '</h3><div class="schedule-roster-pair">' +
+              renderRosterBlock("Away", awayRoster) +
+              renderRosterBlock("Home", homeRoster) +
+              "</div></div>";
+            detail.hidden = false;
+          });
+
+          tbody.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              var row = ev.target.closest(".schedule-matchup-row");
+              if (row) {
+                ev.preventDefault();
+                row.click();
+              }
+            }
+          });
+        })();
+      </script>
+    </main>
+  </body>
+</html>

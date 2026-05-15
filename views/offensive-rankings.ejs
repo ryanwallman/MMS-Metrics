@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+    <% const metricLabels = { ops: 'OPS (AVG + SLG, no walks)', iso: 'ISO (SLG − AVG)', tbPerPa: 'TB / PA', runProd: '(R + RBI) / PA' }; %>
+    <% const ratingBlend = typeof ratingWeights !== 'undefined' ? ratingWeights : { historical: 0.7, current2026: 0.3 }; %>
+    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.3, record: 0.5, sos: 0.2 }; %>
+    <h1 class="page-title">Offensive Rankings</h1>
+
+    <section class="rankings-explainer">
+      <h2>How this is calculated</h2>
+      <p>
+        Rankings emphasize <strong>damage per at-bat</strong> and <strong>run production</strong>.
+        <strong>OPS</strong> is a single number: <strong>AVG + SLG</strong> (walks are <em>not</em> part of this OPS). We also
+        blend ISO, TB/PA, and (R+RBI)/PA — each z-scored vs the league baseline for ranking — then combine eras as
+        <strong><%= Math.round(ratingBlend.historical * 100) %>%</strong> historical composite and
+        <strong><%= Math.round(ratingBlend.current2026 * 100) %>%</strong> 2026 composite when both exist.
+      </p>
+      <ul>
+        <li>
+          <strong>League baseline</strong>: From every <code>data/csv/career.csv</code> line, every <strong>2025</strong> historical
+          row, and every <code>2026 stats (Google Sheet)</code> row with PA &gt; 0, we compute four rates (see weights below). For each
+          rate we take the <strong>PA-weighted mean</strong> (μ) and <strong>PA-weighted standard deviation</strong> (σ) over
+          <strong><%= Math.round(leagueBaseline.poolPa) %></strong> plate appearances in
+          <strong><%= leagueBaseline.observationLines %></strong> source rows.
+        </li>
+        <li>
+          <strong>Composite (one number per era)</strong>: For each rate,
+          <code>z = (your rate − μ) / σ</code>. The <strong>era composite</strong> is a weighted sum of those z-scores:
+          <% const mwEntries = Object.entries(metricWeights); %>
+          <% mwEntries.forEach(([k, w], i) => { %>
+          <strong><%= metricLabels[k] || k %></strong> <%= Math.round(w * 100) %>%<%= i < mwEntries.length - 1 ? ", " : "." %>
+          <% }) %>
+        </li>
+        <li>
+          <strong>2026 vs history</strong>:
+          Your <strong>rates are never regressed or averaged with the league</strong> — e.g. OPS 1.75 from 10 PA is exactly 1.75 for the 2026 composite, same as 1.75 from 70 PA.
+          When <strong>both</strong> career/2025 and 2026 exist, <strong>rating</strong> =
+          <code><%= Math.round(ratingBlend.historical * 100) %>% × (historical composite) + <%= Math.round(ratingBlend.current2026 * 100) %>% × (2026 composite)</code>.
+          Historical rates come straight from <code>data/csv/career.csv</code>, else the 2025 season row, with the same rule — no PA shrink.
+          If there is <strong>no</strong> career/2025 row, hist. comp. is blank (—) and the rating is simply the <strong>2026 composite</strong> (unchanged).
+          If someone has history but no 2026 PA, the rating uses the historical composite only.
+        </li>
+        <li>
+          <strong>Rating</strong>: <%= Math.round(ratingBlend.historical * 100) %>% past / <%= Math.round(ratingBlend.current2026 * 100) %>% 2026 when both exist; otherwise the only available era’s composite.
+          Roughly <strong>0</strong> = near league-average on the included dimensions; positive = tends to exceed the baseline.
+        </li>
+        <li>
+          <strong>Team ranking</strong> (By team section): combines roster talent with results.
+          <strong><%= Math.round(teamBlend.player * 100) %>%</strong> = 2026 PA–weighted avg. of player ratings;
+          <strong><%= Math.round(teamBlend.record * 100) %>%</strong> = z-score of <strong>win %</strong> from the schedule;
+          <strong><%= Math.round(teamBlend.sos * 100) %>%</strong> = z-score of <strong>strength of schedule</strong> (avg. opponent win % across completed games).
+          Teams are sorted by this blended <strong>team +/-</strong>.
+        </li>
+      </ul>
+      <p style="margin-top: 10px;"><strong>Snapshots of league-average rates (μ):</strong></p>
+      <ul style="margin-top: 4px;">
+        <% Object.entries(leagueBaseline.metricMus).forEach(([k, mu]) => { %>
+        <li><%= metricLabels[k] || k %>: <%= Number(mu).toFixed(3) %></li>
+        <% }) %>
+      </ul>
+    </section>
+
+    <% const nLeague = leagueRows.length; const topLeagueRows = leagueRows.slice(0, Math.min(10, nLeague)); const bottomLeagueRows = nLeague > 20 ? leagueRows.slice(-10) : (nLeague > 10 ? leagueRows.slice(nLeague - 10) : []); %>
+    <section class="rankings-league-section">
+      <h2>League — top 10 &amp; bottom 10</h2>
+      <p style="margin: 0 0 12px; color: #4b5563; font-size: 14px;">Full league order: <strong><%= nLeague %></strong> rostered players. Middle ranks are in <strong>By team</strong> below.</p>
+      <div class="rankings-league-split">
+        <div class="rankings-split-col">
+          <h3>Top 10</h3>
+          <div class="rankings-table-wrap" style="margin-bottom: 0;">
+            <table class="rankings-master-table page-table">
+              <thead>
+                <tr>
+                  <th>League rank</th>
+                  <th>Team</th>
+                  <th>Player</th>
+                  <th>Rating</th>
+                  <th title="Weighted z-score, 2026">2026 comp.</th>
+                  <th title="Weighted z-score, career/2025">Hist comp.</th>
+                  <th title="Season AVG+SLG (walks excluded), raw">2026 OPS*</th>
+                  <th title="Season TB per PA, raw">2026 TB/PA*</th>
+                  <th>2026 PA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% topLeagueRows.forEach((r) => { %>
+                <tr>
+                  <td style="text-align:right;"><%= r.leagueRank %></td>
+                  <td><%= r.teamName %> (#<%= r.teamId %>)</td>
+                  <td><%= r.playerName %></td>
+                  <td style="text-align:right;"><%= r.rating >= 0 ? "+" + r.rating.toFixed(2) : r.rating.toFixed(2) %></td>
+                  <td style="text-align:right;"><%= r.composite2026.toFixed(2) %></td>
+                  <td style="text-align:right;"><%= r.compositeHist != null ? r.compositeHist.toFixed(2) : "—" %></td>
+                  <td style="text-align:right;"><%= r.ops2026Adj != null ? r.ops2026Adj.toFixed(3) : "—" %></td>
+                  <td style="text-align:right;"><%= r.tbPerPa2026 != null ? r.tbPerPa2026.toFixed(3) : "—" %></td>
+                  <td style="text-align:right;"><%= r.pa2026 %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="rankings-split-col">
+          <h3>Bottom 10</h3>
+          <div class="rankings-table-wrap" style="margin-bottom: 0;">
+            <% if (bottomLeagueRows.length) { %>
+            <table class="rankings-master-table page-table">
+              <thead>
+                <tr>
+                  <th>League rank</th>
+                  <th>Team</th>
+                  <th>Player</th>
+                  <th>Rating</th>
+                  <th title="Weighted z-score, 2026">2026 comp.</th>
+                  <th title="Weighted z-score, career/2025">Hist comp.</th>
+                  <th title="Season AVG+SLG (walks excluded), raw">2026 OPS*</th>
+                  <th title="Season TB per PA, raw">2026 TB/PA*</th>
+                  <th>2026 PA</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% bottomLeagueRows.forEach((r) => { %>
+                <tr>
+                  <td style="text-align:right;"><%= r.leagueRank %></td>
+                  <td><%= r.teamName %> (#<%= r.teamId %>)</td>
+                  <td><%= r.playerName %></td>
+                  <td style="text-align:right;"><%= r.rating >= 0 ? "+" + r.rating.toFixed(2) : r.rating.toFixed(2) %></td>
+                  <td style="text-align:right;"><%= r.composite2026.toFixed(2) %></td>
+                  <td style="text-align:right;"><%= r.compositeHist != null ? r.compositeHist.toFixed(2) : "—" %></td>
+                  <td style="text-align:right;"><%= r.ops2026Adj != null ? r.ops2026Adj.toFixed(3) : "—" %></td>
+                  <td style="text-align:right;"><%= r.tbPerPa2026 != null ? r.tbPerPa2026.toFixed(3) : "—" %></td>
+                  <td style="text-align:right;"><%= r.pa2026 %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+            <% } else { %>
+            <p style="margin: 0; color: #6b7280; font-size: 14px;">Not enough players for a separate bottom 10 (same as or covered by top list).</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      <p style="font-size: 13px; color: #4b5563; margin-top: 12px;">*2026 OPS and TB/PA are exactly from <code>2026 stats (Google Sheet)</code> (no modification).</p>
+    </section>
+
+    <section class="rankings-by-team-section">
+      <h2>By team</h2>
+      <p style="margin: 0 0 16px; color: #4b5563; font-size: 14px;">Teams sorted by blended <strong>team +/-</strong> (<%= Math.round(teamBlend.player * 100) %>% roster / <%= Math.round(teamBlend.record * 100) %>% record / <%= Math.round(teamBlend.sos * 100) %>% SOS).</p>
+      <% teamSections.forEach((team) => { %>
+      <article class="rankings-team-card">
+        <header class="rankings-team-header">
+          <h3 style="margin: 0;">
+            <%= team.teamName %>
+            <span style="font-weight: normal; opacity: 0.85;">(#<%= team.teamId %>)</span>
+          </h3>
+          <p style="margin: 6px 0 0;">
+            Team +/- (blended):
+            <strong><%= team.teamOffenseRating >= 0 ? "+" + team.teamOffenseRating.toFixed(2) : team.teamOffenseRating.toFixed(2) %></strong>
+            · Record:
+            <strong><%= team.teamWins %>-<%= team.teamLosses %><% if (team.teamWinPct != null) { %> (<%= (team.teamWinPct * 100).toFixed(1) %>%)<% } %></strong>
+            · SOS (avg opp win %):
+            <strong><%= team.teamSosOppWinPct != null ? (team.teamSosOppWinPct * 100).toFixed(1) + "%" : "—" %></strong>
+            · Roster rating:
+            <strong><%= team.teamPlayerRating >= 0 ? "+" + team.teamPlayerRating.toFixed(2) : team.teamPlayerRating.toFixed(2) %></strong>
+          </p>
+        </header>
+        <div class="rankings-table-wrap">
+          <table class="rankings-master-table page-table">
+            <thead>
+              <tr>
+                <th>League rank</th>
+                <th>Player</th>
+                <th>Rating</th>
+                <th>2026 comp.</th>
+                <th>Hist comp.</th>
+                <th>2026 OPS*</th>
+                <th>TB/PA*</th>
+                <th>2026 PA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% team.players.forEach((r) => { %>
+              <tr>
+                <td style="text-align:right;"><%= r.leagueRank %></td>
+                <td><%= r.playerName %></td>
+                <td style="text-align:right;"><%= r.rating >= 0 ? "+" + r.rating.toFixed(2) : r.rating.toFixed(2) %></td>
+                <td style="text-align:right;"><%= r.composite2026.toFixed(2) %></td>
+                <td style="text-align:right;"><%= r.compositeHist != null ? r.compositeHist.toFixed(2) : "—" %></td>
+                <td style="text-align:right;"><%= r.ops2026Adj != null ? r.ops2026Adj.toFixed(3) : "—" %></td>
+                <td style="text-align:right;"><%= r.tbPerPa2026 != null ? r.tbPerPa2026.toFixed(3) : "—" %></td>
+                <td style="text-align:right;"><%= r.pa2026 %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </article>
+      <% }) %>
+    </section>
+    </main>
+  </body>
+</html>

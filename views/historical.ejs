@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+      <h1 class="page-title">League Leaders</h1>
+
+      <section class="leaders-section">
+        <h2 class="section-heading">Top performers</h2>
+        <div class="leaders-grid">
+          <% leaders.forEach((category) => { %>
+          <section class="leader-card">
+            <h3 class="leader-card-title">Top 5 — <%= category.title %></h3>
+            <div class="leader-table-wrap">
+            <table class="leader-table page-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Team</th>
+                  <th><%= category.title %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% category.players.forEach((player, idx) => { %>
+                <tr>
+                  <td><%= idx + 1 %></td>
+                  <td><%= player.Player %></td>
+                  <td><%= player.Team %></td>
+                  <td><%= player[category.field] %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+            </div>
+          </section>
+          <% }) %>
+
+          <section class="leader-card leader-card-rookies">
+            <h3 class="leader-card-title">Top 5 Rookies (by AVG)</h3>
+            <div class="leader-table-wrap">
+            <table class="leader-table page-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Player</th>
+                  <th>Team</th>
+                  <th>AVG</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% topRookies.forEach((player, idx) => { %>
+                <tr>
+                  <td><%= idx + 1 %></td>
+                  <td><%= player.Player %></td>
+                  <td><%= player.Team %></td>
+                  <td><%= player.AVG %></td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

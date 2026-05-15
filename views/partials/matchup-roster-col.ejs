@@ -1,0 +1,35 @@
+<article
+  class="schedule-roster-col schedule-roster-col--<%= side %>"
+  <% if (roster.jerseyColor) { %>style="border-color:<%= roster.jerseyColor %>;box-shadow:inset 0 0 0 1px <%= roster.jerseyColor %>33"<% } %>
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag"><%= side === 'away' ? 'Away' : 'Home' %></span></p>
+  <h3 class="schedule-roster-team-name"><%= roster.teamName %></h3>
+  <% if (roster.captain) { %>
+  <p class="schedule-roster-captain">Captain: <%= roster.captain %></p>
+  <% } %>
+  <p class="matchup-roster-active-count"><%= roster.activeCount %> of <%= (roster.playersDetailed || []).length %> active</p>
+
+  <% if (roster.playersDetailed && roster.playersDetailed.length) { %>
+  <ol class="matchup-roster-list">
+    <% roster.playersDetailed.forEach((p) => { %>
+    <li class="matchup-roster-item<%= p.missing ? ' matchup-roster-item--benched' : '' %><%= p.hitsTwice ? ' matchup-roster-item--hits-twice' : '' %>">
+      <span class="matchup-roster-pick">R<%= p.round %></span>
+      <span class="matchup-roster-name"><%= p.name %></span>
+      <% if (p.hitsTwice) { %>
+      <span class="matchup-roster-double-badge" title="Bats twice for the 11th lineup spot">2× lineup</span>
+      <% } %>
+      <button
+        type="button"
+        class="matchup-status-btn <%= p.missing ? 'matchup-status-btn--missing' : 'matchup-status-btn--active' %>"
+        data-lineup-toggle
+        data-side="<%= side %>"
+        data-norm="<%= p.norm %>"
+        aria-pressed="<%= p.missing ? 'true' : 'false' %>"
+      ><%= p.missing ? 'Missing' : 'Active' %></button>
+    </li>
+    <% }) %>
+  </ol>
+  <% } else { %>
+  <p class="schedule-roster-empty">No roster loaded for this team.</p>
+  <% } %>
+</article>

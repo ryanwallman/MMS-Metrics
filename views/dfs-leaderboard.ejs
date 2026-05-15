@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+
+    <%- include("partials/site-head") %>
+
+    <title>DFS Leaderboard — Marlboro Men's Softball</title>
+
+  </head>
+
+  <body>
+
+    <%- include("partials/site-header") %>
+
+
+
+    <main class="page-main dfs-page dfs-leaderboard-page">
+
+      <div class="dfs-page-head">
+
+        <h1 class="page-title">DFS Leaderboard</h1>
+
+        <p class="dfs-page-head-actions">
+
+          <a href="/dfs" class="dfs-btn">← Lineup builder</a>
+
+        </p>
+
+      </div>
+
+      <p class="page-note dfs-intro">
+
+        Scores use saved lineups from Firestore (every visitor sees the same standings — lineups are not private).
+
+        Fantasy points come from <code>Gamelogs (Google Sheet)</code>; each slate only scores when that file includes rows dated on that slate’s scheduled game days.
+
+        Same rules as the <a href="/dfs">DFS Lineup Builder</a>. Only numbered week slates (<code>W1</code>, <code>W2</code>, …) appear here — Wednesday-only slates (<code>D…</code>) are lineup-only.
+
+      </p>
+
+
+
+      <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
+
+      <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
+
+        <p>
+
+          <strong>Firebase is not configured on this server.</strong>
+
+          Locally, add web app keys to <code>.env</code>. In production, set the same <code>FIREBASE_*</code> names in your host’s
+
+          environment (e.g. <strong>Render → Environment</strong>) and redeploy.
+
+        </p>
+
+      </section>
+
+      <% } else { %>
+
+      <section class="dfs-leaderboard-alert" id="leaderboardStatus" role="status" aria-live="polite">
+
+        <p>Loading standings…</p>
+
+      </section>
+
+      <% } %>
+
+
+
+      <nav class="dfs-leaderboard-tabs" aria-label="Leaderboard type">
+
+        <a
+
+          href="/dfs/leaderboard?tab=weekly<%= selectedWeek ? '&week=' + encodeURIComponent(selectedWeek) : '' %>"
+
+          class="dfs-leaderboard-tab<%= tab === 'weekly' ? ' is-active' : '' %>"
+
+          <%= tab === 'weekly' ? 'aria-current="page"' : '' %>
+
+        >Weekly</a>
+
+        <a
+
+          href="/dfs/leaderboard?tab=cumulative"
+
+          class="dfs-leaderboard-tab<%= tab === 'cumulative' ? ' is-active' : '' %>"
+
+          <%= tab === 'cumulative' ? 'aria-current="page"' : '' %>
+
+        >Season total</a>
+
+      </nav>
+
+
+
+      <% if (tab === 'weekly') { %>
+
+      <form method="GET" action="/dfs/leaderboard" class="dfs-slate-form dfs-leaderboard-week-form">
+
+        <input type="hidden" name="tab" value="weekly" />
+
+        <label for="week">
+
+          <strong>Week</strong>
+
+          <select id="week" name="week" onchange="this.form.submit()">
+
+            <% weekOptions.forEach((opt) => { %>
+
+            <option value="<%= opt.value %>" <%= opt.value === selectedWeek ? 'selected' : '' %>>
+
+              <%= opt.label %><%= opt.isPast ? '' : ' (upcoming)' %>
+
+            </option>
+
+            <% }) %>
+
+          </select>
+
+        </label>
+
+      </form>
+
+
+
+      <% if (slate) { %>
+
+      <section class="dfs-slate-banner" aria-label="Selected week">
+
+        <h2 class="dfs-slate-title"><%= slate.label %></h2>
+
+        <% if (!slate.isPast) { %>
+
+        <p class="dfs-slate-status" id="weeklySlateStatus">This week has not finished yet — standings appear after Sunday’s games are in the gamelog.</p>
+
+        <% } else if (!hasGamelogData) { %>
+
+        <p class="dfs-slate-status dfs-slate-status--past">No gamelog data loaded yet.</p>
+
+        <% } else { %>
+
+        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyGamelogGap" hidden role="status"></p>
+
+        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyEntryCount" hidden></p>
+
+        <% } %>
+
+      </section>
+
+      <% } %>
+
+
+
+      <div class="dfs-leaderboard-table-wrap">
+
+        <table class="dfs-leaderboard-table page-table">
+
+          <thead>
+
+            <tr>
+
+              <th scope="col">Rank</th>
+
+              <th scope="col">Player</th>
+
+              <th scope="col">Points</th>
+
+              <th scope="col">Salary</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="leaderboardWeeklyBody">
+
+            <tr>
+
+              <td colspan="4" class="dfs-leaderboard-empty">Loading…</td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <% } else { %>
+
+      <section class="dfs-slate-banner" aria-label="Season standings">
+
+        <h2 class="dfs-slate-title">Season total</h2>
+
+        <p class="dfs-slate-status dfs-slate-status--past" id="cumulativeMeta">
+
+          Sum of all completed weeks (<%= pastWeekCount %> week<%= pastWeekCount === 1 ? '' : 's' %> so far)
+
+        </p>
+
+      </section>
+
+
+
+      <div class="dfs-leaderboard-table-wrap">
+
+        <table class="dfs-leaderboard-table page-table">
+
+          <thead>
+
+            <tr>
+
+              <th scope="col">Rank</th>
+
+              <th scope="col">Player</th>
+
+              <th scope="col">Weeks</th>
+
+              <th scope="col">Total pts</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="leaderboardCumulativeBody">
+
+            <tr>
+
+              <td colspan="4" class="dfs-leaderboard-empty">Loading…</td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <% } %>
+
+
+
+      <section class="dfs-scoring-rules">
+
+        <h2 class="section-heading">Scoring</h2>
+
+        <ul class="dfs-rules-list">
+
+          <li>Single: <%= scoringRules.single %> pts</li>
+
+          <li>Double: <%= scoringRules.double %> pts</li>
+
+          <li>Triple: <%= scoringRules.triple %> pts</li>
+
+          <li>Home run: <%= scoringRules.hr %> pts</li>
+
+          <li>RBI: <%= scoringRules.rbi %> pts</li>
+
+          <li>Run: <%= scoringRules.run %> pts</li>
+
+          <li>Walk: <%= scoringRules.walk %> pts</li>
+
+        </ul>
+
+      </section>
+
+    </main>
+
+
+
+    <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled && firebaseClientConfig) { %>
+
+    <script>
+
+      window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig) %>;
+
+      window.__LEADERBOARD_PAGE__ = <%- JSON.stringify({
+
+        tab: tab,
+
+        selectedWeek: selectedWeek,
+
+        pastWeekCount: pastWeekCount,
+
+        slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken } : null
+
+      }) %>;
+
+    </script>
+
+    <script type="module" src="/js/dfs-leaderboard.js"></script>
+
+    <% } %>
+
+  </body>
+
+</html>
+

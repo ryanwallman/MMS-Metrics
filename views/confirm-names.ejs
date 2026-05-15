@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Name Confirmation</title>
+  </head>
+  <body>
+    <h1>Roster Name Confirmation</h1>
+    <p>Source: `customRosters2026.js` vs closest in `data/csv/career.csv`</p>
+    <p>Generated: <%= generatedAt %></p>
+    <p><a href="/stats">Back to Stats</a></p>
+
+    <table border="1" cellpadding="6" cellspacing="0">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Team</th>
+          <th>Roster Name</th>
+          <th>Closest Career Name</th>
+          <th>Similarity Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rows.forEach((row, idx) => { %>
+        <tr style="<%= row.matchType === 'none' ? 'background-color: #fecaca;' : (row.matchType === 'similar' ? 'background-color: #fef08a;' : '') %>">
+          <td><%= idx + 1 %></td>
+          <td><%= row.teamId %> - <%= row.teamName %></td>
+          <td><%= row.playerName %></td>
+          <td><%= row.closestCareerName %></td>
+          <td><%= row.distance === null ? '' : row.distance.toFixed(3) %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </body>
+</html>

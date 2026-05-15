@@ -1,0 +1,67 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isWeekSlateId(slateId) {
+      return slateId is string
+        && slateId.size() >= 2
+        && slateId.size() <= 4
+        && slateId.matches('^W[0-9]+$');
+    }
+
+    function isSlateLocked(slateId) {
+      return exists(/databases/$(database)/documents/slateLocks/$(slateId));
+    }
+
+    /** Any signed-in user can create/update their own lineup doc (W4_uid). */
+    function validLineupWrite(lineupId) {
+      let data = request.resource.data;
+      return data.userId == request.auth.uid
+        && isWeekSlateId(data.slateId)
+        && lineupId == data.slateId + '_' + request.auth.uid
+        && data.playerNorms is list
+        && data.playerNorms.size() == 8
+        && data.salaryUsed is number
+        && data.salaryUsed >= 0
+        && data.salaryUsed <= 60000
+        && !isSlateLocked(data.slateId);
+    }
+
+    match /lineups/{lineupId} {
+      /** Public read so the leaderboard can load without a server service account. */
+      allow read: if true;
+
+      allow create: if isSignedIn() && validLineupWrite(lineupId);
+
+      allow update: if isSignedIn()
+        && validLineupWrite(lineupId)
+        && resource.data.userId == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isOwner(userId);
+      allow delete: if false;
+    }
+
+    match /slateLocks/{slateId} {
+      allow read: if isSignedIn() && isWeekSlateId(slateId);
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

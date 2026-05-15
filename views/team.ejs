@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main">
+    <h1 class="page-title"><%= selectedTeam.teamName %></h1>
+
+    <p class="page-note">Shown stats are <strong>2026 season</strong> from <code>2026 stats (Google Sheet)</code>. Progression highlights and AI insights use career and prior-season context behind the scenes.</p>
+
+
+
+    <div class="team-nav">
+
+      <% teamStats.forEach((team) => { %>
+
+      <a href="/stats/team/<%= team.teamId %>" style="text-decoration: none; color: inherit;">
+
+        <span style="display: inline-flex; flex-direction: column; align-items: center; gap: 4px;">
+
+          <span
+
+            class="team-jersey-btn team-<%= team.teamId %>"
+
+            style="background: <%= team.jerseyColor || '#1f2937' %>; color: <%= team.numberColor || '#ffffff' %>;"
+
+          >
+
+            <%= team.teamId %>
+
+          </span>
+
+          <span style="font-size: 11px; max-width: 92px; text-align: center;"><%= team.teamName %></span>
+
+        </span>
+
+      </a>
+
+      <% }) %>
+
+    </div>
+
+
+
+    <section class="team-table-section team-stats-2026-wrap">
+
+      <table class="team-roster-stats-table" border="1" cellspacing="0">
+
+        <colgroup>
+
+          <col class="team-roster-col-player" />
+
+          <col class="team-roster-col-prog" />
+
+          <% stats2026Columns.forEach(() => { %>
+
+          <col class="team-roster-col-stat" />
+
+          <% }) %>
+
+          <col class="team-roster-col-insight" />
+
+        </colgroup>
+
+        <thead>
+
+          <tr>
+
+            <th scope="col">Player</th>
+
+            <th scope="col">Progression</th>
+
+            <% stats2026Columns.forEach((col) => { %>
+
+            <th scope="col" title="2026 only"><%= col %></th>
+
+            <% }) %>
+
+            <th scope="col">AI Insight</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <% selectedTeam.players.forEach((player) => { %>
+
+          <tr>
+
+            <td class="team-roster-td-player"><%= player.playerName %></td>
+
+            <td class="team-roster-td-prog">
+
+              <div
+
+                class="team-roster-prog-dot"
+
+                title="<%= player.progression.label %> (score: <%= player.progression.score.toFixed(3) %>)"
+
+                style="background-color: <%= player.progression.bgColor %>;"
+
+              ></div>
+
+            </td>
+
+            <% stats2026Columns.forEach((col) => { %>
+
+            <td class="team-roster-td-stat"><%= player.stats2026Cells[col] %></td>
+
+            <% }) %>
+
+            <td class="team-roster-td-insight"><%= player.progression.insight %></td>
+
+          </tr>
+
+          <% }) %>
+
+        </tbody>
+
+      </table>
+
+    </section>
+
+    </main>
+  </body>
+
+</html>
+
