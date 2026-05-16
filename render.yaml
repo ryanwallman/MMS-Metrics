@@ -11,7 +11,7 @@ services:
     branch: main
     dockerfilePath: ./deploy/Dockerfile
     dockerContext: .
-    healthCheckPath: /
+    healthCheckPath: /healthz
     envVars:
       - key: NODE_ENV
         value: production

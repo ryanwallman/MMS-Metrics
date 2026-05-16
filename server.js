@@ -59,6 +59,11 @@ app.locals.assetVersion =
 
 app.use(express.json({ limit: "512kb" }));
 
+/** Lightweight probe for Render — do not use `/` (loads full league CSVs). */
+app.get("/healthz", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 const INDEX_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
 const SCHEDULE_URL =
@@ -2672,7 +2677,7 @@ async function loadDfsLeaderboardScoringContext() {
     loadCareerByPlayer(),
     load2025HistoricalByPlayer(),
     load2026StatsByPlayer(),
-    loadWeeklySchedule(),
+    getCachedWeeklySchedule(),
     load2026GamelogsByPlayer(),
   ]);
 
@@ -2693,7 +2698,6 @@ async function loadDfsLeaderboardScoringContext() {
   const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
 
   return {
-    teams,
     schedulePayload,
     gamelogs,
     scoringDeps: {
@@ -3155,15 +3159,14 @@ if (process.env.NODE_ENV === "production" && !getFirebaseClientConfig()) {
 }
 
 function warmLeaderboardCaches() {
-  return Promise.all([
-    getCachedWeeklySchedule().catch((err) => {
-      console.error("[MMS] Schedule cache warm failed:", err.message);
-    }),
-    getCachedDfsLeaderboardScoringContext().catch((err) => {
-      console.error("[MMS] DFS scoring cache warm failed:", err.message);
-    }),
-  ]);
+  return getCachedDfsLeaderboardScoringContext();
 }
+
+const LEADERBOARD_WARM_DELAY_MS = Number(process.env.LEADERBOARD_WARM_DELAY_MS) || 5000;
+
+process.on("SIGTERM", () => {
+  console.log("[MMS] SIGTERM received — Render is stopping this instance (deploy, restart, or memory limit).");
+});
 
 app.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}`);
@@ -3174,7 +3177,13 @@ app.listen(PORT, HOST, () => {
       "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
     );
   }
-  warmLeaderboardCaches().then(() => {
-    console.log("[MMS] Leaderboard data cache warmed.");
-  });
+  setTimeout(() => {
+    warmLeaderboardCaches()
+      .then(() => {
+        console.log("[MMS] Leaderboard data cache warmed.");
+      })
+      .catch((err) => {
+        console.error("[MMS] Leaderboard cache warm failed:", err.message);
+      });
+  }, LEADERBOARD_WARM_DELAY_MS);
 });

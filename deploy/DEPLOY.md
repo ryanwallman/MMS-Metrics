@@ -114,7 +114,7 @@ If the Web API key is restricted by **HTTP referrer**, add:
 2. **Connect your GitHub repo** and pick this repository.
 3. If you use **Blueprint**, Render should pick up **`render.yaml`**.  
    Otherwise choose **Docker**, repo **root** as context, Dockerfile path **`deploy/Dockerfile`**.
-4. Pick a service name (e.g. `mms`). **Free** plan is OK to try; the app may **sleep** when idle (first request can be slow).
+4. Pick a service name (e.g. `mms`). **Free** plan is OK to try; the app may **sleep** when idle (first request can be slow). In the Render dashboard, set **Health Check Path** to **`/healthz`** (not `/`) — the home page loads every league CSV and can cause out-of-memory restarts on the free tier.
 5. **Environment** → add every variable from the **Firebase checklist (A + B)** above, plus optional sheet overrides. Copy values from your local **`.env`** (same names as `.env.example`).  
    **Optional:** `GAMELOGS_2026_CSV_URL` and `STATS_2026_CSV_URL` — only if you change sheets; defaults are in `lib/dataPaths.js`.
 
