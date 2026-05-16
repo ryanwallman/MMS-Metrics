@@ -20,6 +20,7 @@
         <strong>opponent runs allowed</strong> (~18%), and the <strong>opposing primary pitcher</strong> (~10%).
         <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
         <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
+        Players whose salaries fall in the modest end of the slate are all shown at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
         You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy).
         Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
         For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
@@ -132,8 +133,14 @@
             </ol>
             <p class="dfs-lineup-actions">
               <button type="button" class="dfs-btn dfs-btn--primary" id="saveLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Save lineup to database</button>
+              <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled) { %>
+              <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Sign in to load your saved lineup from the database">Load from database</button>
+              <% } %>
               <button type="button" class="dfs-btn" id="clearLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Clear</button>
             </p>
+            <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled) { %>
+            <p class="dfs-lineup-sync-status" id="dfsLineupSyncStatus" role="status" aria-live="polite" hidden></p>
+            <% } %>
           </section>
 
           <% if (typeof lastWeekPreview !== 'undefined' && lastWeekPreview) { %>
@@ -623,6 +630,25 @@
           });
         }
 
+        const loadFromDbBtn = document.getElementById("loadFromDbBtn");
+        if (loadFromDbBtn) {
+          loadFromDbBtn.addEventListener("click", async () => {
+            const btn = loadFromDbBtn;
+            try {
+              btn.disabled = true;
+              const prevLabel = btn.textContent;
+              btn.textContent = "Loading…";
+              await pullLineupFromDatabase();
+              btn.textContent = prevLabel;
+            } catch (err) {
+              console.error(err);
+              setLineupSyncStatus(err.message || "Could not load lineup from the database.", true);
+            } finally {
+              updateLoadFromDbButton();
+            }
+          });
+        }
+
         document.getElementById("saveLineupBtn").addEventListener("click", async () => {
           const btn = document.getElementById("saveLineupBtn");
           const status = document.getElementById("dfsAuthStatus");
@@ -632,6 +658,10 @@
             const prevLabel = btn.textContent;
             btn.textContent = "Saving…";
             await saveLineupToCloud();
+            setLineupSyncStatus(
+              "Lineup saved to the database. It now matches this device.",
+              false
+            );
             if (status) {
               status.textContent =
                 "Lineup saved to the database for " + slateKey.toUpperCase() + ".";
@@ -778,14 +808,84 @@
           syncUi();
         }
 
-        async function loadCloudLineupIfSignedIn() {
-          if (!window.DfsFirebase?.isReady?.() || (!/^W\d+$/i.test(slateKey) && !/^D\d{8}$/i.test(slateKey))) return;
-          try {
-            const cloud = await window.DfsFirebase.loadLineup(slateKey);
-            if (cloud && cloud.length) applyLineupFromArray(cloud);
-          } catch (err) {
-            console.error("Cloud load failed:", err);
+        function isCloudSlateKey(key) {
+          return /^W\d+$/i.test(key || "") || /^D\d{8}$/i.test(key || "");
+        }
+
+        function normalizeLineupNorms(norms) {
+          return (norms || []).filter((n) => pool.has(n)).slice(0, LINEUP_SIZE);
+        }
+
+        function lineupsMatch(a, b) {
+          const na = normalizeLineupNorms(a);
+          const nb = normalizeLineupNorms(b);
+          if (na.length !== nb.length) return false;
+          for (let i = 0; i < na.length; i += 1) {
+            if (na[i] !== nb[i]) return false;
           }
+          return true;
+        }
+
+        function setLineupSyncStatus(message, isWarning) {
+          const el = document.getElementById("dfsLineupSyncStatus");
+          if (!el) return;
+          if (!message) {
+            el.hidden = true;
+            el.textContent = "";
+            el.className = "dfs-lineup-sync-status";
+            return;
+          }
+          el.hidden = false;
+          el.className =
+            "dfs-lineup-sync-status" + (isWarning ? " dfs-lineup-sync-status--warn" : "");
+          el.textContent = message;
+        }
+
+        function updateLoadFromDbButton() {
+          const btn = document.getElementById("loadFromDbBtn");
+          if (!btn) return;
+          const signedIn = !!window.DfsFirebase?.isReady?.();
+          const canLoad = signedIn && isCloudSlateKey(slateKey);
+          btn.disabled = !canLoad;
+          if (canLoad) {
+            btn.title = "Load your saved database lineup and compare with this device";
+          } else if (signedIn) {
+            btn.title = "This slate does not sync to the database";
+          } else {
+            btn.title = "Sign in to load your saved lineup from the database";
+          }
+        }
+
+        async function pullLineupFromDatabase() {
+          if (!window.DfsFirebase?.isReady?.()) {
+            throw new Error("Sign in with Google first to load your lineup from the database.");
+          }
+          if (!isCloudSlateKey(slateKey)) {
+            throw new Error("This slate cannot sync to the database.");
+          }
+          const cloudRaw = await window.DfsFirebase.loadLineup(slateKey);
+          const cloudNorms = normalizeLineupNorms(cloudRaw);
+          if (!cloudNorms.length) {
+            setLineupSyncStatus(
+              "No lineup saved in the database for " + slateKey.toUpperCase() + " yet.",
+              false
+            );
+            return;
+          }
+          const localNorms = normalizeLineupNorms(loadStored() || lineup);
+          const differs = !lineupsMatch(localNorms, cloudNorms);
+          if (differs) {
+            setLineupSyncStatus(
+              "Your lineup on this device differs from your saved database lineup. The database version is now loaded.",
+              true
+            );
+          } else {
+            setLineupSyncStatus(
+              "Your lineup on this device matches the database. Loaded your saved lineup.",
+              false
+            );
+          }
+          applyLineupFromArray(cloudNorms);
         }
 
         function setupFirebaseAuth() {
@@ -805,12 +905,14 @@
                 '<button type="button" class="dfs-btn" id="dfsSignOutBtn">Sign out</button>' +
                 '<span class="dfs-auth-sync">Lineups sync for W# and Wednesday slates</span>';
               if (hint) hint.hidden = false;
-              await loadCloudLineupIfSignedIn();
+              updateLoadFromDbButton();
             } else {
               status.textContent = "Not signed in — you can still build a lineup here. Sign in to save it to the cloud.";
               actions.innerHTML =
                 '<button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>';
               if (hint) hint.hidden = true;
+              setLineupSyncStatus("", false);
+              updateLoadFromDbButton();
             }
           });
         }
@@ -831,15 +933,13 @@
           "dfs-firebase-ready",
           () => {
             setupFirebaseAuth();
-            if (window.DfsFirebase?.isReady?.()) {
-              loadCloudLineupIfSignedIn();
-            }
+            updateLoadFromDbButton();
           },
           { once: true }
         );
         if (window.DfsFirebase) {
           setupFirebaseAuth();
-          if (window.DfsFirebase.isReady()) loadCloudLineupIfSignedIn();
+          updateLoadFromDbButton();
         }
       })();
     </script>

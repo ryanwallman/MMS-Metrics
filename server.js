@@ -6,9 +6,12 @@ const fs = require("fs/promises");
 const path = require("path");
 const { getFirebaseClientConfig } = require("./lib/firebaseClientConfig");
 const { fetchCsvText } = require("./lib/fetchCsvText");
+const { createMemoryCache } = require("./lib/memoryCache");
+const { getAdminFirestore, isFirebaseAdminConfigured } = require("./lib/firebaseAdmin");
 const {
   buildWeeklyLeaderboardFromLineups,
   buildCumulativeLeaderboardFromLineups,
+  fetchLineupsForLeaderboard,
 } = require("./lib/dfsLeaderboard");
 const { canonicalRostersByTeamId } = require("./data/customRosters2026");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
@@ -44,6 +47,15 @@ const {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.locals.assetVersion =
+  process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
+  process.env.ASSET_VERSION ||
+  "1";
 
 app.use(express.json({ limit: "512kb" }));
 
@@ -82,7 +94,12 @@ const TEAM_PAGE_2026_STAT_COLUMNS = Object.freeze([
 
 app.set("view engine", "ejs");
 app.set("views", `${__dirname}/views`);
-app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    maxAge: process.env.NODE_ENV === "production" ? "1d" : 0,
+    etag: true,
+  })
+);
 
 /** Main site navigation (shared header on all primary pages). */
 const SITE_NAV = Object.freeze([
@@ -2690,56 +2707,104 @@ async function loadDfsLeaderboardScoringContext() {
   };
 }
 
+const dfsScoringContextCache = createMemoryCache(
+  Number(process.env.DFS_SCORING_CACHE_TTL_MS) || 10 * 60 * 1000,
+  "dfs-scoring"
+);
+
+const weeklyScheduleCache = createMemoryCache(
+  Number(process.env.SCHEDULE_CACHE_TTL_MS) || 10 * 60 * 1000,
+  "weekly-schedule"
+);
+
+function getCachedDfsLeaderboardScoringContext() {
+  return dfsScoringContextCache.get("leaderboard-scoring", loadDfsLeaderboardScoringContext);
+}
+
+function getCachedWeeklySchedule() {
+  return weeklyScheduleCache.get("payload", loadWeeklySchedule);
+}
+
+async function buildLeaderboardApiResponse({ tab, selectedWeek, lineups }) {
+  const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
+  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+  const nowMs = Date.now();
+  const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
+  const week =
+    selectedWeek && weekOptions.some((w) => w.value === selectedWeek)
+      ? selectedWeek
+      : defaultLeaderboardWeek(weekOptions);
+
+  const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
+
+  let weekly = { rows: [], entryCount: 0 };
+  let cumulative = { rows: [], entryCount: 0, pastWeekCount: 0 };
+
+  if (tab === "weekly" && slate) {
+    weekly = buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps);
+  } else if (tab === "cumulative") {
+    const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
+    cumulative = buildCumulativeLeaderboardFromLineups(
+      lineups,
+      weekOptions,
+      scoringDeps,
+      schedulePayload,
+      refIso,
+      activeSlateToken
+    );
+  }
+
+  return {
+    tab,
+    selectedWeek: week,
+    weekly,
+    cumulative,
+    hasGamelogData: gamelogs.byNorm.size > 0,
+    slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
+    slate: slate
+      ? {
+          label: slate.label,
+          isPast: slate.isPast,
+          viewToken: slate.viewToken,
+          slateType: slate.slateType,
+        }
+      : null,
+  };
+}
+
+/** Fast path: server reads Firestore + scores (one round trip for the browser). */
+app.get("/api/dfs/leaderboard/data", async (req, res) => {
+  try {
+    const tab = safeText(req.query.tab).toLowerCase() === "weekly" ? "weekly" : "cumulative";
+    const selectedWeek = safeText(req.query.week || req.query.selectedWeek).toUpperCase();
+
+    const db = getAdminFirestore();
+    if (!db) {
+      return res.status(503).json({
+        needClientLineups: true,
+        error:
+          "Leaderboard server read is not configured. Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT_JSON on Render.",
+      });
+    }
+
+    const lineups = await fetchLineupsForLeaderboard(db, tab, selectedWeek);
+    const body = await buildLeaderboardApiResponse({ tab, selectedWeek, lineups });
+    res.setHeader("Cache-Control", "private, max-age=30");
+    res.json(body);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message || "Leaderboard load failed." });
+  }
+});
+
 app.post("/api/dfs/leaderboard/score", async (req, res) => {
   try {
     const tab = safeText(req.body?.tab).toLowerCase() === "cumulative" ? "cumulative" : "weekly";
     const selectedWeek = safeText(req.body?.selectedWeek).toUpperCase();
     const lineups = Array.isArray(req.body?.lineups) ? req.body.lineups : [];
 
-    const { schedulePayload, gamelogs, scoringDeps } = await loadDfsLeaderboardScoringContext();
-    const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-    const nowMs = Date.now();
-    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
-    const week =
-      selectedWeek && weekOptions.some((w) => w.value === selectedWeek)
-        ? selectedWeek
-        : defaultLeaderboardWeek(weekOptions);
-
-    const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
-
-    let weekly = { rows: [], entryCount: 0 };
-    let cumulative = { rows: [], entryCount: 0, pastWeekCount: 0 };
-
-    if (tab === "weekly" && slate) {
-      weekly = buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps);
-    } else if (tab === "cumulative") {
-      const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
-      cumulative = buildCumulativeLeaderboardFromLineups(
-        lineups,
-        weekOptions,
-        scoringDeps,
-        schedulePayload,
-        refIso,
-        activeSlateToken
-      );
-    }
-
-    res.json({
-      tab,
-      selectedWeek: week,
-      weekly,
-      cumulative,
-      hasGamelogData: gamelogs.byNorm.size > 0,
-      slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
-      slate: slate
-        ? {
-            label: slate.label,
-            isPast: slate.isPast,
-            viewToken: slate.viewToken,
-            slateType: slate.slateType,
-          }
-        : null,
-    });
+    const body = await buildLeaderboardApiResponse({ tab, selectedWeek, lineups });
+    res.json(body);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message || "Leaderboard scoring failed." });
@@ -2751,7 +2816,7 @@ app.get("/dfs/leaderboard", async (req, res) => {
     const tab = safeText(req.query.tab).toLowerCase() === "weekly" ? "weekly" : "cumulative";
     const weekParam = safeText(req.query.week).toUpperCase();
 
-    const { schedulePayload, gamelogs } = await loadDfsLeaderboardScoringContext();
+    const schedulePayload = await getCachedWeeklySchedule();
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
     const nowMs = Date.now();
     const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
@@ -2778,7 +2843,8 @@ app.get("/dfs/leaderboard", async (req, res) => {
       pastWeekCount,
       activeSlateToken,
       activeSlateLabel,
-      hasGamelogData: gamelogs.byNorm.size > 0,
+      hasGamelogData: true,
+      leaderboardServerRead: isFirebaseAdminConfigured(),
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,
       scoringRules: DFS_SCORING,

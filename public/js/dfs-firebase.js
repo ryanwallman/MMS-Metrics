@@ -80,7 +80,7 @@ if (!config?.projectId) {
       await signOut(auth);
     },
     async loadLineup(slateId) {
-      if (!currentUser || !isWeekSlate(slateId)) return null;
+      if (!currentUser || !isCloudSlateId(slateId)) return null;
       const ref = doc(db, "lineups", lineupDocId(slateId, currentUser.uid));
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;

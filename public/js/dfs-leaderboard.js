@@ -1,5 +1,6 @@
 /**
- * DFS Leaderboard: load lineups from Firestore (web SDK), score via server API.
+ * DFS Leaderboard: prefer one server API (Firestore Admin + cached scoring);
+ * fall back to browser Firestore + POST score when admin is not configured.
  */
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
@@ -31,7 +32,7 @@ function lineupFromDoc(doc) {
   };
 }
 
-async function fetchLineups(db, tab, selectedWeek) {
+async function fetchLineupsFromClient(db, tab, selectedWeek) {
   if (tab === "weekly" && selectedWeek) {
     const slateId = selectedWeek.toUpperCase();
     const q = query(collection(db, "lineups"), where("slateId", "==", slateId));
@@ -70,7 +71,7 @@ function renderWeeklyTable(rows, data) {
     .map(
       (row) =>
         `<tr>
-          <td>${row.rank}</td>
+          <td>${esc(row.rankDisplay != null ? row.rankDisplay : row.rank)}</td>
           <td>${esc(row.displayName)}</td>
           <td class="dfs-leaderboard-pts">${
             row.points == null ? "—" : `<strong>${row.points}</strong>`
@@ -104,7 +105,7 @@ function renderCumulativeTable(rows, pageCtx) {
           : '<span class="dfs-lineup-no">No</span>';
       }
       return `<tr>
-          <td>${row.rank}</td>
+          <td>${esc(row.rankDisplay != null ? row.rankDisplay : row.rank)}</td>
           <td>${esc(row.displayName)}</td>
           <td>${row.weeksPlayed}</td>
           <td class="dfs-leaderboard-pts"><strong>${ptsDisplay}</strong></td>
@@ -156,45 +157,73 @@ function updateWeeklyBanner(data, pageSlate) {
   }
 }
 
-async function loadLeaderboard() {
-  if (!config?.projectId || !page) {
-    setStatus(
-      "Firebase is not configured. Use <code>.env</code> locally; in production set <code>FIREBASE_*</code> in your host (e.g. Render → Environment) and redeploy.",
-      true
+function renderLeaderboardData(data) {
+  setStatus("", false);
+  if (page.tab === "weekly") {
+    renderWeeklyTable(data.weekly?.rows || [], data);
+    updateWeeklyBanner(data, page.slate);
+  } else {
+    renderCumulativeTable(data.cumulative?.rows || [], page);
+  }
+}
+
+async function loadLeaderboardFromServerApi() {
+  const qs = new URLSearchParams({ tab: page.tab });
+  if (page.tab === "weekly" && page.selectedWeek) {
+    qs.set("week", page.selectedWeek);
+  }
+  const res = await fetch(`/api/dfs/leaderboard/data?${qs}`);
+  const data = await res.json();
+  if (res.status === 503 && data.needClientLineups) {
+    return null;
+  }
+  if (!res.ok) {
+    throw new Error(data.error || "Could not load leaderboard.");
+  }
+  return data;
+}
+
+async function loadLeaderboardViaClientFirestore() {
+  if (!config?.projectId) {
+    throw new Error(
+      "Firebase is not configured. Set FIREBASE_* in Render → Environment, or configure FIREBASE_SERVICE_ACCOUNT_JSON for server-side leaderboard reads."
     );
+  }
+  const app = getApps().length ? getApp() : initializeApp(config);
+  const db = getFirestore(app);
+  const lineups = await fetchLineupsFromClient(db, page.tab, page.selectedWeek);
+
+  const res = await fetch("/api/dfs/leaderboard/score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      tab: page.tab,
+      selectedWeek: page.selectedWeek,
+      lineups,
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Could not score leaderboard.");
+  }
+  return data;
+}
+
+async function loadLeaderboard() {
+  if (!page) {
+    setStatus("Leaderboard page configuration is missing.", true);
     return;
   }
 
   setStatus("Loading standings…", false);
 
   try {
-    const app = getApps().length ? getApp() : initializeApp(config);
-    const db = getFirestore(app);
-    const lineups = await fetchLineups(db, page.tab, page.selectedWeek);
-
-    const res = await fetch("/api/dfs/leaderboard/score", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        tab: page.tab,
-        selectedWeek: page.selectedWeek,
-        lineups,
-      }),
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Could not score leaderboard.");
+    let data = await loadLeaderboardFromServerApi();
+    if (!data) {
+      data = await loadLeaderboardViaClientFirestore();
     }
-
-    setStatus("", false);
-
-    if (page.tab === "weekly") {
-      renderWeeklyTable(data.weekly?.rows || [], data);
-      updateWeeklyBanner(data, page.slate);
-    } else {
-      renderCumulativeTable(data.cumulative?.rows || [], page);
-    }
+    renderLeaderboardData(data);
   } catch (err) {
     console.error(err);
     const msg = (err.message || "").includes("permission")

@@ -1974,6 +1974,21 @@ body > main.page-main {
   margin: 0;
 }
 
+.dfs-lineup-sync-status {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #166534;
+}
+
+.dfs-lineup-sync-status--warn {
+  color: #92400e;
+}
+
+.dfs-lineup-sync-status[hidden] {
+  display: none;
+}
+
 .dfs-btn {
   padding: 8px 14px;
   border-radius: 6px;
