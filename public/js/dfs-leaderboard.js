@@ -14,10 +14,41 @@ import {
 const config = window.__FIREBASE_CONFIG__;
 const page = window.__LEADERBOARD_PAGE__;
 
+const FETCH_TIMEOUT_MS = 120_000;
+
 function esc(text) {
   const el = document.createElement("span");
   el.textContent = text == null ? "" : String(text);
   return el.innerHTML;
+}
+
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: ctrl.signal });
+    const text = await res.text();
+    let data = {};
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(
+          "The server returned an unexpected response. Check Render logs or try again in a minute."
+        );
+      }
+    }
+    return { res, data };
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(
+        "This is taking longer than expected. On Render’s free tier the first load after deploy can take 1–2 minutes while league data is fetched. Please wait and refresh once — later loads are much faster."
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function lineupFromDoc(doc) {
@@ -172,8 +203,7 @@ async function loadLeaderboardFromServerApi() {
   if (page.tab === "weekly" && page.selectedWeek) {
     qs.set("week", page.selectedWeek);
   }
-  const res = await fetch(`/api/dfs/leaderboard/data?${qs}`);
-  const data = await res.json();
+  const { res, data } = await fetchJsonWithTimeout(`/api/dfs/leaderboard/data?${qs}`);
   if (res.status === 503 && data.needClientLineups) {
     return null;
   }
@@ -186,14 +216,14 @@ async function loadLeaderboardFromServerApi() {
 async function loadLeaderboardViaClientFirestore() {
   if (!config?.projectId) {
     throw new Error(
-      "Firebase is not configured. Set FIREBASE_* in Render → Environment, or configure FIREBASE_SERVICE_ACCOUNT_JSON for server-side leaderboard reads."
+      "Browser lineup reads need FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, and FIREBASE_APP_ID on Render — or set FIREBASE_SERVICE_ACCOUNT_JSON for faster server-side reads."
     );
   }
   const app = getApps().length ? getApp() : initializeApp(config);
   const db = getFirestore(app);
   const lineups = await fetchLineupsFromClient(db, page.tab, page.selectedWeek);
 
-  const res = await fetch("/api/dfs/leaderboard/score", {
+  const { res, data } = await fetchJsonWithTimeout("/api/dfs/leaderboard/score", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -203,7 +233,6 @@ async function loadLeaderboardViaClientFirestore() {
     }),
   });
 
-  const data = await res.json();
   if (!res.ok) {
     throw new Error(data.error || "Could not score leaderboard.");
   }
@@ -219,10 +248,26 @@ async function loadLeaderboard() {
   setStatus("Loading standings…", false);
 
   try {
-    let data = await loadLeaderboardFromServerApi();
-    if (!data) {
+    let data = null;
+    if (page.leaderboardServerRead) {
+      data = await loadLeaderboardFromServerApi();
+    } else {
       data = await loadLeaderboardViaClientFirestore();
     }
+
+    if (!data && page.leaderboardServerRead) {
+      if (config?.projectId) {
+        setStatus("Server read unavailable — loading via browser instead…", false);
+        data = await loadLeaderboardViaClientFirestore();
+      } else {
+        throw new Error(
+          "Set FIREBASE_SERVICE_ACCOUNT_JSON on Render (recommended), or the web FIREBASE_* keys for browser reads."
+        );
+      }
+    } else if (!data) {
+      data = await loadLeaderboardViaClientFirestore();
+    }
+
     renderLeaderboardData(data);
   } catch (err) {
     console.error(err);

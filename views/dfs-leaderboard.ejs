@@ -40,17 +40,17 @@
 
 
 
-      <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
+      <% const canLoadStandings = (typeof leaderboardServerRead !== 'undefined' && leaderboardServerRead) || (typeof firebaseEnabled !== 'undefined' && firebaseEnabled); %>
+
+      <% if (!canLoadStandings) { %>
 
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
 
         <p>
 
-          <strong>Firebase is not configured on this server.</strong>
+          <strong>Standings cannot load yet.</strong>
 
-          Locally, add web app keys to <code>.env</code>. In production, set the same <code>FIREBASE_*</code> names in your host’s
-
-          environment (e.g. <strong>Render → Environment</strong>) and redeploy.
+          On Render, set <code>FIREBASE_PROJECT_ID</code> and <code>FIREBASE_SERVICE_ACCOUNT_JSON</code> (recommended), or the web app <code>FIREBASE_*</code> keys used on the lineup builder page.
 
         </p>
 
@@ -288,11 +288,11 @@
 
 
 
-    <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled && firebaseClientConfig) { %>
+    <% if (canLoadStandings) { %>
 
     <script>
 
-      window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig) %>;
+      window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig || null) %>;
 
       window.__LEADERBOARD_PAGE__ = <%- JSON.stringify({
 
@@ -314,7 +314,7 @@
 
     </script>
 
-    <script type="module" src="/js/dfs-leaderboard.js"></script>
+    <script type="module" src="/js/dfs-leaderboard.js?v=<%= assetVersion %>"></script>
 
     <% } %>
 

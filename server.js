@@ -3154,6 +3154,27 @@ if (process.env.NODE_ENV === "production" && !getFirebaseClientConfig()) {
   );
 }
 
+function warmLeaderboardCaches() {
+  return Promise.all([
+    getCachedWeeklySchedule().catch((err) => {
+      console.error("[MMS] Schedule cache warm failed:", err.message);
+    }),
+    getCachedDfsLeaderboardScoringContext().catch((err) => {
+      console.error("[MMS] DFS scoring cache warm failed:", err.message);
+    }),
+  ]);
+}
+
 app.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}`);
+  if (isFirebaseAdminConfigured()) {
+    console.log("[MMS] Leaderboard: server-side Firestore reads enabled.");
+  } else {
+    console.warn(
+      "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
+    );
+  }
+  warmLeaderboardCaches().then(() => {
+    console.log("[MMS] Leaderboard data cache warmed.");
+  });
 });
