@@ -1,7 +1,7 @@
 /**
  * DFS Leaderboard: load lineups from Firestore (web SDK), score via server API.
  */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -81,26 +81,36 @@ function renderWeeklyTable(rows, data) {
     .join("");
 }
 
-function renderCumulativeTable(rows) {
+function renderCumulativeTable(rows, pageCtx) {
   const tbody = document.getElementById("leaderboardCumulativeBody");
   if (!tbody) return;
 
   if (!rows.length) {
     tbody.innerHTML =
-      '<tr><td colspan="4" class="dfs-leaderboard-empty">No saved lineups yet.</td></tr>';
+      '<tr><td colspan="5" class="dfs-leaderboard-empty">No saved lineups in the database yet — sign in on the <a href="/dfs">lineup builder</a> and save once to appear here.</td></tr>';
     return;
   }
 
+  const hasOpen = !!(pageCtx?.activeSlateToken && String(pageCtx.activeSlateToken).trim());
+
   tbody.innerHTML = rows
-    .map(
-      (row) =>
-        `<tr>
+    .map((row) => {
+      const pts = row.points == null || row.points === "" ? 0 : Number(row.points);
+      const ptsDisplay = Number.isFinite(pts) ? pts : 0;
+      let openCell = "—";
+      if (hasOpen) {
+        openCell = row.hasOpenSlateLineup
+          ? '<span class="dfs-lineup-yes">Yes</span>'
+          : '<span class="dfs-lineup-no">No</span>';
+      }
+      return `<tr>
           <td>${row.rank}</td>
           <td>${esc(row.displayName)}</td>
           <td>${row.weeksPlayed}</td>
-          <td class="dfs-leaderboard-pts"><strong>${row.points}</strong></td>
-        </tr>`
-    )
+          <td class="dfs-leaderboard-pts"><strong>${ptsDisplay}</strong></td>
+          <td>${openCell}</td>
+        </tr>`;
+    })
     .join("");
 }
 
@@ -158,7 +168,7 @@ async function loadLeaderboard() {
   setStatus("Loading standings…", false);
 
   try {
-    const app = initializeApp(config);
+    const app = getApps().length ? getApp() : initializeApp(config);
     const db = getFirestore(app);
     const lineups = await fetchLineups(db, page.tab, page.selectedWeek);
 
@@ -183,13 +193,7 @@ async function loadLeaderboard() {
       renderWeeklyTable(data.weekly?.rows || [], data);
       updateWeeklyBanner(data, page.slate);
     } else {
-      renderCumulativeTable(data.cumulative?.rows || []);
-      const meta = document.getElementById("cumulativeMeta");
-      if (meta && data.cumulative) {
-        const n = data.cumulative.entryCount || 0;
-        const weeks = data.cumulative.pastWeekCount ?? page.pastWeekCount ?? 0;
-        meta.textContent = `Sum of all completed slates (${weeks} slate${weeks === 1 ? "" : "s"} so far) · ${n} player${n === 1 ? "" : "s"} with at least one saved lineup`;
-      }
+      renderCumulativeTable(data.cumulative?.rows || [], page);
     }
   } catch (err) {
     console.error(err);

@@ -39,6 +39,7 @@ const {
   defaultLeaderboardWeek,
   buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
+  resolveActiveDfsSlateToken,
 } = require("./lib/dfs");
 
 const app = express();
@@ -2697,13 +2698,14 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
 
     const { schedulePayload, gamelogs, scoringDeps } = await loadDfsLeaderboardScoringContext();
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso);
+    const nowMs = Date.now();
+    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
     const week =
       selectedWeek && weekOptions.some((w) => w.value === selectedWeek)
         ? selectedWeek
         : defaultLeaderboardWeek(weekOptions);
 
-    const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso);
+    const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
 
     let weekly = { rows: [], entryCount: 0 };
     let cumulative = { rows: [], entryCount: 0, pastWeekCount: 0 };
@@ -2711,12 +2713,14 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
     if (tab === "weekly" && slate) {
       weekly = buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps);
     } else if (tab === "cumulative") {
+      const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
       cumulative = buildCumulativeLeaderboardFromLineups(
         lineups,
         weekOptions,
         scoringDeps,
         schedulePayload,
-        refIso
+        refIso,
+        activeSlateToken
       );
     }
 
@@ -2744,18 +2748,24 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
 
 app.get("/dfs/leaderboard", async (req, res) => {
   try {
-    const tab = safeText(req.query.tab).toLowerCase() === "cumulative" ? "cumulative" : "weekly";
+    const tab = safeText(req.query.tab).toLowerCase() === "weekly" ? "weekly" : "cumulative";
     const weekParam = safeText(req.query.week).toUpperCase();
 
     const { schedulePayload, gamelogs } = await loadDfsLeaderboardScoringContext();
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso);
+    const nowMs = Date.now();
+    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
     const selectedWeek =
       weekParam && weekOptions.some((w) => w.value === weekParam)
         ? weekParam
         : defaultLeaderboardWeek(weekOptions);
 
-    const slate = buildLeaderboardSlateFromToken(selectedWeek, schedulePayload, refIso);
+    const slate = buildLeaderboardSlateFromToken(selectedWeek, schedulePayload, refIso, nowMs);
+    const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
+    const activeSlateOpt = weekOptions.find((o) => o.value === activeSlateToken);
+    const activeSlateLabel = activeSlateOpt
+      ? `${activeSlateOpt.label}${activeSlateOpt.isPast ? " (locked)" : " — open for lineups"}`
+      : "No open slate (season may be complete or between slates).";
     const firebaseClientConfig = getFirebaseClientConfig();
     const pastWeekCount = weekOptions.filter((w) => w.isPast).length;
 
@@ -2766,6 +2776,8 @@ app.get("/dfs/leaderboard", async (req, res) => {
       selectedWeek,
       slate,
       pastWeekCount,
+      activeSlateToken,
+      activeSlateLabel,
       hasGamelogData: gamelogs.byNorm.size > 0,
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,

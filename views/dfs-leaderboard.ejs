@@ -32,11 +32,9 @@
 
       <p class="page-note dfs-intro">
 
-        Standings use submitted lineups for each slate — <strong>everyone sees the same leaderboard</strong> (your saved lineup isn’t private to you).
+        Standings use submitted lineups from Firebase — <strong>everyone sees the same leaderboard</strong>. <strong>Season total</strong> (default) lists every player who has saved at least one lineup, ranked by fantasy points summed over all <em>completed</em> slates (zeros show as 0). <strong>Submitted</strong> is <strong>Yes</strong> when that player has a full lineup saved in the database for the <em>open</em> slate named below. Use <strong>Weekly</strong> to inspect one slate at a time.
 
-        Fantasy points follow the same rules as the <a href="/dfs">DFS Lineup Builder</a>; a slate only scores once game results exist for that slate’s scheduled dates.
-
-        Pick a <strong>Sunday week</strong> (<code>W1</code>, <code>W2</code>, …) or <strong>Wednesday</strong> (<code>D…</code>) slate in the dropdown. <strong>Season total</strong> adds every completed slate in schedule order (each Sunday week and each Wednesday slate counts once).
+        Fantasy points follow the same rules as the <a href="/dfs">DFS Lineup Builder</a>; past slates score once game logs cover those dates.
 
       </p>
 
@@ -84,7 +82,7 @@
 
         <a
 
-          href="/dfs/leaderboard?tab=cumulative"
+          href="/dfs/leaderboard"
 
           class="dfs-leaderboard-tab<%= tab === 'cumulative' ? ' is-active' : '' %>"
 
@@ -202,6 +200,22 @@
 
         </p>
 
+        <% if (typeof activeSlateLabel !== 'undefined' && activeSlateLabel) { %>
+
+        <p class="dfs-slate-status dfs-slate-status--past" id="openSlateHint">
+
+          <strong>Open slate (Submitted column):</strong> <%= activeSlateLabel %>
+
+          <% if (typeof activeSlateToken !== 'undefined' && activeSlateToken) { %>
+
+          (<code><%= activeSlateToken %></code>)
+
+          <% } %>
+
+        </p>
+
+        <% } %>
+
       </section>
 
 
@@ -222,6 +236,8 @@
 
               <th scope="col">Total pts</th>
 
+              <th scope="col" title="Yes = full lineup saved to the database for the open slate below">Submitted</th>
+
             </tr>
 
           </thead>
@@ -230,7 +246,7 @@
 
             <tr>
 
-              <td colspan="4" class="dfs-leaderboard-empty">Loading…</td>
+              <td colspan="5" class="dfs-leaderboard-empty">Loading…</td>
 
             </tr>
 
@@ -285,6 +301,10 @@
         selectedWeek: selectedWeek,
 
         pastWeekCount: pastWeekCount,
+
+        activeSlateToken: typeof activeSlateToken !== 'undefined' ? activeSlateToken : '',
+
+        activeSlateLabel: typeof activeSlateLabel !== 'undefined' ? activeSlateLabel : '',
 
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType } : null
 

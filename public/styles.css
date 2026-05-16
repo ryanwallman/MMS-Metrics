@@ -2276,11 +2276,25 @@ body > main.page-main {
   text-align: left;
 }
 
-.dfs-leaderboard-table th:last-child,
-.dfs-leaderboard-table td:last-child,
-.dfs-leaderboard-pts {
+.dfs-leaderboard-table th:nth-child(3),
+.dfs-leaderboard-table td:nth-child(3),
+.dfs-leaderboard-table th:nth-child(4),
+.dfs-leaderboard-table td:nth-child(4) {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.dfs-leaderboard-pts {
+  font-variant-numeric: tabular-nums;
+}
+
+.dfs-lineup-yes {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.dfs-lineup-no {
+  color: #b45309;
 }
 
 .dfs-leaderboard-empty {
