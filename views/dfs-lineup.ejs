@@ -16,14 +16,20 @@
       </div>
       <p class="page-note dfs-intro">
         Build an <strong><%= lineupSize %>-player</strong> lineup for the next slate with a
-        <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight offensive rating (~72%),
-        opponent runs allowed (~18%), and the opposing primary pitcher (~10%) from
-        <a href="https://marlborosoftball.com/pitcher-stats/" target="_blank" rel="noopener">league pitcher stats</a>.
-        Scores use <code>Gamelogs (Google Sheet)</code> after games are played.
-        You can browse everything without an account. <strong>Sign in only on this page</strong> to save week slates (<code>W#</code>) to the cloud; Wednesday slates save in your browser.
+        <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight <strong>offensive rating</strong> (~72%),
+        <strong>opponent runs allowed</strong> (~18%), and the <strong>opposing primary pitcher</strong> (~10%).
+        <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
+        <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
+        You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy).
         Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
         For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
       </p>
+
+      <section class="dfs-leaderboard-alert" role="note" aria-label="Lineup disclaimer">
+        <p>
+          <strong>Lineups are at your own risk.</strong> Rosters and schedules here do not guarantee anyone is active for a given slate—players may sit out, be injured, or miss that week for other reasons. Double-check real-world lineups before you lock in picks.
+        </p>
+      </section>
 
       <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
@@ -40,7 +46,7 @@
         <div class="dfs-auth-actions" id="dfsAuthActions">
           <button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>
         </div>
-        <p class="dfs-auth-hint" id="dfsAuthHint" hidden>Week slates (<code>W#</code>) sync to your account when you save. Wednesday slates are stored on this device only.</p>
+        <p class="dfs-auth-hint" id="dfsAuthHint" hidden>Week slates (<code>W#</code>) and Wednesday slates (<code>D…</code>) sync to your account when you save (this device also keeps a local copy).</p>
       </section>
       <% } %>
 
@@ -81,14 +87,19 @@
           <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
         </p>
         <% } else if (slate.isPast) { %>
-        <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores use gamelog rows when available.</p>
+        <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores appear when results are available for this slate.</p>
         <% } else { %>
         <p class="dfs-slate-status dfs-slate-status--locked">This slate isn’t editable right now.</p>
         <% } %>
         <% if (slate.games && slate.games.length) { %>
         <ul class="dfs-game-list">
           <% slate.games.forEach((g) => { %>
-          <li><span class="matchup-side-tag">Away</span> <%= g.away %> <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> <%= g.home %></li>
+          <li>
+            <span class="matchup-side-tag">Away</span> <%= g.away %> <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> <%= g.home %>
+            <% if (g.location && g.location !== '-') { %>
+            <span class="dfs-game-field"><%= g.location %></span>
+            <% } %>
+          </li>
           <% }) %>
         </ul>
         <% } %>
@@ -136,7 +147,7 @@
             <h2 class="section-heading">If this was your lineup last week</h2>
             <p class="dfs-last-week-slate"><%= lastWeekPreview.slateLabel %></p>
             <% if (!lastWeekPreview.hasStats) { %>
-            <p class="dfs-last-week-empty">No gamelog stats in <code>Gamelogs (Google Sheet)</code> for that slate yet.</p>
+            <p class="dfs-last-week-empty">No scoring data for that week yet.</p>
             <% } else { %>
             <p class="dfs-last-week-total">
               <span id="lastWeekTotal"><%= lastWeekPreview.scored ? lastWeekPreview.scored.total : 0 %></span>
@@ -170,7 +181,7 @@
               <li>Walk <strong>+<%= scoringRules.walk %></strong></li>
             </ul>
             <% if (!hasGamelogData) { %>
-            <p class="dfs-rules-note">Gamelog file not loaded yet.</p>
+            <p class="dfs-rules-note">Point totals aren’t available yet — check back after games are played.</p>
             <% } %>
           </section>
 
@@ -179,9 +190,9 @@
             <h2 class="section-heading">Your lineup score</h2>
             <% if (!slateStats || !slateStats.hasStats) { %>
             <% if (typeof slateHasBoxScores !== 'undefined' && !slateHasBoxScores) { %>
-            <p class="dfs-rules-note">There are no game dates in <code>Gamelogs (Google Sheet)</code> that match this slate’s schedule yet — add box scores for those dates to see fantasy points (Sun 10-May ↔ <code>5/10/2026</code>, etc.).</p>
+            <p class="dfs-rules-note">Game results aren’t available for this slate’s scheduled dates yet — fantasy points will show here once they are.</p>
             <% } else { %>
-            <p class="dfs-rules-note">No gamelog stats for this slate yet.</p>
+            <p class="dfs-rules-note">No scoring results for this slate yet.</p>
             <% } %>
             <p class="dfs-score-total">
               <span id="slateScoreTotal"><%= scored ? scored.total : '—' %></span>
@@ -226,7 +237,7 @@
               </label>
               <label class="dfs-search-label">
                 Search
-                <input type="search" id="poolSearch" placeholder="Name or team…" autocomplete="off" />
+                <input type="search" id="poolSearch" placeholder="Name, team, or field…" autocomplete="off" />
               </label>
             </div>
           </div>
@@ -237,6 +248,7 @@
                   <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %><th></th><% } %>
                   <th>Player</th>
                   <th>Team</th>
+                  <th>Field</th>
                   <th>Salary</th>
                   <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
                   <th>Pts</th>
@@ -255,6 +267,7 @@
                   data-name="<%= p.name %>"
                   data-team="<%= p.teamName %>"
                   data-salary="<%= p.salary %>"
+                  data-field="<%- String(p.gameField != null ? p.gameField : '—').replace(/&/g, '&amp;').replace(/"/g, '&quot;') %>"
                   data-points="<%= p.slatePoints != null ? p.slatePoints : 0 %>"
                   data-games="<%= p.slateGames != null ? p.slateGames : 0 %>"
                 >
@@ -270,6 +283,7 @@
                   <% } %>
                   <td class="dfs-player-name"><%= p.name %></td>
                   <td><%= p.teamName %></td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)"><%= p.gameField || "—" %></td>
                   <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
                   <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
                   <td class="dfs-points-cell"><strong><%= p.slatePoints %></strong></td>
@@ -312,6 +326,7 @@
             norm: row.getAttribute("data-norm"),
             name: row.getAttribute("data-name"),
             team: row.getAttribute("data-team"),
+            field: row.getAttribute("data-field") || "",
             salary: Number(row.getAttribute("data-salary")),
           });
         });
@@ -394,8 +409,8 @@
           if (!CAN_EDIT) {
             throw new Error("Lineups can only be edited for the slate that is currently open.");
           }
-          if (!/^W\d+$/i.test(slateKey)) {
-            throw new Error("Cloud save is only for week slates (W1, W2, …). Wednesday slates are saved in your browser automatically.");
+          if (!/^W\d+$/i.test(slateKey) && !/^D\d{8}$/i.test(slateKey)) {
+            throw new Error("Cloud save is only for Sunday week slates (W1, W2, …) and Wednesday slates (D + date).");
           }
           if (!window.DfsFirebase?.isReady?.()) {
             throw new Error("Sign in with Google first to save your lineup to the database.");
@@ -630,7 +645,7 @@
             console.error(err);
             btn.disabled = false;
             btn.textContent = "Save lineup";
-            alert(err.message || "Could not save to the database. Check that Firestore rules are published.");
+            alert(err.message || "Could not save lineup. Try again, or sign out and sign back in.");
           }
         });
 
@@ -671,7 +686,13 @@
           const q = (document.getElementById("poolSearch")?.value || "").trim().toLowerCase();
           const teamVal = currentSort === "team" && teamFilter ? teamFilter.value : "";
           document.querySelectorAll(".dfs-player-row").forEach((row) => {
-            const hay = (row.getAttribute("data-name") + " " + row.getAttribute("data-team")).toLowerCase();
+            const hay = (
+              row.getAttribute("data-name") +
+              " " +
+              row.getAttribute("data-team") +
+              " " +
+              (row.getAttribute("data-field") || "")
+            ).toLowerCase();
             const matchesSearch = !q || hay.includes(q);
             const matchesTeam = !teamVal || row.getAttribute("data-team") === teamVal;
             row.hidden = !matchesSearch || !matchesTeam;
@@ -692,15 +713,6 @@
               const sa = Number(a.getAttribute("data-salary"));
               const sb = Number(b.getAttribute("data-salary"));
               if (sb !== sa) return sb - sa;
-              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
-                sensitivity: "base",
-              });
-            });
-          } else if (mode === "points") {
-            rows.sort((a, b) => {
-              const pa = Number(a.getAttribute("data-points")) || 0;
-              const pb = Number(b.getAttribute("data-points")) || 0;
-              if (pb !== pa) return pb - pa;
               return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
                 sensitivity: "base",
               });
@@ -767,7 +779,7 @@
         }
 
         async function loadCloudLineupIfSignedIn() {
-          if (!window.DfsFirebase?.isReady?.() || !/^W\d+$/i.test(slateKey)) return;
+          if (!window.DfsFirebase?.isReady?.() || (!/^W\d+$/i.test(slateKey) && !/^D\d{8}$/i.test(slateKey))) return;
           try {
             const cloud = await window.DfsFirebase.loadLineup(slateKey);
             if (cloud && cloud.length) applyLineupFromArray(cloud);
@@ -791,7 +803,7 @@
               status.textContent = "Signed in as " + (user.displayName || user.email || "Player");
               actions.innerHTML =
                 '<button type="button" class="dfs-btn" id="dfsSignOutBtn">Sign out</button>' +
-                '<span class="dfs-auth-sync">Lineups sync for week slates (W#)</span>';
+                '<span class="dfs-auth-sync">Lineups sync for W# and Wednesday slates</span>';
               if (hint) hint.hidden = false;
               await loadCloudLineupIfSignedIn();
             } else {

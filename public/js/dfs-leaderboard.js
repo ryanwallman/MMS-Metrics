@@ -40,7 +40,7 @@ async function fetchLineups(db, tab, selectedWeek) {
   }
 
   const snap = await getDocs(collection(db, "lineups"));
-  return snap.docs.map(lineupFromDoc).filter((row) => /^W\d+$/.test(row.slateId));
+  return snap.docs.map(lineupFromDoc).filter((row) => /^W\d+|D\d{8}$/.test(row.slateId));
 }
 
 function renderWeeklyTable(rows, data) {
@@ -56,11 +56,11 @@ function renderWeeklyTable(rows, data) {
     const parts = [];
     if (noCsvOverlap) {
       parts.push(
-        "No rows in the gamelog Google Sheet match this week’s scheduled game dates — fantasy scores stay at zero until those games are in the sheet."
+        "Game results don’t cover this slate’s scheduled dates yet — fantasy scores stay at zero until those games are reflected."
       );
     }
     parts.push(
-      "No saved lineups for this week in Firestore — when players save a lineup for this slate, everyone will see them listed here."
+      "No saved lineups for this slate yet — when players save a lineup for this slate, everyone will see them listed here."
     );
     tbody.innerHTML = `<tr><td colspan="4" class="dfs-leaderboard-empty">${parts.join("<br/><br/>")}</td></tr>`;
     return;
@@ -125,7 +125,7 @@ function updateWeeklyBanner(data, pageSlate) {
     data.slateHasBoxScoresForWeek === false
   ) {
     gapEl.textContent =
-      "No rows in the gamelog Google Sheet match this week’s scheduled game dates — scores stay at zero until those dates are in the sheet.";
+      "Game results don’t cover this slate’s scheduled dates yet — scores stay at zero until those games are reflected.";
     gapEl.hidden = false;
   } else if (gapEl) {
     gapEl.hidden = true;
@@ -139,7 +139,9 @@ function updateWeeklyBanner(data, pageSlate) {
 
   if (statusEl && slate && !slate.isPast) {
     statusEl.textContent =
-      "This week has not finished yet — standings appear after Sunday’s games are in the gamelog.";
+      slate.slateType === "wednesday"
+        ? "This slate has not finished yet — standings update once Wednesday’s games are complete."
+        : "This week has not finished yet — standings update once Sunday’s games are complete.";
     statusEl.hidden = false;
   }
 }
@@ -186,7 +188,7 @@ async function loadLeaderboard() {
       if (meta && data.cumulative) {
         const n = data.cumulative.entryCount || 0;
         const weeks = data.cumulative.pastWeekCount ?? page.pastWeekCount ?? 0;
-        meta.textContent = `Sum of all completed weeks (${weeks} week${weeks === 1 ? "" : "s"} so far) · ${n} player${n === 1 ? "" : "s"} with at least one lineup`;
+        meta.textContent = `Sum of all completed slates (${weeks} slate${weeks === 1 ? "" : "s"} so far) · ${n} player${n === 1 ? "" : "s"} with at least one saved lineup`;
       }
     }
   } catch (err) {

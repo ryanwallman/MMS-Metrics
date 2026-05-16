@@ -1,5 +1,5 @@
 /**
- * DFS Firebase: Google sign-in + Firestore lineups (week slates W# only).
+ * DFS Firebase: Google sign-in + Firestore lineups (week W# and Wednesday D########).
  * Loaded as type="module" on /dfs when firebaseClientConfig is present.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -38,8 +38,9 @@ if (!config?.projectId) {
     console.error("Firebase persistence:", err);
   });
 
-  function isWeekSlate(slateId) {
-    return /^W\d+$/i.test(slateId || "");
+  function isCloudSlateId(slateId) {
+    const s = slateId || "";
+    return /^W\d+$/i.test(s) || /^D\d{8}$/i.test(s);
   }
 
   function lineupDocId(slateId, uid) {
@@ -87,7 +88,7 @@ if (!config?.projectId) {
       return Array.isArray(data.playerNorms) ? data.playerNorms : null;
     },
     async saveLineup(slateId, playerNorms, salaryUsed) {
-      if (!currentUser || !isWeekSlate(slateId)) return;
+      if (!currentUser || !isCloudSlateId(slateId)) return;
       const slate = slateId.toUpperCase();
       const ref = doc(db, "lineups", lineupDocId(slate, currentUser.uid));
       await setDoc(ref, {

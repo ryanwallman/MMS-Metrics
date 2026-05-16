@@ -21,7 +21,7 @@
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
-          <select id="view" name="view" onchange="this.form.matchup.value=''; this.form.submit()" style="min-width: 320px">
+          <select id="view" name="view" onchange="this.form.matchup.value=''; this.form.submit()" class="schedule-view-select">
             <% if (!scheduleOptions.length) { %>
             <option value="">No dates available</option>
             <% } %>
@@ -38,6 +38,7 @@
           <select
             id="matchup"
             name="matchup"
+            class="schedule-view-select"
             onchange="this.form.submit()"
             <%= matchupOptions.length ? "" : "disabled" %>
           >
@@ -81,6 +82,7 @@
         </div>
       </div>
 
+      <div class="page-table-wrap">
       <table class="matchup-pred-lines page-table">
         <thead>
           <tr>
@@ -147,6 +149,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </section>
     <% } %>
 

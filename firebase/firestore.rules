@@ -18,15 +18,26 @@ service cloud.firestore {
         && slateId.matches('^W[0-9]+$');
     }
 
+    /** Wednesday DFS slate token D + YYYYMMDD (e.g. D20260514). */
+    function isWednesdaySlateId(slateId) {
+      return slateId is string
+        && slateId.size() == 9
+        && slateId.matches('^D[0-9]{8}$');
+    }
+
+    function isLeaderboardSlateId(slateId) {
+      return isWeekSlateId(slateId) || isWednesdaySlateId(slateId);
+    }
+
     function isSlateLocked(slateId) {
       return exists(/databases/$(database)/documents/slateLocks/$(slateId));
     }
 
-    /** Any signed-in user can create/update their own lineup doc (W4_uid). */
+    /** Any signed-in user can create/update their own lineup doc (W4_uid or D20260514_uid). */
     function validLineupWrite(lineupId) {
       let data = request.resource.data;
       return data.userId == request.auth.uid
-        && isWeekSlateId(data.slateId)
+        && isLeaderboardSlateId(data.slateId)
         && lineupId == data.slateId + '_' + request.auth.uid
         && data.playerNorms is list
         && data.playerNorms.size() == 8
@@ -56,7 +67,7 @@ service cloud.firestore {
     }
 
     match /slateLocks/{slateId} {
-      allow read: if isSignedIn() && isWeekSlateId(slateId);
+      allow read: if isSignedIn() && isLeaderboardSlateId(slateId);
       allow write: if false;
     }
 

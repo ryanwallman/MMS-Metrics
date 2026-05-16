@@ -35,9 +35,9 @@ const {
   scoreLineupForSlate,
   scoreLineupFromPointsMap,
   referenceIsoForScheduleYear,
-  listWeekSlateOptions,
+  listLeaderboardSlateOptions,
   defaultLeaderboardWeek,
-  buildWeekSlateFromToken,
+  buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
 } = require("./lib/dfs");
 
@@ -651,15 +651,50 @@ function normalizeScheduleTeamId(id) {
   return Number.isInteger(n) ? String(n) : safeText(id);
 }
 
+function scheduleHeaderRowNormalized(headers) {
+  return (headers || []).map((x) =>
+    safeText(x)
+      .replace(/^\ufeff/g, "")
+      .toLowerCase()
+  );
+}
+
+/** First column index whose normalized header matches one of `candidates` (exact). */
+function scheduleColumnFirstOf(normalizedHeaders, candidates) {
+  const h = normalizedHeaders;
+  for (const c of candidates) {
+    const i = h.indexOf(c);
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+function buildScheduleVenueLabel(parts) {
+  const out = [];
+  for (const p of parts) {
+    const t = safeText(p);
+    if (!t || t === "-") continue;
+    if (out.length && out[out.length - 1] === t) continue;
+    out.push(t);
+  }
+  return out.join(" · ");
+}
+
+/** Diamond / short-field locations only (e.g. MIDDLE, SWIM, UH Left) — not turf or class. */
+function buildScheduleDiamondLocationLabel(fieldMain, fieldShort) {
+  return buildScheduleVenueLabel([fieldMain, fieldShort]);
+}
+
 function scheduleCsvColumnIndex(headers) {
-  const h = headers.map((x) => safeText(x).toLowerCase());
+  const h = scheduleHeaderRowNormalized(headers);
   return {
     date: h.indexOf("date"),
     awayId: h.indexOf("away #"),
     awayTeam: h.indexOf("away team"),
     homeId: h.indexOf("home #"),
     homeTeam: h.indexOf("home team"),
-    field: h.indexOf("field"),
+    field: scheduleColumnFirstOf(h, ["field", "diamond"]),
+    shortField: scheduleColumnFirstOf(h, ["short field"]),
     time: h.indexOf("time"),
     gameId: h.indexOf("gameid"),
     awayScore: h.indexOf("away score"),
@@ -694,9 +729,11 @@ function buildParsedScheduleGames(scheduleRows, teams) {
     const parsedDate = parseScheduleSheetDate(dateDisplay);
     if (!parsedDate) continue;
 
-    const gameId = safeText(row[idx.gameId]);
-    const field = safeText(row[idx.field]);
-    const time = safeText(row[idx.time]);
+    const gameId = idx.gameId >= 0 ? safeText(row[idx.gameId]) : "";
+    const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
+    const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
+    const venueLabel = buildScheduleDiamondLocationLabel(field, fieldShort);
+    const time = idx.time >= 0 ? safeText(row[idx.time]) : "";
     const awayName = safeText(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`;
     const homeName = safeText(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`;
 
@@ -710,6 +747,7 @@ function buildParsedScheduleGames(scheduleRows, teams) {
       dateDisplay,
       isoDate: parsedDate.iso,
       field,
+      venueLabel,
       time,
       gameId,
       rowIndex: i,
@@ -751,7 +789,7 @@ async function loadWeeklySchedule() {
     if (wd !== 0 && wd !== 3) continue;
 
     const matchupIds = [g.awayId, g.homeId].sort((a, b) => a.localeCompare(b));
-    const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}`;
+    const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}|${g.venueLabel}`;
     if (seen.has(dedupeKey)) continue;
     seen.add(dedupeKey);
 
@@ -764,7 +802,7 @@ async function loadWeeklySchedule() {
       away: g.awayName,
       awayTeamId,
       homeTeamId,
-      location: g.field || "-",
+      location: (g.venueLabel && g.venueLabel.trim()) || g.field || "-",
       time: g.time || "-",
       date: g.dateDisplay || "",
       result: resultText,
@@ -2659,13 +2697,13 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
 
     const { schedulePayload, gamelogs, scoringDeps } = await loadDfsLeaderboardScoringContext();
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-    const weekOptions = listWeekSlateOptions(schedulePayload, refIso);
+    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso);
     const week =
       selectedWeek && weekOptions.some((w) => w.value === selectedWeek)
         ? selectedWeek
         : defaultLeaderboardWeek(weekOptions);
 
-    const slate = buildWeekSlateFromToken(week, schedulePayload, refIso);
+    const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso);
 
     let weekly = { rows: [], entryCount: 0 };
     let cumulative = { rows: [], entryCount: 0, pastWeekCount: 0 };
@@ -2690,7 +2728,12 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
       hasGamelogData: gamelogs.byNorm.size > 0,
       slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
       slate: slate
-        ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken }
+        ? {
+            label: slate.label,
+            isPast: slate.isPast,
+            viewToken: slate.viewToken,
+            slateType: slate.slateType,
+          }
         : null,
     });
   } catch (error) {
@@ -2706,13 +2749,13 @@ app.get("/dfs/leaderboard", async (req, res) => {
 
     const { schedulePayload, gamelogs } = await loadDfsLeaderboardScoringContext();
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-    const weekOptions = listWeekSlateOptions(schedulePayload, refIso);
+    const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso);
     const selectedWeek =
       weekParam && weekOptions.some((w) => w.value === weekParam)
         ? weekParam
         : defaultLeaderboardWeek(weekOptions);
 
-    const slate = buildWeekSlateFromToken(selectedWeek, schedulePayload, refIso);
+    const slate = buildLeaderboardSlateFromToken(selectedWeek, schedulePayload, refIso);
     const firebaseClientConfig = getFirebaseClientConfig();
     const pastWeekCount = weekOptions.filter((w) => w.isPast).length;
 
@@ -3016,9 +3059,9 @@ app.get("/confirm-names", async (req, res) => {
       };
     });
 
-    res.render("confirm-names", {
+    renderPage(res, "confirm-names", {
       rows,
-      generatedAt: new Date().toISOString(),
+      pageTitle: "Roster name confirmation",
     });
   } catch (error) {
     res.status(500).send(`Failed to build confirmation page: ${error.message}`);

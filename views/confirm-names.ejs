@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Name Confirmation</title>
+    <%- include("partials/site-head") %>
   </head>
   <body>
-    <h1>Roster Name Confirmation</h1>
-    <p>Source: `customRosters2026.js` vs closest in `data/csv/career.csv`</p>
-    <p>Generated: <%= generatedAt %></p>
+    <%- include("partials/site-header") %>
+    <main class="page-main">
+    <h1 class="page-title">Roster Name Confirmation</h1>
+    <p class="page-note">Source: <code>customRosters2026.js</code> vs closest in <code>data/csv/career.csv</code></p>
+    <p class="page-note">Generated: <%= generatedAt %></p>
     <p><a href="/stats">Back to Stats</a></p>
 
-    <table border="1" cellpadding="6" cellspacing="0">
+    <div class="page-table-wrap">
+    <table class="page-table" border="1" cellpadding="6" cellspacing="0">
       <thead>
         <tr>
           <th>#</th>
@@ -33,5 +34,7 @@
         <% }) %>
       </tbody>
     </table>
+    </div>
+    </main>
   </body>
 </html>

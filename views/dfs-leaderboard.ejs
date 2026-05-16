@@ -32,11 +32,11 @@
 
       <p class="page-note dfs-intro">
 
-        Scores use saved lineups from Firestore (every visitor sees the same standings — lineups are not private).
+        Standings use submitted lineups for each slate — <strong>everyone sees the same leaderboard</strong> (your saved lineup isn’t private to you).
 
-        Fantasy points come from <code>Gamelogs (Google Sheet)</code>; each slate only scores when that file includes rows dated on that slate’s scheduled game days.
+        Fantasy points follow the same rules as the <a href="/dfs">DFS Lineup Builder</a>; a slate only scores once game results exist for that slate’s scheduled dates.
 
-        Same rules as the <a href="/dfs">DFS Lineup Builder</a>. Only numbered week slates (<code>W1</code>, <code>W2</code>, …) appear here — Wednesday-only slates (<code>D…</code>) are lineup-only.
+        Pick a <strong>Sunday week</strong> (<code>W1</code>, <code>W2</code>, …) or <strong>Wednesday</strong> (<code>D…</code>) slate in the dropdown. <strong>Season total</strong> adds every completed slate in schedule order (each Sunday week and each Wednesday slate counts once).
 
       </p>
 
@@ -104,7 +104,7 @@
 
         <label for="week">
 
-          <strong>Week</strong>
+          <strong>Slate</strong>
 
           <select id="week" name="week" onchange="this.form.submit()">
 
@@ -134,11 +134,13 @@
 
         <% if (!slate.isPast) { %>
 
-        <p class="dfs-slate-status" id="weeklySlateStatus">This week has not finished yet — standings appear after Sunday’s games are in the gamelog.</p>
+        <p class="dfs-slate-status" id="weeklySlateStatus"><%= slate.slateType === 'wednesday'
+          ? "This slate has not finished yet — standings update once Wednesday’s games are complete."
+          : "This week has not finished yet — standings update once Sunday’s games are complete." %></p>
 
         <% } else if (!hasGamelogData) { %>
 
-        <p class="dfs-slate-status dfs-slate-status--past">No gamelog data loaded yet.</p>
+        <p class="dfs-slate-status dfs-slate-status--past">Scoring data isn’t available yet.</p>
 
         <% } else { %>
 
@@ -196,7 +198,7 @@
 
         <p class="dfs-slate-status dfs-slate-status--past" id="cumulativeMeta">
 
-          Sum of all completed weeks (<%= pastWeekCount %> week<%= pastWeekCount === 1 ? '' : 's' %> so far)
+          Sum of all completed slates (<%= pastWeekCount %> slate<%= pastWeekCount === 1 ? '' : 's' %> so far)
 
         </p>
 
@@ -216,7 +218,7 @@
 
               <th scope="col">Player</th>
 
-              <th scope="col">Weeks</th>
+              <th scope="col">Slates</th>
 
               <th scope="col">Total pts</th>
 
@@ -284,7 +286,7 @@
 
         pastWeekCount: pastWeekCount,
 
-        slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken } : null
+        slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType } : null
 
       }) %>;
 

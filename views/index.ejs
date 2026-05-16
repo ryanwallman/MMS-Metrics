@@ -1,18 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MMS Home</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <%- include("partials/site-head") %>
   </head>
   <body>
-    <h1>Marlboro Men's Softball - Home</h1>
-    <p>Live data pull time: <%= generatedAt %></p>
+    <main class="page-main">
+    <h1 class="page-title">Marlboro Men's Softball — Home</h1>
+    <p class="page-note">Live data pull time: <%= generatedAt %></p>
     <p><a href="/stats">Go to Stats</a></p>
     <p><a href="/schedule">Go to Weekly Schedule</a></p>
     <p><a href="/matchup-predictor">Matchup Predictor</a></p>
     <p><a href="/rankings/offense">Go to Offensive Rankings</a></p>
     <p><a href="/rankings/power">Go to Power Rankings</a></p>
+    </main>
   </body>
 </html>
