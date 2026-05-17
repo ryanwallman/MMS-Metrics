@@ -109,7 +109,14 @@
       <div class="dfs-layout">
         <aside class="dfs-sidebar">
           <section class="dfs-lineup-card">
-            <h2 class="section-heading">Your lineup</h2>
+            <h2 class="section-heading dfs-lineup-heading">
+              Your lineup
+              <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
+              <span class="dfs-lineup-heading-score" id="lineupHeadingScore"><% if (scored && lineupNorms.length) { %> — <strong><%= scored.total %></strong> pts<% } %></span>
+              <% } else { %>
+              <span class="dfs-lineup-heading-score" id="lineupHeadingScore" hidden></span>
+              <% } %>
+            </h2>
             <p class="dfs-budget">
               <span id="salaryUsedLabel">$<%= salaryUsed.toLocaleString() %></span>
               <span class="dfs-budget-sep">/</span>
@@ -520,6 +527,20 @@
             list.appendChild(li);
           }
           totalEl.textContent = (Math.round(total * 10) / 10).toString();
+          updateLineupHeadingScore(total);
+        }
+
+        function updateLineupHeadingScore(total) {
+          const el = document.getElementById("lineupHeadingScore");
+          if (!el || !SHOW_SLATE_STATS || !slatePointsByNorm) return;
+          if (!lineup.length) {
+            el.hidden = true;
+            el.textContent = "";
+            return;
+          }
+          el.hidden = false;
+          const t = Math.round(total * 10) / 10;
+          el.innerHTML = " — <strong>" + t + "</strong> pts";
         }
 
         function updateLastWeekPreview() {
@@ -633,6 +654,9 @@
 
           updateLastWeekPreview();
           updateSlateScoreCard();
+          if (SHOW_SLATE_STATS && slatePointsByNorm) {
+            if (!lineup.length) updateLineupHeadingScore(0);
+          }
         }
 
         function togglePlayer(norm) {

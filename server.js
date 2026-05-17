@@ -2742,7 +2742,7 @@ async function buildWeeklyLeaderboardResponse(selectedWeek, lineups) {
   const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
   const weekly =
     slate && Array.isArray(lineups)
-      ? buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps)
+      ? await buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps)
       : { rows: [], entryCount: 0 };
 
   return {
