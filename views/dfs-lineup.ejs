@@ -21,7 +21,7 @@
         <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
         <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
         Players whose salaries fall in the modest end of the slate are all shown at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
-        You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy).
+        You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy). When you save, each player’s <strong>salary is locked</strong> at that moment even if slate prices change later.
         Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
         For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
       </p>
@@ -387,13 +387,44 @@
           .map((s) => s.trim())
           .filter((n) => pool.has(n));
 
+        /** Salaries locked when a player is added (or loaded from a saved lineup). */
+        const lockedSalaries = new Map();
+
+        function playerSalary(norm) {
+          if (lockedSalaries.has(norm)) return lockedSalaries.get(norm);
+          return pool.get(norm)?.salary || 0;
+        }
+
+        function buildPlayerSalariesArray() {
+          return lineup.map((n) => playerSalary(n));
+        }
+
+        function applyLockedSalaries(norms, salaries) {
+          lockedSalaries.clear();
+          if (!Array.isArray(norms) || !Array.isArray(salaries)) return;
+          const len = Math.min(norms.length, salaries.length);
+          for (let i = 0; i < len; i += 1) {
+            const norm = norms[i];
+            const sal = Number(salaries[i]);
+            if (pool.has(norm) && Number.isFinite(sal) && sal > 0) {
+              lockedSalaries.set(norm, sal);
+            }
+          }
+        }
+
         function loadStored() {
           if (!slateKey) return null;
           try {
             const raw = localStorage.getItem(STORAGE_PREFIX + slateKey);
             if (!raw) return null;
             const data = JSON.parse(raw);
-            return Array.isArray(data.lineup) ? data.lineup.filter((n) => pool.has(n)) : null;
+            const norms = Array.isArray(data.lineup)
+              ? data.lineup.filter((n) => pool.has(n))
+              : null;
+            if (norms && Array.isArray(data.playerSalaries)) {
+              applyLockedSalaries(norms, data.playerSalaries);
+            }
+            return norms;
           } catch {
             return null;
           }
@@ -403,7 +434,11 @@
           if (!slateKey || !CAN_EDIT) return;
           localStorage.setItem(
             STORAGE_PREFIX + slateKey,
-            JSON.stringify({ lineup: [...lineup], updatedAt: Date.now() })
+            JSON.stringify({
+              lineup: [...lineup],
+              playerSalaries: buildPlayerSalariesArray(),
+              updatedAt: Date.now(),
+            })
           );
         }
 
@@ -428,11 +463,13 @@
           if (salaryTotal() > SALARY_CAP) {
             throw new Error("Your lineup is over the salary cap.");
           }
-          await window.DfsFirebase.saveLineup(slateKey, lineup, salaryTotal());
+          const playerSalaries = buildPlayerSalariesArray();
+          const used = playerSalaries.reduce((s, n) => s + n, 0);
+          await window.DfsFirebase.saveLineup(slateKey, lineup, used, playerSalaries);
         }
 
         function salaryTotal() {
-          return lineup.reduce((s, n) => s + (pool.get(n)?.salary || 0), 0);
+          return lineup.reduce((s, n) => s + playerSalary(n), 0);
         }
 
         let lastWeekByNorm = null;
@@ -532,8 +569,8 @@
           document.querySelectorAll(".dfs-player-row").forEach((row) => {
             const norm = row.getAttribute("data-norm");
             const on = lineup.includes(norm);
-            const salary = Number(row.getAttribute("data-salary")) || 0;
-            const overCap = !on && used + salary > SALARY_CAP;
+            const addSalary = Number(row.getAttribute("data-salary")) || 0;
+            const overCap = !on && used + addSalary > SALARY_CAP;
             row.classList.toggle("dfs-player-row--selected", on);
             row.classList.toggle("dfs-player-row--over-cap", overCap);
             const btn = row.querySelector(".dfs-add-btn");
@@ -562,8 +599,14 @@
                     const pts = slatePointsByNorm && slatePointsByNorm[norm];
                     const ptsLabel =
                       pts && SHOW_SLATE_STATS ? " · " + pts.points + " pts" : "";
+                    const slotSalary = playerSalary(norm);
+                    const locked = lockedSalaries.has(norm);
                     const meta =
-                      p.team + " · $" + p.salary.toLocaleString() + ptsLabel;
+                      p.team +
+                      " · $" +
+                      slotSalary.toLocaleString() +
+                      (locked ? " (locked)" : "") +
+                      ptsLabel;
                     const removeBtn = CAN_EDIT
                       ? '<button type="button" class="dfs-remove-btn" data-remove="' +
                         p.norm +
@@ -597,16 +640,19 @@
           const ix = lineup.indexOf(norm);
           if (ix >= 0) {
             lineup.splice(ix, 1);
+            lockedSalaries.delete(norm);
           } else {
             if (lineup.length >= LINEUP_SIZE) {
               alert("Lineup is full (" + LINEUP_SIZE + " players). Remove someone first.");
               return;
             }
-            const nextTotal = salaryTotal() + (pool.get(norm)?.salary || 0);
+            const addSalary = pool.get(norm)?.salary || 0;
+            const nextTotal = salaryTotal() + addSalary;
             if (nextTotal > SALARY_CAP) {
               alert("Not enough salary cap remaining for this player.");
               return;
             }
+            lockedSalaries.set(norm, addSalary);
             lineup.push(norm);
           }
           persistLineup();
@@ -620,6 +666,7 @@
         document.getElementById("clearLineupBtn").addEventListener("click", () => {
           if (!CAN_EDIT) return;
           lineup = [];
+          lockedSalaries.clear();
           persistLineup();
           syncUi();
         });
@@ -802,8 +849,17 @@
           search.addEventListener("input", applyPoolFilters);
         }
 
-        function applyLineupFromArray(norms) {
+        function applyLineupFromArray(norms, salaries) {
           lineup = (norms || []).filter((n) => pool.has(n)).slice(0, LINEUP_SIZE);
+          if (salaries) {
+            applyLockedSalaries(lineup, salaries);
+          } else {
+            lockedSalaries.clear();
+            lineup.forEach((n) => {
+              const sal = pool.get(n)?.salary;
+              if (sal != null) lockedSalaries.set(n, sal);
+            });
+          }
           persistLineup();
           syncUi();
         }
@@ -864,7 +920,10 @@
             throw new Error("This slate cannot sync to the database.");
           }
           const cloudRaw = await window.DfsFirebase.loadLineup(slateKey);
-          const cloudNorms = normalizeLineupNorms(cloudRaw);
+          const cloudNorms = normalizeLineupNorms(
+            cloudRaw?.playerNorms || (Array.isArray(cloudRaw) ? cloudRaw : [])
+          );
+          const cloudSalaries = cloudRaw?.playerSalaries || null;
           if (!cloudNorms.length) {
             setLineupSyncStatus(
               "No lineup saved in the database for " + slateKey.toUpperCase() + " yet.",
@@ -885,7 +944,7 @@
               false
             );
           }
-          applyLineupFromArray(cloudNorms);
+          applyLineupFromArray(cloudNorms, cloudSalaries);
         }
 
         function setupFirebaseAuth() {

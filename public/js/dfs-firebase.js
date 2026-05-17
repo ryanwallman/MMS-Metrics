@@ -85,10 +85,29 @@ if (!config?.projectId) {
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;
       const data = snap.data();
-      return Array.isArray(data.playerNorms) ? data.playerNorms : null;
+      const playerNorms = Array.isArray(data.playerNorms) ? data.playerNorms : [];
+      if (!playerNorms.length) return null;
+      const playerSalaries = Array.isArray(data.playerSalaries)
+        ? data.playerSalaries.map((n) => Number(n) || 0)
+        : null;
+      return {
+        playerNorms,
+        playerSalaries,
+        salaryUsed: Number(data.salaryUsed) || 0,
+      };
     },
-    async saveLineup(slateId, playerNorms, salaryUsed) {
+    async saveLineup(slateId, playerNorms, salaryUsed, playerSalaries) {
       if (!currentUser || !isCloudSlateId(slateId)) return;
+      const norms = [...playerNorms];
+      const salaries = [...playerSalaries];
+      if (norms.length !== 8 || salaries.length !== 8) {
+        throw new Error("Lineup must include exactly 8 players with locked salaries.");
+      }
+      const sum = salaries.reduce((s, n) => s + (Number(n) || 0), 0);
+      const used = Number(salaryUsed) || 0;
+      if (Math.abs(sum - used) > 1) {
+        throw new Error("Salary total does not match locked player prices.");
+      }
       const slate = slateId.toUpperCase();
       const ref = doc(db, "lineups", lineupDocId(slate, currentUser.uid));
       await setDoc(ref, {
@@ -96,8 +115,9 @@ if (!config?.projectId) {
         userId: currentUser.uid,
         displayName:
           currentUser.displayName || currentUser.email || "Player",
-        playerNorms: [...playerNorms],
-        salaryUsed: Number(salaryUsed) || 0,
+        playerNorms: norms,
+        playerSalaries: salaries,
+        salaryUsed: used,
         updatedAt: serverTimestamp(),
       });
       try {

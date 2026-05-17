@@ -59,6 +59,9 @@ function lineupFromDoc(doc) {
     displayName: data.displayName || "Player",
     slateId: (data.slateId || "").toUpperCase(),
     playerNorms: Array.isArray(data.playerNorms) ? data.playerNorms : [],
+    playerSalaries: Array.isArray(data.playerSalaries)
+      ? data.playerSalaries.map((n) => Number(n) || 0)
+      : null,
     salaryUsed: Number(data.salaryUsed) || 0,
   };
 }

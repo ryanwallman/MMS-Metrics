@@ -33,6 +33,24 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/slateLocks/$(slateId));
     }
 
+    function validLockedSalary(value) {
+      return value is number && value >= 5000 && value <= 12000;
+    }
+
+    /** Per-player salaries locked at save time (same order as playerNorms). */
+    function validPlayerSalaries(salaries) {
+      return salaries is list
+        && salaries.size() == 8
+        && validLockedSalary(salaries[0])
+        && validLockedSalary(salaries[1])
+        && validLockedSalary(salaries[2])
+        && validLockedSalary(salaries[3])
+        && validLockedSalary(salaries[4])
+        && validLockedSalary(salaries[5])
+        && validLockedSalary(salaries[6])
+        && validLockedSalary(salaries[7]);
+    }
+
     /** Any signed-in user can create/update their own lineup doc (W4_uid or D20260514_uid). */
     function validLineupWrite(lineupId) {
       let data = request.resource.data;
@@ -41,6 +59,7 @@ service cloud.firestore {
         && lineupId == data.slateId + '_' + request.auth.uid
         && data.playerNorms is list
         && data.playerNorms.size() == 8
+        && validPlayerSalaries(data.playerSalaries)
         && data.salaryUsed is number
         && data.salaryUsed >= 0
         && data.salaryUsed <= 60000
