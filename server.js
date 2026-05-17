@@ -10,8 +10,7 @@ const { createMemoryCache } = require("./lib/memoryCache");
 const { getAdminFirestore, isFirebaseAdminConfigured } = require("./lib/firebaseAdmin");
 const {
   buildWeeklyLeaderboardFromLineups,
-  buildCumulativeLeaderboardFromLineups,
-  fetchLineupsForLeaderboard,
+  fetchLineupsForSlate,
 } = require("./lib/dfsLeaderboard");
 const { canonicalRostersByTeamId } = require("./data/customRosters2026");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
@@ -2729,7 +2728,8 @@ function getCachedWeeklySchedule() {
   return weeklyScheduleCache.get("payload", loadWeeklySchedule);
 }
 
-async function buildLeaderboardApiResponse({ tab, selectedWeek, lineups }) {
+/** Weekly leaderboard: lineups for one slateId → fantasy points for that slate. */
+async function buildWeeklyLeaderboardResponse(selectedWeek, lineups) {
   const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
   const nowMs = Date.now();
@@ -2740,29 +2740,14 @@ async function buildLeaderboardApiResponse({ tab, selectedWeek, lineups }) {
       : defaultLeaderboardWeek(weekOptions);
 
   const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
-
-  let weekly = { rows: [], entryCount: 0 };
-  let cumulative = { rows: [], entryCount: 0, pastWeekCount: 0 };
-
-  if (tab === "weekly" && slate) {
-    weekly = buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps);
-  } else if (tab === "cumulative") {
-    const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
-    cumulative = buildCumulativeLeaderboardFromLineups(
-      lineups,
-      weekOptions,
-      scoringDeps,
-      schedulePayload,
-      refIso,
-      activeSlateToken
-    );
-  }
+  const weekly =
+    slate && Array.isArray(lineups)
+      ? buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps)
+      : { rows: [], entryCount: 0 };
 
   return {
-    tab,
     selectedWeek: week,
     weekly,
-    cumulative,
     hasGamelogData: gamelogs.byNorm.size > 0,
     slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
     slate: slate
@@ -2776,10 +2761,19 @@ async function buildLeaderboardApiResponse({ tab, selectedWeek, lineups }) {
   };
 }
 
-/** Fast path: server reads Firestore + scores (one round trip for the browser). */
+/** Server-rendered standings (no browser Firestore fetch). */
+async function loadWeeklyStandingsForSlate(selectedWeek) {
+  const db = getAdminFirestore();
+  if (!db) return null;
+  const slateId = safeText(selectedWeek).toUpperCase();
+  if (!slateId) return null;
+  const lineups = await fetchLineupsForSlate(db, slateId);
+  return buildWeeklyLeaderboardResponse(slateId, lineups);
+}
+
+/** Firestore lineups for slate + score (weekly only). */
 app.get("/api/dfs/leaderboard/data", async (req, res) => {
   try {
-    const tab = safeText(req.query.tab).toLowerCase() === "weekly" ? "weekly" : "cumulative";
     const selectedWeek = safeText(req.query.week || req.query.selectedWeek).toUpperCase();
 
     const db = getAdminFirestore();
@@ -2791,33 +2785,40 @@ app.get("/api/dfs/leaderboard/data", async (req, res) => {
       });
     }
 
-    const lineups = await fetchLineupsForLeaderboard(db, tab, selectedWeek);
-    const body = await buildLeaderboardApiResponse({ tab, selectedWeek, lineups });
-    res.setHeader("Cache-Control", "private, max-age=30");
+    if (!selectedWeek) {
+      return res.status(400).json({ error: "Missing week (slate id), e.g. W1 or D20260514." });
+    }
+
+    const lineups = await fetchLineupsForSlate(db, selectedWeek);
+    const body = await buildWeeklyLeaderboardResponse(selectedWeek, lineups);
+    res.setHeader("Cache-Control", "private, max-age=60");
     res.json(body);
   } catch (error) {
-    console.error(error);
+    console.error("[MMS] GET /api/dfs/leaderboard/data:", error);
     res.status(500).json({ error: error.message || "Leaderboard load failed." });
   }
 });
 
+/** Score lineups sent from the browser (fallback when Admin SDK is not on Render). */
 app.post("/api/dfs/leaderboard/score", async (req, res) => {
   try {
-    const tab = safeText(req.body?.tab).toLowerCase() === "cumulative" ? "cumulative" : "weekly";
-    const selectedWeek = safeText(req.body?.selectedWeek).toUpperCase();
+    const selectedWeek = safeText(req.body?.selectedWeek || req.body?.week).toUpperCase();
     const lineups = Array.isArray(req.body?.lineups) ? req.body.lineups : [];
 
-    const body = await buildLeaderboardApiResponse({ tab, selectedWeek, lineups });
+    if (!selectedWeek) {
+      return res.status(400).json({ error: "Missing selectedWeek (slate id)." });
+    }
+
+    const body = await buildWeeklyLeaderboardResponse(selectedWeek, lineups);
     res.json(body);
   } catch (error) {
-    console.error(error);
+    console.error("[MMS] POST /api/dfs/leaderboard/score:", error);
     res.status(500).json({ error: error.message || "Leaderboard scoring failed." });
   }
 });
 
 app.get("/dfs/leaderboard", async (req, res) => {
   try {
-    const tab = safeText(req.query.tab).toLowerCase() === "weekly" ? "weekly" : "cumulative";
     const weekParam = safeText(req.query.week).toUpperCase();
 
     const schedulePayload = await getCachedWeeklySchedule();
@@ -2829,26 +2830,40 @@ app.get("/dfs/leaderboard", async (req, res) => {
         ? weekParam
         : defaultLeaderboardWeek(weekOptions);
 
+    if (safeText(req.query.tab).toLowerCase() === "cumulative") {
+      return res.redirect(302, `/dfs/leaderboard?week=${encodeURIComponent(selectedWeek)}`);
+    }
+
     const slate = buildLeaderboardSlateFromToken(selectedWeek, schedulePayload, refIso, nowMs);
-    const activeSlateToken = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs) || "";
-    const activeSlateOpt = weekOptions.find((o) => o.value === activeSlateToken);
-    const activeSlateLabel = activeSlateOpt
-      ? `${activeSlateOpt.label}${activeSlateOpt.isPast ? " (locked)" : " — open for lineups"}`
-      : "No open slate (season may be complete or between slates).";
     const firebaseClientConfig = getFirebaseClientConfig();
-    const pastWeekCount = weekOptions.filter((w) => w.isPast).length;
+    const adminConfigured = isFirebaseAdminConfigured();
+
+    let weeklyStandings = null;
+    let weeklyStandingsError = null;
+    if (adminConfigured) {
+      try {
+        weeklyStandings = await loadWeeklyStandingsForSlate(selectedWeek);
+      } catch (err) {
+        console.error("[MMS] Leaderboard page standings:", err);
+        weeklyStandingsError = err.message || "Could not load standings.";
+      }
+    }
+
+    const hasGamelogData =
+      weeklyStandings?.hasGamelogData !== undefined ? weeklyStandings.hasGamelogData : true;
+    const slateHasBoxScoresForWeek = weeklyStandings?.slateHasBoxScoresForWeek ?? false;
 
     renderPage(res, "dfs-leaderboard", {
       navActive: "dfs",
-      tab,
       weekOptions,
       selectedWeek,
       slate,
-      pastWeekCount,
-      activeSlateToken,
-      activeSlateLabel,
-      hasGamelogData: true,
-      leaderboardServerRead: isFirebaseAdminConfigured(),
+      hasGamelogData,
+      slateHasBoxScoresForWeek,
+      weeklyStandings,
+      weeklyStandingsError,
+      serverRenderedStandings: !!(weeklyStandings && !weeklyStandingsError),
+      leaderboardServerRead: adminConfigured,
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,
       scoringRules: DFS_SCORING,
