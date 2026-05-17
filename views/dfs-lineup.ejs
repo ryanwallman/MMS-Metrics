@@ -57,9 +57,10 @@
           <% slateOptions.forEach((opt) => { %>
           <a
             href="/dfs?slate=<%= encodeURIComponent(opt.value) %>"
-            class="dfs-slate-chip<%= opt.value === selectedSlate ? ' is-selected' : '' %><%= opt.canEdit ? ' dfs-slate-chip--open' : '' %><%= opt.isPast ? ' dfs-slate-chip--past' : '' %>"
+            class="dfs-slate-chip<%= opt.value === selectedSlate ? ' is-selected' : '' %><%= opt.canEdit ? ' dfs-slate-chip--open' : ' dfs-slate-chip--locked' %><%= opt.isPast ? ' dfs-slate-chip--past' : '' %>"
+            data-slate="<%= opt.value %>"
             <%= opt.value === selectedSlate ? 'aria-current="page"' : '' %>
-          ><%= opt.label %><% if (opt.canEdit) { %> · open<% } else if (opt.isPast) { %> · view<% } %></a>
+          ><%= opt.label %><% if (opt.canEdit) { %> · open<% } else { %> · locked<% } %></a>
           <% }) %>
         </nav>
         <input type="hidden" name="lineup" id="lineupInput" value="<%= lineupNorms.join(',') %>" />
@@ -110,12 +111,8 @@
         <aside class="dfs-sidebar">
           <section class="dfs-lineup-card">
             <h2 class="section-heading dfs-lineup-heading">
-              Your lineup
-              <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
-              <span class="dfs-lineup-heading-score" id="lineupHeadingScore"><% if (scored && lineupNorms.length) { %> — <strong><%= scored.total %></strong> pts<% } %></span>
-              <% } else { %>
-              <span class="dfs-lineup-heading-score" id="lineupHeadingScore" hidden></span>
-              <% } %>
+              <span class="dfs-lineup-heading-title">Your lineup</span><% if (slate && !slate.canEdit) { %>
+              <span class="dfs-lineup-heading-points" id="lineupHeadingScore">Points: <strong data-points-value><% if (typeof showSlateStats !== 'undefined' && showSlateStats && scored && lineupNorms.length) { %><%= scored.total %><% } else { %>—<% } %></strong></span><% } %>
             </h2>
             <p class="dfs-budget">
               <span id="salaryUsedLabel">$<%= salaryUsed.toLocaleString() %></span>
@@ -208,6 +205,7 @@
             <% } else { %>
             <p class="dfs-rules-note">No scoring results for this slate yet.</p>
             <% } %>
+            <% } %>
             <p class="dfs-score-total">
               <span id="slateScoreTotal"><%= scored ? scored.total : '—' %></span>
               <span class="dfs-score-pts">pts</span>
@@ -223,7 +221,6 @@
               <% }) %>
               <% } %>
             </ul>
-            <% } %>
           </section>
           <% if (slateStats && slateStats.byNorm) { %>
           <script type="application/json" id="slatePointsData"><%- JSON.stringify(slateStats.byNorm) %></script>
@@ -495,52 +492,71 @@
           slatePointsByNorm = null;
         }
 
+        function computeLineupPointsTotal() {
+          if (!slatePointsByNorm || !lineup.length) return null;
+          let total = 0;
+          for (const norm of lineup) {
+            total += (slatePointsByNorm[norm] || { points: 0 }).points;
+          }
+          return Math.round(total * 10) / 10;
+        }
+
+        function updateLineupHeadingScore(total) {
+          const wrap = document.getElementById("lineupHeadingScore");
+          if (!wrap || CAN_EDIT) return;
+          const valEl = wrap.querySelector("[data-points-value]");
+          if (!valEl) return;
+          if (!lineup.length) {
+            valEl.textContent = "—";
+            return;
+          }
+          if (!SHOW_SLATE_STATS || !slatePointsByNorm) {
+            valEl.textContent = "—";
+            return;
+          }
+          const t = total != null ? total : computeLineupPointsTotal();
+          valEl.textContent = t == null ? "—" : String(t);
+        }
+
         function updateSlateScoreCard() {
           const card = document.getElementById("slateScoreCard");
-          if (!card || !slatePointsByNorm) return;
+          if (!card || !slatePointsByNorm) {
+            updateLineupHeadingScore(null);
+            return;
+          }
 
           const totalEl = document.getElementById("slateScoreTotal");
           const list = document.getElementById("slateScoreBreakdown");
-          if (!totalEl || !list) return;
 
           if (!lineup.length) {
-            totalEl.textContent = "—";
-            list.innerHTML = "";
+            if (totalEl) totalEl.textContent = "—";
+            if (list) list.innerHTML = "";
+            updateLineupHeadingScore(null);
             return;
           }
 
           let total = 0;
-          list.innerHTML = "";
+          if (list) list.innerHTML = "";
           for (const norm of lineup) {
             const row = slatePointsByNorm[norm] || { points: 0, games: 0 };
             const p = pool.get(norm);
             total += row.points;
-            const li = document.createElement("li");
-            li.innerHTML =
-              "<span>" +
-              (p ? p.name : norm) +
-              "</span><strong>" +
-              row.points +
-              '</strong><span class="dfs-score-games">' +
-              row.games +
-              " gm</span>";
-            list.appendChild(li);
+            if (list) {
+              const li = document.createElement("li");
+              li.innerHTML =
+                "<span>" +
+                (p ? p.name : norm) +
+                "</span><strong>" +
+                row.points +
+                '</strong><span class="dfs-score-games">' +
+                row.games +
+                " gm</span>";
+              list.appendChild(li);
+            }
           }
-          totalEl.textContent = (Math.round(total * 10) / 10).toString();
-          updateLineupHeadingScore(total);
-        }
-
-        function updateLineupHeadingScore(total) {
-          const el = document.getElementById("lineupHeadingScore");
-          if (!el || !SHOW_SLATE_STATS || !slatePointsByNorm) return;
-          if (!lineup.length) {
-            el.hidden = true;
-            el.textContent = "";
-            return;
-          }
-          el.hidden = false;
-          const t = Math.round(total * 10) / 10;
-          el.innerHTML = " — <strong>" + t + "</strong> pts";
+          const rounded = Math.round(total * 10) / 10;
+          if (totalEl) totalEl.textContent = rounded.toString();
+          updateLineupHeadingScore(rounded);
         }
 
         function updateLastWeekPreview() {
@@ -654,9 +670,7 @@
 
           updateLastWeekPreview();
           updateSlateScoreCard();
-          if (SHOW_SLATE_STATS && slatePointsByNorm) {
-            if (!lineup.length) updateLineupHeadingScore(0);
-          }
+          if (!CAN_EDIT) updateLineupHeadingScore(null);
         }
 
         function togglePlayer(norm) {
@@ -936,7 +950,17 @@
           }
         }
 
-        async function pullLineupFromDatabase() {
+        async function autoLoadLockedLineupForView() {
+          if (CAN_EDIT || !isCloudSlateKey(slateKey)) return;
+          if (!window.DfsFirebase?.isReady?.()) return;
+          try {
+            await pullLineupFromDatabase(true);
+          } catch (e) {
+            console.warn("Auto-load lineup", e);
+          }
+        }
+
+        async function pullLineupFromDatabase(silent) {
           if (!window.DfsFirebase?.isReady?.()) {
             throw new Error("Sign in with Google first to load your lineup from the database.");
           }
@@ -949,24 +973,28 @@
           );
           const cloudSalaries = cloudRaw?.playerSalaries || null;
           if (!cloudNorms.length) {
-            setLineupSyncStatus(
-              "No lineup saved in the database for " + slateKey.toUpperCase() + " yet.",
-              false
-            );
+            if (!silent) {
+              setLineupSyncStatus(
+                "No lineup saved in the database for " + slateKey.toUpperCase() + " yet.",
+                false
+              );
+            }
             return;
           }
           const localNorms = normalizeLineupNorms(loadStored() || lineup);
           const differs = !lineupsMatch(localNorms, cloudNorms);
-          if (differs) {
-            setLineupSyncStatus(
-              "Your lineup on this device differs from your saved database lineup. The database version is now loaded.",
-              true
-            );
-          } else {
-            setLineupSyncStatus(
-              "Your lineup on this device matches the database. Loaded your saved lineup.",
-              false
-            );
+          if (!silent) {
+            if (differs) {
+              setLineupSyncStatus(
+                "Your lineup on this device differs from your saved database lineup. The database version is now loaded.",
+                true
+              );
+            } else {
+              setLineupSyncStatus(
+                "Your lineup on this device matches the database. Loaded your saved lineup.",
+                false
+              );
+            }
           }
           applyLineupFromArray(cloudNorms, cloudSalaries);
         }
@@ -989,6 +1017,7 @@
                 '<span class="dfs-auth-sync">Lineups sync for W# and Wednesday slates</span>';
               if (hint) hint.hidden = false;
               updateLoadFromDbButton();
+              await autoLoadLockedLineupForView();
             } else {
               status.textContent = "Not signed in — you can still build a lineup here. Sign in to save it to the cloud.";
               actions.innerHTML =

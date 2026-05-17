@@ -21,6 +21,19 @@ function esc(text) {
   return el.innerHTML;
 }
 
+function slateLocked(data, pageCtx) {
+  if (data?.slate?.isLocked === true) return true;
+  if (data?.slate?.canEdit === true) return false;
+  if (pageCtx?.slateLocked) return true;
+  if (pageCtx?.slate?.isLocked === true) return true;
+  if (pageCtx?.slate?.canEdit === true) return false;
+  return pageCtx?.slate?.isPast !== false;
+}
+
+function tableColspan(locked) {
+  return locked ? 4 : 3;
+}
+
 async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -72,9 +85,22 @@ async function fetchLineupsForSlate(db, slateId) {
   return snap.docs.map(lineupFromDoc);
 }
 
+function renderPlayerCell(row, week, locked) {
+  const name = esc(row.displayName);
+  if (locked && row.userId && week) {
+    const href = `/dfs/leaderboard/lineup?week=${encodeURIComponent(week)}&user=${encodeURIComponent(row.userId)}`;
+    return `<a href="${href}" class="dfs-leaderboard-player-link">${name}</a>`;
+  }
+  return name;
+}
+
 function renderWeeklyTable(rows, data) {
   const tbody = document.getElementById("leaderboardWeeklyBody");
   if (!tbody) return;
+
+  const locked = slateLocked(data, page);
+  const week = data.selectedWeek || page?.selectedWeek || "";
+  const cols = tableColspan(locked);
 
   if (!rows.length) {
     const slatePast = data?.slate?.isPast !== false;
@@ -91,22 +117,24 @@ function renderWeeklyTable(rows, data) {
     parts.push(
       "No saved lineups for this slate yet — when players save a lineup for this slate, everyone will see them listed here."
     );
-    tbody.innerHTML = `<tr><td colspan="4" class="dfs-leaderboard-empty">${parts.join("<br/><br/>")}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="${cols}" class="dfs-leaderboard-empty">${parts.join("<br/><br/>")}</td></tr>`;
     return;
   }
 
   tbody.innerHTML = rows
-    .map(
-      (row) =>
-        `<tr>
+    .map((row) => {
+      const salaryCell = locked
+        ? `<td>$${(row.salaryUsed || 0).toLocaleString()}</td>`
+        : "";
+      return `<tr>
           <td>${esc(row.rankDisplay != null ? row.rankDisplay : row.rank)}</td>
-          <td>${esc(row.displayName)}</td>
+          <td>${renderPlayerCell(row, week, locked)}</td>
           <td class="dfs-leaderboard-pts">${
             row.points == null ? "—" : `<strong>${row.points}</strong>`
           }</td>
-          <td>$${(row.salaryUsed || 0).toLocaleString()}</td>
-        </tr>`
-    )
+          ${salaryCell}
+        </tr>`;
+    })
     .join("");
 }
 
@@ -118,11 +146,31 @@ function setStatus(message, isError) {
   el.innerHTML = message ? `<p>${message}</p>` : "";
 }
 
-function updateWeeklyBanner(data, pageSlate) {
+function showLoadingScreen() {
+  const screen = document.getElementById("leaderboardLoadingScreen");
+  if (screen) {
+    screen.hidden = false;
+    screen.setAttribute("aria-busy", "true");
+  }
+  document.body.classList.remove("leaderboard-ready");
+}
+
+function hideLoadingScreen() {
+  const screen = document.getElementById("leaderboardLoadingScreen");
+  if (screen) {
+    screen.hidden = true;
+    screen.setAttribute("aria-busy", "false");
+  }
+  document.body.classList.add("leaderboard-ready");
+  const main = document.querySelector(".dfs-leaderboard-page");
+  if (main) main.classList.remove("dfs-leaderboard-page--loading");
+}
+
+function updateWeeklyBanner(data, pageCtx) {
   const countEl = document.getElementById("weeklyEntryCount");
   const statusEl = document.getElementById("weeklySlateStatus");
   const gapEl = document.getElementById("weeklyGamelogGap");
-  const slate = data.slate || pageSlate;
+  const slate = data.slate || pageCtx.slate;
 
   if (
     gapEl &&
@@ -143,7 +191,7 @@ function updateWeeklyBanner(data, pageSlate) {
     countEl.hidden = false;
   }
 
-  if (statusEl && slate && !slate.isPast) {
+  if (statusEl && slate && slate.canEdit === true) {
     statusEl.textContent =
       slate.slateType === "wednesday"
         ? "This slate has not finished yet — points appear after Wednesday’s games."
@@ -153,9 +201,10 @@ function updateWeeklyBanner(data, pageSlate) {
 }
 
 function renderLeaderboardData(data) {
+  hideLoadingScreen();
   setStatus("", false);
   renderWeeklyTable(data.weekly?.rows || [], data);
-  updateWeeklyBanner(data, page.slate);
+  updateWeeklyBanner(data, page);
 }
 
 async function loadFromServerApi() {
@@ -204,11 +253,13 @@ async function loadLeaderboard() {
     return;
   }
   if (!page.selectedWeek) {
+    hideLoadingScreen();
     setStatus("No slate selected.", true);
     return;
   }
 
-  setStatus("Loading standings…", false);
+  showLoadingScreen();
+  setStatus("", false);
 
   try {
     let data = null;
@@ -224,6 +275,7 @@ async function loadLeaderboard() {
     renderLeaderboardData(data);
   } catch (err) {
     console.error(err);
+    hideLoadingScreen();
     const msg = (err.message || "").includes("permission")
       ? "Could not read lineups. Publish Firestore rules with public read on <code>lineups</code> (see <code>firebase/firestore.rules</code>)."
       : esc(err.message || "Failed to load leaderboard.");

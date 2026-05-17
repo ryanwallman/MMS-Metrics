@@ -10,7 +10,10 @@ const { createMemoryCache } = require("./lib/memoryCache");
 const { getAdminFirestore, isFirebaseAdminConfigured } = require("./lib/firebaseAdmin");
 const {
   buildWeeklyLeaderboardFromLineups,
+  buildLineupDetailView,
   fetchLineupsForSlate,
+  fetchLineupByUserAndSlate,
+  slateSummaryForClient,
 } = require("./lib/dfsLeaderboard");
 const { canonicalRostersByTeamId } = require("./data/customRosters2026");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
@@ -2750,14 +2753,7 @@ async function buildWeeklyLeaderboardResponse(selectedWeek, lineups) {
     weekly,
     hasGamelogData: gamelogs.byNorm.size > 0,
     slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
-    slate: slate
-      ? {
-          label: slate.label,
-          isPast: slate.isPast,
-          viewToken: slate.viewToken,
-          slateType: slate.slateType,
-        }
-      : null,
+    slate: slateSummaryForClient(slate),
   };
 }
 
@@ -2817,6 +2813,55 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
   }
 });
 
+app.get("/dfs/leaderboard/lineup", async (req, res) => {
+  try {
+    const week = safeText(req.query.week || req.query.slate).toUpperCase();
+    const userId = safeText(req.query.user || req.query.userId);
+    if (!week || !userId) {
+      return res.status(400).send("Missing week (slate) or user id.");
+    }
+
+    const db = getAdminFirestore();
+    if (!db) {
+      return res
+        .status(503)
+        .send("Lineup view requires FIREBASE_SERVICE_ACCOUNT_JSON on the server.");
+    }
+
+    const schedulePayload = await getCachedWeeklySchedule();
+    const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+    const nowMs = Date.now();
+    const { scoringDeps } = await getCachedDfsLeaderboardScoringContext();
+
+    const lineup = await fetchLineupByUserAndSlate(db, week, userId);
+    const detail = await buildLineupDetailView(
+      lineup,
+      week,
+      scoringDeps,
+      schedulePayload,
+      refIso,
+      nowMs
+    );
+
+    if (detail.error && detail.locked === false) {
+      return res.status(403).send(detail.error);
+    }
+    if (detail.error) {
+      return res.status(404).send(detail.error);
+    }
+
+    renderPage(res, "dfs-leaderboard-lineup", {
+      navActive: "dfs",
+      selectedWeek: week,
+      detail,
+      scoringRules: DFS_SCORING,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send(`Lineup view failed: ${error.message}`);
+  }
+});
+
 app.get("/dfs/leaderboard", async (req, res) => {
   try {
     const weekParam = safeText(req.query.week).toUpperCase();
@@ -2853,11 +2898,14 @@ app.get("/dfs/leaderboard", async (req, res) => {
       weeklyStandings?.hasGamelogData !== undefined ? weeklyStandings.hasGamelogData : true;
     const slateHasBoxScoresForWeek = weeklyStandings?.slateHasBoxScoresForWeek ?? false;
 
+    const slateLocked = slate ? slate.canEdit !== true : false;
+
     renderPage(res, "dfs-leaderboard", {
       navActive: "dfs",
       weekOptions,
       selectedWeek,
       slate,
+      slateLocked,
       hasGamelogData,
       slateHasBoxScoresForWeek,
       weeklyStandings,

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+    <title><%= detail.displayName %> — <%= detail.slate.label %> — DFS</title>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main dfs-page dfs-lineup-view-page">
+      <div class="dfs-page-head">
+        <h1 class="page-title"><%= detail.displayName %></h1>
+        <p class="dfs-page-head-actions">
+          <a href="/dfs/leaderboard?week=<%= encodeURIComponent(selectedWeek) %>" class="dfs-btn">← Leaderboard</a>
+          <a href="/dfs?slate=<%= encodeURIComponent(selectedWeek) %>" class="dfs-btn">Lineup builder</a>
+        </p>
+      </div>
+
+      <section class="dfs-slate-banner" aria-label="Slate">
+        <h2 class="dfs-slate-title"><%= detail.slate.label %></h2>
+        <p class="dfs-slate-status dfs-slate-status--past">
+          Saved lineup ·
+          <% if (detail.totalPoints != null) { %>
+          <strong><%= detail.totalPoints %> pts</strong>
+          <% } else { %>—<% } %>
+          <% if (detail.salaryUsed != null) { %>
+          · $<%= Number(detail.salaryUsed).toLocaleString() %> salary
+          <% } %>
+        </p>
+      </section>
+
+      <% if (detail.incomplete) { %>
+      <section class="dfs-leaderboard-alert" role="status">
+        <p>This lineup was saved with fewer than 8 players and scores as 0.</p>
+      </section>
+      <% } %>
+
+      <div class="dfs-leaderboard-table-wrap">
+        <table class="dfs-leaderboard-table page-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Player</th>
+              <th scope="col">Pts</th>
+              <th scope="col">Salary</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (!detail.players || !detail.players.length) { %>
+            <tr>
+              <td colspan="4" class="dfs-leaderboard-empty">No players in this saved lineup.</td>
+            </tr>
+            <% } else { detail.players.forEach((p, i) => { %>
+            <tr>
+              <td><%= i + 1 %></td>
+              <td><%= p.name %></td>
+              <td class="dfs-leaderboard-pts"><strong><%= p.points %></strong> <span class="dfs-score-games"><%= p.games %> gm</span></td>
+              <td><% if (p.salary != null) { %>$<%= Number(p.salary).toLocaleString() %><% } else { %>—<% } %></td>
+            </tr>
+            <% }) } %>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
