@@ -112,14 +112,43 @@ app.use(
 const SITE_NAV = Object.freeze([
   { id: "home", label: "League Leaders", href: "/" },
   { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor" },
-  { id: "dfs", label: "DFS Lineup", href: "/dfs" },
+  {
+    id: "dfs",
+    label: "DFS Lineup",
+    href: "/dfs",
+    navSublabel:
+      "Experimental · slow loads. If you take your time, it all works — patience required.",
+  },
   { id: "power", label: "Power Rankings", href: "/rankings/power" },
 ]);
 
+const SITE_DISCLAIMER =
+  "This entire website is built from current-year and career statistics. The algorithm is not perfect by any means and will probably be wrong more than half the time. Regardless, this is a fun tool — please don’t use it to compare players, teams, or individuals against each other. This site is intended only to have fun and be an analytical tool for MMS super fans to play with during your 9–5. Thanks, and I hope you enjoy.";
+
+function formatDataUpdatedLabel(iso) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return `${d.toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })} ET`;
+  } catch {
+    return iso;
+  }
+}
+
 function renderPage(res, view, locals = {}) {
+  const generatedAt = locals.generatedAt || new Date().toISOString();
   res.render(view, {
     siteNav: SITE_NAV,
-    generatedAt: locals.generatedAt || new Date().toISOString(),
+    siteDisclaimer: SITE_DISCLAIMER,
+    generatedAt,
+    dataUpdatedLabel: formatDataUpdatedLabel(generatedAt),
     ...locals,
   });
 }

@@ -8,15 +8,28 @@
       <% (typeof siteNav !== "undefined" ? siteNav : []).forEach((item) => { %>
       <a
         href="<%= item.href %>"
-        class="site-nav-link<%= typeof navActive !== "undefined" && navActive === item.id ? " is-active" : "" %>"
+        class="site-nav-link<%= item.navSublabel ? " site-nav-link--stacked" : "" %><%= typeof navActive !== "undefined" && navActive === item.id ? " is-active" : "" %>"
         <%= typeof navActive !== "undefined" && navActive === item.id ? 'aria-current="page"' : "" %>
       >
+        <% if (item.navSublabel) { %>
+        <span class="site-nav-link-title"><%= item.label %></span>
+        <span class="site-nav-link-sub"><%= item.navSublabel %></span>
+        <% } else { %>
         <%= item.label %>
+        <% } %>
       </a>
       <% }) %>
     </nav>
   </div>
-  <% if (typeof generatedAt !== "undefined" && generatedAt) { %>
-  <p class="site-updated">Data updated <%= generatedAt %></p>
-  <% } %>
+  <div class="site-header-meta">
+    <% if (typeof generatedAt !== "undefined" && generatedAt) { %>
+    <p class="site-updated">
+      Data updated
+      <time datetime="<%= generatedAt %>"><%= typeof dataUpdatedLabel !== "undefined" ? dataUpdatedLabel : generatedAt %></time>
+    </p>
+    <% } %>
+    <% if (typeof siteDisclaimer !== "undefined" && siteDisclaimer) { %>
+    <p class="site-disclaimer"><%= siteDisclaimer %></p>
+    <% } %>
+  </div>
 </header>
