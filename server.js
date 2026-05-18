@@ -118,6 +118,7 @@ const SITE_NAV = Object.freeze([
     href: "/dfs",
     navSublabel:
       "Experimental · slow loads. If you take your time, it all works — patience required.",
+    navSublabelShort: "Experimental · slow — patience required.",
   },
   { id: "power", label: "Power Rankings", href: "/rankings/power" },
 ]);
