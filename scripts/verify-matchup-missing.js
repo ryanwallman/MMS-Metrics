@@ -20,6 +20,8 @@ const MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.18;
 const MATCHUP_WIN_PROB_SHRINK = 0.5;
 const MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
 const MATCHUP_RUN_OFF_Z_PCT = 0.08;
+const MATCHUP_RUN_DEF_Z_PCT = 0.06;
+const MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
 
 function meanAndStd(vals) {
   const v = vals.filter((x) => x != null && Number.isFinite(x));
@@ -47,13 +49,19 @@ function teamPower(profile, norms) {
   );
 }
 
-function projectRuns(profile, norms, leagueAvg = 11.5) {
+function projectRuns(profile, defender, norms, leagueAvg = 11.5, leagueRa = 11) {
   const zOff = zFrom(profile.offenseRating, norms.offense.mean, norms.offense.std);
   const zRun = zFrom(profile.runProd2026, norms.runProd.mean, norms.runProd.std);
   const zRf = zFrom(profile.runsPerGame, norms.runsPerGame.mean, norms.runsPerGame.std);
   const offBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
-  let mult = 1 + MATCHUP_RUN_OFF_Z_PCT * offBlend;
-  const rosterProj = leagueAvg * mult;
+  const defOpp = defender.defenseZ ?? 0;
+  const oppRa = defender.runsAgainstPerGame ?? leagueRa;
+  let mult =
+    (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - MATCHUP_RUN_DEF_Z_PCT * defOpp);
+  if (leagueRa > 0) {
+    mult *= 1 + MATCHUP_OPP_RUNS_AGAINST_SCALE * (oppRa / leagueRa - 1);
+  }
+  const rosterProj = Math.max(2, leagueAvg * mult);
   const rpg = profile.runsPerGame ?? leagueAvg;
   return MATCHUP_SCHEDULE_RUNS_BLEND * rpg + (1 - MATCHUP_SCHEDULE_RUNS_BLEND) * rosterProj;
 }
@@ -79,8 +87,8 @@ function buildNorms(profiles) {
 function predict(away, home, norms) {
   const awayPow = teamPower(away, norms);
   const homePow = teamPower(home, norms);
-  const awayRuns = projectRuns(away, norms);
-  const homeRuns = projectRuns(home, norms);
+  const awayRuns = projectRuns(away, home, norms);
+  const homeRuns = projectRuns(home, away, norms);
   const homeWin = winPct(homeRuns, awayRuns, homePow, awayPow);
   return {
     awayWin: (1 - homeWin) * 100,
@@ -190,22 +198,66 @@ if (drop3 < drop1 * 1.8) {
   process.exit(1);
 }
 
-const shortStar = applyMissing([10, 11, 12, 4]);
+const at10 = applyMissing([11, 12, 13]);
+const short9a = applyMissing([10, 11, 12, 13]);
+const short8a = applyMissing([9, 10, 11, 12, 13]);
+const short7a = applyMissing([8, 9, 10, 11, 12, 13]);
 const shortScrub = applyMissing([10, 11, 12, 13]);
-const pShortStar = predict(shortStar, opponent, fixedNorms);
+const pAt10 = predict(at10, opponent, fixedNorms);
+const pShort9 = predict(short9a, opponent, fixedNorms);
+const pShort8 = predict(short8a, opponent, fixedNorms);
+const pShort7 = predict(short7a, opponent, fixedNorms);
 const pShortScrub = predict(shortScrub, opponent, fixedNorms);
-console.log("\nShort-handed (9 active, 4 missing):");
+const pOppVsFull = predict(opponent, { ...fullProfile, teamMultiplier: 1 }, fixedNorms);
+
+console.log("\nShort-handed defense (runs allowed vs full roster):");
 console.log(
-  `  4th out is R4 (decent): mult=${shortStar.teamMultiplier.toFixed(3)} win=${pShortStar.awayWin.toFixed(1)}%`
+  `  10 fielders: RA mult=${(at10.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pAt10.homeRuns.toFixed(1)} vs ${pOppVsFull.homeRuns.toFixed(1)} full DEF`
 );
 console.log(
-  `  4th out is R13 (bottom +/-): mult=${shortScrub.teamMultiplier.toFixed(3)} win=${pShortScrub.awayWin.toFixed(1)}%`
+  `  9 fielders:  RA mult=${(short9a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort9.homeRuns.toFixed(1)} (Δ +${(pShort9.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
 );
-if (shortStar.teamMultiplier >= shortScrub.teamMultiplier) {
-  console.error("FAIL: Short-handed with a decent 4th out should hurt more than with bottom-tier 4th out.");
+console.log(
+  `  8 fielders:  RA mult=${(short8a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort8.homeRuns.toFixed(1)} (Δ +${(pShort8.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
+);
+console.log(
+  `  7 fielders:  RA mult=${(short7a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort7.homeRuns.toFixed(1)} (Δ +${(pShort7.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
+);
+console.log(
+  `  9 active, 4th out R13 (scrub): offense mult=${shortScrub.teamMultiplier.toFixed(3)} win=${pShortScrub.awayWin.toFixed(1)}%`
+);
+
+const expectRa = { 1: 1.4, 2: 2.0, 3: 2.7, 4: 3.5 };
+for (const [label, prof, slots] of [
+  ["9", short9a, 1],
+  ["8", short8a, 2],
+  ["7", short7a, 3],
+]) {
+  const want = expectRa[slots];
+  const got = prof.runsAgainstMultiplier ?? 1;
+  if (Math.abs(got - want) > 0.01) {
+    console.error(`FAIL: ${label} fielders want RA mult ${want}, got ${got}`);
+    process.exit(1);
+  }
+}
+const short6a = applyMissing([7, 8, 9, 10, 11, 12, 13]);
+if (Math.abs((short6a.runsAgainstMultiplier ?? 0) - 3.5) > 0.01) {
+  console.error(
+    `FAIL: 6 fielders want RA mult 3.5, got ${short6a.runsAgainstMultiplier}`
+  );
   process.exit(1);
 }
-if (shortScrub.teamMultiplier > 0.72) {
+if (pShort8.homeRuns <= pShort9.homeRuns) {
+  console.error("FAIL: Opponent should project more runs vs 8 fielders than vs 9.");
+  process.exit(1);
+}
+const short9Star = applyMissing([10, 11, 12, 4]);
+const short9Scrub = applyMissing([10, 11, 12, 13]);
+if (short9Star.teamMultiplier >= short9Scrub.teamMultiplier) {
+  console.error("FAIL: 9 active with a decent 4th out should hurt offense more than with bottom-tier 4th out.");
+  process.exit(1);
+}
+if (short9Scrub.teamMultiplier > 0.72) {
   console.error("FAIL: Short-handed should stay well below 1.0 even if missing scrubs.");
   process.exit(1);
 }

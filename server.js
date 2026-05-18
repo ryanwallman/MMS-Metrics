@@ -3128,15 +3128,21 @@ app.get("/matchup-predictor", async (req, res) => {
           prediction.missingImpact = {
             away: {
               teamMultiplier: awayProfile.teamMultiplier ?? 1,
+              defenseMultiplier: awayProfile.defenseMultiplier ?? 1,
+              runsAgainstMultiplier: awayProfile.runsAgainstMultiplier ?? 1,
               offenseRating: awayProfile.offenseRating,
               presentCount: awayProfile.presentCount,
               missingCount: awayProfile.missingCount,
+              shortHandedSlots: awayProfile.shortHandedSlots ?? 0,
             },
             home: {
               teamMultiplier: homeProfile.teamMultiplier ?? 1,
+              defenseMultiplier: homeProfile.defenseMultiplier ?? 1,
+              runsAgainstMultiplier: homeProfile.runsAgainstMultiplier ?? 1,
               offenseRating: homeProfile.offenseRating,
               presentCount: homeProfile.presentCount,
               missingCount: homeProfile.missingCount,
+              shortHandedSlots: homeProfile.shortHandedSlots ?? 0,
             },
           };
           enrichMatchupPredictionLines(prediction);
