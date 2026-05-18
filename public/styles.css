@@ -1387,11 +1387,12 @@ body > main.page-main {
 
   .site-header {
     margin-bottom: 14px;
-    padding: 10px 12px 8px;
+    padding: 10px 12px 4px;
   }
 
   .site-header-inner {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
     gap: 8px;
   }
@@ -1454,9 +1455,10 @@ body > main.page-main {
   }
 
   .site-header-meta {
+    flex: none;
     flex-direction: column;
     gap: 5px;
-    margin-top: 6px;
+    margin: 6px 0 0;
     padding: 6px 0 0;
   }
 
@@ -1469,6 +1471,8 @@ body > main.page-main {
   .site-disclaimer {
     font-size: 10px;
     line-height: 1.35;
+    margin: 0;
+    padding: 0;
   }
 
   .page-title {
