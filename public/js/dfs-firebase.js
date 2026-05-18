@@ -99,27 +99,45 @@ if (!config?.projectId) {
     async saveLineup(slateId, playerNorms, salaryUsed, playerSalaries) {
       if (!currentUser || !isCloudSlateId(slateId)) return;
       const norms = [...playerNorms];
-      const salaries = [...playerSalaries];
+      const salaries = playerSalaries.map((n) => Math.round(Number(n) || 0));
       if (norms.length !== 8 || salaries.length !== 8) {
         throw new Error("Lineup must include exactly 8 players with locked salaries.");
       }
-      const sum = salaries.reduce((s, n) => s + (Number(n) || 0), 0);
-      const used = Number(salaryUsed) || 0;
+      for (let i = 0; i < salaries.length; i += 1) {
+        const sal = salaries[i];
+        if (sal < 5000 || sal > 12000) {
+          throw new Error(
+            "Each player needs a locked salary between $5,000 and $12,000. Remove and re-add any player showing an invalid price, then save again."
+          );
+        }
+      }
+      const sum = salaries.reduce((s, n) => s + n, 0);
+      const used = Math.round(Number(salaryUsed) || 0);
       if (Math.abs(sum - used) > 1) {
         throw new Error("Salary total does not match locked player prices.");
       }
       const slate = slateId.toUpperCase();
       const ref = doc(db, "lineups", lineupDocId(slate, currentUser.uid));
-      await setDoc(ref, {
-        slateId: slate,
-        userId: currentUser.uid,
-        displayName:
-          currentUser.displayName || currentUser.email || "Player",
-        playerNorms: norms,
-        playerSalaries: salaries,
-        salaryUsed: used,
-        updatedAt: serverTimestamp(),
-      });
+      try {
+        await setDoc(ref, {
+          slateId: slate,
+          userId: currentUser.uid,
+          displayName:
+            currentUser.displayName || currentUser.email || "Player",
+          playerNorms: norms,
+          playerSalaries: salaries,
+          salaryUsed: used,
+          updatedAt: serverTimestamp(),
+        });
+      } catch (err) {
+        const code = err?.code || "";
+        if (code === "permission-denied") {
+          throw new Error(
+            "Firestore blocked this save (missing or insufficient permissions). Republish firebase/firestore.rules from this repo, or ask an admin to remove any stray slateLocks documents in the Firebase console."
+          );
+        }
+        throw err;
+      }
       try {
         await setDoc(
           doc(db, "users", currentUser.uid),

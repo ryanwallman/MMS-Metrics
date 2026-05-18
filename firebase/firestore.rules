@@ -29,10 +29,6 @@ service cloud.firestore {
       return isWeekSlateId(slateId) || isWednesdaySlateId(slateId);
     }
 
-    function isSlateLocked(slateId) {
-      return exists(/databases/$(database)/documents/slateLocks/$(slateId));
-    }
-
     function validLockedSalary(value) {
       return value is number && value >= 5000 && value <= 12000;
     }
@@ -62,8 +58,7 @@ service cloud.firestore {
         && validPlayerSalaries(data.playerSalaries)
         && data.salaryUsed is number
         && data.salaryUsed >= 0
-        && data.salaryUsed <= 60000
-        && !isSlateLocked(data.slateId);
+        && data.salaryUsed <= 60000;
     }
 
     match /lineups/{lineupId} {
@@ -83,11 +78,6 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create, update: if isOwner(userId);
       allow delete: if false;
-    }
-
-    match /slateLocks/{slateId} {
-      allow read: if isSignedIn() && isLeaderboardSlateId(slateId);
-      allow write: if false;
     }
 
     match /{document=**} {
