@@ -5,8 +5,12 @@
  */
 const {
   applyMissingPlayersToProfile,
+  applyCriticalRosterWinCap,
+  applyCriticalRosterRunProjection,
   computeTeamMissingMultiplier,
   rosterEntriesFromNames,
+  MIN_VIABLE_ACTIVE_PLAYERS,
+  MAX_WIN_FRACTION_CRITICAL_ROSTER,
 } = require("../lib/matchupMissingPlayers");
 
 const MATCHUP_POWER_WEIGHT_OFFENSE = 0.35;
@@ -22,6 +26,43 @@ const MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
 const MATCHUP_RUN_OFF_Z_PCT = 0.08;
 const MATCHUP_RUN_DEF_Z_PCT = 0.06;
 const MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
+const MATCHUP_SHORT_HANDED_RA_SCALE_MAX = 1.05;
+const MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX = 0.16;
+const MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR = 0.08;
+
+function opponentShortHandedSlots(profile) {
+  const slots = profile?.shortHandedSlots;
+  if (slots != null && Number.isFinite(slots) && slots > 0) return slots;
+  const raMult = profile?.runsAgainstMultiplier;
+  if (raMult != null && raMult > 1.01) return 1;
+  return 0;
+}
+
+function matchupScheduleBlendWeight(attackerProfile, defenderProfile) {
+  const slotsShort = opponentShortHandedSlots(defenderProfile);
+  if (slotsShort <= 0 || attackerProfile?.runsPerGame == null) return MATCHUP_SCHEDULE_RUNS_BLEND;
+  return Math.max(
+    MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR,
+    MATCHUP_SCHEDULE_RUNS_BLEND - 0.11 * slotsShort
+  );
+}
+
+function matchupOpponentDefenseScales(defenderProfile) {
+  const slotsShort = opponentShortHandedSlots(defenderProfile);
+  const raMult = defenderProfile?.runsAgainstMultiplier ?? 1;
+  if (slotsShort <= 0) {
+    return { runsAgainstScale: MATCHUP_OPP_RUNS_AGAINST_SCALE, defenseZScale: MATCHUP_RUN_DEF_Z_PCT };
+  }
+  const severity = Math.min(1, (raMult - 1) / 2.5);
+  return {
+    runsAgainstScale:
+      MATCHUP_OPP_RUNS_AGAINST_SCALE +
+      (MATCHUP_SHORT_HANDED_RA_SCALE_MAX - MATCHUP_OPP_RUNS_AGAINST_SCALE) * severity,
+    defenseZScale:
+      MATCHUP_RUN_DEF_Z_PCT +
+      (MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX - MATCHUP_RUN_DEF_Z_PCT) * Math.min(1, slotsShort / 4),
+  };
+}
 
 function meanAndStd(vals) {
   const v = vals.filter((x) => x != null && Number.isFinite(x));
@@ -56,14 +97,16 @@ function projectRuns(profile, defender, norms, leagueAvg = 11.5, leagueRa = 11) 
   const offBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
   const defOpp = defender.defenseZ ?? 0;
   const oppRa = defender.runsAgainstPerGame ?? leagueRa;
+  const { runsAgainstScale, defenseZScale } = matchupOpponentDefenseScales(defender);
   let mult =
-    (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - MATCHUP_RUN_DEF_Z_PCT * defOpp);
+    (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - defenseZScale * defOpp);
   if (leagueRa > 0) {
-    mult *= 1 + MATCHUP_OPP_RUNS_AGAINST_SCALE * (oppRa / leagueRa - 1);
+    mult *= 1 + runsAgainstScale * (oppRa / leagueRa - 1);
   }
   const rosterProj = Math.max(2, leagueAvg * mult);
   const rpg = profile.runsPerGame ?? leagueAvg;
-  return MATCHUP_SCHEDULE_RUNS_BLEND * rpg + (1 - MATCHUP_SCHEDULE_RUNS_BLEND) * rosterProj;
+  const w = matchupScheduleBlendWeight(profile, defender);
+  return w * rpg + (1 - w) * rosterProj;
 }
 
 function winPct(homeRuns, awayRuns, homePow, awayPow) {
@@ -89,10 +132,12 @@ function predict(away, home, norms) {
   const homePow = teamPower(home, norms);
   const awayRuns = projectRuns(away, home, norms);
   const homeRuns = projectRuns(home, away, norms);
-  const homeWin = winPct(homeRuns, awayRuns, homePow, awayPow);
+  let pHome = winPct(homeRuns, awayRuns, homePow, awayPow);
+  let pAway = 1 - pHome;
+  ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(away, home, pAway, pHome));
   return {
-    awayWin: (1 - homeWin) * 100,
-    homeWin: homeWin * 100,
+    awayWin: pAway * 100,
+    homeWin: pHome * 100,
     awayRuns,
     homeRuns,
     awayOff: away.offenseRating,
@@ -115,6 +160,7 @@ const fullProfile = {
   teamOverall: 0.65,
   runsPerGame: 12.5,
   runsAgainstPerGame: 10.8,
+  scheduleGames: 8,
 };
 
 const opponent = {
@@ -124,6 +170,7 @@ const opponent = {
   teamOverall: 0.2,
   runsPerGame: 10.5,
   runsAgainstPerGame: 11.2,
+  scheduleGames: 8,
   teamMultiplier: 1,
 };
 
@@ -208,20 +255,21 @@ const pShort9 = predict(short9a, opponent, fixedNorms);
 const pShort8 = predict(short8a, opponent, fixedNorms);
 const pShort7 = predict(short7a, opponent, fixedNorms);
 const pShortScrub = predict(shortScrub, opponent, fixedNorms);
-const pOppVsFull = predict(opponent, { ...fullProfile, teamMultiplier: 1 }, fixedNorms);
+const fullDef = { ...fullProfile, teamMultiplier: 1 };
+const oppVsFullDef = predict(opponent, fullDef, fixedNorms).awayRuns;
 
 console.log("\nShort-handed defense (runs allowed vs full roster):");
 console.log(
-  `  10 fielders: RA mult=${(at10.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pAt10.homeRuns.toFixed(1)} vs ${pOppVsFull.homeRuns.toFixed(1)} full DEF`
+  `  10 fielders: RA mult=${(at10.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${predict(opponent, at10, fixedNorms).awayRuns.toFixed(1)} vs ${oppVsFullDef.toFixed(1)} full DEF`
 );
 console.log(
-  `  9 fielders:  RA mult=${(short9a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort9.homeRuns.toFixed(1)} (Δ +${(pShort9.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
+  `  9 fielders:  RA mult=${(short9a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort9.homeRuns.toFixed(1)} (Δ +${(pShort9.homeRuns - oppVsFullDef).toFixed(1)})`
 );
 console.log(
-  `  8 fielders:  RA mult=${(short8a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort8.homeRuns.toFixed(1)} (Δ +${(pShort8.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
+  `  8 fielders:  RA mult=${(short8a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort8.homeRuns.toFixed(1)} (Δ +${(pShort8.homeRuns - oppVsFullDef).toFixed(1)})`
 );
 console.log(
-  `  7 fielders:  RA mult=${(short7a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort7.homeRuns.toFixed(1)} (Δ +${(pShort7.homeRuns - pOppVsFull.homeRuns).toFixed(1)})`
+  `  7 fielders:  RA mult=${(short7a.runsAgainstMultiplier ?? 1).toFixed(2)}  opp scores ${pShort7.homeRuns.toFixed(1)} (Δ +${(pShort7.homeRuns - oppVsFullDef).toFixed(1)})`
 );
 console.log(
   `  9 active, 4th out R13 (scrub): offense mult=${shortScrub.teamMultiplier.toFixed(3)} win=${pShortScrub.awayWin.toFixed(1)}%`
@@ -251,6 +299,14 @@ if (pShort8.homeRuns <= pShort9.homeRuns) {
   console.error("FAIL: Opponent should project more runs vs 8 fielders than vs 9.");
   process.exit(1);
 }
+const raDrivenBoost =
+  pShort9.homeRuns - oppVsFullDef >= 1.0 && pShort8.homeRuns - pShort9.homeRuns >= 0.8;
+if (!raDrivenBoost) {
+  console.error(
+    "FAIL: Short-handed defense should drive opponent runs up sharply (RA-weighted projection)."
+  );
+  process.exit(1);
+}
 const short9Star = applyMissing([10, 11, 12, 4]);
 const short9Scrub = applyMissing([10, 11, 12, 13]);
 if (short9Star.teamMultiplier >= short9Scrub.teamMultiplier) {
@@ -261,4 +317,49 @@ if (short9Scrub.teamMultiplier > 0.72) {
   console.error("FAIL: Short-handed should stay well below 1.0 even if missing scrubs.");
   process.exit(1);
 }
+
+const critical7 = applyMissing([8, 9, 10, 11, 12, 13]);
+const critical6 = applyMissing([7, 8, 9, 10, 11, 12, 13]);
+const maxWinPct = MAX_WIN_FRACTION_CRITICAL_ROSTER * 100;
+const pCrit7Away = predict(critical7, opponent, fixedNorms);
+const pCrit6Away = predict(critical6, opponent, fixedNorms);
+const pCrit7Home = predict(opponent, critical7, fixedNorms);
+console.log("\nCritical roster (<8 active) win cap:");
+console.log(
+  `  7 active away: win=${pCrit7Away.awayWin.toFixed(1)}% (max ${maxWinPct.toFixed(1)}%)  present=${critical7.presentCount}`
+);
+console.log(
+  `  6 active away: win=${pCrit6Away.awayWin.toFixed(1)}%  present=${critical6.presentCount}`
+);
+console.log(
+  `  7 active home: win=${pCrit7Home.homeWin.toFixed(1)}%`
+);
+if (critical7.presentCount >= MIN_VIABLE_ACTIVE_PLAYERS) {
+  console.error("FAIL: Test setup should leave 7 active players.");
+  process.exit(1);
+}
+for (const [label, pred, side] of [
+  ["7 away", pCrit7Away, "awayWin"],
+  ["6 away", pCrit6Away, "awayWin"],
+  ["7 home", pCrit7Home, "homeWin"],
+]) {
+  if (pred[side] >= 10) {
+    console.error(`FAIL: ${label} must stay below 10% win (got ${pred[side].toFixed(1)}%).`);
+    process.exit(1);
+  }
+}
+console.log(
+  `  7 active away score: ${pCrit7Away.awayRuns.toFixed(1)}–${pCrit7Away.homeRuns.toFixed(1)} (healthy side ~${pCrit7Away.homeRuns.toFixed(1)} runs)`
+);
+if (pCrit7Away.homeRuns < 17 || pCrit7Away.awayRuns > 6) {
+  console.error(
+    "FAIL: Critical roster should show blowout lines (healthy ~18+ runs, crippled ~5 or fewer)."
+  );
+  process.exit(1);
+}
+if (pCrit6Away.homeRuns < 20) {
+  console.error("FAIL: 6 active should push opponent expected runs toward 20.");
+  process.exit(1);
+}
+
 console.log("\nPASS: Missing players materially move predictions.");

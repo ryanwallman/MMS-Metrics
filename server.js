@@ -22,6 +22,8 @@ const {
   serializeMissingNorms,
   enrichRosterForMatchupView,
   applyMissingPlayersToProfile,
+  applyCriticalRosterWinCap,
+  applyCriticalRosterRunProjection,
 } = require("./lib/matchupMissingPlayers");
 const {
   DFS_LINEUP_SIZE,
@@ -1718,9 +1720,58 @@ const MATCHUP_RUN_OFF_Z_PCT = 0.08;
 const MATCHUP_RUN_DEF_Z_PCT = 0.06;
 const MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
 const MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
+/** When defense is short-handed (<10 fielders), lean harder on inflated runs-against. */
+const MATCHUP_SHORT_HANDED_RA_SCALE_MAX = 1.05;
+const MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX = 0.16;
+const MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR = 0.08;
 const MATCHUP_AWAY_RUN_FACTOR = 0.97;
 const MATCHUP_HOME_RUN_FACTOR = 1.03;
 const DEFAULT_LEAGUE_RUNS_PER_TEAM = 11.5;
+
+function opponentShortHandedSlots(profile) {
+  const slots = profile?.shortHandedSlots;
+  if (slots != null && Number.isFinite(slots) && slots > 0) return slots;
+  const raMult = profile?.runsAgainstMultiplier;
+  if (raMult != null && raMult > 1.01) return 1;
+  return 0;
+}
+
+/** How much schedule runs-for vs roster/defense projection when the opposing defense is short-handed. */
+function matchupScheduleBlendWeight(attackerProfile, defenderProfile) {
+  const slotsShort = opponentShortHandedSlots(defenderProfile);
+  if (
+    slotsShort <= 0 ||
+    attackerProfile?.runsPerGame == null ||
+    (attackerProfile?.scheduleGames ?? 0) < 2
+  ) {
+    return MATCHUP_SCHEDULE_RUNS_BLEND;
+  }
+  return Math.max(
+    MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR,
+    MATCHUP_SCHEDULE_RUNS_BLEND - 0.11 * slotsShort
+  );
+}
+
+function matchupOpponentDefenseScales(defenderProfile) {
+  const slotsShort = opponentShortHandedSlots(defenderProfile);
+  const raMult = defenderProfile?.runsAgainstMultiplier ?? 1;
+  if (slotsShort <= 0) {
+    return {
+      runsAgainstScale: MATCHUP_OPP_RUNS_AGAINST_SCALE,
+      defenseZScale: MATCHUP_RUN_DEF_Z_PCT,
+    };
+  }
+  const severity = Math.min(1, (raMult - 1) / 2.5);
+  return {
+    runsAgainstScale:
+      MATCHUP_OPP_RUNS_AGAINST_SCALE +
+      (MATCHUP_SHORT_HANDED_RA_SCALE_MAX - MATCHUP_OPP_RUNS_AGAINST_SCALE) * severity,
+    defenseZScale:
+      MATCHUP_RUN_DEF_Z_PCT +
+      (MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX - MATCHUP_RUN_DEF_Z_PCT) *
+        Math.min(1, slotsShort / 4),
+  };
+}
 
 function rosterStatWeights(playerNames, stats2026ByPlayer) {
   return (playerNames || []).map((name) => {
@@ -1988,13 +2039,16 @@ function projectRosterExpectedRuns(profile, opponentProfile, norms, runBase, ven
   const defOpp = opponentProfile.defenseZ ?? 0;
   const oppRa = opponentProfile.runsAgainstPerGame;
   const leagueRa = runBase.avgRunsAgainstPerGame || runBase.avgRunsPerTeam;
+  const { runsAgainstScale, defenseZScale } = matchupOpponentDefenseScales(opponentProfile);
 
   let mult =
-    (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - MATCHUP_RUN_DEF_Z_PCT * defOpp) * venueFactor;
+    (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) *
+    (1 - defenseZScale * defOpp) *
+    venueFactor;
 
   if (oppRa != null && leagueRa > 0) {
     const oppAllowFactor = oppRa / leagueRa;
-    mult *= 1 + MATCHUP_OPP_RUNS_AGAINST_SCALE * (oppAllowFactor - 1);
+    mult *= 1 + runsAgainstScale * (oppAllowFactor - 1);
   }
 
   return Math.max(2, runBase.avgRunsPerTeam * mult);
@@ -2004,7 +2058,7 @@ function projectTeamRuns(profile, opponentProfile, norms, runBase, venueFactor) 
   const rosterProj = projectRosterExpectedRuns(profile, opponentProfile, norms, runBase, venueFactor);
 
   if (profile.runsPerGame != null && profile.scheduleGames >= 2) {
-    const w = MATCHUP_SCHEDULE_RUNS_BLEND;
+    const w = matchupScheduleBlendWeight(profile, opponentProfile);
     return Math.max(2, w * profile.runsPerGame + (1 - w) * rosterProj);
   }
 
@@ -2134,20 +2188,26 @@ function predictMatchupGame(awayProfile, homeProfile, norms, runBase) {
   const awayPow = teamCompositePower(awayProfile, norms, false);
   const homePow = teamCompositePower(homeProfile, norms, true);
 
-  const awayRuns = projectTeamRuns(
+  let awayRuns = projectTeamRuns(
     awayProfile,
     homeProfile,
     norms,
     runBase,
     MATCHUP_AWAY_RUN_FACTOR
   );
-  const homeRuns = projectTeamRuns(
+  let homeRuns = projectTeamRuns(
     homeProfile,
     awayProfile,
     norms,
     runBase,
     MATCHUP_HOME_RUN_FACTOR
   );
+  ({ away: awayRuns, home: homeRuns } = applyCriticalRosterRunProjection(
+    awayProfile,
+    homeProfile,
+    awayRuns,
+    homeRuns
+  ));
   let runs = buildRoundedRunProjection(awayRuns, homeRuns);
   if (!runs) {
     return {
@@ -2172,8 +2232,14 @@ function predictMatchupGame(awayProfile, homeProfile, norms, runBase) {
   const pHomeRaw =
     MATCHUP_WIN_WEIGHT_FROM_RUNS * winFromRuns.home +
     MATCHUP_WIN_WEIGHT_FROM_TALENT * winFromTalent.home;
-  const pHome = shrinkWinProbTowardEven(pHomeRaw);
-  const pAway = 1 - pHome;
+  let pHome = shrinkWinProbTowardEven(pHomeRaw);
+  let pAway = 1 - pHome;
+  ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(
+    awayProfile,
+    homeProfile,
+    pAway,
+    pHome
+  ));
 
   runs = resolveTiedRunProjection(runs, pHome >= pAway);
   winFromRuns = winProbFromRunMargin(runs.home, runs.away);
