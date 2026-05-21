@@ -1,5 +1,15 @@
 {
   "firestore": {
     "rules": "firebase/firestore.rules"
+  },
+  "hosting": {
+    "public": "hosting",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "headers": [
+      {
+        "source": "**/*.mjs",
+        "headers": [{ "key": "Content-Type", "value": "text/javascript; charset=utf-8" }]
+      }
+    ]
   }
 }

@@ -5,6 +5,15 @@ const Papa = require("papaparse");
 const fs = require("fs/promises");
 const path = require("path");
 const { getFirebaseClientConfig } = require("./lib/firebaseClientConfig");
+const { buildWeeklyLeaderboardResponse } = require("./lib/dfsLeaderboardResponse");
+const {
+  getCachedDfsLeaderboardScoringContext,
+  loadWeeklySchedule,
+  setNodeCareerReader,
+} = require("./lib/dfsLeaderboardScoringContext");
+const fsPromises = require("fs/promises");
+
+setNodeCareerReader((filePath) => fsPromises.readFile(filePath, "utf8"));
 const { fetchCsvText } = require("./lib/fetchCsvText");
 const { createMemoryCache } = require("./lib/memoryCache");
 const { getAdminFirestore, isFirebaseAdminConfigured } = require("./lib/firebaseAdmin");
@@ -81,6 +90,9 @@ const {
   CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
+const { setCareerCsvFilePath } = require("./lib/sheetUrls");
+
+setCareerCsvFilePath(CAREER_CSV_PATH);
 /** Visible stat columns on `/stats/team/:id` (must match 2026 stats sheet / CSV headers; excludes Team, IDs, Player, IsRookie). */
 const TEAM_PAGE_2026_STAT_COLUMNS = Object.freeze([
   "PA",
@@ -824,101 +836,6 @@ function finishedScheduleGameDedupeKey(g) {
   const gid = safeText(g.gameId);
   if (gid) return `gid|${gid}`;
   return `m|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
-}
-
-async function loadWeeklySchedule() {
-  const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL), loadTeamRosters()]);
-  const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
-
-  const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort((a, b) => a.localeCompare(b));
-  const sundayIsosSorted = uniqueIsosSorted.filter((iso) => weekdayFromIso(iso) === 0);
-  const dateLabelByIso = new Map();
-  for (const g of parsedGames) {
-    if (!dateLabelByIso.has(g.isoDate)) dateLabelByIso.set(g.isoDate, g.dateDisplay);
-  }
-
-  const seen = new Set();
-  /** @type {Map<string, Array<{home: string, away: string, location: string, time: string, date: string, result: string, gameId: string, _iso: string}>>} */
-  const gamesByIso = new Map();
-
-  for (const g of parsedGames) {
-    const wd = weekdayFromIso(g.isoDate);
-    if (wd !== 0 && wd !== 3) continue;
-
-    const matchupIds = [g.awayId, g.homeId].sort((a, b) => a.localeCompare(b));
-    const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}|${g.venueLabel}`;
-    if (seen.has(dedupeKey)) continue;
-    seen.add(dedupeKey);
-
-    const awayTeamId = String(Number(safeText(g.awayId).replace(/\s+/g, "")));
-    const homeTeamId = String(Number(safeText(g.homeId).replace(/\s+/g, "")));
-
-    const resultText = formatFinishedScheduleResult(g.awayScore, g.homeScore, g.resultCsv, g.winnerCsv);
-    const row = {
-      home: g.homeName,
-      away: g.awayName,
-      awayTeamId,
-      homeTeamId,
-      location: (g.venueLabel && g.venueLabel.trim()) || g.field || "-",
-      time: g.time || "-",
-      date: g.dateDisplay || "",
-      result: resultText,
-      gameId: g.gameId,
-      _iso: g.isoDate,
-    };
-    if (!gamesByIso.has(g.isoDate)) gamesByIso.set(g.isoDate, []);
-    gamesByIso.get(g.isoDate).push(row);
-  }
-
-  for (const iso of gamesByIso.keys()) {
-    gamesByIso.set(iso, sortScheduleGameRows(gamesByIso.get(iso)));
-  }
-
-  /** One chronological dropdown: Sundays show date then week number; Wednesdays show date only. */
-  const scheduleOptions = [];
-  let sundayCounter = 0;
-  for (const iso of uniqueIsosSorted) {
-    const wd = weekdayFromIso(iso);
-    const dl = dateLabelByIso.get(iso) || iso;
-    if (wd === 0) {
-      sundayCounter += 1;
-      scheduleOptions.push({
-        value: `W${sundayCounter}`,
-        label: `${dl} • Week ${sundayCounter}`,
-      });
-    } else if (wd === 3) {
-      scheduleOptions.push({
-        value: `D${scheduleIsoToCompactDigits(iso)}`,
-        label: dl,
-      });
-    }
-  }
-
-  const allScheduleViews = scheduleOptions.map((o) => o.value);
-
-  const rosterByTeamId = {};
-  for (const t of teams) {
-    rosterByTeamId[t.teamId] = {
-      teamName: t.teamName,
-      captain: t.captain,
-      jerseyColor: t.jerseyColor,
-      numberColor: t.numberColor,
-      players: Array.isArray(t.players) ? t.players : [],
-    };
-  }
-
-  const scheduleRosterPayloadB64 = buildScheduleRosterPayloadB64(rosterByTeamId, teams);
-
-  return {
-    scheduleOptions,
-    allScheduleViews,
-    gamesByIso,
-    sundayIsosSorted,
-    uniqueIsosSorted,
-    dateLabelByIso,
-    rosterByTeamId,
-    scheduleRosterPayloadB64,
-  };
 }
 
 function resolveScheduleGamesForView(encodedView, payload) {
@@ -2762,95 +2679,13 @@ app.get("/dfs", async (req, res) => {
   }
 });
 
-async function loadDfsLeaderboardScoringContext() {
-  const [
-    teams,
-    careerByPlayer,
-    hist2025ByPlayer,
-    stats2026ByPlayer,
-    schedulePayload,
-    gamelogs,
-  ] = await Promise.all([
-    loadTeamRosters(),
-    loadCareerByPlayer(),
-    load2025HistoricalByPlayer(),
-    load2026StatsByPlayer(),
-    getCachedWeeklySchedule(),
-    load2026GamelogsByPlayer(),
-  ]);
-
-  const scheduleRows = await fetchCsvRows(SCHEDULE_URL);
-  const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-  const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
-
-  const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
-  const { moments } = weightedMomentsPerMetric(bundles);
-  const leagueRows = buildOffensivePlayerRows(
-    teams,
-    careerByPlayer,
-    hist2025ByPlayer,
-    stats2026ByPlayer,
-    moments
-  );
-  const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-  const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
-
-  return {
-    schedulePayload,
-    gamelogs,
-    scoringDeps: {
-      teams,
-      offenseRatingByNorm,
-      scheduleRunRates,
-      stats2026ByPlayer,
-      teamCodeById,
-      gamelogs,
-    },
-  };
-}
-
-const dfsScoringContextCache = createMemoryCache(
-  Number(process.env.DFS_SCORING_CACHE_TTL_MS) || 10 * 60 * 1000,
-  "dfs-scoring"
-);
-
 const weeklyScheduleCache = createMemoryCache(
   Number(process.env.SCHEDULE_CACHE_TTL_MS) || 10 * 60 * 1000,
   "weekly-schedule"
 );
 
-function getCachedDfsLeaderboardScoringContext() {
-  return dfsScoringContextCache.get("leaderboard-scoring", loadDfsLeaderboardScoringContext);
-}
-
 function getCachedWeeklySchedule() {
   return weeklyScheduleCache.get("payload", loadWeeklySchedule);
-}
-
-/** Weekly leaderboard: lineups for one slateId → fantasy points for that slate. */
-async function buildWeeklyLeaderboardResponse(selectedWeek, lineups) {
-  const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
-  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-  const nowMs = Date.now();
-  const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
-  const week =
-    selectedWeek && weekOptions.some((w) => w.value === selectedWeek)
-      ? selectedWeek
-      : defaultLeaderboardWeek(weekOptions);
-
-  const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
-  const weekly =
-    slate && Array.isArray(lineups)
-      ? await buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps)
-      : { rows: [], entryCount: 0 };
-
-  return {
-    selectedWeek: week,
-    weekly,
-    hasGamelogData: gamelogs.byNorm.size > 0,
-    slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
-    slate: slateSummaryForClient(slate),
-  };
 }
 
 /** Server-rendered standings (no browser Firestore fetch). */

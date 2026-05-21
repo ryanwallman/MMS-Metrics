@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+/**
+ * Bundle client-side DFS leaderboard scoring (runtime Google Sheets + career CSV).
+ * Run: npm run build:leaderboard-scoring
+ */
+import * as esbuild from "esbuild";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.join(__dirname, "..");
+
+await esbuild.build({
+  entryPoints: [path.join(root, "client/leaderboard-scoring-entry.mjs")],
+  bundle: true,
+  format: "esm",
+  platform: "browser",
+  target: ["es2020"],
+  outfile: path.join(root, "public/js/dfs-leaderboard-scoring.mjs"),
+  logLevel: "info",
+  define: {
+    "process.env.DFS_SCORING_CACHE_TTL_MS": '"600000"',
+    "process.env.SCHEDULE_CALENDAR_YEAR": '"2026"',
+    "process.env.GAMELOGS_2026_CSV_URL": '""',
+    "process.env.STATS_2026_CSV_URL": '""',
+    "process.env.CAREER_CSV_URL": '""',
+  },
+});
+
+console.log("Wrote public/js/dfs-leaderboard-scoring.mjs");

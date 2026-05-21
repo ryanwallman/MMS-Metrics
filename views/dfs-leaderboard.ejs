@@ -162,10 +162,12 @@
         selectedWeek: selectedWeek,
         leaderboardServerRead: typeof leaderboardServerRead !== 'undefined' ? leaderboardServerRead : false,
         serverRendered: false,
+        useClientScoring: true,
         slateLocked: lbSlateLocked,
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType, canEdit: slate.canEdit === true, isLocked: slate.canEdit !== true } : null
       }) %>;
     </script>
+    <script type="module" src="/js/dfs-leaderboard-scoring.mjs?v=<%= assetVersion %>"></script>
     <script type="module" src="/js/dfs-leaderboard.js?v=<%= assetVersion %>"></script>
     <% } %>
   </body>

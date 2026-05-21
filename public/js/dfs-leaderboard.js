@@ -54,7 +54,7 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT
   } catch (err) {
     if (err.name === "AbortError") {
       throw new Error(
-        "This is taking longer than expected. On Render’s free tier the first load after idle can take up to a minute while league data is fetched. Please wait and refresh once."
+        "This is taking longer than expected — the first load fetches league sheets from Google (often 30–60 seconds). Please wait and refresh once."
       );
     }
     throw err;
@@ -226,12 +226,16 @@ async function loadFromServerApi() {
 async function loadViaBrowserFirestore() {
   if (!config?.projectId) {
     throw new Error(
-      "Set FIREBASE_* keys on Render, or FIREBASE_SERVICE_ACCOUNT_JSON for server-side reads."
+      "Set FIREBASE_* keys for Firestore, or FIREBASE_SERVICE_ACCOUNT_JSON for server-side reads."
     );
   }
   const app = getApps().length ? getApp() : initializeApp(config);
   const db = getFirestore(app);
   const lineups = await fetchLineupsForSlate(db, page.selectedWeek);
+
+  if (page.useClientScoring && window.MmsLeaderboardScoring?.scoreWeeklyLeaderboard) {
+    return window.MmsLeaderboardScoring.scoreWeeklyLeaderboard(page.selectedWeek, lineups);
+  }
 
   const { res, data } = await fetchJsonWithTimeout("/api/dfs/leaderboard/score", {
     method: "POST",
