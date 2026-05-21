@@ -8,18 +8,10 @@
       <% (typeof siteNav !== "undefined" ? siteNav : []).forEach((item) => { %>
       <a
         href="<%= item.href %>"
-        class="site-nav-link<%= item.navSublabel ? " site-nav-link--stacked" : "" %><%= typeof navActive !== "undefined" && navActive === item.id ? " is-active" : "" %>"
+        class="site-nav-link<%= typeof navActive !== "undefined" && navActive === item.id ? " is-active" : "" %>"
         <%= typeof navActive !== "undefined" && navActive === item.id ? 'aria-current="page"' : "" %>
       >
-        <% if (item.navSublabel) { %>
-        <span class="site-nav-link-title"><%= item.label %></span>
-        <span class="site-nav-link-sub site-nav-link-sub--full"><%= item.navSublabel %></span>
-        <% if (item.navSublabelShort) { %>
-        <span class="site-nav-link-sub site-nav-link-sub--short"><%= item.navSublabelShort %></span>
-        <% } %>
-        <% } else { %>
         <%= item.label %>
-        <% } %>
       </a>
       <% }) %>
     </nav>

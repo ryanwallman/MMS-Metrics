@@ -38,6 +38,8 @@ const {
   DFS_LINEUP_SIZE,
   DFS_SALARY_CAP,
   DFS_SCORING,
+  DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+  DFS_OFFENSE_RATING_WEIGHT_2026,
   buildTeamCodeById,
   resolvePreviousDfsSlate,
   buildDfsSlateOptions,
@@ -56,6 +58,7 @@ const {
   buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
+  resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
 
 const app = express();
@@ -126,19 +129,12 @@ app.use(
 const SITE_NAV = Object.freeze([
   { id: "home", label: "League Leaders", href: "/" },
   { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor" },
-  {
-    id: "dfs",
-    label: "DFS Lineup",
-    href: "/dfs",
-    navSublabel:
-      "Experimental · slow loads. If you take your time, it all works — patience required.",
-    navSublabelShort: "Experimental · slow — patience required.",
-  },
+  { id: "dfs", label: "DFS Lineup", href: "/dfs" },
   { id: "power", label: "Power Rankings", href: "/rankings/power" },
 ]);
 
 const SITE_DISCLAIMER =
-  "This entire website is built from current-year and career statistics. The algorithm is not perfect by any means and will probably be wrong more than half the time. Regardless, this is a fun tool — please don’t use it to compare players, teams, or individuals against each other. This site is intended only to have fun and be an analytical tool for MMS super fans to play with during your 9–5. Thanks, and I hope you enjoy.";
+  "This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.";
 
 function formatDataUpdatedLabel(iso) {
   try {
@@ -1227,20 +1223,31 @@ function neutralCompositeZ() {
   return 0;
 }
 
-/** Rating = 70% hist + 30% 2026 when both exist; else the single available composite. */
-function blendedOffenseRating(composite26, compositeHist, has26, hasHist) {
+/** Rating blend when both career and 2026 exist; else the single available composite. */
+function blendedOffenseRating(composite26, compositeHist, has26, hasHist, blendWeights) {
+  const wHist = blendWeights?.historical ?? OFFENSE_RATING_WEIGHT_HISTORICAL;
+  const w26 = blendWeights?.y2026 ?? OFFENSE_RATING_WEIGHT_2026;
   if (has26 && hasHist) {
-    return (
-      OFFENSE_RATING_WEIGHT_HISTORICAL * compositeHist +
-      OFFENSE_RATING_WEIGHT_2026 * composite26
-    );
+    return wHist * compositeHist + w26 * composite26;
   }
   if (has26) return composite26;
   if (hasHist) return compositeHist;
   return neutralCompositeZ();
 }
 
-function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments) {
+const DFS_SALARY_RATING_BLEND = Object.freeze({
+  historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+  y2026: DFS_OFFENSE_RATING_WEIGHT_2026,
+});
+
+function buildOffensivePlayerRows(
+  teams,
+  careerByPlayer,
+  hist2025ByPlayer,
+  stats2026ByPlayer,
+  moments,
+  blendWeights
+) {
   const rows = [];
 
   for (const team of teams) {
@@ -1260,7 +1267,13 @@ function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats
       const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
       const hasHist = zHist != null;
 
-      const ratingRaw = blendedOffenseRating(composite26, compositeHist ?? 0, has26, hasHist);
+      const ratingRaw = blendedOffenseRating(
+        composite26,
+        compositeHist ?? 0,
+        has26,
+        hasHist,
+        blendWeights
+      );
       const ratingRounded = Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0;
 
       const opsDisplay26 =
@@ -2552,7 +2565,8 @@ app.get("/dfs", async (req, res) => {
       careerByPlayer,
       hist2025ByPlayer,
       stats2026ByPlayer,
-      moments
+      moments,
+      DFS_SALARY_RATING_BLEND
     );
     const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
     const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
@@ -2593,6 +2607,7 @@ app.get("/dfs", async (req, res) => {
       };
     }
     const canEdit = slate.canEdit ?? false;
+    const nextLineupLock = resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs);
 
     const playerPool = buildDfsPlayerPool({
       teams,
@@ -2672,6 +2687,8 @@ app.get("/dfs", async (req, res) => {
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,
       slateHasBoxScores: slateHasGamelogDates(slate, gamelogs),
+      nextLineupLockDeadlineMs: nextLineupLock.deadlineMs,
+      nextLineupLockDeadlineLabel: nextLineupLock.deadlineLabel,
     });
   } catch (error) {
     console.error(error);

@@ -777,11 +777,15 @@ var require_dfs = __commonJS({
     var DFS_SALARY_MIN = 5e3;
     var DFS_SALARY_MAX = 12e3;
     var DFS_SALARY_STEP = 100;
-    var DFS_BOTTOM_TIER_PCT = 0.18;
+    var DFS_SALARY_TIERS = 14;
+    var DFS_OFFENSE_RATING_BAND = 0.15;
+    var DFS_BOTTOM_TIER_PCT = 0.25;
     var DFS_SALARY_INTERNAL_MIN = 3e3;
-    var OFFENSE_SALARY_WEIGHT = 0.72;
-    var OPP_RUNS_SALARY_WEIGHT = 0.18;
-    var PITCHER_SALARY_WEIGHT = 0.1;
+    var OFFENSE_SALARY_WEIGHT = 0.8;
+    var OPP_RUNS_SALARY_WEIGHT = 0.12;
+    var PITCHER_SALARY_WEIGHT = 0.08;
+    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.85;
+    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.15;
     var DFS_SCORING = Object.freeze({
       single: 3,
       double: 5,
@@ -931,13 +935,53 @@ var require_dfs = __commonJS({
       );
       return 0.55 * baaEase + 0.45 * runsEase;
     }
-    function computePlayerSalary({ offenseRating, opponentRunsAgainst, opponentPitcher, leagueAvgRag }) {
+    function computeSalaryComposite({
+      offenseRating,
+      opponentRunsAgainst,
+      opponentPitcher,
+      leagueAvgRag
+    }) {
       const off = normalizeOffenseRating(offenseRating);
       const opp = normalizeRunsAgainst(opponentRunsAgainst, leagueAvgRag);
       const pit = normalizePitcherEase(opponentPitcher);
-      const composite = OFFENSE_SALARY_WEIGHT * off + OPP_RUNS_SALARY_WEIGHT * opp + PITCHER_SALARY_WEIGHT * pit;
-      const raw = DFS_SALARY_INTERNAL_MIN + composite * (DFS_SALARY_MAX - DFS_SALARY_INTERNAL_MIN);
+      return OFFENSE_SALARY_WEIGHT * off + OPP_RUNS_SALARY_WEIGHT * opp + PITCHER_SALARY_WEIGHT * pit;
+    }
+    function quantizeSalaryComposite(composite) {
+      const c = clamp(composite, 0, 1);
+      const tiers = Math.max(2, DFS_SALARY_TIERS);
+      const tier = Math.round(c * (tiers - 1));
+      return tier / (tiers - 1);
+    }
+    function salaryFromComposite(composite) {
+      const q = quantizeSalaryComposite(composite);
+      const raw = DFS_SALARY_INTERNAL_MIN + q * (DFS_SALARY_MAX - DFS_SALARY_INTERNAL_MIN);
       return roundSalary(raw);
+    }
+    function computePlayerSalary({ offenseRating, opponentRunsAgainst, opponentPitcher, leagueAvgRag }) {
+      const composite = computeSalaryComposite({
+        offenseRating,
+        opponentRunsAgainst,
+        opponentPitcher,
+        leagueAvgRag
+      });
+      return salaryFromComposite(composite);
+    }
+    function applyOffenseRatingSalaryBands(pool, bandWidth = DFS_OFFENSE_RATING_BAND) {
+      if (!pool.length || bandWidth <= 0) return pool;
+      const groups = /* @__PURE__ */ new Map();
+      for (const p of pool) {
+        const band = Math.round(toNumber(p.offenseRating) / bandWidth) * bandWidth;
+        const key = String(Math.round(band * 100) / 100);
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(p);
+      }
+      for (const group of groups.values()) {
+        const salaries = group.map((p) => p.salary).sort((a, b) => a - b);
+        const mid = salaries[Math.floor(salaries.length / 2)];
+        const unified = roundSalary(mid);
+        for (const p of group) p.salary = unified;
+      }
+      return pool;
     }
     function resolveUpcomingDfsSlate(referenceIso, schedulePayload, pickDefaultViewFn) {
       const viewToken = pickDefaultViewFn(referenceIso, schedulePayload);
@@ -1245,6 +1289,7 @@ var require_dfs = __commonJS({
           });
         }
       }
+      applyOffenseRatingSalaryBands(pool);
       applyBottomTierSalaryFloor(pool);
       enforceGlobalSalaryFloor(pool);
       sortDfsPlayerPool(pool);
@@ -1493,6 +1538,11 @@ var require_dfs = __commonJS({
       DFS_LINEUP_SIZE,
       DFS_SALARY_CAP,
       DFS_SCORING,
+      OFFENSE_SALARY_WEIGHT,
+      OPP_RUNS_SALARY_WEIGHT,
+      PITCHER_SALARY_WEIGHT,
+      DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+      DFS_OFFENSE_RATING_WEIGHT_2026,
       buildTeamCodeById,
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
@@ -1516,6 +1566,8 @@ var require_dfs = __commonJS({
       resolveActiveDfsSlateToken,
       buildSlateFromToken,
       computePlayerSalary,
+      computeSalaryComposite,
+      applyOffenseRatingSalaryBands,
       captainLastName,
       slateHasGamelogDates,
       normalizePlayerName
@@ -2180,7 +2232,13 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     var { canonicalRostersByTeamId } = require_customRosters2026();
     var { fetchCsvText } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
-    var { buildTeamCodeById, load2026GamelogsByPlayer, normalizePlayerName } = require_dfs();
+    var {
+      buildTeamCodeById,
+      load2026GamelogsByPlayer,
+      normalizePlayerName,
+      DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+      DFS_OFFENSE_RATING_WEIGHT_2026
+    } = require_dfs();
     var {
       INDEX_URL,
       SCHEDULE_URL,
@@ -2710,15 +2768,21 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         row2026.RBI
       );
     }
-    function blendedOffenseRating(composite26, compositeHist, has26, hasHist) {
+    function blendedOffenseRating(composite26, compositeHist, has26, hasHist, blendWeights) {
+      const wHist = blendWeights?.historical ?? OFFENSE_RATING_WEIGHT_HISTORICAL;
+      const w26 = blendWeights?.y2026 ?? OFFENSE_RATING_WEIGHT_2026;
       if (has26 && hasHist) {
-        return OFFENSE_RATING_WEIGHT_HISTORICAL * compositeHist + OFFENSE_RATING_WEIGHT_2026 * composite26;
+        return wHist * compositeHist + w26 * composite26;
       }
       if (has26) return composite26;
       if (hasHist) return compositeHist;
       return 0;
     }
-    function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments) {
+    var DFS_SALARY_RATING_BLEND = Object.freeze({
+      historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+      y2026: DFS_OFFENSE_RATING_WEIGHT_2026
+    });
+    function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
       const rows = [];
       for (const team of teams) {
         for (const playerName of team.players) {
@@ -2803,7 +2867,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         careerByPlayer,
         hist2025ByPlayer,
         stats2026ByPlayer,
-        moments
+        moments,
+        DFS_SALARY_RATING_BLEND
       );
       const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
       const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);

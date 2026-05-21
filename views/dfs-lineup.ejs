@@ -10,34 +10,83 @@
     <main class="page-main dfs-page<%= slate && !slate.canEdit ? ' dfs-page--readonly' : '' %>">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Lineup Builder</h1>
-        <p class="dfs-page-head-actions">
-          <a href="/dfs/leaderboard" class="dfs-btn dfs-btn--primary">Leaderboard ~30s load time</a>
-        </p>
+        <div class="dfs-page-head-actions">
+          <div class="dfs-info-wrap">
+            <button
+              type="button"
+              class="dfs-info-btn"
+              id="dfsIntroBtn"
+              aria-label="How DFS lineups work"
+              aria-expanded="false"
+              aria-controls="dfsIntroPanel"
+            >
+              <svg class="dfs-info-btn__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <circle cx="12" cy="8" r="1.25" fill="currentColor" />
+              </svg>
+            </button>
+            <div
+              id="dfsIntroPanel"
+              class="dfs-info-panel"
+              role="dialog"
+              aria-labelledby="dfsIntroPanelTitle"
+              hidden
+            >
+              <button type="button" class="dfs-info-panel__close" id="dfsIntroClose" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+              <h2 class="dfs-info-panel__title" id="dfsIntroPanelTitle">How DFS lineups work</h2>
+              <div class="dfs-info-panel__body dfs-intro">
+                <p>
+                  Build an <strong><%= lineupSize %>-player</strong> lineup for the next slate with a
+                  <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight <strong>offensive rating</strong> (~80%),
+                  <strong>opponent runs allowed</strong> (~12%), and the <strong>opposing primary pitcher</strong> (~8%).
+                  Player rating leans on <strong>career stats</strong> when available (about 85% career / 15% 2026 when both exist).
+                  <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
+                  <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
+                  The bottom <strong>25%</strong> of the slate by salary are all priced at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
+                  You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy). When you save, each player’s <strong>salary is locked</strong> at that moment even if slate prices change later.
+                  Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
+                  For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
+                </p>
+              </div>
+            </div>
+          </div>
+          <a href="/dfs/leaderboard" class="dfs-btn dfs-btn--primary">Leaderboard</a>
+        </div>
       </div>
-      <p class="page-note dfs-intro">
-        Build an <strong><%= lineupSize %>-player</strong> lineup for the next slate with a
-        <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight <strong>offensive rating</strong> (~72%),
-        <strong>opponent runs allowed</strong> (~18%), and the <strong>opposing primary pitcher</strong> (~10%).
-        <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
-        <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
-        Players whose salaries fall in the modest end of the slate are all shown at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
-        You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy). When you save, each player’s <strong>salary is locked</strong> at that moment even if slate prices change later.
-        Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
-        For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
-      </p>
 
-      <section class="dfs-leaderboard-alert" role="note" aria-label="Leaderboard competition">
-        <p>
-          <strong>To compete against others,</strong> you must sign in on this page and save your lineup for the slate.
-          The <a href="/dfs/leaderboard">leaderboard</a> only ranks lineups saved to an account.
-        </p>
-      </section>
+      <div class="dfs-lineup-notices" id="dfsLineupNotices">
+        <section
+          class="dfs-lineup-notice dfs-lineup-notice--compete"
+          id="dfsNoticeCompete"
+          role="note"
+          aria-label="Leaderboard competition"
+        >
+          <button type="button" class="dfs-notice-dismiss" data-notice-dismiss="compete" aria-label="Dismiss competition notice">
+            <span aria-hidden="true">×</span>
+          </button>
+          <p class="dfs-notice-text">
+            <strong>To compete against others,</strong> you must sign in on this page and save your lineup for the slate.
+            The <a href="/dfs/leaderboard">leaderboard</a> only ranks lineups saved to an account.
+          </p>
+        </section>
 
-      <section class="dfs-leaderboard-alert" role="note" aria-label="Lineup disclaimer">
-        <p>
-          <strong>Lineups are at your own risk.</strong> Rosters and schedules here do not guarantee anyone is active for a given slate—players may sit out, be injured, or miss that week for other reasons. Double-check real-world lineups before you lock in picks.
-        </p>
-      </section>
+        <section
+          class="dfs-lineup-notice dfs-lineup-notice--risk"
+          id="dfsNoticeRisk"
+          role="note"
+          aria-label="Lineup disclaimer"
+        >
+          <button type="button" class="dfs-notice-dismiss" data-notice-dismiss="risk" aria-label="Dismiss lineup disclaimer">
+            <span aria-hidden="true">×</span>
+          </button>
+          <p class="dfs-notice-text">
+            <strong>Lineups are at your own risk.</strong> Rosters and schedules here do not guarantee anyone is active for a given slate—players may sit out, be injured, or miss that week for other reasons. Double-check real-world lineups before you lock in picks.
+          </p>
+        </section>
+      </div>
 
       <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
@@ -86,37 +135,37 @@
       </p>
       <% } %>
 
-      <section class="dfs-slate-banner" aria-label="Current slate">
-        <h2 class="dfs-slate-title"><%= slate ? slate.label : 'No slate' %></h2>
-        <% if (!slate) { %>
-        <p class="dfs-slate-status">No slates on the schedule.</p>
-        <% } else if (slate.canEdit) { %>
-        <p class="dfs-slate-status dfs-slate-status--open">
-          Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong> (11:59 PM Eastern the night before games) ·
-          <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
-        </p>
-        <% } else if (slate.isPast) { %>
-        <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores appear when results are available for this slate.</p>
-        <% } else { %>
-        <p class="dfs-slate-status dfs-slate-status--locked">This slate isn’t editable right now.</p>
-        <% } %>
-        <% if (slate.games && slate.games.length) { %>
-        <ul class="dfs-game-list">
-          <% slate.games.forEach((g) => { %>
-          <li>
-            <span class="matchup-side-tag">Away</span> <%= g.away %> <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> <%= g.home %>
-            <% if (g.location && g.location !== '-') { %>
-            <span class="dfs-game-field"><%= g.location %></span>
-            <% } %>
-          </li>
-          <% }) %>
-        </ul>
-        <% } %>
-      </section>
-
       <div class="dfs-layout">
-        <aside class="dfs-sidebar">
-          <section class="dfs-lineup-card">
+        <div class="dfs-top-row">
+          <section class="dfs-slate-banner dfs-top-panel" aria-label="Current slate">
+            <h2 class="dfs-slate-title"><%= slate ? slate.label : 'No slate' %></h2>
+            <% if (!slate) { %>
+            <p class="dfs-slate-status">No slates on the schedule.</p>
+            <% } else if (slate.canEdit) { %>
+            <p class="dfs-slate-status dfs-slate-status--open">
+              Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong> (11:59 PM Eastern the night before games) ·
+              <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
+            </p>
+            <% } else if (slate.isPast) { %>
+            <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores appear when results are available for this slate.</p>
+            <% } else { %>
+            <p class="dfs-slate-status dfs-slate-status--locked">This slate isn’t editable right now.</p>
+            <% } %>
+            <% if (slate && slate.games && slate.games.length) { %>
+            <ul class="dfs-game-list">
+              <% slate.games.forEach((g) => { %>
+              <li>
+                <span class="matchup-side-tag">Away</span> <%= g.away %> <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> <%= g.home %>
+                <% if (g.location && g.location !== '-') { %>
+                <span class="dfs-game-field"><%= g.location %></span>
+                <% } %>
+              </li>
+              <% }) %>
+            </ul>
+            <% } %>
+          </section>
+
+          <section class="dfs-lineup-card dfs-top-panel">
             <h2 class="section-heading dfs-lineup-heading">
               <span class="dfs-lineup-heading-title">Your lineup</span><% if (slate && !slate.canEdit) { %>
               <span class="dfs-lineup-heading-points" id="lineupHeadingScore">Points: <strong data-points-value><% if (typeof showSlateStats !== 'undefined' && showSlateStats && scored && lineupNorms.length) { %><%= scored.total %><% } else { %>—<% } %></strong></span><% } %>
@@ -154,6 +203,57 @@
             <% } %>
           </section>
 
+          <section class="dfs-scoring-rules dfs-top-panel">
+            <h2 class="section-heading">Scoring (per game)</h2>
+            <% const dfsLockDeadlineMs =
+              typeof nextLineupLockDeadlineMs !== 'undefined' && nextLineupLockDeadlineMs != null
+                ? nextLineupLockDeadlineMs
+                : (slate && slate.canEdit && slate.lineupLockDeadlineMs != null
+                    ? slate.lineupLockDeadlineMs
+                    : null);
+            const dfsLockDeadlineLabel =
+              typeof nextLineupLockDeadlineLabel !== 'undefined' && nextLineupLockDeadlineLabel
+                ? nextLineupLockDeadlineLabel
+                : (slate && slate.lineupLockDeadlineLabel ? slate.lineupLockDeadlineLabel : '');
+            %>
+            <div
+              class="dfs-lock-countdown"
+              id="dfsLockCountdown"
+              <% if (dfsLockDeadlineMs != null) { %>data-deadline-ms="<%= dfsLockDeadlineMs %>"<% } %>
+              aria-live="polite"
+              <%= dfsLockDeadlineMs == null ? 'hidden' : '' %>
+            >
+              <p class="dfs-lock-countdown__label">Lineups lock in</p>
+              <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
+              <% if (dfsLockDeadlineLabel) { %>
+              <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen"><%= dfsLockDeadlineLabel %></p>
+              <% } else { %>
+              <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen" hidden></p>
+              <% } %>
+            </div>
+            <p
+              class="dfs-lock-countdown dfs-lock-countdown--closed"
+              id="dfsLockCountdownClosed"
+              <%= dfsLockDeadlineMs != null ? 'hidden' : '' %>
+            >
+              Lineups are locked — no upcoming slate deadline.
+            </p>
+            <ul class="dfs-rules-list">
+              <li>Single <strong>+<%= scoringRules.single %></strong></li>
+              <li>Double <strong>+<%= scoringRules.double %></strong></li>
+              <li>Triple <strong>+<%= scoringRules.triple %></strong></li>
+              <li>Home run <strong>+<%= scoringRules.hr %></strong></li>
+              <li>RBI <strong>+<%= scoringRules.rbi %></strong></li>
+              <li>Run <strong>+<%= scoringRules.run %></strong></li>
+              <li>Walk <strong>+<%= scoringRules.walk %></strong></li>
+            </ul>
+            <% if (!hasGamelogData) { %>
+            <p class="dfs-rules-note">Point totals aren’t available yet — check back after games are played.</p>
+            <% } %>
+          </section>
+        </div>
+
+        <div class="dfs-extra-panels">
           <% if (typeof lastWeekPreview !== 'undefined' && lastWeekPreview) { %>
           <section
             class="dfs-last-week-card"
@@ -187,22 +287,6 @@
           <script type="application/json" id="lastWeekPointsData"><%- JSON.stringify(lastWeekPreview.byNorm) %></script>
           <% } %>
 
-          <section class="dfs-scoring-rules">
-            <h2 class="section-heading">Scoring (per game)</h2>
-            <ul class="dfs-rules-list">
-              <li>Single <strong>+<%= scoringRules.single %></strong></li>
-              <li>Double <strong>+<%= scoringRules.double %></strong></li>
-              <li>Triple <strong>+<%= scoringRules.triple %></strong></li>
-              <li>Home run <strong>+<%= scoringRules.hr %></strong></li>
-              <li>RBI <strong>+<%= scoringRules.rbi %></strong></li>
-              <li>Run <strong>+<%= scoringRules.run %></strong></li>
-              <li>Walk <strong>+<%= scoringRules.walk %></strong></li>
-            </ul>
-            <% if (!hasGamelogData) { %>
-            <p class="dfs-rules-note">Point totals aren’t available yet — check back after games are played.</p>
-            <% } %>
-          </section>
-
           <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
           <section class="dfs-score-card" id="slateScoreCard">
             <h2 class="section-heading">Your lineup score</h2>
@@ -233,7 +317,7 @@
           <script type="application/json" id="slatePointsData"><%- JSON.stringify(slateStats.byNorm) %></script>
           <% } %>
           <% } %>
-        </aside>
+        </div>
 
         <section class="dfs-pool-section">
           <div class="dfs-pool-toolbar">
@@ -348,6 +432,117 @@
             salary: Number(row.getAttribute("data-salary")),
           });
         });
+
+        (function setupLineupLockCountdown() {
+          const wrap = document.getElementById("dfsLockCountdown");
+          const closed = document.getElementById("dfsLockCountdownClosed");
+          const timerEl = document.getElementById("dfsLockCountdownTimer");
+          if (!wrap || !timerEl) return;
+
+          const raw = wrap.getAttribute("data-deadline-ms");
+          const deadlineMs = raw ? Number(raw) : NaN;
+          if (!Number.isFinite(deadlineMs)) {
+            wrap.hidden = true;
+            if (closed) closed.hidden = false;
+            return;
+          }
+          if (closed) closed.hidden = true;
+          wrap.hidden = false;
+
+          function pad2(n) {
+            return String(n).padStart(2, "0");
+          }
+
+          function formatRemaining(ms) {
+            if (ms <= 0) return null;
+            const totalSec = Math.floor(ms / 1000);
+            const days = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+            const parts = [];
+            if (days > 0) parts.push(days + "d");
+            parts.push(pad2(hours) + "h");
+            parts.push(pad2(minutes) + "m");
+            parts.push(pad2(seconds) + "s");
+            return parts.join(" ");
+          }
+
+          function tick() {
+            const left = deadlineMs - Date.now();
+            const text = formatRemaining(left);
+            if (!text) {
+              timerEl.textContent = "Locked";
+              wrap.classList.add("dfs-lock-countdown--expired");
+              return;
+            }
+            timerEl.textContent = text;
+          }
+
+          tick();
+          window.setInterval(tick, 1000);
+        })();
+
+        (function setupDfsIntroInfo() {
+          const btn = document.getElementById("dfsIntroBtn");
+          const panel = document.getElementById("dfsIntroPanel");
+          const closeBtn = document.getElementById("dfsIntroClose");
+          if (!btn || !panel) return;
+
+          function setOpen(open) {
+            panel.hidden = !open;
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+          }
+
+          function toggle() {
+            setOpen(panel.hidden);
+          }
+
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggle();
+          });
+
+          closeBtn?.addEventListener("click", () => setOpen(false));
+
+          document.addEventListener("click", (e) => {
+            if (panel.hidden) return;
+            if (e.target.closest(".dfs-info-wrap")) return;
+            setOpen(false);
+          });
+
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !panel.hidden) setOpen(false);
+          });
+        })();
+
+        (function setupLineupNotices() {
+          const row = document.getElementById("dfsLineupNotices");
+          if (!row) return;
+
+          const storagePrefix = "mms-dfs-notice-dismiss-";
+
+          function syncNoticesLayout() {
+            const visible = row.querySelectorAll(".dfs-lineup-notice:not([hidden])");
+            row.classList.toggle("dfs-lineup-notices--single", visible.length === 1);
+            row.hidden = visible.length === 0;
+          }
+
+          row.querySelectorAll(".dfs-lineup-notice").forEach((notice) => {
+            const key = notice.id;
+            if (key && sessionStorage.getItem(storagePrefix + key)) {
+              notice.hidden = true;
+            }
+            const dismiss = notice.querySelector(".dfs-notice-dismiss");
+            dismiss?.addEventListener("click", () => {
+              notice.hidden = true;
+              if (key) sessionStorage.setItem(storagePrefix + key, "1");
+              syncNoticesLayout();
+            });
+          });
+
+          syncNoticesLayout();
+        })();
 
         (function setupDfsAuthClickDelegation() {
           const actions = document.getElementById("dfsAuthActions");

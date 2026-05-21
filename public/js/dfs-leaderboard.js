@@ -21,13 +21,13 @@ function esc(text) {
   return el.innerHTML;
 }
 
+/** True when the slate is locked — show salary column and link each name to their saved lineup. */
 function slateLocked(data, pageCtx) {
-  if (data?.slate?.isLocked === true) return true;
-  if (data?.slate?.canEdit === true) return false;
+  const slate = data?.slate || pageCtx?.slate;
+  if (slate?.isLocked === true || slate?.canEdit === false) return true;
+  if (slate?.canEdit === true) return false;
   if (pageCtx?.slateLocked) return true;
-  if (pageCtx?.slate?.isLocked === true) return true;
-  if (pageCtx?.slate?.canEdit === true) return false;
-  return pageCtx?.slate?.isPast !== false;
+  return slate?.isPast === true;
 }
 
 function tableColspan(locked) {
@@ -153,6 +153,8 @@ function showLoadingScreen() {
     screen.setAttribute("aria-busy", "true");
   }
   document.body.classList.remove("leaderboard-ready");
+  const main = document.querySelector(".dfs-leaderboard-page");
+  if (main) main.classList.add("dfs-leaderboard-page--loading");
 }
 
 function hideLoadingScreen() {
