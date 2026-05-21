@@ -53,7 +53,7 @@
               </div>
             </div>
           </div>
-          <a href="/dfs/leaderboard" class="dfs-btn dfs-btn--primary">Leaderboard</a>
+          <a href="<%= sitePath('/dfs/leaderboard') %>" class="dfs-btn dfs-btn--primary">Leaderboard</a>
         </div>
       </div>
 
@@ -69,7 +69,7 @@
           </button>
           <p class="dfs-notice-text">
             <strong>To compete against others,</strong> you must sign in on this page and save your lineup for the slate.
-            The <a href="/dfs/leaderboard">leaderboard</a> only ranks lineups saved to an account.
+            The <a href="<%= sitePath('/dfs/leaderboard') %>">leaderboard</a> only ranks lineups saved to an account.
           </p>
         </section>
 
@@ -124,7 +124,7 @@
 
       <% if (typeof allSlatesLocked !== 'undefined' && allSlatesLocked) { %>
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--season" role="status">
-        The season schedule is complete — all slates are view only. Browse past weeks below or check the <a href="/dfs/leaderboard">leaderboard</a>.
+        The season schedule is complete — all slates are view only. Browse past weeks below or check the <a href="<%= sitePath('/dfs/leaderboard') %>">leaderboard</a>.
       </p>
       <% } else if (slate && slate.isPast && !slate.canEdit) { %>
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
@@ -409,7 +409,7 @@
     <script>
       window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig) %>;
     </script>
-    <script type="module" src="/js/dfs-firebase.js?v=<%= assetVersion %>"></script>
+    <script type="module" src="<%= sitePath('/js/dfs-firebase.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
 
     <script>

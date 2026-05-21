@@ -7,5 +7,6 @@
   href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
   rel="stylesheet"
 />
-<link rel="preload" href="/styles.css?v=<%= assetVersion %>" as="style" />
-<link rel="stylesheet" href="/styles.css?v=<%= assetVersion %>" />
+<script>window.__SITE_BASE_PATH__ = "<%= typeof siteBasePath !== 'undefined' ? siteBasePath : '' %>";</script>
+<link rel="preload" href="<%= sitePath('/styles.css') %>?v=<%= assetVersion %>" as="style" />
+<link rel="stylesheet" href="<%= sitePath('/styles.css') %>?v=<%= assetVersion %>" />

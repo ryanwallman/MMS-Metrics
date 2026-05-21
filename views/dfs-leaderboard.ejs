@@ -31,13 +31,13 @@
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Leaderboard</h1>
         <p class="dfs-page-head-actions">
-          <a href="/dfs" class="dfs-btn">← Lineup builder</a>
+          <a href="<%= sitePath('/dfs') %>" class="dfs-btn">← Lineup builder</a>
         </p>
       </div>
 
       <p class="page-note dfs-intro">
         Saved lineups for the selected slate are loaded from Firebase and ranked by total fantasy points.
-        Scoring uses the same per-player slate points shown on the <a href="/dfs">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
+        Scoring uses the same per-player slate points shown on the <a href="<%= sitePath('/dfs') %>">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
         <% if (!lbSlateLocked) { %> Salary stays hidden until the slate locks.<% } else { %> Tap a name to view that player’s saved lineup.<% } %>
       </p>
 
@@ -56,7 +56,25 @@
 
       <section class="dfs-leaderboard-alert" id="leaderboardStatus" role="status" aria-live="polite" hidden></section>
 
-      <form method="GET" action="/dfs/leaderboard" class="dfs-slate-form dfs-leaderboard-week-form">
+      <% if (typeof staticSite !== 'undefined' && staticSite) { %>
+      <div class="dfs-slate-form dfs-leaderboard-week-form">
+        <label for="week">
+          <strong>Slate</strong>
+          <select id="week" name="week" onchange="location.assign(this.options[this.selectedIndex].dataset.href)">
+            <% weekOptions.forEach((opt) => { %>
+            <option
+              value="<%= opt.value %>"
+              data-href="<%= sitePath('/dfs/leaderboard/week/' + opt.value.toLowerCase() + '/') %>"
+              <%= opt.value === selectedWeek ? 'selected' : '' %>
+            >
+              <%= opt.label %><%= opt.isPast ? '' : ' (upcoming)' %>
+            </option>
+            <% }) %>
+          </select>
+        </label>
+      </div>
+      <% } else { %>
+      <form method="GET" action="<%= sitePath('/dfs/leaderboard') %>" class="dfs-slate-form dfs-leaderboard-week-form">
         <label for="week">
           <strong>Slate</strong>
           <select id="week" name="week" onchange="this.form.submit()">
@@ -68,6 +86,7 @@
           </select>
         </label>
       </form>
+      <% } %>
 
       <% if (slate) { %>
       <section class="dfs-slate-banner" aria-label="Selected slate">
@@ -152,17 +171,18 @@
     <% if (canLoadStandings && !serverRendered) { %>
     <script>
       window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig || null) %>;
+      window.__MMS_CAREER_CSV_URL__ = "<%= sitePath('/data/csv/career.csv') %>";
       window.__LEADERBOARD_PAGE__ = <%- JSON.stringify({
         selectedWeek: selectedWeek,
         leaderboardServerRead: typeof leaderboardServerRead !== 'undefined' ? leaderboardServerRead : false,
         serverRendered: false,
-        useClientScoring: true,
+        useClientScoring: typeof useClientScoring !== 'undefined' ? useClientScoring : true,
         slateLocked: lbSlateLocked,
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType, canEdit: slate.canEdit === true, isLocked: slate.canEdit !== true } : null
       }) %>;
     </script>
-    <script type="module" src="/js/dfs-leaderboard-scoring.mjs?v=<%= assetVersion %>"></script>
-    <script type="module" src="/js/dfs-leaderboard.js?v=<%= assetVersion %>"></script>
+    <script type="module" src="<%= sitePath('/js/dfs-leaderboard-scoring.mjs') %>?v=<%= assetVersion %>"></script>
+    <script type="module" src="<%= sitePath('/js/dfs-leaderboard.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
   </body>
 </html>

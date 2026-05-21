@@ -94,8 +94,20 @@ const {
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
 const { setCareerCsvFilePath } = require("./lib/sheetUrls");
+const {
+  normalizeSiteBasePath,
+  sitePath: buildSitePath,
+  mapNavHrefs,
+} = require("./lib/sitePaths");
 
 setCareerCsvFilePath(CAREER_CSV_PATH);
+
+const SITE_BASE_PATH = normalizeSiteBasePath(process.env.SITE_BASE_PATH || "");
+const STATIC_EXPORT = process.env.STATIC_EXPORT === "1";
+
+function sitePath(path) {
+  return buildSitePath(path, SITE_BASE_PATH);
+}
 /** Visible stat columns on `/stats/team/:id` (must match 2026 stats sheet / CSV headers; excludes Team, IDs, Player, IsRookie). */
 const TEAM_PAGE_2026_STAT_COLUMNS = Object.freeze([
   "PA",
@@ -156,8 +168,11 @@ function formatDataUpdatedLabel(iso) {
 function renderPage(res, view, locals = {}) {
   const generatedAt = locals.generatedAt || new Date().toISOString();
   res.render(view, {
-    siteNav: SITE_NAV,
+    siteNav: mapNavHrefs(SITE_NAV, SITE_BASE_PATH),
     siteDisclaimer: SITE_DISCLAIMER,
+    sitePath,
+    siteBasePath: SITE_BASE_PATH,
+    staticSite: STATIC_EXPORT,
     generatedAt,
     dataUpdatedLabel: formatDataUpdatedLabel(generatedAt),
     ...locals,
@@ -2824,12 +2839,15 @@ app.get("/dfs/leaderboard", async (req, res) => {
         : defaultLeaderboardWeek(weekOptions);
 
     if (safeText(req.query.tab).toLowerCase() === "cumulative") {
-      return res.redirect(302, `/dfs/leaderboard?week=${encodeURIComponent(selectedWeek)}`);
+      return res.redirect(
+        302,
+        sitePath(`/dfs/leaderboard?week=${encodeURIComponent(selectedWeek)}`)
+      );
     }
 
     const slate = buildLeaderboardSlateFromToken(selectedWeek, schedulePayload, refIso, nowMs);
     const firebaseClientConfig = getFirebaseClientConfig();
-    const adminConfigured = isFirebaseAdminConfigured();
+    const adminConfigured = STATIC_EXPORT ? false : isFirebaseAdminConfigured();
 
     let weeklyStandings = null;
     let weeklyStandingsError = null;
@@ -2848,6 +2866,8 @@ app.get("/dfs/leaderboard", async (req, res) => {
 
     const slateLocked = slate ? slate.canEdit !== true : false;
 
+    const useClientScoring = STATIC_EXPORT || !adminConfigured;
+
     renderPage(res, "dfs-leaderboard", {
       navActive: "dfs",
       weekOptions,
@@ -2858,10 +2878,13 @@ app.get("/dfs/leaderboard", async (req, res) => {
       slateHasBoxScoresForWeek,
       weeklyStandings,
       weeklyStandingsError,
-      serverRenderedStandings: !!(weeklyStandings && !weeklyStandingsError),
+      serverRenderedStandings: STATIC_EXPORT
+        ? false
+        : !!(weeklyStandings && !weeklyStandingsError),
       leaderboardServerRead: adminConfigured,
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,
+      useClientScoring,
       scoringRules: DFS_SCORING,
     });
   } catch (error) {
@@ -3099,7 +3122,18 @@ app.get("/matchup-predictor", async (req, res) => {
 
 /** Schedule page hidden for now. */
 app.get("/schedule", (req, res) => {
-  res.redirect(302, "/");
+  res.redirect(302, sitePath("/"));
+});
+
+/** Pretty paths for static GitHub Pages exports (redirect to query form on Node). */
+app.get("/dfs/slate/:slate", (req, res) => {
+  const token = safeText(req.params.slate).toUpperCase();
+  res.redirect(302, sitePath(`/dfs?slate=${encodeURIComponent(token)}`));
+});
+
+app.get("/dfs/leaderboard/week/:week", (req, res) => {
+  const week = safeText(req.params.week).toUpperCase();
+  res.redirect(302, sitePath(`/dfs/leaderboard?week=${encodeURIComponent(week)}`));
 });
 
 async function renderLeagueLeadersPage(res) {
@@ -3167,8 +3201,6 @@ app.get("/confirm-names", async (req, res) => {
   }
 });
 
-const HOST = process.env.HOST || "0.0.0.0";
-
 if (process.env.NODE_ENV === "production" && !getFirebaseClientConfig()) {
   console.warn(
     "[MMS] Firebase web config missing (FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID, …). Set the same names as .env in your host environment (e.g. Render → Environment) and redeploy."
@@ -3185,22 +3217,30 @@ process.on("SIGTERM", () => {
   console.log("[MMS] SIGTERM received — Render is stopping this instance (deploy, restart, or memory limit).");
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`Server running at http://${HOST}:${PORT}`);
-  if (isFirebaseAdminConfigured()) {
-    console.log("[MMS] Leaderboard: server-side Firestore reads enabled.");
-  } else {
-    console.warn(
-      "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
-    );
-  }
-  setTimeout(() => {
-    warmLeaderboardCaches()
-      .then(() => {
-        console.log("[MMS] Leaderboard data cache warmed.");
-      })
-      .catch((err) => {
-        console.error("[MMS] Leaderboard cache warm failed:", err.message);
-      });
-  }, LEADERBOARD_WARM_DELAY_MS);
-});
+if (require.main === module) {
+  const HOST = process.env.HOST || "0.0.0.0";
+  app.listen(PORT, HOST, () => {
+    console.log(`Server running at http://${HOST}:${PORT}`);
+    if (SITE_BASE_PATH) {
+      console.log(`[MMS] SITE_BASE_PATH=${SITE_BASE_PATH}`);
+    }
+    if (STATIC_EXPORT) {
+      console.log("[MMS] STATIC_EXPORT: client-side leaderboard scoring only.");
+    } else if (isFirebaseAdminConfigured()) {
+      console.log("[MMS] Leaderboard: server-side Firestore reads enabled.");
+    } else {
+      console.warn(
+        "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
+      );
+    }
+    setTimeout(() => {
+      warmLeaderboardCaches()
+        .then(() => {
+          console.log("[MMS] Leaderboard data cache warmed.");
+        })
+        .catch((err) => {
+          console.error("[MMS] Leaderboard cache warm failed:", err.message);
+        });
+    }, LEADERBOARD_WARM_DELAY_MS);
+  });
+}

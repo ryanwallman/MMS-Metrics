@@ -11,7 +11,7 @@
 
     <form
       method="GET"
-      action="/matchup-predictor"
+      action="<%= sitePath('/matchup-predictor') %>"
       class="matchup-predictor-form"
       id="matchupForm"
       <% if (typeof selectedMatchup !== 'undefined' && selectedMatchup) { %>data-matchup-key="<%= selectedMatchup %>"<% } %>

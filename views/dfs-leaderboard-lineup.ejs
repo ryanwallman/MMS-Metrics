@@ -11,8 +11,8 @@
       <div class="dfs-page-head">
         <h1 class="page-title"><%= detail.displayName %></h1>
         <p class="dfs-page-head-actions">
-          <a href="/dfs/leaderboard?week=<%= encodeURIComponent(selectedWeek) %>" class="dfs-btn">← Leaderboard</a>
-          <a href="/dfs?slate=<%= encodeURIComponent(selectedWeek) %>" class="dfs-btn">Lineup builder</a>
+          <a href="<%= typeof staticSite !== 'undefined' && staticSite ? sitePath('/dfs/leaderboard/week/' + selectedWeek.toLowerCase() + '/') : sitePath('/dfs/leaderboard?week=' + encodeURIComponent(selectedWeek)) %>" class="dfs-btn">← Leaderboard</a>
+          <a href="<%= typeof staticSite !== 'undefined' && staticSite ? sitePath('/dfs/slate/' + selectedWeek.toLowerCase() + '/') : sitePath('/dfs?slate=' + encodeURIComponent(selectedWeek)) %>" class="dfs-btn">Lineup builder</a>
         </p>
       </div>
 

@@ -2,7 +2,7 @@
 
 Repo layout is described in the root **`README.md`**. This file is the deploy guide.
 
-**GitHub Pages cannot run this app** (it needs Node/Express). **Render** connects to GitHub: pushes to `main` can auto-deploy. You add **mmsmetrics.com** in Render and DNS.
+**GitHub Pages** can host a **static export** of this app (no Node on Pages). See **`deploy/GITHUB_PAGES.md`**. For the full Express app (APIs, server leaderboard reads), use **Render** below. You add **mmsmetrics.com** in Render and DNS.
 
 ---
 

@@ -15,6 +15,28 @@ const page = window.__LEADERBOARD_PAGE__;
 
 const FETCH_TIMEOUT_MS = 90_000;
 
+function siteBase() {
+  return String(window.__SITE_BASE_PATH__ || "").replace(/\/+$/, "");
+}
+
+function siteUrl(path) {
+  const base = siteBase();
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${p}`;
+}
+
+function weekFromUrl() {
+  const m = window.location.pathname.match(/\/dfs\/leaderboard\/week\/([^/]+)\/?$/i);
+  if (m) return m[1].toUpperCase();
+  const q = new URLSearchParams(window.location.search).get("week");
+  return q ? String(q).trim().toUpperCase() : "";
+}
+
+if (page && !page.serverRendered) {
+  const urlWeek = weekFromUrl();
+  if (urlWeek) page.selectedWeek = urlWeek;
+}
+
 function esc(text) {
   const el = document.createElement("span");
   el.textContent = text == null ? "" : String(text);
@@ -215,7 +237,7 @@ async function loadFromServerApi() {
     throw new Error("No slate selected.");
   }
   const qs = new URLSearchParams({ week });
-  const { res, data } = await fetchJsonWithTimeout(`/api/dfs/leaderboard/data?${qs}`);
+  const { res, data } = await fetchJsonWithTimeout(siteUrl(`/api/dfs/leaderboard/data?${qs}`));
   if (res.status === 503 && data.needClientLineups) {
     return null;
   }
@@ -239,7 +261,7 @@ async function loadViaBrowserFirestore() {
     return window.MmsLeaderboardScoring.scoreWeeklyLeaderboard(page.selectedWeek, lineups);
   }
 
-  const { res, data } = await fetchJsonWithTimeout("/api/dfs/leaderboard/score", {
+  const { res, data } = await fetchJsonWithTimeout(siteUrl("/api/dfs/leaderboard/score"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

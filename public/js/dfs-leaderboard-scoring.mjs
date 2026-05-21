@@ -55,7 +55,7 @@ var require_sheetUrls = __commonJS({
       return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
     }
     function getCareerCsvSource() {
-      const url = "".trim();
+      const url = "/MMS-Metrics/data/csv/career.csv".trim();
       if (url) return { type: "url", url };
       if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
       return { type: "url", url: CAREER_CSV_PUBLIC_URL };
@@ -1093,6 +1093,29 @@ var require_dfs = __commonJS({
         timeZoneName: "shortGeneric"
       }).format(new Date(lockMs));
     }
+    function resolveNextLineupLockDeadline(slateOptions, slate, nowMs = Date.now()) {
+      if (typeof slate === "number" && Number.isFinite(slate)) {
+        nowMs = slate;
+        slate = null;
+      }
+      const options = slateOptions || [];
+      const editable = options.find((o) => o.canEdit);
+      let deadlineMs = null;
+      if (editable?.lineupLockDeadlineMs != null && Number.isFinite(editable.lineupLockDeadlineMs)) {
+        deadlineMs = editable.lineupLockDeadlineMs;
+      } else if (slate?.canEdit && slate.lineupLockDeadlineMs != null && Number.isFinite(slate.lineupLockDeadlineMs)) {
+        deadlineMs = slate.lineupLockDeadlineMs;
+      } else {
+        deadlineMs = options.map((o) => o.lineupLockDeadlineMs).filter((ms) => ms != null && Number.isFinite(ms) && ms > nowMs).sort((a, b) => a - b)[0] ?? null;
+      }
+      if (deadlineMs == null || !Number.isFinite(deadlineMs)) {
+        return { deadlineMs: null, deadlineLabel: "" };
+      }
+      return {
+        deadlineMs,
+        deadlineLabel: formatLineupLockDeadlineEst(deadlineMs)
+      };
+    }
     function buildDfsSlateOptions(schedulePayload, refIso, nowMs = Date.now()) {
       const raw = (schedulePayload.scheduleOptions || []).filter(
         (o) => /^(W\d+|D\d{8})$/i.test(o.value)
@@ -1564,6 +1587,7 @@ var require_dfs = __commonJS({
       buildDfsSlateOptions,
       filterVisibleDfsSlateOptions,
       resolveActiveDfsSlateToken,
+      resolveNextLineupLockDeadline,
       buildSlateFromToken,
       computePlayerSalary,
       computeSalaryComposite,
