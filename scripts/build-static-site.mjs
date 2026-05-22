@@ -31,27 +31,6 @@ function routeToFile(routePath) {
   return path.join(pathname.slice(1), "index.html");
 }
 
-function parseHtmlOptionValues(html, selectId) {
-  const re = new RegExp(
-    `<select[^>]*id=["']${selectId}["'][^>]*>([\\s\\S]*?)</select>`,
-    "i"
-  );
-  const block = html.match(re)?.[1] || "";
-  const values = [];
-  for (const m of block.matchAll(/<option[^>]*value=["']([^"']+)["']/gi)) {
-    values.push(m[1]);
-  }
-  return [...new Set(values.filter(Boolean))];
-}
-
-function parseDfsSlateTokens(html) {
-  const tokens = [];
-  for (const m of html.matchAll(/[?&]slate=([A-Za-z0-9]+)/gi)) {
-    tokens.push(m[1].toUpperCase());
-  }
-  return [...new Set(tokens.filter(Boolean))];
-}
-
 function waitForHealth(port, timeoutMs = 180_000) {
   const start = Date.now();
   return new Promise((resolve, reject) => {
@@ -83,13 +62,31 @@ async function copyDir(src, dest) {
   }
 }
 
+const FETCH_TIMEOUT_MS = Number(process.env.STATIC_FETCH_TIMEOUT_MS) || 180_000;
+const BUILD_MAX_MS = Number(process.env.STATIC_BUILD_MAX_MS) || 18 * 60 * 1000;
+
 async function fetchHtml(port, route) {
   const url = `http://127.0.0.1:${port}${route}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`GET ${route} → ${res.status}`);
+  const started = Date.now();
+  console.log(`[static] GET ${route} …`);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    if (!res.ok) {
+      throw new Error(`GET ${route} → ${res.status}`);
+    }
+    const html = await res.text();
+    console.log(`[static] GET ${route} ok (${((Date.now() - started) / 1000).toFixed(1)}s)`);
+    return html;
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(`GET ${route} timed out after ${FETCH_TIMEOUT_MS / 1000}s`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.text();
 }
 
 async function writeRoute(html, routePath) {
@@ -153,6 +150,11 @@ async function main() {
   server.stdout?.on("data", (d) => process.stdout.write(d));
   server.stderr?.on("data", (d) => process.stderr.write(d));
 
+  const stopServer = () => {
+    if (server.killed) return;
+    server.kill("SIGKILL");
+  };
+
   try {
     await waitForHealth(port);
 
@@ -161,22 +163,8 @@ async function main() {
       await writeRoute(html, route);
     }
 
-    const dfsHtml = await fetchHtml(port, "/dfs");
-    const slates = parseDfsSlateTokens(dfsHtml);
-    for (const slate of slates) {
-      const q = `/dfs?slate=${encodeURIComponent(slate)}`;
-      const html = await fetchHtml(port, q);
-      const fileRoute = `/dfs/slate/${slate.toLowerCase()}/`;
-      await writeRoute(html, fileRoute);
-    }
-
-    const lbHtml = await fetchHtml(port, "/dfs/leaderboard");
-    const weeks = parseHtmlOptionValues(lbHtml, "week");
-    for (const week of weeks) {
-      const q = `/dfs/leaderboard?week=${encodeURIComponent(week)}`;
-      const html = await fetchHtml(port, q);
-      await writeRoute(html, `/dfs/leaderboard/week/${week.toLowerCase()}/`);
-    }
+    // GitHub Pages serves the same index.html for ?slate= / ?week= query URLs — no per-token HTML needed.
+    console.log("[static] Skipping per-slate/per-week exports (use ?query on /dfs and /dfs/leaderboard).");
 
     console.log("[static] Copying public/ …");
     await copyDir(path.join(root, "public"), outDir);
@@ -184,11 +172,23 @@ async function main() {
 
     console.log(`[static] Done → ${outDir}`);
   } finally {
-    server.kill("SIGTERM");
+    stopServer();
   }
 }
 
-main().catch((err) => {
+function withBuildDeadline(promise) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      setTimeout(
+        () => reject(new Error(`Static build exceeded ${BUILD_MAX_MS / 60000} minute limit`)),
+        BUILD_MAX_MS
+      );
+    }),
+  ]);
+}
+
+withBuildDeadline(main()).catch((err) => {
   console.error("[static]", err.message || err);
   process.exit(1);
 });

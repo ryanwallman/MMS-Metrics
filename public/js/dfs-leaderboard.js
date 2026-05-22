@@ -26,10 +26,11 @@ function siteUrl(path) {
 }
 
 function weekFromUrl() {
+  const q = new URLSearchParams(window.location.search).get("week");
+  if (q) return String(q).trim().toUpperCase();
   const m = window.location.pathname.match(/\/dfs\/leaderboard\/week\/([^/]+)\/?$/i);
   if (m) return m[1].toUpperCase();
-  const q = new URLSearchParams(window.location.search).get("week");
-  return q ? String(q).trim().toUpperCase() : "";
+  return "";
 }
 
 if (page && !page.serverRendered) {

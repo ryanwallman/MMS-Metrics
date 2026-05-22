@@ -64,7 +64,7 @@
             <% weekOptions.forEach((opt) => { %>
             <option
               value="<%= opt.value %>"
-              data-href="<%= sitePath('/dfs/leaderboard/week/' + opt.value.toLowerCase() + '/') %>"
+              data-href="<%= sitePath('/dfs/leaderboard') %>?week=<%= encodeURIComponent(opt.value) %>"
               <%= opt.value === selectedWeek ? 'selected' : '' %>
             >
               <%= opt.label %><%= opt.isPast ? '' : ' (upcoming)' %>

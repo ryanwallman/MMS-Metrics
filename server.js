@@ -200,11 +200,7 @@ function buildScheduleRosterPayloadB64(rosterByTeamId, teams) {
 }
 
 async function fetchCsvRows(url) {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to load CSV (${response.status}) from ${url}`);
-  }
-  const csvText = await response.text();
+  const csvText = await fetchCsvText(url);
   return Papa.parse(csvText).data;
 }
 
@@ -3233,14 +3229,16 @@ if (require.main === module) {
         "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
       );
     }
-    setTimeout(() => {
-      warmLeaderboardCaches()
-        .then(() => {
-          console.log("[MMS] Leaderboard data cache warmed.");
-        })
-        .catch((err) => {
-          console.error("[MMS] Leaderboard cache warm failed:", err.message);
-        });
-    }, LEADERBOARD_WARM_DELAY_MS);
+    if (!STATIC_EXPORT) {
+      setTimeout(() => {
+        warmLeaderboardCaches()
+          .then(() => {
+            console.log("[MMS] Leaderboard data cache warmed.");
+          })
+          .catch((err) => {
+            console.error("[MMS] Leaderboard cache warm failed:", err.message);
+          });
+      }, LEADERBOARD_WARM_DELAY_MS);
+    }
   });
 }

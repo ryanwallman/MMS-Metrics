@@ -112,7 +112,7 @@
         <nav class="dfs-slate-picker" aria-label="Choose slate">
           <% slateOptions.forEach((opt) => { %>
           <a
-            href="/dfs?slate=<%= encodeURIComponent(opt.value) %>"
+            href="<%= sitePath('/dfs?slate=' + encodeURIComponent(opt.value)) %>"
             class="dfs-slate-chip<%= opt.value === selectedSlate ? ' is-selected' : '' %><%= opt.canEdit ? ' dfs-slate-chip--open' : ' dfs-slate-chip--locked' %><%= opt.isPast ? ' dfs-slate-chip--past' : '' %>"
             data-slate="<%= opt.value %>"
             <%= opt.value === selectedSlate ? 'aria-current="page"' : '' %>
@@ -130,7 +130,7 @@
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
         <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
         <% if (activeSlateToken) { %>
-        <a href="/dfs?slate=<%= encodeURIComponent(activeSlateToken) %>" class="dfs-slate-lock-link">Go to open slate</a>
+        <a href="<%= sitePath('/dfs?slate=' + encodeURIComponent(activeSlateToken)) %>" class="dfs-slate-lock-link">Go to open slate</a>
         <% } %>
       </p>
       <% } %>

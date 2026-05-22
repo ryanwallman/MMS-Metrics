@@ -44,6 +44,26 @@ Publish Firestore rules if needed:
 firebase deploy --only firestore
 ```
 
+## Build time and failures
+
+The **Build static site** step pre-renders **5 pages** (not dozens). Each page loads Google Sheets CSVs; expect **3–15 minutes** total on Actions.
+
+Watch the log for:
+
+```
+[static] GET /dfs …
+[static] GET /dfs ok (45.2s)
+```
+
+**If a run hit the 6-hour GitHub limit**, an older workflow was likely exporting every slate/week with **no timeouts**, so hung sheet requests never finished. The current workflow caps the job at **25 minutes** and fails fast if a route or CSV fetch hangs.
+
+| Limit | Value |
+|-------|--------|
+| Job | 25 min |
+| Build step | 20 min |
+| Each page fetch | 3 min |
+| Each Google CSV | 90 sec |
+
 ## Local build
 
 ```bash
