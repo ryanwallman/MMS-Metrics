@@ -69,7 +69,7 @@ async function fetchJsonWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT
         data = JSON.parse(text);
       } catch {
         throw new Error(
-          "The server returned an unexpected response. Check Render logs or try again in a minute."
+          "The server returned an unexpected response. Check the browser console or try again in a minute."
         );
       }
     }
@@ -251,7 +251,7 @@ async function loadFromServerApi() {
 async function loadViaBrowserFirestore() {
   if (!config?.projectId) {
     throw new Error(
-      "Set FIREBASE_* keys for Firestore, or FIREBASE_SERVICE_ACCOUNT_JSON for server-side reads."
+      "Set FIREBASE_* keys in .env (local) or GitHub Actions secrets (Pages) so Firestore can load lineups."
     );
   }
   const app = getApps().length ? getApp() : initializeApp(config);

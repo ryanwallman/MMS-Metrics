@@ -1408,6 +1408,17 @@ body > main.page-main {
   font-weight: normal;
 }
 
+.power-heat-legend {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.power-rankings-table .power-heat-cell {
+  font-variant-numeric: tabular-nums;
+  transition: background-color 0.15s ease;
+}
+
 .matchup-predictor-pair.schedule-roster-pair {
   align-items: stretch;
 }
@@ -1934,6 +1945,16 @@ body > main.page-main {
   color: #6b7280;
 }
 
+.dfs-username-input {
+  min-width: 12rem;
+  max-width: 100%;
+  padding: 8px 12px;
+  font-size: 15px;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+  border-radius: var(--mms-radius-sm);
+  background: #fff;
+}
+
 .dfs-slate-form {
   margin: 0 0 16px;
 }
@@ -2177,8 +2198,52 @@ body > main.page-main {
   display: none;
 }
 
+.dfs-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  height: 100%;
+}
+
+.dfs-lock-panel.dfs-top-panel {
+  border-color: rgba(234, 179, 8, 0.45);
+  background: linear-gradient(145deg, #ffffff 0%, #fffbeb 55%, #fef9c3 100%);
+}
+
+.dfs-lock-panel .section-heading {
+  margin-bottom: 10px;
+}
+
+.dfs-lock-panel .dfs-lock-countdown {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
+.dfs-lock-panel .dfs-lock-countdown--closed {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.dfs-pool-hidden-notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: var(--mms-radius-sm);
+}
+
 .dfs-lineup-card,
 .dfs-scoring-rules,
+.dfs-lock-panel,
 .dfs-score-card,
 .dfs-last-week-card,
 .dfs-slate-banner.dfs-top-panel {
@@ -2475,6 +2540,13 @@ body > main.page-main {
   font-size: 12px;
   color: #78716c;
   line-height: 1.35;
+}
+
+.dfs-lock-countdown__rule {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #57534e;
+  line-height: 1.4;
 }
 
 .dfs-rules-list {

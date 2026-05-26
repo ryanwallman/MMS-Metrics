@@ -46,9 +46,9 @@
                   <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
                   <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
                   The bottom <strong>25%</strong> of the slate by salary are all priced at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
-                  You can browse everything without an account. <strong>Sign in only on this page</strong> to save lineups for <strong>Sunday week slates</strong> (<code>W#</code>) and <strong>Wednesday slates</strong> (<code>D…</code>) to the cloud (your browser still keeps a local copy). When you save, each player’s <strong>salary is locked</strong> at that moment even if slate prices change later.
+                  You can browse everything without an account. To compete on the leaderboard, enter a <strong>display name</strong> (first name and last initial or full name) and save your lineup for <strong>Sunday week slates</strong> (<code>W#</code>) or <strong>Wednesday slates</strong> (<code>D…</code>). <strong>One lineup per device per slate.</strong> When you save to the database, each player’s <strong>salary is locked at that moment</strong> — the leaderboard always shows what you paid, not today’s prices. You can edit and re-save before the deadline; if you change players, new salaries apply on the next save.
                   Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
-                  For the open slate you can edit until <strong>11:59 PM Eastern on the night before games</strong> (e.g. Sunday games lock after Saturday 11:59 PM ET).
+                  <strong>Sunday</strong> slates lock at <strong>11:59 PM Eastern the night before games</strong>. <strong>Wednesday</strong> slates lock at <strong>5:00 PM Eastern on game day</strong>.
                 </p>
               </div>
             </div>
@@ -68,8 +68,8 @@
             <span aria-hidden="true">×</span>
           </button>
           <p class="dfs-notice-text">
-            <strong>To compete against others,</strong> you must sign in on this page and save your lineup for the slate.
-            The <a href="<%= sitePath('/dfs/leaderboard') %>">leaderboard</a> only ranks lineups saved to an account.
+            <strong>To compete against others,</strong> enter a display name and save your lineup for the slate.
+            The <a href="<%= sitePath('/dfs/leaderboard') %>">leaderboard</a> ranks saved lineups — one entry per device per slate.
           </p>
         </section>
 
@@ -91,19 +91,29 @@
       <% if (typeof firebaseEnabled !== 'undefined' && !firebaseEnabled) { %>
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
         <p>
-          <strong>Firebase is not configured on this server.</strong>
-          Locally, add web app keys to <code>.env</code>. In production, set the same <code>FIREBASE_*</code> names in your host’s environment (e.g. Render → Environment) and redeploy.
+          <strong>Firebase is not configured.</strong>
+          Locally, add web app keys to <code>.env</code>. For GitHub Pages, add the same <code>FIREBASE_*</code> names under <strong>Settings → Secrets and variables → Actions → Secrets</strong>, then re-run the Deploy GitHub Pages workflow.
         </p>
       </section>
       <% } %>
 
       <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled) { %>
-      <section class="dfs-auth-bar" id="dfsAuthBar" aria-label="Account">
-        <p class="dfs-auth-status" id="dfsAuthStatus">Restoring sign-in…</p>
-        <div class="dfs-auth-actions" id="dfsAuthActions">
-          <button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>
+      <section class="dfs-auth-bar" id="dfsPlayerBar" aria-label="Leaderboard name">
+        <label class="dfs-auth-status" for="dfsUsername">
+          <strong>Display name</strong> (shown on the leaderboard)
+        </label>
+        <div class="dfs-auth-actions">
+          <input
+            type="text"
+            id="dfsUsername"
+            class="dfs-username-input"
+            maxlength="24"
+            autocomplete="nickname"
+            placeholder="e.g. Mitch P or John Smith"
+          />
         </div>
-        <p class="dfs-auth-hint" id="dfsAuthHint" hidden>Week slates (<code>W#</code>) and Wednesday slates (<code>D…</code>) sync to your account when you save (this device also keeps a local copy).</p>
+        <p class="dfs-auth-hint" id="dfsPlayerHint">First name and last initial (or full name). One lineup per device per slate — update it anytime before the countdown hits zero.</p>
+        <p class="dfs-auth-status" id="dfsSubmitStatus" role="status" aria-live="polite"></p>
       </section>
       <% } %>
 
@@ -143,7 +153,7 @@
             <p class="dfs-slate-status">No slates on the schedule.</p>
             <% } else if (slate.canEdit) { %>
             <p class="dfs-slate-status dfs-slate-status--open">
-              Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong> (11:59 PM Eastern the night before games) ·
+              Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong><% if (slate.slateType === 'wednesday') { %> (5:00 PM Eastern on game day)<% } else { %> (11:59 PM Eastern the night before games)<% } %> ·
               <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
             </p>
             <% } else if (slate.isPast) { %>
@@ -194,7 +204,7 @@
             <p class="dfs-lineup-actions">
               <button type="button" class="dfs-btn dfs-btn--primary" id="saveLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Save lineup to database</button>
               <% if (typeof firebaseEnabled !== 'undefined' && firebaseEnabled) { %>
-              <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Sign in to load your saved lineup from the database">Load from database</button>
+              <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Load your saved lineup from the database">Load saved lineup</button>
               <% } %>
               <button type="button" class="dfs-btn" id="clearLineupBtn" <%= slate && !slate.canEdit ? 'disabled' : '' %>>Clear</button>
             </p>
@@ -203,8 +213,7 @@
             <% } %>
           </section>
 
-          <section class="dfs-scoring-rules dfs-top-panel">
-            <h2 class="section-heading">Scoring (per game)</h2>
+          <div class="dfs-side-stack">
             <% const dfsLockDeadlineMs =
               typeof nextLineupLockDeadlineMs !== 'undefined' && nextLineupLockDeadlineMs != null
                 ? nextLineupLockDeadlineMs
@@ -216,28 +225,39 @@
                 ? nextLineupLockDeadlineLabel
                 : (slate && slate.lineupLockDeadlineLabel ? slate.lineupLockDeadlineLabel : '');
             %>
-            <div
-              class="dfs-lock-countdown"
-              id="dfsLockCountdown"
-              <% if (dfsLockDeadlineMs != null) { %>data-deadline-ms="<%= dfsLockDeadlineMs %>"<% } %>
-              aria-live="polite"
-              <%= dfsLockDeadlineMs == null ? 'hidden' : '' %>
-            >
-              <p class="dfs-lock-countdown__label">Lineups lock in</p>
-              <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
-              <% if (dfsLockDeadlineLabel) { %>
-              <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen"><%= dfsLockDeadlineLabel %></p>
-              <% } else { %>
-              <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen" hidden></p>
-              <% } %>
-            </div>
-            <p
-              class="dfs-lock-countdown dfs-lock-countdown--closed"
-              id="dfsLockCountdownClosed"
-              <%= dfsLockDeadlineMs != null ? 'hidden' : '' %>
-            >
-              Lineups are locked — no upcoming slate deadline.
-            </p>
+            <section class="dfs-lock-panel dfs-top-panel" aria-label="Lineup deadline">
+              <h2 class="section-heading dfs-lock-panel__title">Lineup deadline</h2>
+              <div
+                class="dfs-lock-countdown"
+                id="dfsLockCountdown"
+                <% if (dfsLockDeadlineMs != null) { %>data-deadline-ms="<%= dfsLockDeadlineMs %>"<% } %>
+                aria-live="polite"
+                <%= dfsLockDeadlineMs == null ? 'hidden' : '' %>
+              >
+                <p class="dfs-lock-countdown__label">Lineups lock in (New York time)</p>
+                <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
+                <% if (dfsLockDeadlineLabel) { %>
+                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen"><%= dfsLockDeadlineLabel %></p>
+                <% if (slate && slate.slateType === 'wednesday') { %>
+                <p class="dfs-lock-countdown__rule">Wednesday slates lock at <strong>5:00 PM Eastern</strong> on game day.</p>
+                <% } else if (slate && slate.canEdit) { %>
+                <p class="dfs-lock-countdown__rule">Week slates lock at <strong>11:59 PM Eastern</strong> the night before games.</p>
+                <% } %>
+                <% } else { %>
+                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen" hidden></p>
+                <% } %>
+              </div>
+              <p
+                class="dfs-lock-countdown dfs-lock-countdown--closed"
+                id="dfsLockCountdownClosed"
+                <%= dfsLockDeadlineMs != null ? 'hidden' : '' %>
+              >
+                Lineups are locked — no upcoming slate deadline.
+              </p>
+            </section>
+
+            <section class="dfs-scoring-rules dfs-top-panel" aria-label="Scoring rules">
+            <h2 class="section-heading">Scoring (per game)</h2>
             <ul class="dfs-rules-list">
               <li>Single <strong>+<%= scoringRules.single %></strong></li>
               <li>Double <strong>+<%= scoringRules.double %></strong></li>
@@ -250,7 +270,8 @@
             <% if (!hasGamelogData) { %>
             <p class="dfs-rules-note">Point totals aren’t available yet — check back after games are played.</p>
             <% } %>
-          </section>
+            </section>
+          </div>
         </div>
 
         <div class="dfs-extra-panels">
@@ -319,7 +340,12 @@
           <% } %>
         </div>
 
-        <section class="dfs-pool-section">
+        <% if (!canEdit) { %>
+        <p class="dfs-pool-hidden-notice" role="status">
+          The player pool is hidden after the lineup deadline. Your saved lineup and locked salaries are shown above; the leaderboard uses those same prices.
+        </p>
+        <% } %>
+        <section class="dfs-pool-section" id="dfsPoolSection" <%= canEdit ? '' : 'hidden' %>>
           <div class="dfs-pool-toolbar">
             <h2 class="section-heading">Player pool</h2>
             <div class="dfs-pool-toolbar-actions">
@@ -357,7 +383,7 @@
                   <th>Gm</th>
                   <% } %>
                   <th>vs</th>
-                  <th>Pitcher</th>
+                  <th>Opposing Pitcher</th>
                 </tr>
               </thead>
               <tbody>
@@ -468,12 +494,18 @@
             return parts.join(" ");
           }
 
+          function hidePlayerPoolAfterLock() {
+            const poolSection = document.getElementById("dfsPoolSection");
+            if (poolSection) poolSection.hidden = true;
+          }
+
           function tick() {
             const left = deadlineMs - Date.now();
             const text = formatRemaining(left);
             if (!text) {
               timerEl.textContent = "Locked";
               wrap.classList.add("dfs-lock-countdown--expired");
+              hidePlayerPoolAfterLock();
               return;
             }
             timerEl.textContent = text;
@@ -544,47 +576,16 @@
           syncNoticesLayout();
         })();
 
-        (function setupDfsAuthClickDelegation() {
-          const actions = document.getElementById("dfsAuthActions");
-          if (!actions) return;
-
-          function signInErrorMessage(err) {
-            const code = err && err.code;
-            if (code === "auth/unauthorized-domain") {
-              return "Sign-in blocked: add this site’s hostname (e.g. localhost or your Render URL) under Firebase → Authentication → Settings → Authorized domains.";
-            }
-            if (code === "auth/popup-blocked" || code === "auth/cancelled-popup-request") {
-              return "Pop-up was blocked or closed. Allow pop-ups for this site and try again.";
-            }
-            if (code === "auth/operation-not-supported-in-this-environment") {
-              return "Google sign-in isn’t supported in this browser context. Open the site in a normal browser tab.";
-            }
-            return (
-              "Sign-in failed. In Firebase: enable Google under Sign-in method, and add this domain to Authorized domains. (" +
-              (code || "unknown") +
-              ")"
-            );
-          }
-
-          actions.addEventListener("click", (e) => {
-            const signIn = e.target.closest("#dfsSignInBtn");
-            const signOut = e.target.closest("#dfsSignOutBtn");
-            if (signOut) {
-              e.preventDefault();
-              window.DfsFirebase?.signOut();
-              return;
-            }
-            if (!signIn) return;
-            e.preventDefault();
-            const statusEl = document.getElementById("dfsAuthStatus");
-            if (!window.DfsFirebase) {
-              if (statusEl) statusEl.textContent = "Loading sign-in… wait a moment, then try again.";
-              return;
-            }
-            window.DfsFirebase.signInWithGoogle().catch((err) => {
-              console.error(err);
-              if (statusEl) statusEl.textContent = signInErrorMessage(err);
-            });
+        (function setupPlayerBar() {
+          const input = document.getElementById("dfsUsername");
+          if (!input) return;
+          const saved = (localStorage.getItem("mms-dfs-username") || "").trim();
+          if (saved) input.value = saved;
+          input.addEventListener("change", () => {
+            window.DfsLineupStore?.setUsername?.(input.value);
+          });
+          input.addEventListener("input", () => {
+            window.DfsLineupStore?.setUsername?.(input.value);
           });
         })();
 
@@ -660,9 +661,12 @@
           if (!/^W\d+$/i.test(slateKey) && !/^D\d{8}$/i.test(slateKey)) {
             throw new Error("Cloud save is only for Sunday week slates (W1, W2, …) and Wednesday slates (D + date).");
           }
-          if (!window.DfsFirebase?.isReady?.()) {
-            throw new Error("Sign in with Google first to save your lineup to the database.");
+          if (!window.DfsLineupStore) {
+            throw new Error("Lineup storage is still loading — wait a moment and try again.");
           }
+          const usernameInput = document.getElementById("dfsUsername");
+          const displayName = usernameInput ? usernameInput.value : "";
+          window.DfsLineupStore.validateUsername(displayName);
           if (lineup.length !== LINEUP_SIZE) {
             throw new Error("Pick exactly " + LINEUP_SIZE + " players before saving.");
           }
@@ -671,7 +675,7 @@
           }
           const playerSalaries = buildPlayerSalariesArray();
           const used = playerSalaries.reduce((s, n) => s + n, 0);
-          await window.DfsFirebase.saveLineup(slateKey, lineup, used, playerSalaries);
+          await window.DfsLineupStore.saveLineup(slateKey, lineup, used, playerSalaries, displayName);
         }
 
         function salaryTotal() {
@@ -844,7 +848,7 @@
                       p.team +
                       " · $" +
                       slotSalary.toLocaleString() +
-                      (locked ? " (locked)" : "") +
+                      (locked ? " (locked at save)" : "") +
                       ptsLabel;
                     const removeBtn = CAN_EDIT
                       ? '<button type="button" class="dfs-remove-btn" data-remove="' +
@@ -938,31 +942,30 @@
 
         document.getElementById("saveLineupBtn").addEventListener("click", async () => {
           const btn = document.getElementById("saveLineupBtn");
-          const status = document.getElementById("dfsAuthStatus");
+          const status = document.getElementById("dfsSubmitStatus");
           try {
             persistLineup();
             btn.disabled = true;
             const prevLabel = btn.textContent;
             btn.textContent = "Saving…";
+            const hadSaved = await window.DfsLineupStore.hasLineupForSlate(slateKey);
             await saveLineupToCloud();
             setLineupSyncStatus(
-              "Lineup saved to the database. It now matches this device.",
+              hadSaved
+                ? "Lineup updated for " + slateKey.toUpperCase() + ". You can keep editing until the deadline."
+                : "Lineup saved for " + slateKey.toUpperCase() + ". You can change it anytime before the deadline.",
               false
             );
             if (status) {
               status.textContent =
-                "Lineup saved to the database for " + slateKey.toUpperCase() + ".";
+                "Saved as " + (window.DfsLineupStore?.getUsername?.() || "Player") + " for " + slateKey.toUpperCase() + ".";
             }
-            btn.textContent = "Saved";
-            setTimeout(() => {
-              btn.textContent = prevLabel;
-              btn.disabled = false;
-            }, 2500);
+            await updateSaveButtonState();
           } catch (err) {
             console.error(err);
             btn.disabled = false;
-            btn.textContent = "Save lineup";
-            alert(err.message || "Could not save lineup. Try again, or sign out and sign back in.");
+            await updateSaveButtonState();
+            alert(err.message || "Could not save lineup. Try again.");
           }
         });
 
@@ -1140,21 +1143,46 @@
         function updateLoadFromDbButton() {
           const btn = document.getElementById("loadFromDbBtn");
           if (!btn) return;
-          const signedIn = !!window.DfsFirebase?.isReady?.();
-          const canLoad = signedIn && isCloudSlateKey(slateKey);
+          const canLoad = !!window.DfsLineupStore && isCloudSlateKey(slateKey);
           btn.disabled = !canLoad;
           if (canLoad) {
-            btn.title = "Load your saved database lineup and compare with this device";
-          } else if (signedIn) {
-            btn.title = "This slate does not sync to the database";
+            btn.title = "Load your submitted lineup for this slate";
           } else {
-            btn.title = "Sign in to load your saved lineup from the database";
+            btn.title = "This slate does not sync to the database";
+          }
+        }
+
+        async function updateSaveButtonState() {
+          const btn = document.getElementById("saveLineupBtn");
+          const status = document.getElementById("dfsSubmitStatus");
+          if (!btn || !window.DfsLineupStore) return;
+          if (!isCloudSlateKey(slateKey)) {
+            btn.textContent = "Save lineup to database";
+            return;
+          }
+          if (!CAN_EDIT) {
+            btn.disabled = true;
+            btn.textContent = "Lineup locked";
+            return;
+          }
+          try {
+            const submitted = await window.DfsLineupStore.hasLineupForSlate(slateKey);
+            btn.disabled = false;
+            btn.textContent = submitted ? "Update saved lineup" : "Save lineup to database";
+            if (status && submitted) {
+              status.textContent =
+                "You have a saved lineup for " +
+                slateKey.toUpperCase() +
+                " — change players and save again before the deadline.";
+            }
+          } catch (e) {
+            console.warn("Save button state", e);
           }
         }
 
         async function autoLoadLockedLineupForView() {
           if (CAN_EDIT || !isCloudSlateKey(slateKey)) return;
-          if (!window.DfsFirebase?.isReady?.()) return;
+          if (!window.DfsLineupStore) return;
           try {
             await pullLineupFromDatabase(true);
           } catch (e) {
@@ -1163,13 +1191,13 @@
         }
 
         async function pullLineupFromDatabase(silent) {
-          if (!window.DfsFirebase?.isReady?.()) {
-            throw new Error("Sign in with Google first to load your lineup from the database.");
+          if (!window.DfsLineupStore) {
+            throw new Error("Lineup storage is still loading — wait a moment and try again.");
           }
           if (!isCloudSlateKey(slateKey)) {
             throw new Error("This slate cannot sync to the database.");
           }
-          const cloudRaw = await window.DfsFirebase.loadLineup(slateKey);
+          const cloudRaw = await window.DfsLineupStore.loadLineup(slateKey);
           const cloudNorms = normalizeLineupNorms(
             cloudRaw?.playerNorms || (Array.isArray(cloudRaw) ? cloudRaw : [])
           );
@@ -1201,37 +1229,39 @@
           applyLineupFromArray(cloudNorms, cloudSalaries);
         }
 
-        function setupFirebaseAuth() {
-          const status = document.getElementById("dfsAuthStatus");
-          const actions = document.getElementById("dfsAuthActions");
-          const hint = document.getElementById("dfsAuthHint");
-          if (!window.DfsFirebase) {
-            if (status) status.textContent = "";
-            return;
-          }
-
-          window.DfsFirebase.onAuthChange(async (user) => {
-            if (!status || !actions) return;
-            if (user) {
-              status.textContent = "Signed in as " + (user.displayName || user.email || "Player");
-              actions.innerHTML =
-                '<button type="button" class="dfs-btn" id="dfsSignOutBtn">Sign out</button>' +
-                '<span class="dfs-auth-sync">Lineups sync for W# and Wednesday slates</span>';
-              if (hint) hint.hidden = false;
-              updateLoadFromDbButton();
-              await autoLoadLockedLineupForView();
-            } else {
-              status.textContent = "Not signed in — you can still build a lineup here. Sign in to save it to the cloud.";
-              actions.innerHTML =
-                '<button type="button" class="dfs-btn dfs-btn--primary" id="dfsSignInBtn">Sign in with Google</button>';
-              if (hint) hint.hidden = true;
-              setLineupSyncStatus("", false);
-              updateLoadFromDbButton();
+        async function loadSavedLineupForOpenSlate() {
+          if (!CAN_EDIT || !isCloudSlateKey(slateKey) || !window.DfsLineupStore) return;
+          try {
+            const cloudRaw = await window.DfsLineupStore.loadLineup(slateKey);
+            const cloudNorms = normalizeLineupNorms(cloudRaw?.playerNorms || []);
+            if (!cloudNorms.length) return;
+            applyLineupFromArray(cloudNorms, cloudRaw?.playerSalaries || null);
+            const un = document.getElementById("dfsUsername");
+            if (un && cloudRaw.displayName) {
+              un.value = cloudRaw.displayName;
+              window.DfsLineupStore.setUsername(cloudRaw.displayName);
             }
-          });
+            setLineupSyncStatus(
+              "Loaded your saved lineup — update it anytime before the deadline.",
+              false
+            );
+          } catch (e) {
+            console.warn("Load saved lineup", e);
+          }
+        }
+
+        async function setupLineupStore() {
+          updateLoadFromDbButton();
+          if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
+            await autoLoadLockedLineupForView();
+          } else {
+            await loadSavedLineupForOpenSlate();
+          }
+          await updateSaveButtonState();
         }
 
         function initLineupFromStorage() {
+          if (!CAN_EDIT && isCloudSlateKey(slateKey)) return;
           const stored = loadStored();
           if (stored && stored.length) {
             lineup = stored.slice(0, LINEUP_SIZE);
@@ -1243,17 +1273,23 @@
         initLineupFromStorage();
         setSortMode(SHOW_SLATE_STATS ? "points" : "salary");
 
+        async function initLineupForPage() {
+          if (window.DfsLineupStore) {
+            await setupLineupStore();
+          } else if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
+            syncUi();
+          }
+        }
+
         window.addEventListener(
-          "dfs-firebase-ready",
+          "dfs-lineup-store-ready",
           () => {
-            setupFirebaseAuth();
-            updateLoadFromDbButton();
+            initLineupForPage();
           },
           { once: true }
         );
-        if (window.DfsFirebase) {
-          setupFirebaseAuth();
-          updateLoadFromDbButton();
+        if (window.DfsLineupStore) {
+          initLineupForPage();
         }
       })();
     </script>

@@ -45,7 +45,7 @@
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
         <p>
           <strong>Standings cannot load yet.</strong>
-          On Render, set <code>FIREBASE_PROJECT_ID</code> and <code>FIREBASE_SERVICE_ACCOUNT_JSON</code> (recommended), or the web <code>FIREBASE_*</code> keys used on the lineup builder page.
+          Set the web <code>FIREBASE_*</code> keys (locally in <code>.env</code>, or as GitHub Actions secrets for Pages). The leaderboard loads lineups from Firestore in your browser.
         </p>
       </section>
       <% } else if (typeof weeklyStandingsError !== 'undefined' && weeklyStandingsError) { %>
@@ -119,7 +119,7 @@
               <th scope="col">Rank</th>
               <th scope="col">Player</th>
               <th scope="col">Points</th>
-              <% if (lbSlateLocked) { %><th scope="col">Salary</th><% } %>
+              <% if (lbSlateLocked) { %><th scope="col">Salary at save</th><% } %>
             </tr>
           </thead>
           <tbody id="leaderboardWeeklyBody">

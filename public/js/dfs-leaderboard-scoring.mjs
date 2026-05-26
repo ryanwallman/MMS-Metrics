@@ -55,7 +55,7 @@ var require_sheetUrls = __commonJS({
       return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
     }
     function getCareerCsvSource() {
-      const url = "/MMS-Metrics/data/csv/career.csv".trim();
+      const url = "/data/csv/career.csv".trim();
       if (url) return { type: "url", url };
       if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
       return { type: "url", url: CAREER_CSV_PUBLIC_URL };
@@ -742,21 +742,37 @@ var require_fetchCsvText = __commonJS({
     function setFetchCsvTextOverride(fn) {
       fetchCsvTextOverride = typeof fn === "function" ? fn : null;
     }
+    function csvFetchTimeoutMs() {
+      const fromEnv = Number(process.env.CSV_FETCH_TIMEOUT_MS);
+      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+      if (process.env.STATIC_EXPORT === "1") return 9e4;
+      return 0;
+    }
+    async function fetchUrlText(url) {
+      const timeoutMs = csvFetchTimeoutMs();
+      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+      try {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+          throw new Error(`Failed to load CSV (${res.status}) from ${url}`);
+        }
+        let text = await res.text();
+        text = text.replace(/^\ufeff/, "");
+        return text;
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          throw new Error(`Timed out loading CSV after ${timeoutMs / 1e3}s: ${url}`);
+        }
+        throw err;
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) throw new Error("CSV URL is empty.");
       if (fetchCsvTextOverride) {
         return fetchCsvTextOverride(safeUrl);
       }
-      return csvTextCache.get(safeUrl, async () => {
-        const res = await fetch(safeUrl);
-        if (!res.ok) {
-          throw new Error(`Failed to load CSV (${res.status}) from ${safeUrl}`);
-        }
-        let text = await res.text();
-        text = text.replace(/^\ufeff/, "");
-        return text;
-      });
+      return csvTextCache.get(safeUrl, () => fetchUrlText(safeUrl));
     }
     module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
@@ -2249,11 +2265,80 @@ Pat Ciaglia
   }
 });
 
+// lib/teamRosters.js
+var require_teamRosters = __commonJS({
+  "lib/teamRosters.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { canonicalRostersByTeamId } = require_customRosters2026();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { INDEX_URL, ROSTER_URL } = require_sheetUrls();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    async function fetchCsvRows(url) {
+      const csvText = await fetchCsvText(url);
+      return Papa.parse(csvText).data;
+    }
+    function buildTeamMap(indexRows) {
+      const teamMap = /* @__PURE__ */ new Map();
+      for (let i = 1; i < indexRows.length; i += 1) {
+        const row = indexRows[i];
+        const teamId = safeText(row[4]);
+        const captain = safeText(row[5]);
+        const teamName = safeText(row[7]);
+        const jerseyColor = safeText(row[10]) || "#1f2937";
+        const numberColor = safeText(row[11]) || "#ffffff";
+        if (!teamId || !captain) continue;
+        teamMap.set(teamId, { teamId, captain, teamName, jerseyColor, numberColor });
+      }
+      return teamMap;
+    }
+    function buildRosterByCaptain(rosterRows) {
+      const rosterMap = /* @__PURE__ */ new Map();
+      function extractRosterRange(captainRowIndex, playerStartRowIndex, startCol, endCol) {
+        for (let col = startCol; col <= endCol; col += 1) {
+          const captain = safeText(rosterRows[captainRowIndex] && rosterRows[captainRowIndex][col]);
+          if (!captain) continue;
+          const players = [];
+          for (let r = playerStartRowIndex; r < playerStartRowIndex + 13; r += 1) {
+            const player = safeText(rosterRows[r] && rosterRows[r][col]);
+            if (player) players.push(player);
+          }
+          rosterMap.set(captain, players);
+        }
+      }
+      extractRosterRange(1, 3, 0, 18);
+      extractRosterRange(16, 18, 0, 18);
+      return rosterMap;
+    }
+    async function loadTeamRosters() {
+      const [indexRows, rosterRows] = await Promise.all([
+        fetchCsvRows(INDEX_URL),
+        fetchCsvRows(ROSTER_URL)
+      ]);
+      const teamMap = buildTeamMap(indexRows);
+      const rosterByCaptain = buildRosterByCaptain(rosterRows);
+      const teams = [];
+      for (let id = 1; id <= 18; id += 1) {
+        const teamId = String(id);
+        const teamMeta = teamMap.get(teamId) || { teamId, captain: "", teamName: `Team ${teamId}` };
+        const players = canonicalRostersByTeamId[teamId] || rosterByCaptain.get(teamMeta.captain) || [];
+        teams.push({ ...teamMeta, players });
+      }
+      return teams;
+    }
+    module.exports = {
+      buildTeamMap,
+      buildRosterByCaptain,
+      loadTeamRosters
+    };
+  }
+});
+
 // lib/dfsLeaderboardScoringContext.js
 var require_dfsLeaderboardScoringContext = __commonJS({
   "lib/dfsLeaderboardScoringContext.js"(exports, module) {
     var Papa = require_papaparse_min();
-    var { canonicalRostersByTeamId } = require_customRosters2026();
     var { fetchCsvText } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
     var {
@@ -2264,9 +2349,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       DFS_OFFENSE_RATING_WEIGHT_2026
     } = require_dfs();
     var {
-      INDEX_URL,
       SCHEDULE_URL,
-      ROSTER_URL,
       HIST_2025_STATS_URL,
       SCHEDULE_CALENDAR_YEAR,
       getStats2026CsvUrl,
@@ -2296,46 +2379,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const csvText = await fetchCsvText(url);
       return Papa.parse(csvText).data;
     }
-    function buildTeamMap(indexRows) {
-      const teamMap = /* @__PURE__ */ new Map();
-      for (let i = 1; i < indexRows.length; i += 1) {
-        const row = indexRows[i];
-        const teamId = safeText(row[4]);
-        const captain = safeText(row[1]);
-        const teamName = safeText(row[2]);
-        if (!teamId) continue;
-        teamMap.set(teamId, { teamId, captain, teamName });
-      }
-      return teamMap;
-    }
-    function buildRosterByCaptain(rosterRows) {
-      const rosterByCaptain = /* @__PURE__ */ new Map();
-      for (let i = 1; i < rosterRows.length; i += 1) {
-        const row = rosterRows[i];
-        const captain = safeText(row[0]);
-        const player = safeText(row[1]);
-        if (!captain || !player) continue;
-        if (!rosterByCaptain.has(captain)) rosterByCaptain.set(captain, []);
-        rosterByCaptain.get(captain).push(player);
-      }
-      return rosterByCaptain;
-    }
-    async function loadTeamRosters() {
-      const [indexRows, rosterRows] = await Promise.all([
-        fetchCsvRows(INDEX_URL),
-        fetchCsvRows(ROSTER_URL)
-      ]);
-      const teamMap = buildTeamMap(indexRows);
-      const rosterByCaptain = buildRosterByCaptain(rosterRows);
-      const teams = [];
-      for (let id = 1; id <= 18; id += 1) {
-        const teamId = String(id);
-        const teamMeta = teamMap.get(teamId) || { teamId, captain: "", teamName: `Team ${teamId}` };
-        const players = canonicalRostersByTeamId[teamId] || rosterByCaptain.get(teamMeta.captain) || [];
-        teams.push({ ...teamMeta, players });
-      }
-      return teams;
-    }
+    var { loadTeamRosters } = require_teamRosters();
     function parseScheduleSheetDate(displayDate) {
       const s = safeText(displayDate);
       if (!s) return null;

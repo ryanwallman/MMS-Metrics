@@ -1,6 +1,9 @@
 # Firebase (local + CLI)
 
-- **`firestore.rules`** — security rules. Deploy with Firebase CLI: `firebase deploy --only firestore` (from repo root; `firebase.json` points here).
+- **`firestore.rules`** — device-based lineup writes (no sign-in). Deploy from repo root:
 
-- **`service-account.json`** — optional local file for Firebase **Admin** SDK (**gitignored**). Download from Firebase Console → **Service accounts** → **Generate new private key**, save as `firebase/service-account.json`, or set `FIREBASE_SERVICE_ACCOUNT_PATH` / `FIREBASE_SERVICE_ACCOUNT_JSON` in `.env`.  
-  For **Render**, use env **`FIREBASE_SERVICE_ACCOUNT_JSON`** (see **`deploy/DEPLOY.md`** Firebase checklist § B).
+  ```bash
+  firebase deploy --only firestore
+  ```
+
+- **`service-account.json`** — optional for Firebase **Admin** SDK (**gitignored**). Not needed on GitHub Pages (browser reads/writes Firestore directly). For local server-rendered leaderboard reads, set `FIREBASE_SERVICE_ACCOUNT_JSON` in `.env`.

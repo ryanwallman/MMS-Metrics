@@ -1,17 +1,8 @@
 /**
- * DFS Firebase: Google sign-in + Firestore lineups (week W# and Wednesday D########).
+ * DFS Firestore lineups: device ID + display name (no sign-in).
  * Loaded as type="module" on /dfs when firebaseClientConfig is present.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  setPersistence,
-  browserLocalPersistence,
-} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 import {
   getFirestore,
   doc,
@@ -20,68 +11,111 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
+const DEVICE_KEY = "mms-dfs-device-id";
+const USERNAME_KEY = "mms-dfs-username";
+const SUBMITTED_KEY = "mms-dfs-submitted-slates";
+
+function getOrCreateDeviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(DEVICE_KEY, id);
+  }
+  return id;
+}
+
+function getUsername() {
+  return (localStorage.getItem(USERNAME_KEY) || "").trim();
+}
+
+function setUsername(name) {
+  const trimmed = validateUsername(name);
+  localStorage.setItem(USERNAME_KEY, trimmed);
+  return trimmed;
+}
+
+function validateUsername(name) {
+  const trimmed = String(name || "")
+    .trim()
+    .replace(/\s+/g, " ");
+  if (trimmed.length > 24) {
+    throw new Error("Display name must be 24 characters or fewer.");
+  }
+  if (!/^[\w .'-]+$/i.test(trimmed)) {
+    throw new Error("Use letters, spaces, and . ' - only (e.g. Mitch P or John Smith).");
+  }
+  const parts = trimmed.split(" ").filter(Boolean);
+  if (parts.length < 2) {
+    throw new Error("Use your first name and last initial or last name (e.g. Mitch P or John Smith).");
+  }
+  if (parts[0].length < 2) {
+    throw new Error("First name must be at least 2 letters.");
+  }
+  const last = parts[parts.length - 1];
+  if (last.length < 1) {
+    throw new Error("Include a last initial or last name after your first name.");
+  }
+  return trimmed;
+}
+
+function readSubmittedSlates() {
+  try {
+    const slates = JSON.parse(localStorage.getItem(SUBMITTED_KEY) || "[]");
+    return Array.isArray(slates) ? slates.map((s) => String(s).toUpperCase()) : [];
+  } catch {
+    return [];
+  }
+}
+
+function markSubmitted(slateId) {
+  const slate = slateId.toUpperCase();
+  const slates = readSubmittedSlates();
+  if (!slates.includes(slate)) {
+    slates.push(slate);
+    localStorage.setItem(SUBMITTED_KEY, JSON.stringify(slates));
+  }
+}
+
+function hasSubmittedLocal(slateId) {
+  return readSubmittedSlates().includes(String(slateId || "").toUpperCase());
+}
+
+function isCloudSlateId(slateId) {
+  const s = slateId || "";
+  return /^W\d+$/i.test(s) || /^D\d{8}$/i.test(s);
+}
+
+function lineupDocId(slateId, deviceId) {
+  return `${slateId.toUpperCase()}_${deviceId}`;
+}
+
 const config = window.__FIREBASE_CONFIG__;
 if (!config?.projectId) {
-  console.warn("DFS Firebase: missing config");
+  console.warn("DFS Firestore: missing config");
 } else {
   const app = initializeApp(config);
-  const auth = getAuth(app);
   const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
 
-  let currentUser = null;
-  let authReady = false;
-  const authListeners = [];
-
-  // Stay signed in across page visits (League Leaders → DFS → back, etc.)
-  setPersistence(auth, browserLocalPersistence).catch((err) => {
-    console.error("Firebase persistence:", err);
-  });
-
-  function isCloudSlateId(slateId) {
-    const s = slateId || "";
-    return /^W\d+$/i.test(s) || /^D\d{8}$/i.test(s);
-  }
-
-  function lineupDocId(slateId, uid) {
-    return `${slateId.toUpperCase()}_${uid}`;
-  }
-
-  onAuthStateChanged(auth, (user) => {
-    currentUser = user;
-    authReady = true;
-    authListeners.forEach((fn) => {
-      try {
-        fn(user);
-      } catch (e) {
-        console.error(e);
-      }
-    });
-  });
-
-  window.DfsFirebase = {
+  window.DfsLineupStore = {
+    getDeviceId: getOrCreateDeviceId,
+    getUsername,
+    setUsername,
+    validateUsername,
+    hasSubmittedLocal,
     isReady() {
-      return !!currentUser;
+      return true;
     },
-    getUser() {
-      return currentUser;
-    },
-    onAuthChange(fn) {
-      authListeners.push(fn);
-      if (authReady) fn(currentUser);
-    },
-    isAuthReady() {
-      return authReady;
-    },
-    async signInWithGoogle() {
-      await signInWithPopup(auth, provider);
-    },
-    async signOut() {
-      await signOut(auth);
+    async hasLineupForSlate(slateId) {
+      if (!isCloudSlateId(slateId)) return false;
+      if (hasSubmittedLocal(slateId)) return true;
+      const ref = doc(db, "lineups", lineupDocId(slateId, getOrCreateDeviceId()));
+      const snap = await getDoc(ref);
+      if (snap.exists()) markSubmitted(slateId);
+      return snap.exists();
     },
     async loadLineup(slateId) {
-      if (!currentUser || !isCloudSlateId(slateId)) return null;
-      const ref = doc(db, "lineups", lineupDocId(slateId, currentUser.uid));
+      if (!isCloudSlateId(slateId)) return null;
+      const ref = doc(db, "lineups", lineupDocId(slateId, getOrCreateDeviceId()));
       const snap = await getDoc(ref);
       if (!snap.exists()) return null;
       const data = snap.data();
@@ -94,10 +128,19 @@ if (!config?.projectId) {
         playerNorms,
         playerSalaries,
         salaryUsed: Number(data.salaryUsed) || 0,
+        displayName: data.displayName || "",
       };
     },
-    async saveLineup(slateId, playerNorms, salaryUsed, playerSalaries) {
-      if (!currentUser || !isCloudSlateId(slateId)) return;
+    async saveLineup(slateId, playerNorms, salaryUsed, playerSalaries, displayName) {
+      if (!isCloudSlateId(slateId)) {
+        throw new Error("Cloud save is only for Sunday week slates (W1, W2, …) and Wednesday slates (D + date).");
+      }
+      const name = validateUsername(displayName || getUsername());
+      setUsername(name);
+      const deviceId = getOrCreateDeviceId();
+      const slate = slateId.toUpperCase();
+      const ref = doc(db, "lineups", lineupDocId(slate, deviceId));
+
       const norms = [...playerNorms];
       const salaries = playerSalaries.map((n) => Math.round(Number(n) || 0));
       if (norms.length !== 8 || salaries.length !== 8) {
@@ -116,14 +159,12 @@ if (!config?.projectId) {
       if (Math.abs(sum - used) > 1) {
         throw new Error("Salary total does not match locked player prices.");
       }
-      const slate = slateId.toUpperCase();
-      const ref = doc(db, "lineups", lineupDocId(slate, currentUser.uid));
+
       try {
         await setDoc(ref, {
           slateId: slate,
-          userId: currentUser.uid,
-          displayName:
-            currentUser.displayName || currentUser.email || "Player",
+          userId: deviceId,
+          displayName: name,
           playerNorms: norms,
           playerSalaries: salaries,
           salaryUsed: used,
@@ -133,27 +174,14 @@ if (!config?.projectId) {
         const code = err?.code || "";
         if (code === "permission-denied") {
           throw new Error(
-            "Firestore blocked this save (missing or insufficient permissions). Republish firebase/firestore.rules from this repo, or ask an admin to remove any stray slateLocks documents in the Firebase console."
+            "Firestore blocked this save. Republish firebase/firestore.rules from this repo (device-based rules, no sign-in)."
           );
         }
         throw err;
       }
-      try {
-        await setDoc(
-          doc(db, "users", currentUser.uid),
-          {
-            displayName:
-              currentUser.displayName || currentUser.email || "Player",
-            email: currentUser.email || "",
-            updatedAt: serverTimestamp(),
-          },
-          { merge: true }
-        );
-      } catch (profileErr) {
-        console.warn("User profile save skipped:", profileErr);
-      }
+      markSubmitted(slate);
     },
   };
 
-  window.dispatchEvent(new Event("dfs-firebase-ready"));
+  window.dispatchEvent(new Event("dfs-lineup-store-ready"));
 }

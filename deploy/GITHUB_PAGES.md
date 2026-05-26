@@ -1,6 +1,6 @@
 # GitHub Pages (static export)
 
-GitHub Pages serves **static files only** — no Node/Express. This repo can export pre-rendered HTML plus `public/` assets into `docs/` for hosting at:
+GitHub Pages serves **static files only** — no Node/Express. This repo exports pre-rendered HTML plus `public/` assets into `docs/` via **GitHub Actions** (`/.github/workflows/deploy-pages.yml`).
 
 **https://ryanwallman.github.io/MMS-Metrics/**
 
@@ -8,9 +8,9 @@ GitHub Pages serves **static files only** — no Node/Express. This repo can exp
 
 ## Enable Pages
 
-1. Push this branch to GitHub.
-2. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions** (recommended).
-3. On the first push, open the **Actions** tab and confirm **Deploy GitHub Pages** succeeds.
+1. Push to `main` (or a branch listed in `deploy-pages.yml`).
+2. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
+3. Open the **Actions** tab and confirm **Deploy GitHub Pages** succeeds.
 
 ### Alternative: deploy from branch `/docs`
 
@@ -20,11 +20,13 @@ GitHub Pages serves **static files only** — no Node/Express. This repo can exp
 
 ## Required GitHub secrets (Actions)
 
-Add under **Settings → Secrets and variables → Actions** (same values as local `.env`):
+Add under **Settings → Secrets and variables → Actions** — **Secrets** preferred; the workflow also falls back to **Repository variables** with the same names.
+
+Use the same values as local `.env`:
 
 | Secret | Purpose |
 |--------|---------|
-| `FIREBASE_API_KEY` | DFS sign-in + Firestore in the browser |
+| `FIREBASE_API_KEY` | Firestore in the browser (lineup save + leaderboard) |
 | `FIREBASE_AUTH_DOMAIN` | |
 | `FIREBASE_PROJECT_ID` | |
 | `FIREBASE_STORAGE_BUCKET` | |
@@ -32,13 +34,13 @@ Add under **Settings → Secrets and variables → Actions** (same values as loc
 | `FIREBASE_APP_ID` | |
 | `FIREBASE_MEASUREMENT_ID` | Optional |
 
+These are baked into HTML at **build time**. If DFS shows “Firebase is not configured,” the secrets were missing or misnamed when the workflow ran — fix them and **re-run** the deploy workflow.
+
 ## Firebase Console
 
-**Authentication → Settings → Authorized domains** — add:
+**No Google sign-in required** — lineups use a device ID + display name.
 
-- `ryanwallman.github.io` (covers `*.github.io` project URLs for this account’s Pages)
-
-Publish Firestore rules if needed:
+Publish Firestore rules after pulling this repo (device-based writes; update allowed until lock):
 
 ```bash
 firebase deploy --only firestore
@@ -46,7 +48,7 @@ firebase deploy --only firestore
 
 ## Build time and failures
 
-The **Build static site** step pre-renders **5 pages** (not dozens). Each page loads Google Sheets CSVs; expect **3–15 minutes** total on Actions.
+The **Build static site** step pre-renders **5 pages**. Each page loads Google Sheets CSVs; expect **3–15 minutes** total on Actions.
 
 Watch the log for:
 
@@ -54,8 +56,6 @@ Watch the log for:
 [static] GET /dfs …
 [static] GET /dfs ok (45.2s)
 ```
-
-**If a run hit the 6-hour GitHub limit**, an older workflow was likely exporting every slate/week with **no timeouts**, so hung sheet requests never finished. The current workflow caps the job at **25 minutes** and fails fast if a route or CSV fetch hangs.
 
 | Limit | Value |
 |-------|--------|
@@ -69,7 +69,6 @@ Watch the log for:
 ```bash
 cp .env.example .env   # fill FIREBASE_*
 npm run build:static
-# open docs/index.html via a static server, or:
 npx serve docs -l 5000
 ```
 
@@ -79,13 +78,14 @@ Override base path (defaults to `/MMS-Metrics` from repo name):
 SITE_BASE_PATH=/MMS-Metrics npm run build:static
 ```
 
-## What works on Pages vs Render
+## What works on Pages
 
-| Feature | GitHub Pages | Render (Node) |
-|---------|--------------|---------------|
-| League leaders, matchup, power rankings | Pre-rendered HTML | Live |
-| DFS lineup builder + Google sign-in | Yes (browser Firebase) | Yes |
-| DFS leaderboard scoring | Client-side (sheets + Firestore) | Server or client |
-| Leaderboard lineup detail (`/dfs/leaderboard/lineup?…`) | Not exported (needs Admin SDK) | Yes |
+| Feature | GitHub Pages |
+|---------|--------------|
+| League leaders, power rankings | Pre-rendered HTML |
+| Matchup predictor | Default view only (form changes need client-side work or Node host) |
+| DFS lineup builder | Yes — save with display name (one per device per slate) |
+| DFS leaderboard | Client-side (Firestore + Google Sheets scoring) |
+| Leaderboard lineup detail (`/dfs/leaderboard/lineup?…`) | Not exported (no server Admin SDK) |
 
-Full production app with all APIs: use **`deploy/DEPLOY.md`** (Render + custom domain).
+For full server-rendered pages and APIs, run `node server.js` locally or use a Node host.

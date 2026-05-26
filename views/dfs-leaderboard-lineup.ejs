@@ -24,7 +24,7 @@
           <strong><%= detail.totalPoints %> pts</strong>
           <% } else { %>—<% } %>
           <% if (detail.salaryUsed != null) { %>
-          · $<%= Number(detail.salaryUsed).toLocaleString() %> salary
+          · $<%= Number(detail.salaryUsed).toLocaleString() %> salary at save
           <% } %>
         </p>
       </section>
@@ -42,7 +42,7 @@
               <th scope="col">#</th>
               <th scope="col">Player</th>
               <th scope="col">Pts</th>
-              <th scope="col">Salary</th>
+              <th scope="col">Salary at save</th>
             </tr>
           </thead>
           <tbody>

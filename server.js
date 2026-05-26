@@ -24,7 +24,7 @@ const {
   fetchLineupByUserAndSlate,
   slateSummaryForClient,
 } = require("./lib/dfsLeaderboard");
-const { canonicalRostersByTeamId } = require("./data/customRosters2026");
+const { loadTeamRosters } = require("./lib/teamRosters");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
 const {
   parseMissingNorms,
@@ -108,6 +108,10 @@ const STATIC_EXPORT = process.env.STATIC_EXPORT === "1";
 function sitePath(path) {
   return buildSitePath(path, SITE_BASE_PATH);
 }
+
+/** EJS includes (site-head, site-header) read from app.locals — not per-render locals alone. */
+app.locals.sitePath = sitePath;
+app.locals.siteBasePath = SITE_BASE_PATH;
 /** Visible stat columns on `/stats/team/:id` (must match 2026 stats sheet / CSV headers; excludes Team, IDs, Player, IsRookie). */
 const TEAM_PAGE_2026_STAT_COLUMNS = Object.freeze([
   "PA",
@@ -202,46 +206,6 @@ function buildScheduleRosterPayloadB64(rosterByTeamId, teams) {
 async function fetchCsvRows(url) {
   const csvText = await fetchCsvText(url);
   return Papa.parse(csvText).data;
-}
-
-function buildTeamMap(indexRows) {
-  const teamMap = new Map();
-
-  for (let i = 1; i < indexRows.length; i += 1) {
-    const row = indexRows[i];
-    const teamId = safeText(row[4]); // Column E
-    const captain = safeText(row[5]); // Column F
-    const teamName = safeText(row[7]); // Column H
-    const jerseyColor = safeText(row[10]) || "#1f2937"; // Column K
-    const numberColor = safeText(row[11]) || "#ffffff"; // Column L
-    if (!teamId || !captain) continue;
-    teamMap.set(teamId, { teamId, captain, teamName, jerseyColor, numberColor });
-  }
-
-  return teamMap;
-}
-
-function buildRosterByCaptain(rosterRows) {
-  const rosterMap = new Map();
-
-  function extractRosterRange(captainRowIndex, playerStartRowIndex, startCol, endCol) {
-    for (let col = startCol; col <= endCol; col += 1) {
-      const captain = safeText(rosterRows[captainRowIndex] && rosterRows[captainRowIndex][col]);
-      if (!captain) continue;
-
-      const players = [];
-      for (let r = playerStartRowIndex; r < playerStartRowIndex + 13; r += 1) {
-        const player = safeText(rosterRows[r] && rosterRows[r][col]);
-        if (player) players.push(player);
-      }
-
-      rosterMap.set(captain, players);
-    }
-  }
-
-  extractRosterRange(1, 3, 0, 18); // Top half
-  extractRosterRange(16, 18, 0, 18); // Bottom half
-  return rosterMap;
 }
 
 function normalizePlayerName(name) {
@@ -500,29 +464,6 @@ function buildRookieOnlyMergedRow(playerName, season2026) {
       ops: formatRate(ops),
     },
   };
-}
-
-async function loadTeamRosters() {
-  const [indexRows, rosterRows] = await Promise.all([
-    fetchCsvRows(INDEX_URL),
-    fetchCsvRows(ROSTER_URL),
-  ]);
-
-  const teamMap = buildTeamMap(indexRows);
-  const rosterByCaptain = buildRosterByCaptain(rosterRows);
-  const teams = [];
-
-  for (let id = 1; id <= 18; id += 1) {
-    const teamId = String(id);
-    const teamMeta = teamMap.get(teamId) || { teamId, captain: "", teamName: `Team ${teamId}` };
-    const players =
-      canonicalRostersByTeamId[teamId] ||
-      rosterByCaptain.get(teamMeta.captain) ||
-      [];
-    teams.push({ ...teamMeta, players });
-  }
-
-  return teams;
 }
 
 function parseWeekIndex(value, fallback) {
@@ -1506,8 +1447,55 @@ function buildRemainingScheduleGames(parsedGames) {
   return remaining;
 }
 
+function heatMapRgb(t) {
+  const clamped = Math.max(0, Math.min(1, t));
+  const red = { r: 248, g: 113, b: 113 };
+  const mid = { r: 254, g: 243, b: 199 };
+  const green = { r: 74, g: 222, b: 128 };
+  let r;
+  let g;
+  let b;
+  if (clamped < 0.5) {
+    const u = clamped / 0.5;
+    r = red.r + (mid.r - red.r) * u;
+    g = red.g + (mid.g - red.g) * u;
+    b = red.b + (mid.b - red.b) * u;
+  } else {
+    const u = (clamped - 0.5) / 0.5;
+    r = mid.r + (green.r - mid.r) * u;
+    g = mid.g + (green.g - mid.g) * u;
+    b = mid.b + (green.b - mid.b) * u;
+  }
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+}
+
+/** Green = high value; red = low. Set invert for metrics where high is bad (e.g. SOS). */
+function heatMapBackground(value, min, max, invert = false) {
+  if (value == null || !Number.isFinite(value) || min == null || !Number.isFinite(min) || max == null || !Number.isFinite(max)) {
+    return "";
+  }
+  if (max === min) return "background-color: #f3f4f6";
+  let t = (value - min) / (max - min);
+  if (invert) t = 1 - t;
+  return `background-color: ${heatMapRgb(t)}`;
+}
+
+function applyPowerRankingsHeatMaps(rows) {
+  const winVals = rows.map((r) => r.winPct).filter((v) => Number.isFinite(v));
+  const sosVals = rows.map((r) => r.sosOppWinPct).filter((v) => Number.isFinite(v));
+  const winMin = winVals.length ? Math.min(...winVals) : 0;
+  const winMax = winVals.length ? Math.max(...winVals) : 1;
+  const sosMin = sosVals.length ? Math.min(...sosVals) : 0;
+  const sosMax = sosVals.length ? Math.max(...sosVals) : 1;
+  return rows.map((r) => ({
+    ...r,
+    winPctHeatStyle: heatMapBackground(r.winPct, winMin, winMax, false),
+    sosHeatStyle: heatMapBackground(r.sosOppWinPct, sosMin, sosMax, true),
+  }));
+}
+
 function buildPowerRankingsCurrentRows(teamSections) {
-  return teamSections.map((t, i) => ({
+  const rows = teamSections.map((t, i) => ({
     rank: i + 1,
     teamId: t.teamId,
     teamName: t.teamName,
@@ -1519,6 +1507,7 @@ function buildPowerRankingsCurrentRows(teamSections) {
     winPct: t.teamWinPct,
     sosOppWinPct: t.teamSosOppWinPct,
   }));
+  return applyPowerRankingsHeatMaps(rows);
 }
 
 /**
@@ -2736,7 +2725,7 @@ app.get("/api/dfs/leaderboard/data", async (req, res) => {
       return res.status(503).json({
         needClientLineups: true,
         error:
-          "Leaderboard server read is not configured. Set FIREBASE_PROJECT_ID and FIREBASE_SERVICE_ACCOUNT_JSON on Render.",
+          "Leaderboard server read is not configured. For local dev, set FIREBASE_SERVICE_ACCOUNT_JSON. On GitHub Pages, the browser loads lineups directly from Firestore.",
       });
     }
 
@@ -2935,7 +2924,16 @@ app.get("/matchup-predictor", async (req, res) => {
     if (!validMatchupKeys.has(selectedMatchup)) selectedMatchup = "";
 
     const nameToTeamId = buildNameToTeamIdMap(teams);
-    const rosterByTeamId = payload.rosterByTeamId || {};
+    const rosterByTeamId = {};
+    for (const t of teams) {
+      rosterByTeamId[t.teamId] = {
+        teamName: t.teamName,
+        captain: t.captain,
+        jerseyColor: t.jerseyColor,
+        numberColor: t.numberColor,
+        players: Array.isArray(t.players) ? t.players : [],
+      };
+    }
 
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
     const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
@@ -3199,7 +3197,7 @@ app.get("/confirm-names", async (req, res) => {
 
 if (process.env.NODE_ENV === "production" && !getFirebaseClientConfig()) {
   console.warn(
-    "[MMS] Firebase web config missing (FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID, …). Set the same names as .env in your host environment (e.g. Render → Environment) and redeploy."
+    "[MMS] Firebase web config missing (FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID, …). Locally: add to .env. GitHub Pages: add as Actions secrets and re-run Deploy GitHub Pages."
   );
 }
 
@@ -3226,7 +3224,7 @@ if (require.main === module) {
       console.log("[MMS] Leaderboard: server-side Firestore reads enabled.");
     } else {
       console.warn(
-        "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups (slower). Add service account JSON on Render."
+        "[MMS] Leaderboard: FIREBASE_SERVICE_ACCOUNT_JSON not set — browser will load lineups from Firestore (expected on GitHub Pages)."
       );
     }
     if (!STATIC_EXPORT) {

@@ -36,7 +36,10 @@
 
     <section class="power-rankings-section">
       <h2>Current power rankings</h2>
-      <p class="power-rankings-note">Sorted by blended team power rating (higher = stronger right now).</p>
+      <p class="power-rankings-note">
+        Sorted by blended team power rating (higher = stronger right now).
+        <span class="power-heat-legend">Win % and SOS are color-coded: green = higher win % or easier schedule; red = lower win % or tougher schedule.</span>
+      </p>
       <div class="rankings-table-wrap">
         <table class="rankings-master-table page-table power-rankings-table">
           <thead>
@@ -60,10 +63,10 @@
                 <strong><%= t.powerRating >= 0 ? "+" + t.powerRating.toFixed(2) : t.powerRating.toFixed(2) %></strong>
               </td>
               <td style="text-align: right"><%= t.wins %>-<%= t.losses %></td>
-              <td style="text-align: right">
+              <td class="power-heat-cell" style="<%= ['text-align: right', t.winPctHeatStyle].filter(Boolean).join('; ') %>">
                 <%= t.winPct != null ? (t.winPct * 100).toFixed(1) + "%" : "—" %>
               </td>
-              <td style="text-align: right">
+              <td class="power-heat-cell" style="<%= ['text-align: right', t.sosHeatStyle].filter(Boolean).join('; ') %>">
                 <%= t.sosOppWinPct != null ? (t.sosOppWinPct * 100).toFixed(1) + "%" : "—" %>
               </td>
               <td style="text-align: right">

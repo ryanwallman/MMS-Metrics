@@ -3,14 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
     function isWeekSlateId(slateId) {
       return slateId is string
         && slateId.size() >= 2
@@ -33,7 +25,6 @@ service cloud.firestore {
       return value is number && value >= 5000 && value <= 12000;
     }
 
-    /** Per-player salaries locked at save time (same order as playerNorms). */
     function validPlayerSalaries(salaries) {
       return salaries is list
         && salaries.size() == 8
@@ -47,12 +38,24 @@ service cloud.firestore {
         && validLockedSalary(salaries[7]);
     }
 
-    /** Any signed-in user can create/update their own lineup doc (W4_uid or D20260514_uid). */
+    function validDeviceId(deviceId) {
+      return deviceId is string && deviceId.size() >= 16 && deviceId.size() <= 64;
+    }
+
+    function validDisplayName(name) {
+      return name is string
+        && name.size() >= 4
+        && name.size() <= 24
+        && name.matches('.* .*');
+    }
+
+    /** Device-based lineup write (no Firebase Auth). Doc ID: {slateId}_{deviceId}. */
     function validLineupWrite(lineupId) {
       let data = request.resource.data;
-      return data.userId == request.auth.uid
+      return validDeviceId(data.userId)
         && isLeaderboardSlateId(data.slateId)
-        && lineupId == data.slateId + '_' + request.auth.uid
+        && lineupId == data.slateId + '_' + data.userId
+        && validDisplayName(data.displayName)
         && data.playerNorms is list
         && data.playerNorms.size() == 8
         && validPlayerSalaries(data.playerSalaries)
@@ -65,18 +68,12 @@ service cloud.firestore {
       /** Public read so the leaderboard can load without a server service account. */
       allow read: if true;
 
-      allow create: if isSignedIn() && validLineupWrite(lineupId);
+      allow create: if validLineupWrite(lineupId);
 
-      allow update: if isSignedIn()
-        && validLineupWrite(lineupId)
-        && resource.data.userId == request.auth.uid;
+      /** Same device may update its lineup until the slate locks (client enforces deadline). */
+      allow update: if validLineupWrite(lineupId)
+        && resource.data.userId == request.resource.data.userId;
 
-      allow delete: if false;
-    }
-
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create, update: if isOwner(userId);
       allow delete: if false;
     }
 
