@@ -11,8 +11,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=5" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=5" />
 
   </head>
   <body>
@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T14:33:55.906Z">May 27, 2026, 10:33 AM ET</time>
+        <time datetime="2026-05-27T19:02:09.454Z">May 27, 2026, 3:02 PM ET</time>
       </p>
       
       
@@ -777,6 +777,11 @@
 
     </form>
     </main>
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"14","teamName":"NEW HORIZON","offenseRating":0.3426046511627907,"runProd2026":0.4,"defenseZ":0,"winPct":0.2,"sosOppWinPct":0.75,"teamOverall":-0.09,"rosterPlayerRating":0.3426046511627907,"scheduleGames":5,"runsPerGame":8.8,"runsAgainstPerGame":14.4,"runDiffPerGame":-5.6},"homeBaseProfile":{"teamId":"3","teamName":"PRINCETON BRAIN & SPINE","offenseRating":0.4139419087136929,"runProd2026":0.5892116182572614,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.5700000000000001,"teamOverall":0.44,"rosterPlayerRating":0.4139419087136929,"scheduleGames":5,"runsPerGame":14.6,"runsAgainstPerGame":9.6,"runDiffPerGame":5},"awayPlayers":["Ryan Amato","Shawn Leonardi","Bryan Frank","Dom Defalco","Espartaco Gonzalez","Piero Vescio","Dave Meyer","Jeff Mendelson","Craig Tepper","Daniel Navatta","Anthony Galiano","Mike Amato","Brian Frueh"],"homePlayers":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"awayLabel":"NEW HORIZON","homeLabel":"PRINCETON BRAIN & SPINE","offenseRatingByNorm":{"ryan amato":4.64,"shawn leonardi":1.32,"bryan frank":1.74,"dom defalco":-1.4,"espartaco gonzalez":0.48,"piero vescio":-0.57,"dave meyer":0.11,"jeff mendelson":0.3,"craig tepper":-0.39,"daniel navatta":-0.36,"anthony galiano":-0.22,"mike amato":-1.38,"brian frueh":-1.44,"david vignapiano":2.38,"fred lugos":1.21,"mark magariello":1.3,"mike brullo":0.63,"matt granese":1.16,"billy loschiavo":0.26,"dave wagreich":0.32,"todd wallman":-0.39,"ryan wallman":0.13,"mike steinberg":0.03,"dhimant balar":-0.8,"sudipta ray":-0.2,"paul steinberg":-1.29},"stats2026ByPlayer":{"ryan amato":{"PA":"20","Runs":"9","RBI":"15"},"shawn leonardi":{"PA":"20","Runs":"3","RBI":"5"},"bryan frank":{"PA":"16","Runs":"7","RBI":"5"},"dom defalco":{"PA":"16","Runs":"3","RBI":"1"},"espartaco gonzalez":{"PA":"20","Runs":"3","RBI":"2"},"piero vescio":{"PA":"19","Runs":"5","RBI":"2"},"dave meyer":{"PA":"23","Runs":"6","RBI":"1"},"jeff mendelson":{"PA":"7","Runs":"2","RBI":"2"},"craig tepper":{"PA":"14","Runs":"2","RBI":"4"},"daniel navatta":{"PA":"18","Runs":"1","RBI":"1"},"anthony galiano":{"PA":"14","Runs":"1","RBI":"2"},"mike amato":{"PA":"16","Runs":"1","RBI":"2"},"brian frueh":{"PA":"12","Runs":"1","RBI":"0"},"david vignapiano":{"PA":"22","Runs":"8","RBI":"9"},"fred lugos":{"PA":"21","Runs":"8","RBI":"5"},"mark magariello":{"PA":"21","Runs":"6","RBI":"9"},"mike brullo":{"PA":"21","Runs":"6","RBI":"8"},"matt granese":{"PA":"10","Runs":"5","RBI":"4"},"billy loschiavo":{"PA":"20","Runs":"3","RBI":"7"},"dave wagreich":{"PA":"21","Runs":"5","RBI":"5"},"todd wallman":{"PA":"19","Runs":"6","RBI":"3"},"ryan wallman":{"PA":"18","Runs":"7","RBI":"5"},"mike steinberg":{"PA":"18","Runs":"6","RBI":"2"},"dhimant balar":{"PA":"15","Runs":"2","RBI":"3"},"sudipta ray":{"PA":"18","Runs":"4","RBI":"6"},"paul steinberg":{"PA":"17","Runs":"7","RBI":"3"}},"defenseZByNorm":{}};</script>
+    <script src="/MMS-Metrics/js/matchup-predictor-ui.js?v=5"></script>
+    <script type="module" src="/MMS-Metrics/js/matchup-predictor-client.mjs?v=5"></script>
+    
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -789,6 +794,7 @@
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
 
         function parseList(value) {
           return value
@@ -930,7 +936,30 @@
           }
         }
 
+        function recalcPrediction() {
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              [...awaySet],
+              [...homeSet]
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
         syncButtons(awaySet, homeSet);
+        if (matchupCtx) recalcPrediction();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -952,7 +981,8 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            if (!isStaticSite) submitOrNavigate();
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
           });
         });
       })();

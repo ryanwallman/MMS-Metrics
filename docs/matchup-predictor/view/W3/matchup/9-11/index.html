@@ -11,8 +11,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=5" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=5" />
 
   </head>
   <body>
@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T14:33:55.111Z">May 27, 2026, 10:33 AM ET</time>
+        <time datetime="2026-05-27T19:02:08.795Z">May 27, 2026, 3:02 PM ET</time>
       </p>
       
       
@@ -777,6 +777,11 @@
 
     </form>
     </main>
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.4899999999999999,"runProd2026":0.41333333333333333,"defenseZ":0,"winPct":0.4,"sosOppWinPct":0.49000000000000005,"teamOverall":-0.1,"rosterPlayerRating":0.4899999999999999,"scheduleGames":5,"runsPerGame":9.8,"runsAgainstPerGame":11.2,"runDiffPerGame":-1.4},"homeBaseProfile":{"teamId":"11","teamName":"SHORE SMILE","offenseRating":0.3249600000000001,"runProd2026":0.44,"defenseZ":0,"winPct":0.25,"sosOppWinPct":0.48750000000000004,"teamOverall":-0.47,"rosterPlayerRating":0.3249600000000001,"scheduleGames":4,"runsPerGame":7.25,"runsAgainstPerGame":16.5,"runDiffPerGame":-9.25},"awayPlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"homePlayers":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"awayLabel":"ACE ALUMINUM","homeLabel":"SHORE SMILE","offenseRatingByNorm":{"martin blackburn":2.2,"zack derosa":1.91,"ronnie carlin":0.03,"brad goldstein":2.42,"eric rosenstock":1.09,"brett easton":0.29,"marc carlin":0.4,"bob bilodeau":0.69,"mike rosenstock":-0.27,"steven oran":0.36,"shawn adelsberg":-1.11,"lenny sarcona":-0.28,"logan fauci":-2.2,"michael kleschinsky jr":2.74,"nick villani":1.07,"mike klecko":0.79,"kevin kleschinsky":0.69,"jeremy levine":1.22,"pete kokoszka":0.09,"mike villani":0.35,"jim lombardi":-0.74,"michael kleschinsky sr":0.36,"will perez":-1.03,"anthony fazzino":-0.71,"paul lombardi":-0.89,"nick kleschinsky":-1.65},"stats2026ByPlayer":{"martin blackburn":{"PA":"20","Runs":"11","RBI":"4"},"zack derosa":{"PA":"16","Runs":"5","RBI":"10"},"ronnie carlin":{"PA":"19","Runs":"1","RBI":"5"},"brad goldstein":{"PA":"16","Runs":"9","RBI":"5"},"eric rosenstock":{"PA":"15","Runs":"3","RBI":"9"},"brett easton":{"PA":"22","Runs":"7","RBI":"2"},"marc carlin":{"PA":"22","Runs":"4","RBI":"1"},"bob bilodeau":{"PA":"16","Runs":"1","RBI":"3"},"mike rosenstock":{"PA":"18","Runs":"1","RBI":"2"},"steven oran":{"PA":"18","Runs":"2","RBI":"2"},"shawn adelsberg":{"PA":"13","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"17","Runs":"4","RBI":"1"},"logan fauci":{"PA":"13","Runs":"1","RBI":"0"},"michael kleschinsky jr":{"PA":"11","Runs":"5","RBI":"7"},"nick villani":{"PA":"11","Runs":"5","RBI":"3"},"mike klecko":{"PA":"11","Runs":"1","RBI":"4"},"kevin kleschinsky":{"PA":"7","Runs":"1","RBI":"1"},"jeremy levine":{"PA":"11","Runs":"6","RBI":"2"},"pete kokoszka":{"PA":"11","Runs":"2","RBI":"1"},"mike villani":{"PA":"10","Runs":"1","RBI":"2"},"jim lombardi":{"PA":"9","Runs":"3","RBI":"0"},"michael kleschinsky sr":{"PA":"14","Runs":"2","RBI":"4"},"will perez":{"PA":"5","Runs":"0","RBI":"1"},"anthony fazzino":{"PA":"9","Runs":"1","RBI":"0"},"paul lombardi":{"PA":"9","Runs":"0","RBI":"2"},"nick kleschinsky":{"PA":"7","Runs":"1","RBI":"0"}},"defenseZByNorm":{}};</script>
+    <script src="/MMS-Metrics/js/matchup-predictor-ui.js?v=5"></script>
+    <script type="module" src="/MMS-Metrics/js/matchup-predictor-client.mjs?v=5"></script>
+    
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -789,6 +794,7 @@
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
 
         function parseList(value) {
           return value
@@ -930,7 +936,30 @@
           }
         }
 
+        function recalcPrediction() {
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              [...awaySet],
+              [...homeSet]
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
         syncButtons(awaySet, homeSet);
+        if (matchupCtx) recalcPrediction();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -952,7 +981,8 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            if (!isStaticSite) submitOrNavigate();
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
           });
         });
       })();

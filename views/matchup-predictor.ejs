@@ -255,6 +255,11 @@
 
     </form>
     </main>
+    <% if (typeof matchupClient !== 'undefined' && matchupClient) { %>
+    <script>window.__MATCHUP_CLIENT__ = <%- JSON.stringify(matchupClient) %>;</script>
+    <script src="<%= sitePath('/js/matchup-predictor-ui.js') %>?v=<%= assetVersion %>"></script>
+    <script type="module" src="<%= sitePath('/js/matchup-predictor-client.mjs') %>?v=<%= assetVersion %>"></script>
+    <% } %>
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -267,6 +272,7 @@
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
 
         function parseList(value) {
           return value
@@ -408,7 +414,30 @@
           }
         }
 
+        function recalcPrediction() {
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              [...awaySet],
+              [...homeSet]
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
         syncButtons(awaySet, homeSet);
+        if (matchupCtx) recalcPrediction();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -430,7 +459,8 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            if (!isStaticSite) submitOrNavigate();
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
           });
         });
       })();

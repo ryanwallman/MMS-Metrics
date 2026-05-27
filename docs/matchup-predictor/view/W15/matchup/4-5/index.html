@@ -11,8 +11,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=5" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=5" />
 
   </head>
   <body>
@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T14:33:56.022Z">May 27, 2026, 10:33 AM ET</time>
+        <time datetime="2026-05-27T19:02:09.564Z">May 27, 2026, 3:02 PM ET</time>
       </p>
       
       
@@ -777,6 +777,11 @@
 
     </form>
     </main>
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":0.03705555555555556,"runProd2026":0.40555555555555556,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5,"teamOverall":0,"rosterPlayerRating":0.03705555555555556,"scheduleGames":4,"runsPerGame":9.5,"runsAgainstPerGame":9.25,"runDiffPerGame":0.25},"homeBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.16027322404371588,"runProd2026":0.43169398907103823,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.525,"teamOverall":0.08,"rosterPlayerRating":0.16027322404371588,"scheduleGames":4,"runsPerGame":10.5,"runsAgainstPerGame":8.5,"runDiffPerGame":2},"awayPlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"homePlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"awayLabel":"URWAY HEALTH","homeLabel":"GODDARD'S HOME IMPROVEMENTS","offenseRatingByNorm":{"dennis oconnor":4.06,"chris baldino":0.13,"justin bykofsky":0.59,"nick dinapoli":0.72,"jason feingold":-0.72,"robbie juergens":0.35,"chip costa":0.58,"seamus coyle":0.48,"john maguire":-0.75,"carlo tanzola":-1.59,"ken feingold":-0.54,"john fisher":-2.92,"darren wald":-0.74,"vince caputo":1.42,"peter kwiecinski":0.8,"joe peragine":1.19,"joe caputo":0.83,"evan abramson":-0.08,"jeff goddard":-0.25,"mark goddard":0.03,"lawrence rubin":0.24,"michael weitsen":-0.34,"michael cruz":-0.48,"justin randell":-0.87,"bruce cotter":-0.83,"brad randell":-0.83},"stats2026ByPlayer":{"dennis oconnor":{"PA":"12","Runs":"6","RBI":"6"},"chris baldino":{"PA":"16","Runs":"5","RBI":"2"},"justin bykofsky":{"PA":"17","Runs":"6","RBI":"1"},"nick dinapoli":{"PA":"17","Runs":"4","RBI":"2"},"jason feingold":{"PA":"15","Runs":"2","RBI":"3"},"robbie juergens":{"PA":"12","Runs":"3","RBI":"3"},"chip costa":{"PA":"16","Runs":"3","RBI":"8"},"seamus coyle":{"PA":"12","Runs":"2","RBI":"1"},"john maguire":{"PA":"15","Runs":"2","RBI":"2"},"carlo tanzola":{"PA":"13","Runs":"1","RBI":"1"},"ken feingold":{"PA":"13","Runs":"1","RBI":"4"},"john fisher":{"PA":"9","Runs":"0","RBI":"0"},"darren wald":{"PA":"13","Runs":"3","RBI":"2"},"vince caputo":{"PA":"17","Runs":"4","RBI":"4"},"peter kwiecinski":{"PA":"15","Runs":"6","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"15","Runs":"5","RBI":"8"},"evan abramson":{"PA":"15","Runs":"2","RBI":"3"},"jeff goddard":{"PA":"15","Runs":"2","RBI":"3"},"mark goddard":{"PA":"14","Runs":"3","RBI":"4"},"lawrence rubin":{"PA":"15","Runs":"4","RBI":"2"},"michael weitsen":{"PA":"14","Runs":"4","RBI":"0"},"michael cruz":{"PA":"14","Runs":"3","RBI":"4"},"justin randell":{"PA":"13","Runs":"0","RBI":"1"},"bruce cotter":{"PA":"10","Runs":"3","RBI":"2"},"brad randell":{"PA":"9","Runs":"1","RBI":"0"}},"defenseZByNorm":{}};</script>
+    <script src="/MMS-Metrics/js/matchup-predictor-ui.js?v=5"></script>
+    <script type="module" src="/MMS-Metrics/js/matchup-predictor-client.mjs?v=5"></script>
+    
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -789,6 +794,7 @@
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
 
         function parseList(value) {
           return value
@@ -930,7 +936,30 @@
           }
         }
 
+        function recalcPrediction() {
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              [...awaySet],
+              [...homeSet]
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
         syncButtons(awaySet, homeSet);
+        if (matchupCtx) recalcPrediction();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -952,7 +981,8 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            if (!isStaticSite) submitOrNavigate();
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
           });
         });
       })();

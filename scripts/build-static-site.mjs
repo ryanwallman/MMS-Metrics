@@ -164,6 +164,15 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:leaderboard-scoring failed"))));
   });
 
+  console.log("[static] Building matchup predictor client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:matchup-predictor"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor failed"))));
+  });
+
   const careerSrc = path.join(root, "data/csv/career.csv");
   const careerDest = path.join(root, "public/data/csv/career.csv");
   await fs.mkdir(path.dirname(careerDest), { recursive: true });

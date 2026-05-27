@@ -11,8 +11,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=5" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=5" />
 
   </head>
   <body>
@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T14:33:55.493Z">May 27, 2026, 10:33 AM ET</time>
+        <time datetime="2026-05-27T19:02:09.041Z">May 27, 2026, 3:02 PM ET</time>
       </p>
       
       
@@ -785,6 +785,11 @@
 
     </form>
     </main>
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"2","teamName":"FREEHOLD BUICK GMC","offenseRating":0.2926767676767677,"runProd2026":0.5025380710659898,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.4,"teamOverall":0.1,"rosterPlayerRating":0.2926767676767677,"scheduleGames":5,"runsPerGame":12.8,"runsAgainstPerGame":14.6,"runDiffPerGame":-1.8},"homeBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.2800526315789474,"runProd2026":0.5210526315789473,"defenseZ":0,"winPct":0.8,"sosOppWinPct":0.43,"teamOverall":0.57,"rosterPlayerRating":0.2800526315789474,"scheduleGames":5,"runsPerGame":13,"runsAgainstPerGame":8.2,"runDiffPerGame":4.8},"awayPlayers":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"homePlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"awayLabel":"FREEHOLD BUICK GMC","homeLabel":"FRADKIN LAW","offenseRatingByNorm":{"gregory deluise":0.9,"mike conti":1.86,"mat manochio":0.29,"lucas preiss":0.53,"nick deluise":0.99,"dan manochio jr":0.56,"patrick thomas":-0.3,"stephen milhaven":3.29,"dan manochio sr":0.33,"michael podolla":-0.64,"ryan ramirez":-1.89,"tom bongiovani":-1.02,"raymond porzio":-1.64,"phil corde":2,"ed fradkin":2.37,"patrick brock":2.02,"joe picarello":0.26,"rob corde":2.5,"nolan ruthberg":0.43,"gary szemcsak":-0.43,"cameron gille":-1.36,"dylan jacoby":-2.46,"pat pingaro":-0.56,"justin jacoby":-1.33,"marc persily":-0.15,"jonathan okun":-1.64},"stats2026ByPlayer":{"gregory deluise":{"PA":"13","Runs":"4","RBI":"3"},"mike conti":{"PA":"17","Runs":"8","RBI":"7"},"mat manochio":{"PA":"19","Runs":"7","RBI":"2"},"lucas preiss":{"PA":"17","Runs":"7","RBI":"3"},"nick deluise":{"PA":"18","Runs":"7","RBI":"6"},"dan manochio jr":{"PA":"17","Runs":"4","RBI":"5"},"patrick thomas":{"PA":"17","Runs":"3","RBI":"2"},"stephen milhaven":{"PA":"17","Runs":"5","RBI":"13"},"dan manochio sr":{"PA":"0","Runs":"0","RBI":"0"},"michael podolla":{"PA":"17","Runs":"3","RBI":"2"},"ryan ramirez":{"PA":"17","Runs":"3","RBI":"1"},"tom bongiovani":{"PA":"17","Runs":"0","RBI":"3"},"raymond porzio":{"PA":"11","Runs":"0","RBI":"1"},"phil corde":{"PA":"18","Runs":"7","RBI":"8"},"ed fradkin":{"PA":"18","Runs":"5","RBI":"9"},"patrick brock":{"PA":"13","Runs":"7","RBI":"1"},"joe picarello":{"PA":"17","Runs":"5","RBI":"3"},"rob corde":{"PA":"17","Runs":"8","RBI":"11"},"nolan ruthberg":{"PA":"17","Runs":"7","RBI":"3"},"gary szemcsak":{"PA":"7","Runs":"2","RBI":"2"},"cameron gille":{"PA":"20","Runs":"3","RBI":"1"},"dylan jacoby":{"PA":"14","Runs":"1","RBI":"1"},"pat pingaro":{"PA":"16","Runs":"2","RBI":"4"},"justin jacoby":{"PA":"3","Runs":"0","RBI":"0"},"marc persily":{"PA":"14","Runs":"5","RBI":"2"},"jonathan okun":{"PA":"16","Runs":"1","RBI":"1"}},"defenseZByNorm":{}};</script>
+    <script src="/MMS-Metrics/js/matchup-predictor-ui.js?v=5"></script>
+    <script type="module" src="/MMS-Metrics/js/matchup-predictor-client.mjs?v=5"></script>
+    
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -797,6 +802,7 @@
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
 
         function parseList(value) {
           return value
@@ -938,7 +944,30 @@
           }
         }
 
+        function recalcPrediction() {
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              [...awaySet],
+              [...homeSet]
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
         syncButtons(awaySet, homeSet);
+        if (matchupCtx) recalcPrediction();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -960,7 +989,8 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            if (!isStaticSite) submitOrNavigate();
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
           });
         });
       })();
