@@ -4,7 +4,10 @@
 import { configureCareerCsvForBrowser } from "../lib/sheetUrls.js";
 import { buildWeeklyLeaderboardResponse } from "../lib/dfsLeaderboardResponse.js";
 
-configureCareerCsvForBrowser("/data/csv/career.csv");
+const careerCsvUrl =
+  (typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__) ||
+  "/data/csv/career.csv";
+configureCareerCsvForBrowser(careerCsvUrl);
 
 export async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
   return buildWeeklyLeaderboardResponse(selectedWeek, lineups);

@@ -122,7 +122,9 @@
         <nav class="dfs-slate-picker" aria-label="Choose slate">
           <% slateOptions.forEach((opt) => { %>
           <a
-            href="<%= sitePath('/dfs?slate=' + encodeURIComponent(opt.value)) %>"
+            href="<%= (typeof staticSite !== 'undefined' && staticSite)
+              ? sitePath('/dfs/slate/' + encodeURIComponent(opt.value))
+              : sitePath('/dfs?slate=' + encodeURIComponent(opt.value)) %>"
             class="dfs-slate-chip<%= opt.value === selectedSlate ? ' is-selected' : '' %><%= opt.canEdit ? ' dfs-slate-chip--open' : ' dfs-slate-chip--locked' %><%= opt.isPast ? ' dfs-slate-chip--past' : '' %>"
             data-slate="<%= opt.value %>"
             <%= opt.value === selectedSlate ? 'aria-current="page"' : '' %>

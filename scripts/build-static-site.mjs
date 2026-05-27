@@ -122,6 +122,15 @@ function extractSelectOptionValues(html, selectId) {
   return values;
 }
 
+function extractAllMatches(html, regex) {
+  const out = [];
+  let m;
+  while ((m = regex.exec(html))) {
+    out.push(m[1]);
+  }
+  return out;
+}
+
 function matchupPath(view, matchup = "") {
   const base = `/matchup-predictor/view/${encodeURIComponent(view)}`;
   if (!matchup) return base;
@@ -221,6 +230,27 @@ async function main() {
     await mapConcurrent(matchupRoutes, 24, async (route) => {
       const html = await fetchHtml(port, route);
       await writeRoute(html, route);
+    });
+
+    // Export pretty DFS links for static navigation.
+    const dfsHtml = await fetchHtml(port, "/dfs");
+    const slateTokens = extractAllMatches(
+      dfsHtml,
+      /\/dfs\/slate\/([A-Za-z0-9%]+)/g
+    ).map((t) => decodeURIComponent(t));
+    await mapConcurrent(Array.from(new Set(slateTokens)), 6, async (token) => {
+      const html = await fetchHtml(port, `/dfs?slate=${encodeURIComponent(token)}`);
+      await writeRoute(html, `/dfs/slate/${encodeURIComponent(token)}`);
+    });
+
+    const lbHtml = await fetchHtml(port, "/dfs/leaderboard");
+    const weekTokens = extractAllMatches(
+      lbHtml,
+      /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g
+    ).map((t) => decodeURIComponent(t));
+    await mapConcurrent(Array.from(new Set(weekTokens)), 4, async (week) => {
+      const html = await fetchHtml(port, `/dfs/leaderboard?week=${encodeURIComponent(week)}`);
+      await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
     });
 
     for (const route of STATIC_ROUTES) {

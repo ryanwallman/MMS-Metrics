@@ -3053,7 +3053,8 @@ var require_dfsLeaderboardResponse = __commonJS({
 // client/leaderboard-scoring-entry.mjs
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_dfsLeaderboardResponse = __toESM(require_dfsLeaderboardResponse(), 1);
-(0, import_sheetUrls.configureCareerCsvForBrowser)("/data/csv/career.csv");
+var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
+(0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
 async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
   return (0, import_dfsLeaderboardResponse.buildWeeklyLeaderboardResponse)(selectedWeek, lineups);
 }

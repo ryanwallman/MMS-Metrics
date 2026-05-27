@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+  rel="stylesheet"
+/>
+<script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
+<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+
+    <title>DFS Lineup — Marlboro Men's Softball</title>
+  </head>
+  <body>
+    <header class="site-header">
+  <div class="site-header-inner">
+    <div class="site-brand-block">
+      <a href="/MMS-Metrics/" class="site-brand">Marlboro Men's Softball</a>
+      <span class="site-brand-tagline">League stats · DFS · all the numbers</span>
+    </div>
+    <nav class="site-nav" aria-label="Main">
+      
+      <a
+        href="/MMS-Metrics/"
+        class="site-nav-link"
+        
+      >
+        League Leaders
+      </a>
+      
+      <a
+        href="/MMS-Metrics/matchup-predictor"
+        class="site-nav-link"
+        
+      >
+        Matchup Predictor
+      </a>
+      
+      <a
+        href="/MMS-Metrics/dfs"
+        class="site-nav-link is-active"
+        aria-current=&#34;page&#34;
+      >
+        DFS Lineup
+      </a>
+      
+      <a
+        href="/MMS-Metrics/rankings/power"
+        class="site-nav-link"
+        
+      >
+        Power Rankings
+      </a>
+      
+    </nav>
+    <div class="site-header-meta">
+      
+      <p class="site-updated">
+        Data updated
+        <time datetime="2026-05-27T14:33:56.780Z">May 27, 2026, 10:33 AM ET</time>
+      </p>
+      
+      
+      <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
+      
+    </div>
+  </div>
+</header>
+
+
+    <main class="page-main dfs-page">
+      <div class="dfs-page-head">
+        <h1 class="page-title">DFS Lineup Builder</h1>
+        <div class="dfs-page-head-actions">
+          <div class="dfs-info-wrap">
+            <button
+              type="button"
+              class="dfs-info-btn"
+              id="dfsIntroBtn"
+              aria-label="How DFS lineups work"
+              aria-expanded="false"
+              aria-controls="dfsIntroPanel"
+            >
+              <svg class="dfs-info-btn__icon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <circle cx="12" cy="8" r="1.25" fill="currentColor" />
+              </svg>
+            </button>
+            <div
+              id="dfsIntroPanel"
+              class="dfs-info-panel"
+              role="dialog"
+              aria-labelledby="dfsIntroPanelTitle"
+              hidden
+            >
+              <button type="button" class="dfs-info-panel__close" id="dfsIntroClose" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+              <h2 class="dfs-info-panel__title" id="dfsIntroPanelTitle">How DFS lineups work</h2>
+              <div class="dfs-info-panel__body dfs-intro">
+                <p>
+                  Build an <strong>8-player</strong> lineup for the next slate with a
+                  <strong>$60,000</strong> salary cap. Salaries weight <strong>offensive rating</strong> (~80%),
+                  <strong>opponent runs allowed</strong> (~12%), and the <strong>opposing primary pitcher</strong> (~8%).
+                  Player rating leans on <strong>career stats</strong> when available (about 85% career / 15% 2026 when both exist).
+                  <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
+                  <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
+                  The bottom <strong>25%</strong> of the slate by salary are all priced at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
+                  You can browse everything without an account. To compete on the leaderboard, enter a <strong>display name</strong> (first name and last initial or full name) and save your lineup for <strong>Sunday week slates</strong> (<code>W#</code>) or <strong>Wednesday slates</strong> (<code>D…</code>). <strong>One lineup per device per slate.</strong> When you save to the database, each player’s <strong>salary is locked at that moment</strong> — the leaderboard always shows what you paid, not today’s prices. You can edit and re-save before the deadline; if you change players, new salaries apply on the next save.
+                  Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
+                  <strong>Sunday</strong> slates lock at <strong>11:59 PM Eastern the night before games</strong>. <strong>Wednesday</strong> slates lock at <strong>5:00 PM Eastern on game day</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+          <a href="/MMS-Metrics/dfs/leaderboard" class="dfs-btn dfs-btn--primary">Leaderboard</a>
+        </div>
+      </div>
+
+      <div class="dfs-lineup-notices" id="dfsLineupNotices">
+        <section
+          class="dfs-lineup-notice dfs-lineup-notice--compete"
+          id="dfsNoticeCompete"
+          role="note"
+          aria-label="Leaderboard competition"
+        >
+          <button type="button" class="dfs-notice-dismiss" data-notice-dismiss="compete" aria-label="Dismiss competition notice">
+            <span aria-hidden="true">×</span>
+          </button>
+          <p class="dfs-notice-text">
+            <strong>To compete against others,</strong> enter a display name and save your lineup for the slate.
+            The <a href="/MMS-Metrics/dfs/leaderboard">leaderboard</a> ranks saved lineups — one entry per device per slate.
+          </p>
+        </section>
+
+        <section
+          class="dfs-lineup-notice dfs-lineup-notice--risk"
+          id="dfsNoticeRisk"
+          role="note"
+          aria-label="Lineup disclaimer"
+        >
+          <button type="button" class="dfs-notice-dismiss" data-notice-dismiss="risk" aria-label="Dismiss lineup disclaimer">
+            <span aria-hidden="true">×</span>
+          </button>
+          <p class="dfs-notice-text">
+            <strong>Lineups are at your own risk.</strong> Rosters and schedules here do not guarantee anyone is active for a given slate—players may sit out, be injured, or miss that week for other reasons. Double-check real-world lineups before you lock in picks.
+          </p>
+        </section>
+      </div>
+
+      
+
+      
+      <section class="dfs-auth-bar" id="dfsPlayerBar" aria-label="Leaderboard name">
+        <label class="dfs-auth-status" for="dfsUsername">
+          <strong>Display name</strong> (shown on the leaderboard)
+        </label>
+        <div class="dfs-auth-actions">
+          <input
+            type="text"
+            id="dfsUsername"
+            class="dfs-username-input"
+            maxlength="24"
+            autocomplete="nickname"
+            placeholder="e.g. Mitch P or John Smith"
+          />
+        </div>
+        <p class="dfs-auth-hint" id="dfsPlayerHint">First name and last initial (or full name). One lineup per device per slate — update it anytime before the countdown hits zero.</p>
+        <p class="dfs-auth-status" id="dfsSubmitStatus" role="status" aria-live="polite"></p>
+      </section>
+      
+
+      <div class="dfs-slate-form" id="dfsSlateForm">
+        <p class="dfs-slate-form-label"><strong>Slate</strong></p>
+        <nav class="dfs-slate-picker" aria-label="Choose slate">
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/W1"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="W1"
+            
+          >Sun, 26-Apr • Week 1 · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/D20260429"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="D20260429"
+            
+          >Wed, 29-Apr · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/W2"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="W2"
+            
+          >Sun, 3-May • Week 2 · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/D20260506"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="D20260506"
+            
+          >Wed, 6-May · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/W3"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="W3"
+            
+          >Sun, 10-May • Week 3 · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/D20260513"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="D20260513"
+            
+          >Wed, 13-May · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/W4"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
+            data-slate="W4"
+            
+          >Sun, 17-May • Week 4 · locked</a>
+          
+          <a
+            href="/MMS-Metrics/dfs/slate/D20260527"
+            class="dfs-slate-chip is-selected dfs-slate-chip--open"
+            data-slate="D20260527"
+            aria-current=&#34;page&#34;
+          >Wed, 27-May · open</a>
+          
+        </nav>
+        <input type="hidden" name="lineup" id="lineupInput" value="" />
+      </div>
+
+      
+
+      <div class="dfs-layout">
+        <div class="dfs-top-row">
+          <section class="dfs-slate-banner dfs-top-panel" aria-label="Current slate">
+            <h2 class="dfs-slate-title">Wed, 27-May</h2>
+            
+            <p class="dfs-slate-status dfs-slate-status--open">
+              Open for lineups through <strong>Wed, May 27, 2026, 5:00 PM EDT</strong> (5:00 PM Eastern on game day) ·
+              2 games · 4 teams
+            </p>
+            
+            
+            <ul class="dfs-game-list">
+              
+              <li>
+                <span class="matchup-side-tag">Away</span> EB CONSTRUCTION <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> ENGAGE PEO
+                
+                <span class="dfs-game-field">UH RIGHT · UHR</span>
+                
+              </li>
+              
+              <li>
+                <span class="matchup-side-tag">Away</span> LHRGC LAW <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> GODDARD HOME
+                
+                <span class="dfs-game-field">UH LEFT · UHL</span>
+                
+              </li>
+              
+            </ul>
+            
+          </section>
+
+          <section class="dfs-lineup-card dfs-top-panel">
+            <h2 class="section-heading dfs-lineup-heading">
+              <span class="dfs-lineup-heading-title">Your lineup</span>
+            </h2>
+            <p class="dfs-budget">
+              <span id="salaryUsedLabel">$0</span>
+              <span class="dfs-budget-sep">/</span>
+              $60,000
+              <span class="dfs-budget-remaining" id="salaryRemainingLabel">($60,000 left)</span>
+            </p>
+            <ol class="dfs-lineup-slots" id="lineupSlots">
+              
+              
+              <li class="dfs-lineup-slot" data-slot="0">
+                <span class="dfs-slot-num">1</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="1">
+                <span class="dfs-slot-num">2</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="2">
+                <span class="dfs-slot-num">3</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="3">
+                <span class="dfs-slot-num">4</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="4">
+                <span class="dfs-slot-num">5</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="5">
+                <span class="dfs-slot-num">6</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="6">
+                <span class="dfs-slot-num">7</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+              
+              <li class="dfs-lineup-slot" data-slot="7">
+                <span class="dfs-slot-num">8</span>
+                
+                <span class="dfs-slot-empty">Select a player</span>
+                
+              </li>
+              
+            </ol>
+            <p class="dfs-lineup-actions">
+              <button type="button" class="dfs-btn dfs-btn--primary" id="saveLineupBtn" >Save lineup to database</button>
+              
+              <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Load your saved lineup from the database">Load saved lineup</button>
+              
+              <button type="button" class="dfs-btn" id="clearLineupBtn" >Clear</button>
+            </p>
+            
+            <p class="dfs-lineup-sync-status" id="dfsLineupSyncStatus" role="status" aria-live="polite" hidden></p>
+            
+          </section>
+
+          <div class="dfs-side-stack">
+            
+            <section class="dfs-lock-panel dfs-top-panel" aria-label="Lineup deadline">
+              <h2 class="section-heading dfs-lock-panel__title">Lineup deadline</h2>
+              <div
+                class="dfs-lock-countdown"
+                id="dfsLockCountdown"
+                data-deadline-ms="1779915599999"
+                aria-live="polite"
+                
+              >
+                <p class="dfs-lock-countdown__label">Lineups lock in (New York time)</p>
+                <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
+                
+                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen">Wed, May 27, 2026, 5:00 PM EDT</p>
+                
+                <p class="dfs-lock-countdown__rule">Wednesday slates lock at <strong>5:00 PM Eastern</strong> on game day.</p>
+                
+                
+              </div>
+              <p
+                class="dfs-lock-countdown dfs-lock-countdown--closed"
+                id="dfsLockCountdownClosed"
+                hidden
+              >
+                Lineups are locked — no upcoming slate deadline.
+              </p>
+            </section>
+
+            <section class="dfs-scoring-rules dfs-top-panel" aria-label="Scoring rules">
+            <h2 class="section-heading">Scoring (per game)</h2>
+            <ul class="dfs-rules-list">
+              <li>Single <strong>+3</strong></li>
+              <li>Double <strong>+5</strong></li>
+              <li>Triple <strong>+8</strong></li>
+              <li>Home run <strong>+10</strong></li>
+              <li>RBI <strong>+2</strong></li>
+              <li>Run <strong>+2</strong></li>
+              <li>Walk <strong>+2</strong></li>
+            </ul>
+            
+            </section>
+          </div>
+        </div>
+
+        <div class="dfs-extra-panels">
+          
+
+          
+        </div>
+
+        
+        <section class="dfs-pool-section" id="dfsPoolSection" >
+          <div class="dfs-pool-toolbar">
+            <h2 class="section-heading">Player pool</h2>
+            <div class="dfs-pool-toolbar-actions">
+              <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
+                <span class="dfs-sort-label">Sort</span>
+                <button type="button" class="dfs-sort-btn is-active" data-sort="salary">Salary</button>
+                <button type="button" class="dfs-sort-btn" data-sort="team">Team</button>
+                
+              </div>
+              <label class="dfs-team-filter" id="teamFilterWrap" hidden>
+                <span class="dfs-team-filter-label">Team</span>
+                <select id="teamFilter" aria-label="Filter by team">
+                  <option value="">All teams</option>
+                </select>
+              </label>
+              <label class="dfs-search-label">
+                Search
+                <input type="search" id="poolSearch" placeholder="Name, team, or field…" autocomplete="off" />
+              </label>
+            </div>
+          </div>
+          <div class="dfs-table-wrap">
+            <table class="dfs-player-table page-table" id="playerPoolTable">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Player</th>
+                  <th>Team</th>
+                  <th>Field</th>
+                  <th>Salary</th>
+                  
+                  <th>vs</th>
+                  <th>Opposing Pitcher</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="anthony dimarco"
+                  data-name="Anthony Dimarco"
+                  data-team="LHRGC LAW"
+                  data-salary="10600"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="anthony dimarco"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Anthony Dimarco</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$10,600</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="cole fluta"
+                  data-name="Cole Fluta"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="9200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="cole fluta"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Cole Fluta</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$9,200</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="darren saler"
+                  data-name="Darren Saler"
+                  data-team="LHRGC LAW"
+                  data-salary="9200"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="darren saler"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Darren Saler</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$9,200</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="eric becker"
+                  data-name="Eric Becker"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="8500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="eric becker"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Eric Becker</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$8,500</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="evan rosenthal"
+                  data-name="Evan Rosenthal"
+                  data-team="LHRGC LAW"
+                  data-salary="8500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="evan rosenthal"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Evan Rosenthal</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$8,500</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="joel zaretsky"
+                  data-name="Joel Zaretsky"
+                  data-team="ENGAGE PEO"
+                  data-salary="8500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="joel zaretsky"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Joel Zaretsky</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$8,500</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="nick martino"
+                  data-name="Nick Martino"
+                  data-team="ENGAGE PEO"
+                  data-salary="8500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="nick martino"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Nick Martino</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$8,500</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="vince caputo"
+                  data-name="Vince Caputo"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="8500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="vince caputo"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Vince Caputo</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$8,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="joe mamone"
+                  data-name="Joe Mamone"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="7800"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="joe mamone"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Joe Mamone</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,800</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="joe peragine"
+                  data-name="Joe Peragine"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="7800"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="joe peragine"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Joe Peragine</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,800</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="peter kwiecinski"
+                  data-name="Peter Kwiecinski"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="7800"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="peter kwiecinski"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Peter Kwiecinski</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,800</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="rich acerra"
+                  data-name="Rich Acerra"
+                  data-team="LHRGC LAW"
+                  data-salary="7800"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="rich acerra"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Rich Acerra</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,800</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="austin silverberg"
+                  data-name="Austin Silverberg"
+                  data-team="ENGAGE PEO"
+                  data-salary="7200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="austin silverberg"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Austin Silverberg</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="connor schmidt"
+                  data-name="Connor Schmidt"
+                  data-team="LHRGC LAW"
+                  data-salary="7200"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="connor schmidt"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Connor Schmidt</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="holden silverberg"
+                  data-name="Holden Silverberg"
+                  data-team="ENGAGE PEO"
+                  data-salary="7200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="holden silverberg"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Holden Silverberg</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="jeff beja"
+                  data-name="Jeff Beja"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="7200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="jeff beja"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Jeff Beja</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="joe caputo"
+                  data-name="Joe Caputo"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="7200"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="joe caputo"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Joe Caputo</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="matt pollock"
+                  data-name="Matt Pollock"
+                  data-team="ENGAGE PEO"
+                  data-salary="7200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="matt pollock"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Matt Pollock</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="mitch pollock"
+                  data-name="Mitch Pollock"
+                  data-team="ENGAGE PEO"
+                  data-salary="7200"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="mitch pollock"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Mitch Pollock</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="zach schmidt"
+                  data-name="Zach Schmidt"
+                  data-team="LHRGC LAW"
+                  data-salary="7200"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="zach schmidt"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Zach Schmidt</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$7,200</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="alex goldfarb"
+                  data-name="Alex Goldfarb"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="alex goldfarb"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Alex Goldfarb</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="andrew bianchi"
+                  data-name="Andrew Bianchi"
+                  data-team="LHRGC LAW"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="andrew bianchi"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Andrew Bianchi</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="chris curti"
+                  data-name="Chris Curti"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="chris curti"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Chris Curti</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="evan abramson"
+                  data-name="Evan Abramson"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="evan abramson"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Evan Abramson</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="frank larocca"
+                  data-name="Frank LaRocca"
+                  data-team="LHRGC LAW"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="frank larocca"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Frank LaRocca</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="james pezzulo"
+                  data-name="James Pezzulo"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="james pezzulo"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">James Pezzulo</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="jeff goddard"
+                  data-name="Jeff Goddard"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="jeff goddard"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Jeff Goddard</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="lawrence rubin"
+                  data-name="Lawrence Rubin"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="lawrence rubin"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Lawrence Rubin</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="mark goddard"
+                  data-name="Mark Goddard"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="mark goddard"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Mark Goddard</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="matt whelen"
+                  data-name="Matt Whelen"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="matt whelen"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Matt Whelen</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="michael weitsen"
+                  data-name="Michael Weitsen"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="6500"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="michael weitsen"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Michael Weitsen</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="mike ferrarese"
+                  data-name="Mike Ferrarese"
+                  data-team="ENGAGE PEO"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="mike ferrarese"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Mike Ferrarese</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="phillip kuhner"
+                  data-name="Phillip Kuhner"
+                  data-team="ENGAGE PEO"
+                  data-salary="6500"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="phillip kuhner"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Phillip Kuhner</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$6,500</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="aaron williams"
+                  data-name="Aaron Williams"
+                  data-team="LHRGC LAW"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="aaron williams"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Aaron Williams</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="bill chiusano"
+                  data-name="Bill Chiusano"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="bill chiusano"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Bill Chiusano</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="brad randell"
+                  data-name="Brad Randell"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="brad randell"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Brad Randell</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="bruce cotter"
+                  data-name="Bruce Cotter"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="bruce cotter"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Bruce Cotter</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="bryan thompson"
+                  data-name="Bryan Thompson"
+                  data-team="ENGAGE PEO"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="bryan thompson"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Bryan Thompson</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="edwin valentin"
+                  data-name="Edwin Valentin"
+                  data-team="ENGAGE PEO"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="edwin valentin"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Edwin Valentin</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="jesse panassidi"
+                  data-name="Jesse Panassidi"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="jesse panassidi"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Jesse Panassidi</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="joe olivencia"
+                  data-name="Joe Olivencia"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="joe olivencia"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Joe Olivencia</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="josh garcia"
+                  data-name="Josh Garcia"
+                  data-team="ENGAGE PEO"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="josh garcia"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Josh Garcia</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="justin randell"
+                  data-name="Justin Randell"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="justin randell"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Justin Randell</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="mark karp"
+                  data-name="Mark Karp"
+                  data-team="LHRGC LAW"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="mark karp"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Mark Karp</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="michael cruz"
+                  data-name="Michael Cruz"
+                  data-team="GODDARD&#39;S HOME IMPROVEMENTS"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="michael cruz"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Michael Cruz</td>
+                  <td>GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">LHRGC LAW</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.402, Runs/G 9.3">LaRocca</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="mike cornacchia"
+                  data-name="Mike Cornacchia"
+                  data-team="LHRGC LAW"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="mike cornacchia"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Mike Cornacchia</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="reid goldfarb"
+                  data-name="Reid Goldfarb"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="reid goldfarb"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Reid Goldfarb</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="rich hartly"
+                  data-name="Rich Hartly"
+                  data-team="EB CONSTRUCTION"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="rich hartly"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Rich Hartly</td>
+                  <td>EB CONSTRUCTION</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">ENGAGE PEO</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.392, Runs/G 10">MA Pollock</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="rob rozencwaig"
+                  data-name="Rob Rozencwaig"
+                  data-team="ENGAGE PEO"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="rob rozencwaig"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Rob Rozencwaig</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="stephen epstein"
+                  data-name="Stephen Epstein"
+                  data-team="LHRGC LAW"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="stephen epstein"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Stephen Epstein</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="steven frey"
+                  data-name="Steven Frey"
+                  data-team="ENGAGE PEO"
+                  data-salary="5000"
+                  data-field="UH RIGHT · UHR"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="steven frey"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Steven Frey</td>
+                  <td>ENGAGE PEO</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH RIGHT · UHR</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">EB CONSTRUCTION</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.39, Runs/G 10">Becker</td>
+                </tr>
+                
+                
+                <tr
+                  class="dfs-player-row"
+                  data-norm="zachary kane"
+                  data-name="Zachary Kane"
+                  data-team="LHRGC LAW"
+                  data-salary="5000"
+                  data-field="UH LEFT · UHL"
+                  data-points="0"
+                  data-games="0"
+                >
+                  
+                  <td>
+                    <button
+                      type="button"
+                      class="dfs-add-btn"
+                      data-toggle="zachary kane"
+                      aria-pressed="false"
+                    >+</button>
+                  </td>
+                  
+                  <td class="dfs-player-name">Zachary Kane</td>
+                  <td>LHRGC LAW</td>
+                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)">UH LEFT · UHL</td>
+                  <td class="dfs-salary-cell">$5,000</td>
+                  
+                  <td class="dfs-opp-cell">GODDARD&#39;S HOME IMPROVEMENTS</td>
+                  <td class="dfs-pitcher-cell" title="BAA 0.377, Runs/G 7">J Goddard</td>
+                </tr>
+                
+              </tbody>
+            </table>
+          </div>
+          
+        </section>
+      </div>
+    </main>
+
+    
+    <script>
+      window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};
+    </script>
+    <script type="module" src="/MMS-Metrics/js/dfs-firebase.js?v=1"></script>
+    
+
+    <script>
+      (function () {
+        const LINEUP_SIZE = 8;
+        const SALARY_CAP = 60000;
+        const CAN_EDIT = true;
+        const SHOW_SLATE_STATS = false;
+        const STORAGE_PREFIX = "mms-dfs-lineup:";
+        const slateKey = "D20260527";
+        const form = document.getElementById("dfsSlateForm");
+        const lineupInput = document.getElementById("lineupInput");
+        const pool = new Map();
+        document.querySelectorAll(".dfs-player-row").forEach((row) => {
+          pool.set(row.getAttribute("data-norm"), {
+            norm: row.getAttribute("data-norm"),
+            name: row.getAttribute("data-name"),
+            team: row.getAttribute("data-team"),
+            field: row.getAttribute("data-field") || "",
+            salary: Number(row.getAttribute("data-salary")),
+          });
+        });
+
+        (function setupLineupLockCountdown() {
+          const wrap = document.getElementById("dfsLockCountdown");
+          const closed = document.getElementById("dfsLockCountdownClosed");
+          const timerEl = document.getElementById("dfsLockCountdownTimer");
+          if (!wrap || !timerEl) return;
+
+          const raw = wrap.getAttribute("data-deadline-ms");
+          const deadlineMs = raw ? Number(raw) : NaN;
+          if (!Number.isFinite(deadlineMs)) {
+            wrap.hidden = true;
+            if (closed) closed.hidden = false;
+            return;
+          }
+          if (closed) closed.hidden = true;
+          wrap.hidden = false;
+
+          function pad2(n) {
+            return String(n).padStart(2, "0");
+          }
+
+          function formatRemaining(ms) {
+            if (ms <= 0) return null;
+            const totalSec = Math.floor(ms / 1000);
+            const days = Math.floor(totalSec / 86400);
+            const hours = Math.floor((totalSec % 86400) / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+            const parts = [];
+            if (days > 0) parts.push(days + "d");
+            parts.push(pad2(hours) + "h");
+            parts.push(pad2(minutes) + "m");
+            parts.push(pad2(seconds) + "s");
+            return parts.join(" ");
+          }
+
+          function hidePlayerPoolAfterLock() {
+            const poolSection = document.getElementById("dfsPoolSection");
+            if (poolSection) poolSection.hidden = true;
+          }
+
+          function tick() {
+            const left = deadlineMs - Date.now();
+            const text = formatRemaining(left);
+            if (!text) {
+              timerEl.textContent = "Locked";
+              wrap.classList.add("dfs-lock-countdown--expired");
+              hidePlayerPoolAfterLock();
+              return;
+            }
+            timerEl.textContent = text;
+          }
+
+          tick();
+          window.setInterval(tick, 1000);
+        })();
+
+        (function setupDfsIntroInfo() {
+          const btn = document.getElementById("dfsIntroBtn");
+          const panel = document.getElementById("dfsIntroPanel");
+          const closeBtn = document.getElementById("dfsIntroClose");
+          if (!btn || !panel) return;
+
+          function setOpen(open) {
+            panel.hidden = !open;
+            btn.setAttribute("aria-expanded", open ? "true" : "false");
+          }
+
+          function toggle() {
+            setOpen(panel.hidden);
+          }
+
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            toggle();
+          });
+
+          closeBtn?.addEventListener("click", () => setOpen(false));
+
+          document.addEventListener("click", (e) => {
+            if (panel.hidden) return;
+            if (e.target.closest(".dfs-info-wrap")) return;
+            setOpen(false);
+          });
+
+          document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !panel.hidden) setOpen(false);
+          });
+        })();
+
+        (function setupLineupNotices() {
+          const row = document.getElementById("dfsLineupNotices");
+          if (!row) return;
+
+          const storagePrefix = "mms-dfs-notice-dismiss-";
+
+          function syncNoticesLayout() {
+            const visible = row.querySelectorAll(".dfs-lineup-notice:not([hidden])");
+            row.classList.toggle("dfs-lineup-notices--single", visible.length === 1);
+            row.hidden = visible.length === 0;
+          }
+
+          row.querySelectorAll(".dfs-lineup-notice").forEach((notice) => {
+            const key = notice.id;
+            if (key && sessionStorage.getItem(storagePrefix + key)) {
+              notice.hidden = true;
+            }
+            const dismiss = notice.querySelector(".dfs-notice-dismiss");
+            dismiss?.addEventListener("click", () => {
+              notice.hidden = true;
+              if (key) sessionStorage.setItem(storagePrefix + key, "1");
+              syncNoticesLayout();
+            });
+          });
+
+          syncNoticesLayout();
+        })();
+
+        (function setupPlayerBar() {
+          const input = document.getElementById("dfsUsername");
+          if (!input) return;
+          const saved = (localStorage.getItem("mms-dfs-username") || "").trim();
+          if (saved) input.value = saved;
+          input.addEventListener("change", () => {
+            window.DfsLineupStore?.setUsername?.(input.value);
+          });
+          input.addEventListener("input", () => {
+            window.DfsLineupStore?.setUsername?.(input.value);
+          });
+        })();
+
+        let lineup = lineupInput.value
+          .split(",")
+          .map((s) => s.trim())
+          .filter((n) => pool.has(n));
+
+        /** Salaries locked when a player is added (or loaded from a saved lineup). */
+        const lockedSalaries = new Map();
+
+        function playerSalary(norm) {
+          if (lockedSalaries.has(norm)) return lockedSalaries.get(norm);
+          return pool.get(norm)?.salary || 0;
+        }
+
+        function buildPlayerSalariesArray() {
+          return lineup.map((n) => playerSalary(n));
+        }
+
+        function applyLockedSalaries(norms, salaries) {
+          lockedSalaries.clear();
+          if (!Array.isArray(norms) || !Array.isArray(salaries)) return;
+          const len = Math.min(norms.length, salaries.length);
+          for (let i = 0; i < len; i += 1) {
+            const norm = norms[i];
+            const sal = Number(salaries[i]);
+            if (pool.has(norm) && Number.isFinite(sal) && sal > 0) {
+              lockedSalaries.set(norm, sal);
+            }
+          }
+        }
+
+        function loadStored() {
+          if (!slateKey) return null;
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + slateKey);
+            if (!raw) return null;
+            const data = JSON.parse(raw);
+            const norms = Array.isArray(data.lineup)
+              ? data.lineup.filter((n) => pool.has(n))
+              : null;
+            if (norms && Array.isArray(data.playerSalaries)) {
+              applyLockedSalaries(norms, data.playerSalaries);
+            }
+            return norms;
+          } catch {
+            return null;
+          }
+        }
+
+        function saveStored() {
+          if (!slateKey || !CAN_EDIT) return;
+          localStorage.setItem(
+            STORAGE_PREFIX + slateKey,
+            JSON.stringify({
+              lineup: [...lineup],
+              playerSalaries: buildPlayerSalariesArray(),
+              updatedAt: Date.now(),
+            })
+          );
+        }
+
+        function persistLineup() {
+          saveStored();
+          lineupInput.value = lineup.join(",");
+        }
+
+        async function saveLineupToCloud() {
+          if (!CAN_EDIT) {
+            throw new Error("Lineups can only be edited for the slate that is currently open.");
+          }
+          if (!/^W\d+$/i.test(slateKey) && !/^D\d{8}$/i.test(slateKey)) {
+            throw new Error("Cloud save is only for Sunday week slates (W1, W2, …) and Wednesday slates (D + date).");
+          }
+          if (!window.DfsLineupStore) {
+            throw new Error("Lineup storage is still loading — wait a moment and try again.");
+          }
+          const usernameInput = document.getElementById("dfsUsername");
+          const displayName = usernameInput ? usernameInput.value : "";
+          window.DfsLineupStore.validateUsername(displayName);
+          if (lineup.length !== LINEUP_SIZE) {
+            throw new Error("Pick exactly " + LINEUP_SIZE + " players before saving.");
+          }
+          if (salaryTotal() > SALARY_CAP) {
+            throw new Error("Your lineup is over the salary cap.");
+          }
+          const playerSalaries = buildPlayerSalariesArray();
+          const used = playerSalaries.reduce((s, n) => s + n, 0);
+          await window.DfsLineupStore.saveLineup(slateKey, lineup, used, playerSalaries, displayName);
+        }
+
+        function salaryTotal() {
+          return lineup.reduce((s, n) => s + playerSalary(n), 0);
+        }
+
+        let lastWeekByNorm = null;
+        try {
+          const el = document.getElementById("lastWeekPointsData");
+          if (el) lastWeekByNorm = JSON.parse(el.textContent || "{}");
+        } catch {
+          lastWeekByNorm = null;
+        }
+
+        let slatePointsByNorm = null;
+        try {
+          const el = document.getElementById("slatePointsData");
+          if (el) slatePointsByNorm = JSON.parse(el.textContent || "{}");
+        } catch {
+          slatePointsByNorm = null;
+        }
+
+        function computeLineupPointsTotal() {
+          if (!slatePointsByNorm || !lineup.length) return null;
+          let total = 0;
+          for (const norm of lineup) {
+            total += (slatePointsByNorm[norm] || { points: 0 }).points;
+          }
+          return Math.round(total * 10) / 10;
+        }
+
+        function updateLineupHeadingScore(total) {
+          const wrap = document.getElementById("lineupHeadingScore");
+          if (!wrap || CAN_EDIT) return;
+          const valEl = wrap.querySelector("[data-points-value]");
+          if (!valEl) return;
+          if (!lineup.length) {
+            valEl.textContent = "—";
+            return;
+          }
+          if (!SHOW_SLATE_STATS || !slatePointsByNorm) {
+            valEl.textContent = "—";
+            return;
+          }
+          const t = total != null ? total : computeLineupPointsTotal();
+          valEl.textContent = t == null ? "—" : String(t);
+        }
+
+        function updateSlateScoreCard() {
+          const card = document.getElementById("slateScoreCard");
+          if (!card || !slatePointsByNorm) {
+            updateLineupHeadingScore(null);
+            return;
+          }
+
+          const totalEl = document.getElementById("slateScoreTotal");
+          const list = document.getElementById("slateScoreBreakdown");
+
+          if (!lineup.length) {
+            if (totalEl) totalEl.textContent = "—";
+            if (list) list.innerHTML = "";
+            updateLineupHeadingScore(null);
+            return;
+          }
+
+          let total = 0;
+          if (list) list.innerHTML = "";
+          for (const norm of lineup) {
+            const row = slatePointsByNorm[norm] || { points: 0, games: 0 };
+            const p = pool.get(norm);
+            total += row.points;
+            if (list) {
+              const li = document.createElement("li");
+              li.innerHTML =
+                "<span>" +
+                (p ? p.name : norm) +
+                "</span><strong>" +
+                row.points +
+                '</strong><span class="dfs-score-games">' +
+                row.games +
+                " gm</span>";
+              list.appendChild(li);
+            }
+          }
+          const rounded = Math.round(total * 10) / 10;
+          if (totalEl) totalEl.textContent = rounded.toString();
+          updateLineupHeadingScore(rounded);
+        }
+
+        function updateLastWeekPreview() {
+          const card = document.getElementById("lastWeekPreviewCard");
+          if (!card || !lastWeekByNorm) return;
+
+          if (!lineup.length) {
+            card.hidden = true;
+            return;
+          }
+          card.hidden = false;
+
+          if (card.getAttribute("data-has-stats") !== "1") return;
+
+          let total = 0;
+          const list = document.getElementById("lastWeekBreakdown");
+          const totalEl = document.getElementById("lastWeekTotal");
+          if (!list || !totalEl) return;
+
+          list.innerHTML = "";
+          for (const norm of lineup) {
+            const row = lastWeekByNorm[norm] || { points: 0, games: 0 };
+            const p = pool.get(norm);
+            total += row.points;
+            const li = document.createElement("li");
+            li.innerHTML =
+              "<span>" +
+              (p ? p.name : norm) +
+              "</span><strong>" +
+              row.points +
+              '</strong><span class="dfs-score-games">' +
+              row.games +
+              " gm</span>";
+            list.appendChild(li);
+          }
+          totalEl.textContent = (Math.round(total * 10) / 10).toString();
+        }
+
+        function syncUi() {
+          const used = salaryTotal();
+          const left = SALARY_CAP - used;
+          document.getElementById("salaryUsedLabel").textContent = "$" + used.toLocaleString();
+          const rem = document.getElementById("salaryRemainingLabel");
+          rem.textContent = "($" + left.toLocaleString() + " left)";
+          rem.classList.toggle("dfs-budget-over", left < 0);
+
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const norm = row.getAttribute("data-norm");
+            const on = lineup.includes(norm);
+            const addSalary = Number(row.getAttribute("data-salary")) || 0;
+            const overCap = !on && used + addSalary > SALARY_CAP;
+            row.classList.toggle("dfs-player-row--selected", on);
+            row.classList.toggle("dfs-player-row--over-cap", overCap);
+            const btn = row.querySelector(".dfs-add-btn");
+            if (btn) {
+              btn.textContent = on ? "−" : "+";
+              btn.classList.toggle("dfs-add-btn--remove", on);
+              btn.setAttribute("aria-pressed", on ? "true" : "false");
+              btn.disabled = overCap;
+              btn.title = overCap ? "Not enough salary cap remaining" : "";
+            }
+          });
+
+          const slots = document.getElementById("lineupSlots");
+          slots.innerHTML = "";
+          for (let i = 0; i < LINEUP_SIZE; i++) {
+            const norm = lineup[i];
+            const p = norm ? pool.get(norm) : null;
+            const li = document.createElement("li");
+            li.className = "dfs-lineup-slot" + (p ? " dfs-lineup-slot--filled" : "");
+            li.innerHTML =
+              '<span class="dfs-slot-num">' +
+              (i + 1) +
+              "</span>" +
+              (p
+                ? (function () {
+                    const pts = slatePointsByNorm && slatePointsByNorm[norm];
+                    const ptsLabel =
+                      pts && SHOW_SLATE_STATS ? " · " + pts.points + " pts" : "";
+                    const slotSalary = playerSalary(norm);
+                    const locked = lockedSalaries.has(norm);
+                    const meta =
+                      p.team +
+                      " · $" +
+                      slotSalary.toLocaleString() +
+                      (locked ? " (locked at save)" : "") +
+                      ptsLabel;
+                    const removeBtn = CAN_EDIT
+                      ? '<button type="button" class="dfs-remove-btn" data-remove="' +
+                        p.norm +
+                        '" aria-label="Remove">×</button>'
+                      : "";
+                    return (
+                      '<span class="dfs-slot-name">' +
+                      p.name +
+                      '</span><span class="dfs-slot-meta">' +
+                      meta +
+                      "</span>" +
+                      removeBtn
+                    );
+                  })()
+                : '<span class="dfs-slot-empty">' +
+                  (CAN_EDIT ? "Select a player" : "No saved lineup") +
+                  "</span>");
+            slots.appendChild(li);
+          }
+
+          slots.querySelectorAll("[data-remove]").forEach((btn) => {
+            btn.addEventListener("click", () => togglePlayer(btn.getAttribute("data-remove")));
+          });
+
+          updateLastWeekPreview();
+          updateSlateScoreCard();
+          if (!CAN_EDIT) updateLineupHeadingScore(null);
+        }
+
+        function togglePlayer(norm) {
+          if (!CAN_EDIT) return;
+          const ix = lineup.indexOf(norm);
+          if (ix >= 0) {
+            lineup.splice(ix, 1);
+            lockedSalaries.delete(norm);
+          } else {
+            if (lineup.length >= LINEUP_SIZE) {
+              alert("Lineup is full (" + LINEUP_SIZE + " players). Remove someone first.");
+              return;
+            }
+            const addSalary = pool.get(norm)?.salary || 0;
+            const nextTotal = salaryTotal() + addSalary;
+            if (nextTotal > SALARY_CAP) {
+              alert("Not enough salary cap remaining for this player.");
+              return;
+            }
+            lockedSalaries.set(norm, addSalary);
+            lineup.push(norm);
+          }
+          persistLineup();
+          syncUi();
+        }
+
+        document.querySelectorAll("[data-toggle]").forEach((btn) => {
+          btn.addEventListener("click", () => togglePlayer(btn.getAttribute("data-toggle")));
+        });
+
+        document.getElementById("clearLineupBtn").addEventListener("click", () => {
+          if (!CAN_EDIT) return;
+          lineup = [];
+          lockedSalaries.clear();
+          persistLineup();
+          syncUi();
+        });
+
+        if (!CAN_EDIT) {
+          document.querySelectorAll(".dfs-add-btn").forEach((btn) => {
+            btn.disabled = true;
+          });
+        }
+
+        const loadFromDbBtn = document.getElementById("loadFromDbBtn");
+        if (loadFromDbBtn) {
+          loadFromDbBtn.addEventListener("click", async () => {
+            const btn = loadFromDbBtn;
+            try {
+              btn.disabled = true;
+              const prevLabel = btn.textContent;
+              btn.textContent = "Loading…";
+              await pullLineupFromDatabase();
+              btn.textContent = prevLabel;
+            } catch (err) {
+              console.error(err);
+              setLineupSyncStatus(err.message || "Could not load lineup from the database.", true);
+            } finally {
+              updateLoadFromDbButton();
+            }
+          });
+        }
+
+        document.getElementById("saveLineupBtn").addEventListener("click", async () => {
+          const btn = document.getElementById("saveLineupBtn");
+          const status = document.getElementById("dfsSubmitStatus");
+          try {
+            persistLineup();
+            btn.disabled = true;
+            const prevLabel = btn.textContent;
+            btn.textContent = "Saving…";
+            const hadSaved = await window.DfsLineupStore.hasLineupForSlate(slateKey);
+            await saveLineupToCloud();
+            setLineupSyncStatus(
+              hadSaved
+                ? "Lineup updated for " + slateKey.toUpperCase() + ". You can keep editing until the deadline."
+                : "Lineup saved for " + slateKey.toUpperCase() + ". You can change it anytime before the deadline.",
+              false
+            );
+            if (status) {
+              status.textContent =
+                "Saved as " + (window.DfsLineupStore?.getUsername?.() || "Player") + " for " + slateKey.toUpperCase() + ".";
+            }
+            await updateSaveButtonState();
+          } catch (err) {
+            console.error(err);
+            btn.disabled = false;
+            await updateSaveButtonState();
+            alert(err.message || "Could not save lineup. Try again.");
+          }
+        });
+
+        const tbody = document.querySelector("#playerPoolTable tbody");
+        const teamFilterWrap = document.getElementById("teamFilterWrap");
+        const teamFilter = document.getElementById("teamFilter");
+        let currentSort = "salary";
+
+        function buildTeamRank() {
+          const maxByTeam = new Map();
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const team = row.getAttribute("data-team");
+            const sal = Number(row.getAttribute("data-salary"));
+            maxByTeam.set(team, Math.max(maxByTeam.get(team) || 0, sal));
+          });
+          const teams = [...maxByTeam.entries()]
+            .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], undefined, { sensitivity: "base" }))
+            .map(([name]) => name);
+          const rank = new Map(teams.map((name, i) => [name, i]));
+          return { teams, rank };
+        }
+
+        function refreshTeamFilterOptions() {
+          if (!teamFilter) return;
+          const { teams } = buildTeamRank();
+          const kept = teamFilter.value;
+          teamFilter.innerHTML = '<option value="">All teams</option>';
+          teams.forEach((name) => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            teamFilter.appendChild(opt);
+          });
+          if (kept && teams.includes(kept)) teamFilter.value = kept;
+        }
+
+        function applyPoolFilters() {
+          const q = (document.getElementById("poolSearch")?.value || "").trim().toLowerCase();
+          const teamVal = currentSort === "team" && teamFilter ? teamFilter.value : "";
+          document.querySelectorAll(".dfs-player-row").forEach((row) => {
+            const hay = (
+              row.getAttribute("data-name") +
+              " " +
+              row.getAttribute("data-team") +
+              " " +
+              (row.getAttribute("data-field") || "")
+            ).toLowerCase();
+            const matchesSearch = !q || hay.includes(q);
+            const matchesTeam = !teamVal || row.getAttribute("data-team") === teamVal;
+            row.hidden = !matchesSearch || !matchesTeam;
+          });
+        }
+
+        function sortPlayerPool(mode) {
+          if (!tbody) return;
+          const rows = Array.from(tbody.querySelectorAll(".dfs-player-row"));
+          if (mode === "team") {
+            const { rank } = buildTeamRank();
+            rows.sort((a, b) => {
+              const ta = a.getAttribute("data-team");
+              const tb = b.getAttribute("data-team");
+              const ra = rank.get(ta) ?? 999;
+              const rb = rank.get(tb) ?? 999;
+              if (ra !== rb) return ra - rb;
+              const sa = Number(a.getAttribute("data-salary"));
+              const sb = Number(b.getAttribute("data-salary"));
+              if (sb !== sa) return sb - sa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          } else if (mode === "points") {
+            rows.sort((a, b) => {
+              const pa = Number(a.getAttribute("data-points")) || 0;
+              const pb = Number(b.getAttribute("data-points")) || 0;
+              if (pb !== pa) return pb - pa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          } else {
+            rows.sort((a, b) => {
+              const sa = Number(a.getAttribute("data-salary"));
+              const sb = Number(b.getAttribute("data-salary"));
+              if (sb !== sa) return sb - sa;
+              return a.getAttribute("data-name").localeCompare(b.getAttribute("data-name"), undefined, {
+                sensitivity: "base",
+              });
+            });
+          }
+          rows.forEach((row) => tbody.appendChild(row));
+          applyPoolFilters();
+        }
+
+        function setSortMode(mode) {
+          currentSort = mode;
+          if (teamFilterWrap) {
+            const showTeam = mode === "team";
+            teamFilterWrap.hidden = !showTeam;
+            teamFilterWrap.setAttribute("aria-hidden", showTeam ? "false" : "true");
+          }
+          if (mode === "team") {
+            refreshTeamFilterOptions();
+          } else if (teamFilter) {
+            teamFilter.value = "";
+          }
+          sortPlayerPool(mode);
+        }
+
+        document.querySelectorAll(".dfs-sort-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".dfs-sort-btn").forEach((b) => b.classList.remove("is-active"));
+            btn.classList.add("is-active");
+            setSortMode(btn.getAttribute("data-sort"));
+          });
+        });
+
+        if (teamFilter) {
+          teamFilter.addEventListener("change", applyPoolFilters);
+        }
+
+        const search = document.getElementById("poolSearch");
+        if (search) {
+          search.addEventListener("input", applyPoolFilters);
+        }
+
+        function applyLineupFromArray(norms, salaries) {
+          lineup = (norms || []).filter((n) => pool.has(n)).slice(0, LINEUP_SIZE);
+          if (salaries) {
+            applyLockedSalaries(lineup, salaries);
+          } else {
+            lockedSalaries.clear();
+            lineup.forEach((n) => {
+              const sal = pool.get(n)?.salary;
+              if (sal != null) lockedSalaries.set(n, sal);
+            });
+          }
+          persistLineup();
+          syncUi();
+        }
+
+        function isCloudSlateKey(key) {
+          return /^W\d+$/i.test(key || "") || /^D\d{8}$/i.test(key || "");
+        }
+
+        function normalizeLineupNorms(norms) {
+          return (norms || []).filter((n) => pool.has(n)).slice(0, LINEUP_SIZE);
+        }
+
+        function lineupsMatch(a, b) {
+          const na = normalizeLineupNorms(a);
+          const nb = normalizeLineupNorms(b);
+          if (na.length !== nb.length) return false;
+          for (let i = 0; i < na.length; i += 1) {
+            if (na[i] !== nb[i]) return false;
+          }
+          return true;
+        }
+
+        function setLineupSyncStatus(message, isWarning) {
+          const el = document.getElementById("dfsLineupSyncStatus");
+          if (!el) return;
+          if (!message) {
+            el.hidden = true;
+            el.textContent = "";
+            el.className = "dfs-lineup-sync-status";
+            return;
+          }
+          el.hidden = false;
+          el.className =
+            "dfs-lineup-sync-status" + (isWarning ? " dfs-lineup-sync-status--warn" : "");
+          el.textContent = message;
+        }
+
+        function updateLoadFromDbButton() {
+          const btn = document.getElementById("loadFromDbBtn");
+          if (!btn) return;
+          const canLoad = !!window.DfsLineupStore && isCloudSlateKey(slateKey);
+          btn.disabled = !canLoad;
+          if (canLoad) {
+            btn.title = "Load your submitted lineup for this slate";
+          } else {
+            btn.title = "This slate does not sync to the database";
+          }
+        }
+
+        async function updateSaveButtonState() {
+          const btn = document.getElementById("saveLineupBtn");
+          const status = document.getElementById("dfsSubmitStatus");
+          if (!btn || !window.DfsLineupStore) return;
+          if (!isCloudSlateKey(slateKey)) {
+            btn.textContent = "Save lineup to database";
+            return;
+          }
+          if (!CAN_EDIT) {
+            btn.disabled = true;
+            btn.textContent = "Lineup locked";
+            return;
+          }
+          try {
+            const submitted = await window.DfsLineupStore.hasLineupForSlate(slateKey);
+            btn.disabled = false;
+            btn.textContent = submitted ? "Update saved lineup" : "Save lineup to database";
+            if (status && submitted) {
+              status.textContent =
+                "You have a saved lineup for " +
+                slateKey.toUpperCase() +
+                " — change players and save again before the deadline.";
+            }
+          } catch (e) {
+            console.warn("Save button state", e);
+          }
+        }
+
+        async function autoLoadLockedLineupForView() {
+          if (CAN_EDIT || !isCloudSlateKey(slateKey)) return;
+          if (!window.DfsLineupStore) return;
+          try {
+            await pullLineupFromDatabase(true);
+          } catch (e) {
+            console.warn("Auto-load lineup", e);
+          }
+        }
+
+        async function pullLineupFromDatabase(silent) {
+          if (!window.DfsLineupStore) {
+            throw new Error("Lineup storage is still loading — wait a moment and try again.");
+          }
+          if (!isCloudSlateKey(slateKey)) {
+            throw new Error("This slate cannot sync to the database.");
+          }
+          const cloudRaw = await window.DfsLineupStore.loadLineup(slateKey);
+          const cloudNorms = normalizeLineupNorms(
+            cloudRaw?.playerNorms || (Array.isArray(cloudRaw) ? cloudRaw : [])
+          );
+          const cloudSalaries = cloudRaw?.playerSalaries || null;
+          if (!cloudNorms.length) {
+            if (!silent) {
+              setLineupSyncStatus(
+                "No lineup saved in the database for " + slateKey.toUpperCase() + " yet.",
+                false
+              );
+            }
+            return;
+          }
+          const localNorms = normalizeLineupNorms(loadStored() || lineup);
+          const differs = !lineupsMatch(localNorms, cloudNorms);
+          if (!silent) {
+            if (differs) {
+              setLineupSyncStatus(
+                "Your lineup on this device differs from your saved database lineup. The database version is now loaded.",
+                true
+              );
+            } else {
+              setLineupSyncStatus(
+                "Your lineup on this device matches the database. Loaded your saved lineup.",
+                false
+              );
+            }
+          }
+          applyLineupFromArray(cloudNorms, cloudSalaries);
+        }
+
+        async function loadSavedLineupForOpenSlate() {
+          if (!CAN_EDIT || !isCloudSlateKey(slateKey) || !window.DfsLineupStore) return;
+          try {
+            const cloudRaw = await window.DfsLineupStore.loadLineup(slateKey);
+            const cloudNorms = normalizeLineupNorms(cloudRaw?.playerNorms || []);
+            if (!cloudNorms.length) return;
+            applyLineupFromArray(cloudNorms, cloudRaw?.playerSalaries || null);
+            const un = document.getElementById("dfsUsername");
+            if (un && cloudRaw.displayName) {
+              un.value = cloudRaw.displayName;
+              window.DfsLineupStore.setUsername(cloudRaw.displayName);
+            }
+            setLineupSyncStatus(
+              "Loaded your saved lineup — update it anytime before the deadline.",
+              false
+            );
+          } catch (e) {
+            console.warn("Load saved lineup", e);
+          }
+        }
+
+        async function setupLineupStore() {
+          updateLoadFromDbButton();
+          if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
+            await autoLoadLockedLineupForView();
+          } else {
+            await loadSavedLineupForOpenSlate();
+          }
+          await updateSaveButtonState();
+        }
+
+        function initLineupFromStorage() {
+          if (!CAN_EDIT && isCloudSlateKey(slateKey)) return;
+          const stored = loadStored();
+          if (stored && stored.length) {
+            lineup = stored.slice(0, LINEUP_SIZE);
+          }
+          persistLineup();
+          syncUi();
+        }
+
+        initLineupFromStorage();
+        setSortMode(SHOW_SLATE_STATS ? "points" : "salary");
+
+        async function initLineupForPage() {
+          if (window.DfsLineupStore) {
+            await setupLineupStore();
+          } else if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
+            syncUi();
+          }
+        }
+
+        window.addEventListener(
+          "dfs-lineup-store-ready",
+          () => {
+            initLineupForPage();
+          },
+          { once: true }
+        );
+        if (window.DfsLineupStore) {
+          initLineupForPage();
+        }
+      })();
+    </script>
+  </body>
+</html>
