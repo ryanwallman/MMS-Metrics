@@ -444,10 +444,14 @@
           const storedHome = sortedKey(stored.home);
 
           if (storedAway !== serverAway || storedHome !== serverHome) {
+            awaySet = new Set(stored.away);
+            homeSet = new Set(stored.home);
             awayInput.value = stored.away.join(",");
             homeInput.value = stored.home.join(",");
-            submitOrNavigate();
-            return;
+            if (!isStaticSite) {
+              submitOrNavigate();
+              return;
+            }
           }
         }
 
@@ -473,7 +477,7 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            submitOrNavigate();
+            if (!isStaticSite) submitOrNavigate();
           });
         });
       })();

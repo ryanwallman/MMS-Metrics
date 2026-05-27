@@ -18,11 +18,11 @@
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Loading leaderboard"
+      aria-label="Loading"
     >
       <div class="dfs-leaderboard-loading-screen__panel">
         <div class="dfs-leaderboard-loading-screen__spinner" aria-hidden="true"></div>
-        <h2 class="dfs-leaderboard-loading-screen__title">Loading leaderboard</h2>
+        <h2 class="dfs-leaderboard-loading-screen__title">Loading</h2>
       </div>
     </div>
     <% } %>
@@ -197,6 +197,7 @@
         }
       });
     </script>
+    <script type="module" src="<%= sitePath('/js/dfs-leaderboard-scoring.mjs') %>?v=<%= assetVersion %>"></script>
     <script type="module" src="<%= sitePath('/js/dfs-leaderboard.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
   </body>

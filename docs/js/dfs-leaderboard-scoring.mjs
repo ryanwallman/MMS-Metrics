@@ -1,3 +1,4 @@
+var process={env:{}};
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -57,7 +58,7 @@ var require_sheetUrls = __commonJS({
       return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
     }
     function getCaptainMappingCsvUrl() {
-      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      const u = "";
       if (u && u.trim()) return u.trim();
       return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
     }
@@ -745,7 +746,7 @@ var require_fetchCsvText = __commonJS({
   "lib/fetchCsvText.js"(exports, module) {
     var { createMemoryCache } = require_memoryCache();
     var csvTextCache = createMemoryCache(
-      Number(process.env.CSV_CACHE_TTL_MS) || 10 * 60 * 1e3,
+      Number("600000") || 10 * 60 * 1e3,
       "csv-text"
     );
     var fetchCsvTextOverride = null;
@@ -755,7 +756,7 @@ var require_fetchCsvText = __commonJS({
     function csvFetchTimeoutMs() {
       const fromEnv = Number("90000");
       if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (process.env.STATIC_EXPORT === "1") return 9e4;
+      if (true) return 9e4;
       return 0;
     }
     async function fetchUrlText(url) {
@@ -1682,7 +1683,7 @@ var require_dfsLeaderboard = __commonJS({
       scoreLineupFromPointsMap
     } = require_dfs();
     var slatePointsCache = createMemoryCache(
-      Number(process.env.SLATE_POINTS_CACHE_TTL_MS) || 10 * 60 * 1e3,
+      Number("600000") || 10 * 60 * 1e3,
       "slate-points"
     );
     function safeText(value) {
