@@ -2878,7 +2878,7 @@ app.get("/dfs/leaderboard", async (req, res) => {
   }
 });
 
-app.get("/matchup-predictor", async (req, res) => {
+async function renderMatchupPredictorPage(req, res) {
   try {
     const [
       payload,
@@ -2898,7 +2898,8 @@ app.get("/matchup-predictor", async (req, res) => {
       loadDefensiveRatingsNormalizedMap(),
     ]);
 
-    let viewParam = safeText(req.query.view);
+    const viewFromPath = safeText(req.params?.view);
+    let viewParam = viewFromPath || safeText(req.query.view);
     if (!viewParam && req.query.week !== undefined && req.query.week !== null && safeText(req.query.week) !== "") {
       const wk = safeText(req.query.week);
       viewParam = /^W\d+$/i.test(wk) ? `W${Number(wk.slice(1))}` : `W${parseWeekIndex(wk, 1)}`;
@@ -2920,7 +2921,8 @@ app.get("/matchup-predictor", async (req, res) => {
 
     const matchupOptions = buildMatchupOptionsForGames(games);
     const validMatchupKeys = new Set(matchupOptions.map((o) => o.value));
-    let selectedMatchup = safeText(req.query.matchup);
+    const matchupFromPath = safeText(req.params?.matchup);
+    let selectedMatchup = matchupFromPath || safeText(req.query.matchup);
     if (!validMatchupKeys.has(selectedMatchup)) selectedMatchup = "";
 
     const nameToTeamId = buildNameToTeamIdMap(teams);
@@ -3112,7 +3114,11 @@ app.get("/matchup-predictor", async (req, res) => {
   } catch (error) {
     res.status(500).send(`Failed to load matchup predictor: ${error.message}`);
   }
-});
+}
+
+app.get("/matchup-predictor", renderMatchupPredictorPage);
+app.get("/matchup-predictor/view/:view", renderMatchupPredictorPage);
+app.get("/matchup-predictor/view/:view/matchup/:matchup", renderMatchupPredictorPage);
 
 /** Schedule page hidden for now. */
 app.get("/schedule", (req, res) => {

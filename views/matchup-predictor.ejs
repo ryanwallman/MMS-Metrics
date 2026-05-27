@@ -21,7 +21,7 @@
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
-          <select id="view" name="view" onchange="this.form.matchup.value=''; this.form.submit()" class="schedule-view-select">
+          <select id="view" name="view" class="schedule-view-select">
             <% if (!scheduleOptions.length) { %>
             <option value="">No dates available</option>
             <% } %>
@@ -39,7 +39,6 @@
             id="matchup"
             name="matchup"
             class="schedule-view-select"
-            onchange="this.form.submit()"
             <%= matchupOptions.length ? "" : "disabled" %>
           >
             <option value="" <%= !selectedMatchup ? "selected" : "" %>>— Select a game —</option>
@@ -261,7 +260,10 @@
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
-        if (!form || !awayInput || !homeInput) return;
+        const viewSelect = document.getElementById("view");
+        const matchupSelect = document.getElementById("matchup");
+        if (!form || !awayInput || !homeInput || !viewSelect || !matchupSelect) return;
+        const isStaticSite = <%= staticSite ? "true" : "false" %>;
 
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
@@ -275,6 +277,41 @@
 
         function sortedKey(arr) {
           return [...arr].sort().join(",");
+        }
+
+        function submitOrNavigate() {
+          if (!isStaticSite) {
+            form.requestSubmit();
+            return;
+          }
+          const view = (viewSelect.value || "").trim();
+          const matchup = (matchupSelect.value || "").trim();
+          let path = "<%= sitePath('/matchup-predictor') %>";
+          if (view) {
+            path += "/view/" + encodeURIComponent(view);
+            if (matchup) path += "/matchup/" + encodeURIComponent(matchup);
+          }
+          const params = new URLSearchParams();
+          if (awayInput.value) params.set("awayMissing", awayInput.value);
+          if (homeInput.value) params.set("homeMissing", homeInput.value);
+          const qs = params.toString();
+          window.location.assign(qs ? path + "?" + qs : path);
+        }
+
+        if (isStaticSite && !window.location.pathname.includes("/view/")) {
+          const url = new URL(window.location.href);
+          const queryView = (url.searchParams.get("view") || "").trim();
+          const queryMatchup = (url.searchParams.get("matchup") || "").trim();
+          const queryAwayMissing = (url.searchParams.get("awayMissing") || "").trim();
+          const queryHomeMissing = (url.searchParams.get("homeMissing") || "").trim();
+          if (queryView) viewSelect.value = queryView;
+          if (queryMatchup) matchupSelect.value = queryMatchup;
+          if (queryAwayMissing) awayInput.value = queryAwayMissing;
+          if (queryHomeMissing) homeInput.value = queryHomeMissing;
+          if (queryView || queryMatchup) {
+            submitOrNavigate();
+            return;
+          }
         }
 
         function loadStored() {
@@ -327,12 +364,21 @@
           if (storedAway !== serverAway || storedHome !== serverHome) {
             awayInput.value = stored.away.join(",");
             homeInput.value = stored.home.join(",");
-            form.requestSubmit();
+            submitOrNavigate();
             return;
           }
         }
 
         syncButtons(awaySet, homeSet);
+
+        viewSelect.addEventListener("change", () => {
+          matchupSelect.value = "";
+          submitOrNavigate();
+        });
+
+        matchupSelect.addEventListener("change", () => {
+          submitOrNavigate();
+        });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
           btn.addEventListener("click", () => {
@@ -345,7 +391,7 @@
             homeInput.value = [...homeSet].join(",");
             saveStored([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
-            form.requestSubmit();
+            submitOrNavigate();
           });
         });
       })();

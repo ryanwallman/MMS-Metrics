@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Matchup Predictor · MMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+  rel="stylesheet"
+/>
+<script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
+<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
+
+  </head>
+  <body>
+    <header class="site-header">
+  <div class="site-header-inner">
+    <div class="site-brand-block">
+      <a href="/MMS-Metrics/" class="site-brand">Marlboro Men's Softball</a>
+      <span class="site-brand-tagline">League stats · DFS · all the numbers</span>
+    </div>
+    <nav class="site-nav" aria-label="Main">
+      
+      <a
+        href="/MMS-Metrics/"
+        class="site-nav-link"
+        
+      >
+        League Leaders
+      </a>
+      
+      <a
+        href="/MMS-Metrics/matchup-predictor"
+        class="site-nav-link is-active"
+        aria-current=&#34;page&#34;
+      >
+        Matchup Predictor
+      </a>
+      
+      <a
+        href="/MMS-Metrics/dfs"
+        class="site-nav-link"
+        
+      >
+        DFS Lineup
+      </a>
+      
+      <a
+        href="/MMS-Metrics/rankings/power"
+        class="site-nav-link"
+        
+      >
+        Power Rankings
+      </a>
+      
+    </nav>
+    <div class="site-header-meta">
+      
+      <p class="site-updated">
+        Data updated
+        <time datetime="2026-05-27T02:57:28.094Z">May 26, 2026, 10:57 PM ET</time>
+      </p>
+      
+      
+      <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
+      
+    </div>
+  </div>
+</header>
+
+
+    <main class="page-main">
+    <h1 class="page-title">Matchup Predictor</h1>
+
+    <form
+      method="GET"
+      action="/MMS-Metrics/matchup-predictor"
+      class="matchup-predictor-form"
+      id="matchupForm"
+      data-matchup-key="14|7"
+    >
+      <input type="hidden" name="awayMissing" id="awayMissing" value="" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+      <div class="matchup-predictor-controls">
+        <label for="view">
+          <strong>Date</strong>
+          <select id="view" name="view" class="schedule-view-select">
+            
+            
+            <option value="W1" >
+              Sun, 26-Apr • Week 1
+            </option>
+            
+            <option value="D20260429" selected>
+              Wed, 29-Apr
+            </option>
+            
+            <option value="W2" >
+              Sun, 3-May • Week 2
+            </option>
+            
+            <option value="D20260506" >
+              Wed, 6-May
+            </option>
+            
+            <option value="W3" >
+              Sun, 10-May • Week 3
+            </option>
+            
+            <option value="D20260513" >
+              Wed, 13-May
+            </option>
+            
+            <option value="W4" >
+              Sun, 17-May • Week 4
+            </option>
+            
+            <option value="D20260527" >
+              Wed, 27-May
+            </option>
+            
+            <option value="W5" >
+              Sun, 31-May • Week 5
+            </option>
+            
+            <option value="D20260603" >
+              Wed, 3-Jun
+            </option>
+            
+            <option value="W6" >
+              Sun, 7-Jun • Week 6
+            </option>
+            
+            <option value="D20260610" >
+              Wed, 10-Jun
+            </option>
+            
+            <option value="W7" >
+              Sun, 14-Jun • Week 7
+            </option>
+            
+            <option value="D20260617" >
+              Wed, 17-Jun
+            </option>
+            
+            <option value="W8" >
+              Sun, 21-Jun • Week 8
+            </option>
+            
+            <option value="D20260624" >
+              Wed, 24-Jun
+            </option>
+            
+            <option value="W9" >
+              Sun, 28-Jun • Week 9
+            </option>
+            
+            <option value="D20260701" >
+              Wed, 1-Jul
+            </option>
+            
+            <option value="W10" >
+              Sun, 5-Jul • Week 10
+            </option>
+            
+            <option value="D20260708" >
+              Wed, 8-Jul
+            </option>
+            
+            <option value="W11" >
+              Sun, 12-Jul • Week 11
+            </option>
+            
+            <option value="D20260715" >
+              Wed, 15-Jul
+            </option>
+            
+            <option value="W12" >
+              Sun, 19-Jul • Week 12
+            </option>
+            
+            <option value="D20260722" >
+              Wed, 22-Jul
+            </option>
+            
+            <option value="W13" >
+              Sun, 26-Jul • Week 13
+            </option>
+            
+            <option value="D20260729" >
+              Wed, 29-Jul
+            </option>
+            
+            <option value="W14" >
+              Sun, 2-Aug • Week 14
+            </option>
+            
+            <option value="D20260805" >
+              Wed, 5-Aug
+            </option>
+            
+            <option value="W15" >
+              Sun, 9-Aug • Week 15
+            </option>
+            
+            <option value="W16" >
+              Sun, 16-Aug • Week 16
+            </option>
+            
+            <option value="W17" >
+              Sun, 23-Aug • Week 17
+            </option>
+            
+            <option value="W18" >
+              Sun, 30-Aug • Week 18
+            </option>
+            
+          </select>
+        </label>
+
+        <label for="matchup">
+          <strong>Matchup</strong>
+          <select
+            id="matchup"
+            name="matchup"
+            class="schedule-view-select"
+            
+          >
+            <option value="" >— Select a game —</option>
+            
+            <option value="13|9" >
+              MONMOUTH GYM @ ACE ALUMINUM · 8:15 PM · 23-9 MARRONE
+            </option>
+            
+            <option value="14|7" selected>
+              NEW HORIZON @ FRADKIN LAW · 8:15 PM · 16-12 PINGARO
+            </option>
+            
+          </select>
+        </label>
+      </div>
+      <noscript><button type="submit">Go</button></noscript>
+
+    
+    <p class="matchup-predictor-summary">Wed, 29-Apr</p>
+    
+
+    
+    <section class="matchup-prediction">
+      <h2>Model prediction</h2>
+      <p class="matchup-prediction-note">
+        <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
+        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+      </p>
+
+      
+      
+      
+      <div class="matchup-pred-win-row">
+        <div class="matchup-pred-team matchup-pred-away">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>NEW HORIZON</span>
+          <span class="matchup-pred-pct">38.9%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:38.9%"></span></span>
+        </div>
+        <div class="matchup-pred-team matchup-pred-home">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>FRADKIN LAW</span>
+          <span class="matchup-pred-pct">61.1%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:61.1%"></span></span>
+        </div>
+      </div>
+
+      <div class="page-table-wrap">
+      <table class="matchup-pred-lines page-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th>Team</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          
+          <tr class="matchup-lines-row--final-score">
+            <td>Predicted final score</td>
+            
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>FRADKIN LAW</td>
+            
+            <td class="matchup-lines-value matchup-lines-score">
+              <span class="matchup-score-runs matchup-score-runs--loser">9</span>
+              <span class="matchup-score-sep">–</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">13</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Over / under (total runs)</td>
+            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
+            <td class="matchup-lines-value"><strong>O/U 22</strong></td>
+          </tr>
+          
+          
+          
+          
+          
+          <tr class="matchup-lines-row--runline">
+            <td>Run line</td>
+            
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span>FRADKIN LAW</td>
+            
+            <td class="matchup-lines-value"><strong>+4</strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>NEW HORIZON</td>
+            <td class="matchup-lines-value"><strong>+145</strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>FRADKIN LAW</td>
+            <td class="matchup-lines-value"><strong>-175</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+    
+
+    
+
+    
+    
+    
+    <section class="matchup-predictor-rosters">
+      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Missing</strong> for each player. Lineups are saved for this matchup in your browser. The prediction recalculates using active players only (draft round matters).</p>
+      <h2 class="matchup-predictor-headline">
+        <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>NEW HORIZON</span>
+        <span class="matchup-predictor-at">@</span>
+        <span class="matchup-headline-team matchup-headline-team--home"><span class="matchup-side-tag">Home</span>FRADKIN LAW</span>
+      </h2>
+      <div class="schedule-roster-pair matchup-predictor-pair">
+        <article
+  class="schedule-roster-col schedule-roster-col--away"
+  style="border-color:#E9DCCB;box-shadow:inset 0 0 0 1px #E9DCCB33"
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag">Away</span></p>
+  <h3 class="schedule-roster-team-name">NEW HORIZON</h3>
+  
+  <p class="schedule-roster-captain">Captain: MEYER</p>
+  
+  <p class="matchup-roster-active-count">13 of 13 active</p>
+
+  
+  <ol class="matchup-roster-list">
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R1</span>
+      <span class="matchup-roster-name">Ryan Amato</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="ryan amato"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R2</span>
+      <span class="matchup-roster-name">Shawn Leonardi</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="shawn leonardi"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R3</span>
+      <span class="matchup-roster-name">Bryan Frank</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="bryan frank"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R4</span>
+      <span class="matchup-roster-name">Dom Defalco</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dom defalco"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R5</span>
+      <span class="matchup-roster-name">Espartaco Gonzalez</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="espartaco gonzalez"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R6</span>
+      <span class="matchup-roster-name">Piero Vescio</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="piero vescio"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R7</span>
+      <span class="matchup-roster-name">Dave Meyer</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dave meyer"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R8</span>
+      <span class="matchup-roster-name">Jeff Mendelson</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="jeff mendelson"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R9</span>
+      <span class="matchup-roster-name">Craig Tepper</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="craig tepper"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R10</span>
+      <span class="matchup-roster-name">Daniel Navatta</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="daniel navatta"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R11</span>
+      <span class="matchup-roster-name">Anthony Galiano</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="anthony galiano"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R12</span>
+      <span class="matchup-roster-name">Mike Amato</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mike amato"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R13</span>
+      <span class="matchup-roster-name">Brian Frueh</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="brian frueh"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+  </ol>
+  
+</article>
+
+        <article
+  class="schedule-roster-col schedule-roster-col--home"
+  style="border-color:#C5B783;box-shadow:inset 0 0 0 1px #C5B78333"
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag">Home</span></p>
+  <h3 class="schedule-roster-team-name">FRADKIN LAW</h3>
+  
+  <p class="schedule-roster-captain">Captain: PINGARO</p>
+  
+  <p class="matchup-roster-active-count">13 of 13 active</p>
+
+  
+  <ol class="matchup-roster-list">
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R1</span>
+      <span class="matchup-roster-name">Phil Corde</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="phil corde"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R2</span>
+      <span class="matchup-roster-name">Ed Fradkin</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="ed fradkin"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R3</span>
+      <span class="matchup-roster-name">Patrick Brock</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="patrick brock"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R4</span>
+      <span class="matchup-roster-name">Joe Picarello</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="joe picarello"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R5</span>
+      <span class="matchup-roster-name">Rob Corde</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="rob corde"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R6</span>
+      <span class="matchup-roster-name">Nolan Ruthberg</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="nolan ruthberg"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R7</span>
+      <span class="matchup-roster-name">Gary Szemcsak</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="gary szemcsak"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R8</span>
+      <span class="matchup-roster-name">Cameron Gille</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="cameron gille"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R9</span>
+      <span class="matchup-roster-name">Dylan Jacoby</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="dylan jacoby"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R10</span>
+      <span class="matchup-roster-name">Pat Pingaro</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="pat pingaro"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R11</span>
+      <span class="matchup-roster-name">Justin Jacoby</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="justin jacoby"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R12</span>
+      <span class="matchup-roster-name">Marc Persily</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="marc persily"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R13</span>
+      <span class="matchup-roster-name">Jonathan Okun</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="jonathan okun"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+  </ol>
+  
+</article>
+
+      </div>
+    </section>
+    
+
+    </form>
+    </main>
+    <script>
+      (function () {
+        const form = document.getElementById("matchupForm");
+        const awayInput = document.getElementById("awayMissing");
+        const homeInput = document.getElementById("homeMissing");
+        const viewSelect = document.getElementById("view");
+        const matchupSelect = document.getElementById("matchup");
+        if (!form || !awayInput || !homeInput || !viewSelect || !matchupSelect) return;
+        const isStaticSite = true;
+
+        const STORAGE_PREFIX = "mms-matchup-lineup:";
+        const matchupKey = form.getAttribute("data-matchup-key") || "";
+
+        function parseList(value) {
+          return value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+
+        function sortedKey(arr) {
+          return [...arr].sort().join(",");
+        }
+
+        function submitOrNavigate() {
+          if (!isStaticSite) {
+            form.requestSubmit();
+            return;
+          }
+          const view = (viewSelect.value || "").trim();
+          const matchup = (matchupSelect.value || "").trim();
+          let path = "/MMS-Metrics/matchup-predictor";
+          if (view) {
+            path += "/view/" + encodeURIComponent(view);
+            if (matchup) path += "/matchup/" + encodeURIComponent(matchup);
+          }
+          const params = new URLSearchParams();
+          if (awayInput.value) params.set("awayMissing", awayInput.value);
+          if (homeInput.value) params.set("homeMissing", homeInput.value);
+          const qs = params.toString();
+          window.location.assign(qs ? path + "?" + qs : path);
+        }
+
+        if (isStaticSite && !window.location.pathname.includes("/view/")) {
+          const url = new URL(window.location.href);
+          const queryView = (url.searchParams.get("view") || "").trim();
+          const queryMatchup = (url.searchParams.get("matchup") || "").trim();
+          const queryAwayMissing = (url.searchParams.get("awayMissing") || "").trim();
+          const queryHomeMissing = (url.searchParams.get("homeMissing") || "").trim();
+          if (queryView) viewSelect.value = queryView;
+          if (queryMatchup) matchupSelect.value = queryMatchup;
+          if (queryAwayMissing) awayInput.value = queryAwayMissing;
+          if (queryHomeMissing) homeInput.value = queryHomeMissing;
+          if (queryView || queryMatchup) {
+            submitOrNavigate();
+            return;
+          }
+        }
+
+        function loadStored() {
+          if (!matchupKey) return { away: [], home: [] };
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + matchupKey);
+            if (!raw) return { away: [], home: [] };
+            const data = JSON.parse(raw);
+            return {
+              away: Array.isArray(data.away) ? data.away : [],
+              home: Array.isArray(data.home) ? data.home : [],
+            };
+          } catch {
+            return { away: [], home: [] };
+          }
+        }
+
+        function saveStored(away, home) {
+          if (!matchupKey) return;
+          localStorage.setItem(
+            STORAGE_PREFIX + matchupKey,
+            JSON.stringify({ away: [...away], home: [...home] })
+          );
+        }
+
+        function syncButtons(awaySet, homeSet) {
+          document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const missing = (side === "away" ? awaySet : homeSet).has(norm);
+            btn.textContent = missing ? "Missing" : "Active";
+            btn.classList.toggle("matchup-status-btn--active", !missing);
+            btn.classList.toggle("matchup-status-btn--missing", missing);
+            btn.setAttribute("aria-pressed", missing ? "true" : "false");
+            const row = btn.closest(".matchup-roster-item");
+            if (row) row.classList.toggle("matchup-roster-item--benched", missing);
+          });
+        }
+
+        let awaySet = new Set(parseList(awayInput.value));
+        let homeSet = new Set(parseList(homeInput.value));
+
+        if (matchupKey) {
+          const stored = loadStored();
+          const serverAway = sortedKey([...awaySet]);
+          const serverHome = sortedKey([...homeSet]);
+          const storedAway = sortedKey(stored.away);
+          const storedHome = sortedKey(stored.home);
+
+          if (storedAway !== serverAway || storedHome !== serverHome) {
+            awayInput.value = stored.away.join(",");
+            homeInput.value = stored.home.join(",");
+            submitOrNavigate();
+            return;
+          }
+        }
+
+        syncButtons(awaySet, homeSet);
+
+        viewSelect.addEventListener("change", () => {
+          matchupSelect.value = "";
+          submitOrNavigate();
+        });
+
+        matchupSelect.addEventListener("change", () => {
+          submitOrNavigate();
+        });
+
+        document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const set = side === "away" ? awaySet : homeSet;
+            if (set.has(norm)) set.delete(norm);
+            else set.add(norm);
+            awayInput.value = [...awaySet].join(",");
+            homeInput.value = [...homeSet].join(",");
+            saveStored([...awaySet], [...homeSet]);
+            syncButtons(awaySet, homeSet);
+            submitOrNavigate();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+

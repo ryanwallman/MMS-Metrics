@@ -18,7 +18,6 @@ const siteBase =
 
 const STATIC_ROUTES = [
   "/",
-  "/matchup-predictor",
   "/rankings/power",
   "/dfs",
   "/dfs/leaderboard",
@@ -97,6 +96,34 @@ async function writeRoute(html, routePath) {
   console.log(`  wrote ${rel}`);
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function extractSelectOptionValues(html, selectId) {
+  const selectPattern = new RegExp(
+    `<select[^>]*id="${escapeRegex(selectId)}"[^>]*>([\\s\\S]*?)</select>`,
+    "i"
+  );
+  const selectMatch = html.match(selectPattern);
+  if (!selectMatch) return [];
+  const body = selectMatch[1];
+  const values = [];
+  const optionRe = /<option[^>]*value="([^"]*)"[^>]*>/gi;
+  let m;
+  while ((m = optionRe.exec(body))) {
+    const value = String(m[1] || "").trim();
+    if (value) values.push(value);
+  }
+  return values;
+}
+
+function matchupPath(view, matchup = "") {
+  const base = `/matchup-predictor/view/${encodeURIComponent(view)}`;
+  if (!matchup) return base;
+  return `${base}/matchup/${encodeURIComponent(matchup)}`;
+}
+
 async function main() {
   const port = Number(process.env.STATIC_EXPORT_PORT) || 3847;
 
@@ -157,6 +184,24 @@ async function main() {
 
   try {
     await waitForHealth(port);
+
+    const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
+    await writeRoute(rootMatchupHtml, "/matchup-predictor");
+    const viewValues = extractSelectOptionValues(rootMatchupHtml, "view");
+    const extraMatchupRoutes = new Set();
+    for (const view of viewValues) {
+      const viewRoute = matchupPath(view);
+      const viewHtml = await fetchHtml(port, viewRoute);
+      await writeRoute(viewHtml, viewRoute);
+      const matchupValues = extractSelectOptionValues(viewHtml, "matchup");
+      for (const matchup of matchupValues) {
+        extraMatchupRoutes.add(matchupPath(view, matchup));
+      }
+    }
+    for (const route of Array.from(extraMatchupRoutes)) {
+      const html = await fetchHtml(port, route);
+      await writeRoute(html, route);
+    }
 
     for (const route of STATIC_ROUTES) {
       const html = await fetchHtml(port, route);
