@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T02:57:27.864Z">May 26, 2026, 10:57 PM ET</time>
+        <time datetime="2026-05-27T13:59:29.146Z">May 27, 2026, 9:59 AM ET</time>
       </p>
       
       
@@ -282,6 +282,36 @@
           return [...arr].sort().join(",");
         }
 
+        function matchupKeyToSlug(key) {
+          const k = (key || "").trim();
+          const pipe = k.indexOf("|");
+          if (pipe < 0) return k;
+          return k.slice(0, pipe) + "-" + k.slice(pipe + 1);
+        }
+
+        function redirectLegacyMatchupPath() {
+          if (!isStaticSite) return false;
+          const p = window.location.pathname;
+          const m = p.match(/\/matchup\/([^/?#]+)/);
+          if (!m) return false;
+          const seg = m[1];
+          if (!seg.includes("%7C") && !seg.includes("|")) return false;
+          let decoded = seg;
+          try {
+            decoded = decodeURIComponent(seg);
+          } catch {
+            /* keep seg */
+          }
+          const parts = decoded.split("|");
+          if (parts.length !== 2 || !/^\d+$/.test(parts[0]) || !/^\d+$/.test(parts[1])) return false;
+          const slug = parts[0] + "-" + parts[1];
+          const next = p.replace(/\/matchup\/[^/?#]+/, "/matchup/" + slug) + window.location.search;
+          window.location.replace(next);
+          return true;
+        }
+
+        if (redirectLegacyMatchupPath()) return;
+
         function submitOrNavigate() {
           if (!isStaticSite) {
             form.requestSubmit();
@@ -292,7 +322,7 @@
           let path = "/MMS-Metrics/matchup-predictor";
           if (view) {
             path += "/view/" + encodeURIComponent(view);
-            if (matchup) path += "/matchup/" + encodeURIComponent(matchup);
+            if (matchup) path += "/matchup/" + matchupKeyToSlug(matchup);
           }
           const params = new URLSearchParams();
           if (awayInput.value) params.set("awayMissing", awayInput.value);
@@ -308,7 +338,12 @@
           const queryAwayMissing = (url.searchParams.get("awayMissing") || "").trim();
           const queryHomeMissing = (url.searchParams.get("homeMissing") || "").trim();
           if (queryView) viewSelect.value = queryView;
-          if (queryMatchup) matchupSelect.value = queryMatchup;
+          if (queryMatchup) {
+            const pipe = queryMatchup.indexOf("|");
+            matchupSelect.value = pipe >= 0
+              ? queryMatchup.slice(0, pipe) + "|" + queryMatchup.slice(pipe + 1)
+              : queryMatchup.replace(/^(\d+)-(\d+)$/, "$1|$2");
+          }
           if (queryAwayMissing) awayInput.value = queryAwayMissing;
           if (queryHomeMissing) homeInput.value = queryHomeMissing;
           if (queryView || queryMatchup) {

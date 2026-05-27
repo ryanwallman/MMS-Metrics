@@ -5,6 +5,7 @@ const Papa = require("papaparse");
 const fs = require("fs/promises");
 const path = require("path");
 const { getFirebaseClientConfig } = require("./lib/firebaseClientConfig");
+const { matchupSlugToKey } = require("./lib/matchupSlug");
 const { buildWeeklyLeaderboardResponse } = require("./lib/dfsLeaderboardResponse");
 const {
   getCachedDfsLeaderboardScoringContext,
@@ -2921,8 +2922,8 @@ async function renderMatchupPredictorPage(req, res) {
 
     const matchupOptions = buildMatchupOptionsForGames(games);
     const validMatchupKeys = new Set(matchupOptions.map((o) => o.value));
-    const matchupFromPath = safeText(req.params?.matchup);
-    let selectedMatchup = matchupFromPath || safeText(req.query.matchup);
+    let selectedMatchup =
+      matchupSlugToKey(req.params?.matchup) || matchupSlugToKey(req.query.matchup);
     if (!validMatchupKeys.has(selectedMatchup)) selectedMatchup = "";
 
     const nameToTeamId = buildNameToTeamIdMap(teams);
