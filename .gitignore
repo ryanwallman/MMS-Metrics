@@ -1,9 +1,5 @@
 node_modules/
 .env
-# Static export output (built in CI via npm run build:static)
-docs/*
-!docs/static-firebase/
-!docs/static-firebase/**
 firebase/service-account.json
 firebase-service-account.json
 .DS_Store

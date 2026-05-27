@@ -1,82 +1,70 @@
 # GitHub Pages (static export)
 
-GitHub Pages serves **static files only** — no Node/Express. This repo exports pre-rendered HTML plus `public/` assets into `docs/` via **GitHub Actions** (`/.github/workflows/deploy-pages.yml`).
+GitHub Pages serves **static files only** — no Node/Express. This repo builds pre-rendered HTML plus `public/` assets into **`docs/`**, which you commit and deploy.
 
 **https://ryanwallman.github.io/MMS-Metrics/**
 
 (Replace `MMS-Metrics` if the repository name changes.)
 
-## Enable Pages
+## Deploy from branch (recommended)
 
-1. Push to `main` (or a branch listed in `deploy-pages.yml`).
-2. **Settings → Pages → Build and deployment → Source:** choose **GitHub Actions**.
-3. Open the **Actions** tab and confirm **Deploy GitHub Pages** succeeds.
+1. **One-time:** GitHub → **Settings → Pages → Build and deployment → Source** → **Deploy from a branch**.
+2. Choose the branch you push to (usually **`main`**) and folder **`/docs`**.
+3. After code changes, rebuild and push:
 
-### Alternative: deploy from branch `/docs`
+```bash
+cp .env.example .env   # once — fill FIREBASE_* from Firebase Console
+npm run build:pages    # builds docs/ with Firebase + Google Sheets data
+git add docs/
+git commit -m "Rebuild static site for Pages"
+git push
+```
 
-1. Locally: `npm run build:static` (needs `.env` with `FIREBASE_*` keys).
-2. Commit the generated `docs/` folder.
-3. **Settings → Pages → Source:** **Deploy from a branch** → pick your branch → folder **`/docs`**.
+Pages updates within a minute or two after the push. No GitHub Actions secrets required — Firebase keys come from your local `.env` at build time (same as `npm start` locally).
 
-## Required GitHub secrets (Actions)
+### Workflow with feature branches
 
-Add under **Settings → Secrets and variables → Actions** — **Secrets** preferred; the workflow also falls back to **Repository variables** with the same names.
+1. Develop on a feature branch (`git checkout -b my-feature`).
+2. When ready for production: merge into the **Pages branch** (e.g. `main`).
+3. On that branch, run `npm run build:pages`, commit `docs/`, and push.
 
-Use the same values as local `.env`:
+Only the branch selected in **Settings → Pages** is live. Pushes to other branches do not update the site until merged and rebuilt.
 
-| Secret | Purpose |
-|--------|---------|
-| `FIREBASE_API_KEY` | Firestore in the browser (lineup save + leaderboard) |
-| `FIREBASE_AUTH_DOMAIN` | |
-| `FIREBASE_PROJECT_ID` | |
-| `FIREBASE_STORAGE_BUCKET` | |
-| `FIREBASE_MESSAGING_SENDER_ID` | |
-| `FIREBASE_APP_ID` | |
-| `FIREBASE_MEASUREMENT_ID` | Optional |
+## Firebase
 
-These are baked into HTML at **build time**. If DFS shows “Firebase is not configured,” the secrets were missing or misnamed when the workflow ran — fix them and **re-run** the deploy workflow.
+**No Google sign-in** — lineups use a device ID + display name.
 
-## Firebase Console
-
-**No Google sign-in required** — lineups use a device ID + display name.
-
-Publish Firestore rules after pulling this repo (device-based writes; update allowed until lock):
+1. Put web app keys in `.env` (see `.env.example`) before `npm run build:pages`.
+2. Publish Firestore rules after rule changes:
 
 ```bash
 firebase deploy --only firestore
 ```
 
-## Build time and failures
+If DFS shows “Firebase is not configured” on Pages, rebuild with a complete `.env` and push `docs/` again.
 
-The **Build static site** step pre-renders **5 pages**. Each page loads Google Sheets CSVs; expect **3–15 minutes** total on Actions.
-
-Watch the log for:
-
-```
-[static] GET /dfs …
-[static] GET /dfs ok (45.2s)
-```
-
-| Limit | Value |
-|-------|--------|
-| Job | 25 min |
-| Build step | 20 min |
-| Each page fetch | 3 min |
-| Each Google CSV | 90 sec |
-
-## Local build
+## Local preview
 
 ```bash
-cp .env.example .env   # fill FIREBASE_*
-npm run build:static
+npm run build:pages
 npx serve docs -l 5000
 ```
 
-Override base path (defaults to `/MMS-Metrics` from repo name):
+Open http://localhost:5000/MMS-Metrics/ (base path matches GitHub Pages).
+
+Override base path:
 
 ```bash
 SITE_BASE_PATH=/MMS-Metrics npm run build:static
 ```
+
+## Optional: GitHub Actions
+
+`/.github/workflows/deploy-pages.yml` can still build and deploy on push (manual **workflow_dispatch** only). Use it if you prefer CI over committing `docs/`. Branch deploy and Actions both produce the same static output — pick one Pages source in Settings, not both.
+
+## Build time
+
+`npm run build:pages` pre-renders **5 routes** and fetches Google Sheets CSVs. Expect **3–15 minutes** on a typical connection.
 
 ## What works on Pages
 
@@ -88,4 +76,4 @@ SITE_BASE_PATH=/MMS-Metrics npm run build:static
 | DFS leaderboard | Client-side (Firestore + Google Sheets scoring) |
 | Leaderboard lineup detail (`/dfs/leaderboard/lineup?…`) | Not exported (no server Admin SDK) |
 
-For full server-rendered pages and APIs, run `node server.js` locally or use a Node host.
+For full server-rendered pages and APIs, run `npm start` locally or use a Node host.

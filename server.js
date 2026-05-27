@@ -3197,7 +3197,7 @@ app.get("/confirm-names", async (req, res) => {
 
 if (process.env.NODE_ENV === "production" && !getFirebaseClientConfig()) {
   console.warn(
-    "[MMS] Firebase web config missing (FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID, …). Locally: add to .env. GitHub Pages: add as Actions secrets and re-run Deploy GitHub Pages."
+    "[MMS] Firebase web config missing (FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_APP_ID, …). Add to .env, then run npm run build:pages before pushing docs/ to GitHub."
   );
 }
 

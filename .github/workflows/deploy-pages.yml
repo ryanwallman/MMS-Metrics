@@ -1,13 +1,10 @@
-# Build static site to docs/ and deploy to GitHub Pages.
-# Repo Settings → Pages → Source: GitHub Actions (not "branch /docs" unless you commit docs/ manually).
+# Build static site to docs/ for GitHub Pages (branch deploy).
+# Primary deploy: npm run build:pages locally, commit docs/, push — Settings → Pages → branch /docs.
+# This workflow is optional (manual only). Do not enable "GitHub Actions" as Pages source if using branch deploy.
 
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
-      - feat/dfs-ux-and-pricing
   workflow_dispatch:
 
 permissions:

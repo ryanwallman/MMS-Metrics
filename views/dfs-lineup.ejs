@@ -92,7 +92,7 @@
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
         <p>
           <strong>Firebase is not configured.</strong>
-          Locally, add web app keys to <code>.env</code>. For GitHub Pages, add the same <code>FIREBASE_*</code> names under <strong>Settings → Secrets and variables → Actions → Secrets</strong>, then re-run the Deploy GitHub Pages workflow.
+          Add web app keys to <code>.env</code>, then run <code>npm run build:pages</code> and push the <code>docs/</code> folder for GitHub Pages.
         </p>
       </section>
       <% } %>

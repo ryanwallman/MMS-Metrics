@@ -45,7 +45,7 @@
       <section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="status">
         <p>
           <strong>Standings cannot load yet.</strong>
-          Set the web <code>FIREBASE_*</code> keys (locally in <code>.env</code>, or as GitHub Actions secrets for Pages). The leaderboard loads lineups from Firestore in your browser.
+          Set <code>FIREBASE_*</code> in <code>.env</code>, run <code>npm run build:pages</code>, and push <code>docs/</code>. The leaderboard loads lineups from Firestore in your browser.
         </p>
       </section>
       <% } else if (typeof weeklyStandingsError !== 'undefined' && weeklyStandingsError) { %>
