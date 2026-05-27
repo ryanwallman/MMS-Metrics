@@ -800,13 +800,13 @@ var require_dfs = __commonJS({
     var { getGamelogs2026CsvUrl } = require_sheetUrls();
     var { fetchCsvText } = require_fetchCsvText();
     var DFS_LINEUP_SIZE = 8;
-    var DFS_SALARY_CAP = 6e4;
+    var DFS_SALARY_CAP = 5e4;
     var DFS_SALARY_MIN = 5e3;
+    var DFS_SALARY_NON_BOTTOM_MIN = 5100;
     var DFS_SALARY_MAX = 12e3;
     var DFS_SALARY_STEP = 100;
     var DFS_SALARY_TIERS = 14;
-    var DFS_OFFENSE_RATING_BAND = 0.15;
-    var DFS_BOTTOM_TIER_PCT = 0.25;
+    var DFS_BOTTOM_TIER_PCT = 0.2;
     var DFS_SALARY_INTERNAL_MIN = 3e3;
     var OFFENSE_SALARY_WEIGHT = 0.8;
     var OPP_RUNS_SALARY_WEIGHT = 0.12;
@@ -841,21 +841,36 @@ var require_dfs = __commonJS({
       const stepped = Math.round(n / DFS_SALARY_STEP) * DFS_SALARY_STEP;
       return clamp(stepped, 0, DFS_SALARY_MAX);
     }
-    function applyBottomTierSalaryFloor(pool, pct = DFS_BOTTOM_TIER_PCT) {
+    function applyDfsSalaryPricing(pool, bottomPct = DFS_BOTTOM_TIER_PCT) {
       if (!pool.length) return pool;
-      const sorted = pool.slice().sort((a, b) => a.salary - b.salary);
-      const bottomCount = Math.max(1, Math.ceil(pool.length * pct));
-      const cutoff = sorted[bottomCount - 1].salary;
       for (const p of pool) {
-        if (p.salary <= cutoff) {
+        p.rawSalary = p.salary;
+      }
+      const byRaw = pool.slice().sort((a, b) => a.rawSalary - b.rawSalary);
+      const bottomCount = Math.max(1, Math.ceil(pool.length * bottomPct));
+      const cutoffRaw = byRaw[bottomCount - 1].rawSalary;
+      const bottomNorms = /* @__PURE__ */ new Set();
+      for (const p of pool) {
+        if (p.rawSalary <= cutoffRaw) {
+          bottomNorms.add(p.norm);
           p.salary = DFS_SALARY_MIN;
         }
       }
-      return pool;
-    }
-    function enforceGlobalSalaryFloor(pool) {
+      const rest = pool.filter((p) => !bottomNorms.has(p.norm)).sort((a, b) => {
+        if (b.offenseRating !== a.offenseRating) return b.offenseRating - a.offenseRating;
+        return a.name.localeCompare(b.name, void 0, { sensitivity: "base" });
+      });
+      const minR = DFS_SALARY_NON_BOTTOM_MIN;
+      const maxR = DFS_SALARY_MAX;
+      const n = rest.length;
+      for (let i = 0; i < n; i += 1) {
+        const t = n === 1 ? 0 : i / (n - 1);
+        const raw = maxR - t * (maxR - minR);
+        rest[i].salary = roundSalary(raw);
+      }
       for (const p of pool) {
         p.salary = Math.max(roundSalary(p.salary), DFS_SALARY_MIN);
+        delete p.rawSalary;
       }
       return pool;
     }
@@ -1141,8 +1156,8 @@ var require_dfs = __commonJS({
       const iso = safeText(firstIso);
       if (!iso) return null;
       if (/^D\d{8}$/.test(v)) {
-        const atFivePm = instantAtNyLocalTime(iso, 17, 0);
-        return Number.isFinite(atFivePm) ? atFivePm - 1 : null;
+        const atEightPm = instantAtNyLocalTime(iso, 20, 0);
+        return Number.isFinite(atEightPm) ? atEightPm - 1 : null;
       }
       return lineupLockDeadlineMsFromFirstGameIso(iso);
     }
@@ -1383,9 +1398,7 @@ var require_dfs = __commonJS({
           });
         }
       }
-      applyOffenseRatingSalaryBands(pool);
-      applyBottomTierSalaryFloor(pool);
-      enforceGlobalSalaryFloor(pool);
+      applyDfsSalaryPricing(pool);
       sortDfsPlayerPool(pool);
       return pool;
     }
@@ -1662,7 +1675,11 @@ var require_dfs = __commonJS({
       buildSlateFromToken,
       computePlayerSalary,
       computeSalaryComposite,
+      applyDfsSalaryPricing,
       applyOffenseRatingSalaryBands,
+      DFS_SALARY_MIN,
+      DFS_SALARY_NON_BOTTOM_MIN,
+      DFS_BOTTOM_TIER_PCT,
       captainLastName,
       slateHasGamelogDates,
       normalizePlayerName: normalizePlayerName2

@@ -133,7 +133,7 @@ function renderPlayerCell(row, week, locked) {
   const name = esc(row.displayName);
   if (locked && row.userId && week) {
     const href = siteUrl(
-      `/dfs/leaderboard/lineup?week=${encodeURIComponent(week)}&user=${encodeURIComponent(row.userId)}`
+      `/dfs/leaderboard/lineup/?week=${encodeURIComponent(week)}&user=${encodeURIComponent(row.userId)}`
     );
     return `<a href="${href}" class="dfs-leaderboard-player-link">${name}</a>`;
   }

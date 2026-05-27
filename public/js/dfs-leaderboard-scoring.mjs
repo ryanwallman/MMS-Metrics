@@ -800,13 +800,13 @@ var require_dfs = __commonJS({
     var { getGamelogs2026CsvUrl } = require_sheetUrls();
     var { fetchCsvText } = require_fetchCsvText();
     var DFS_LINEUP_SIZE = 8;
-    var DFS_SALARY_CAP = 6e4;
+    var DFS_SALARY_CAP = 5e4;
     var DFS_SALARY_MIN = 5e3;
+    var DFS_SALARY_NON_BOTTOM_MIN = 5100;
     var DFS_SALARY_MAX = 12e3;
     var DFS_SALARY_STEP = 100;
     var DFS_SALARY_TIERS = 14;
-    var DFS_OFFENSE_RATING_BAND = 0.15;
-    var DFS_BOTTOM_TIER_PCT = 0.25;
+    var DFS_BOTTOM_TIER_PCT = 0.2;
     var DFS_SALARY_INTERNAL_MIN = 3e3;
     var OFFENSE_SALARY_WEIGHT = 0.8;
     var OPP_RUNS_SALARY_WEIGHT = 0.12;
@@ -841,21 +841,36 @@ var require_dfs = __commonJS({
       const stepped = Math.round(n / DFS_SALARY_STEP) * DFS_SALARY_STEP;
       return clamp(stepped, 0, DFS_SALARY_MAX);
     }
-    function applyBottomTierSalaryFloor(pool, pct = DFS_BOTTOM_TIER_PCT) {
+    function applyDfsSalaryPricing(pool, bottomPct = DFS_BOTTOM_TIER_PCT) {
       if (!pool.length) return pool;
-      const sorted = pool.slice().sort((a, b) => a.salary - b.salary);
-      const bottomCount = Math.max(1, Math.ceil(pool.length * pct));
-      const cutoff = sorted[bottomCount - 1].salary;
       for (const p of pool) {
-        if (p.salary <= cutoff) {
+        p.rawSalary = p.salary;
+      }
+      const byRaw = pool.slice().sort((a, b) => a.rawSalary - b.rawSalary);
+      const bottomCount = Math.max(1, Math.ceil(pool.length * bottomPct));
+      const cutoffRaw = byRaw[bottomCount - 1].rawSalary;
+      const bottomNorms = /* @__PURE__ */ new Set();
+      for (const p of pool) {
+        if (p.rawSalary <= cutoffRaw) {
+          bottomNorms.add(p.norm);
           p.salary = DFS_SALARY_MIN;
         }
       }
-      return pool;
-    }
-    function enforceGlobalSalaryFloor(pool) {
+      const rest = pool.filter((p) => !bottomNorms.has(p.norm)).sort((a, b) => {
+        if (b.offenseRating !== a.offenseRating) return b.offenseRating - a.offenseRating;
+        return a.name.localeCompare(b.name, void 0, { sensitivity: "base" });
+      });
+      const minR = DFS_SALARY_NON_BOTTOM_MIN;
+      const maxR = DFS_SALARY_MAX;
+      const n = rest.length;
+      for (let i = 0; i < n; i += 1) {
+        const t = n === 1 ? 0 : i / (n - 1);
+        const raw = maxR - t * (maxR - minR);
+        rest[i].salary = roundSalary(raw);
+      }
       for (const p of pool) {
         p.salary = Math.max(roundSalary(p.salary), DFS_SALARY_MIN);
+        delete p.rawSalary;
       }
       return pool;
     }
@@ -1141,8 +1156,8 @@ var require_dfs = __commonJS({
       const iso = safeText(firstIso);
       if (!iso) return null;
       if (/^D\d{8}$/.test(v)) {
-        const atFivePm = instantAtNyLocalTime(iso, 17, 0);
-        return Number.isFinite(atFivePm) ? atFivePm - 1 : null;
+        const atEightPm = instantAtNyLocalTime(iso, 20, 0);
+        return Number.isFinite(atEightPm) ? atEightPm - 1 : null;
       }
       return lineupLockDeadlineMsFromFirstGameIso(iso);
     }
@@ -1383,9 +1398,7 @@ var require_dfs = __commonJS({
           });
         }
       }
-      applyOffenseRatingSalaryBands(pool);
-      applyBottomTierSalaryFloor(pool);
-      enforceGlobalSalaryFloor(pool);
+      applyDfsSalaryPricing(pool);
       sortDfsPlayerPool(pool);
       return pool;
     }
@@ -1662,7 +1675,11 @@ var require_dfs = __commonJS({
       buildSlateFromToken,
       computePlayerSalary,
       computeSalaryComposite,
+      applyDfsSalaryPricing,
       applyOffenseRatingSalaryBands,
+      DFS_SALARY_MIN,
+      DFS_SALARY_NON_BOTTOM_MIN,
+      DFS_BOTTOM_TIER_PCT,
       captainLastName,
       slateHasGamelogDates,
       normalizePlayerName
@@ -2459,6 +2476,41 @@ var require_teamRosters = __commonJS({
   }
 });
 
+// lib/stats2026Loader.js
+var require_stats2026Loader = __commonJS({
+  "lib/stats2026Loader.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { getStats2026CsvUrl } = require_sheetUrls();
+    var { normalizePlayerName } = require_dfs();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    async function load2026StatsByPlayer() {
+      const csvText = await fetchCsvText(getStats2026CsvUrl());
+      const rows = Papa.parse(csvText).data;
+      const headers = (rows[1] || []).map((h) => safeText(h));
+      const dataRows = rows.slice(2);
+      const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
+      if (nameIndex === -1) {
+        throw new Error("2026 stats CSV missing Player column.");
+      }
+      const statsByPlayer = /* @__PURE__ */ new Map();
+      for (const row of dataRows) {
+        const playerName = safeText(row[nameIndex]);
+        if (!playerName) continue;
+        const stats = {};
+        for (let i = 0; i < headers.length; i += 1) {
+          stats[headers[i]] = safeText(row[i]);
+        }
+        statsByPlayer.set(normalizePlayerName(playerName), stats);
+      }
+      return statsByPlayer;
+    }
+    module.exports = { load2026StatsByPlayer };
+  }
+});
+
 // lib/dfsLeaderboardScoringContext.js
 var require_dfsLeaderboardScoringContext = __commonJS({
   "lib/dfsLeaderboardScoringContext.js"(exports, module) {
@@ -2476,7 +2528,6 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       SCHEDULE_URL,
       HIST_2025_STATS_URL,
       SCHEDULE_CALENDAR_YEAR,
-      getStats2026CsvUrl,
       resolveCareerCsvSource
     } = require_sheetUrls();
     var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
@@ -2776,23 +2827,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         parsedGames
       };
     }
-    async function load2026StatsByPlayer() {
-      const csvText = await fetchCsvText(getStats2026CsvUrl());
-      const rows = Papa.parse(csvText).data;
-      const headers = (rows[1] || []).map((h) => safeText(h));
-      const dataRows = rows.slice(2);
-      const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
-      if (nameIndex === -1) throw new Error("2026 stats CSV missing Player column.");
-      const statsByPlayer = /* @__PURE__ */ new Map();
-      for (const row of dataRows) {
-        const playerName = safeText(row[nameIndex]);
-        if (!playerName) continue;
-        const stats = {};
-        for (let i = 0; i < headers.length; i += 1) stats[headers[i]] = safeText(row[i]);
-        statsByPlayer.set(normalizePlayerName(playerName), stats);
-      }
-      return statsByPlayer;
-    }
+    var { load2026StatsByPlayer } = require_stats2026Loader();
     async function load2025HistoricalByPlayer() {
       const rows = await fetchCsvRows(HIST_2025_STATS_URL);
       const headers = (rows[0] || []).map((h) => safeText(h));

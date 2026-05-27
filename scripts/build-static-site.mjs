@@ -31,6 +31,7 @@ const STATIC_ROUTES = [
   "/rankings/power",
   "/dfs",
   "/dfs/leaderboard",
+  "/dfs/leaderboard/lineup/",
 ];
 
 function routeToFile(routePath) {
@@ -177,6 +178,35 @@ async function main() {
       stdio: "inherit",
     });
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor failed"))));
+  });
+
+  console.log("[static] Building leaderboard lineup client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:leaderboard-lineup"], {
+      cwd: root,
+      stdio: "inherit",
+      env: { ...process.env, SITE_BASE_PATH: siteBase },
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:leaderboard-lineup failed"))));
+  });
+
+  console.log("[static] Building league leaders client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:league-leaders"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:league-leaders failed"))));
+  });
+
+  console.log("[static] Building DFS lineup pool client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:dfs-lineup-pool"], {
+      cwd: root,
+      stdio: "inherit",
+      env: { ...process.env, SITE_BASE_PATH: siteBase },
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:dfs-lineup-pool failed"))));
   });
 
   const careerSrc = path.join(root, "data/csv/career.csv");

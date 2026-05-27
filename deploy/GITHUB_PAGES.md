@@ -80,10 +80,10 @@ Open http://localhost:5000/ (custom domain builds use site root; use `build:page
 
 | Feature | On Pages |
 |---------|----------|
-| Home / league leaders | Yes (pre-rendered) |
-| Power rankings | Yes (pre-rendered; captains from captain_mapping sheet) |
+| Home / league leaders | Yes — **live** from 2026 stats Google Sheet in the browser |
+| Power rankings | Yes (pre-rendered at build; rebuild to refresh) |
 | Matchup predictor | Yes (pre-rendered view/matchup URLs) |
-| DFS lineup builder | Yes (Firestore in browser) |
+| DFS lineup builder | Yes — **live** pool/salaries from Google Sheets + Firestore saves ($50k cap) |
 | DFS leaderboard | Yes (Firestore + client scoring; first load can take 30–60s) |
 | DFS leaderboard lineup detail (`?week=&user=`) | No server — use locked slate on builder |
 

@@ -16,6 +16,8 @@ const fsPromises = require("fs/promises");
 
 setNodeCareerReader((filePath) => fsPromises.readFile(filePath, "utf8"));
 const { fetchCsvText } = require("./lib/fetchCsvText");
+const { load2026StatsByPlayer } = require("./lib/stats2026Loader");
+const { buildLeagueLeaders } = require("./lib/leagueLeaders");
 const { createMemoryCache } = require("./lib/memoryCache");
 const { getAdminFirestore, isFirebaseAdminConfigured } = require("./lib/firebaseAdmin");
 const {
@@ -82,7 +84,6 @@ const {
   buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
-  resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
 
 const app = express();
@@ -194,7 +195,12 @@ function formatDataUpdatedLabel(iso) {
 }
 
 function renderPage(res, view, locals = {}) {
-  const generatedAt = locals.generatedAt || new Date().toISOString();
+  const generatedAt =
+    locals.generatedAt !== undefined
+      ? locals.generatedAt
+      : STATIC_EXPORT
+        ? null
+        : new Date().toISOString();
   res.render(view, {
     siteNav: mapNavHrefs(SITE_NAV, SITE_BASE_PATH),
     siteDisclaimer: SITE_DISCLAIMER,
@@ -202,7 +208,7 @@ function renderPage(res, view, locals = {}) {
     siteBasePath: SITE_BASE_PATH,
     staticSite: STATIC_EXPORT,
     generatedAt,
-    dataUpdatedLabel: formatDataUpdatedLabel(generatedAt),
+    dataUpdatedLabel: generatedAt ? formatDataUpdatedLabel(generatedAt) : "",
     ...locals,
   });
 }
@@ -268,11 +274,6 @@ function toNumber(value) {
 
 function formatRate(value) {
   return value.toFixed(3);
-}
-
-function isTruthyRookie(value) {
-  const text = safeText(value).toLowerCase();
-  return text === "y" || text === "yes" || text === "true" || text === "1";
 }
 
 function computeRates(pa, ab, h, r, rbi, bb, tb) {
@@ -907,30 +908,6 @@ function resolveSundayWeekViewParam(encodedWeek, payload) {
 
   const selectedWeek = allowed.has(candidate) ? candidate : fallbackWeek;
   return { selectedWeek, weekOptions };
-}
-
-async function load2026StatsByPlayer() {
-  const csvText = await fetchCsvText(getStats2026CsvUrl());
-  const rows = Papa.parse(csvText).data;
-  // Row 1 is metadata, row 2 is header.
-  const headers = (rows[1] || []).map((h) => safeText(h));
-  const dataRows = rows.slice(2);
-  const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
-  if (nameIndex === -1) {
-    throw new Error("2026 stats CSV missing Player column.");
-  }
-
-  const statsByPlayer = new Map();
-  for (const row of dataRows) {
-    const playerName = safeText(row[nameIndex]);
-    if (!playerName) continue;
-    const stats = {};
-    for (let i = 0; i < headers.length; i += 1) {
-      stats[headers[i]] = safeText(row[i]);
-    }
-    statsByPlayer.set(normalizePlayerName(playerName), stats);
-  }
-  return statsByPlayer;
 }
 
 function displaySeason2026StatCell(season2026, headerKey) {
@@ -1675,37 +1652,6 @@ async function loadDefensiveRatingsNormalizedMap() {
   return map;
 }
 
-function buildLeagueLeaders(players) {
-  const topN = (items, field, n = 5, minAB = 0) =>
-    items
-      .filter((p) => toNumber(p.AB) >= minAB)
-      .slice()
-      .sort((a, b) => toNumber(b[field]) - toNumber(a[field]))
-      .slice(0, n);
-
-  const leaders = [
-    { title: "OPS", field: "OPS", minAB: 0 },
-    { title: "AVG", field: "AVG", minAB: 0 },
-    { title: "OBP", field: "OBP", minAB: 0 },
-    { title: "SLG", field: "SLG", minAB: 0 },
-    { title: "Hits", field: "Hits", minAB: 0 },
-    { title: "Runs", field: "Runs", minAB: 0 },
-    { title: "RBI", field: "RBI", minAB: 0 },
-    { title: "HR", field: "HR", minAB: 0 },
-  ].map((category) => ({
-    ...category,
-    players: topN(players, category.field, 5, category.minAB),
-  }));
-
-  const topRookies = players
-    .filter((p) => isTruthyRookie(p.IsRookie))
-    .slice()
-    .sort((a, b) => toNumber(b.AVG) - toNumber(a.AVG))
-    .slice(0, 5);
-
-  return { leaders, topRookies };
-}
-
 function levenshtein(a, b) {
   const s = safeText(a).toLowerCase();
   const t = safeText(b).toLowerCase();
@@ -1931,7 +1877,6 @@ app.get("/dfs", async (req, res) => {
       };
     }
     const canEdit = slate.canEdit ?? false;
-    const nextLineupLock = resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs);
 
     const playerPool = buildDfsPlayerPool({
       teams,
@@ -1996,7 +1941,8 @@ app.get("/dfs", async (req, res) => {
       allSlatesLocked,
       canEdit,
       selectedSlate: slate?.viewToken || "",
-      playerPool: playerPoolWithStats,
+      clientSidePool: STATIC_EXPORT,
+      playerPool: STATIC_EXPORT ? [] : playerPoolWithStats,
       showSlateStats,
       slateStats,
       lineupNorms,
@@ -2011,8 +1957,6 @@ app.get("/dfs", async (req, res) => {
       firebaseClientConfig,
       firebaseEnabled: !!firebaseClientConfig,
       slateHasBoxScores: slateHasGamelogDates(slate, gamelogs),
-      nextLineupLockDeadlineMs: nextLineupLock.deadlineMs,
-      nextLineupLockDeadlineLabel: nextLineupLock.deadlineLabel,
     });
   } catch (error) {
     console.error(error);
@@ -2085,10 +2029,22 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
   }
 });
 
-app.get("/dfs/leaderboard/lineup", async (req, res) => {
+app.get(["/dfs/leaderboard/lineup", "/dfs/leaderboard/lineup/"], async (req, res) => {
   try {
     const week = safeText(req.query.week || req.query.slate).toUpperCase();
     const userId = safeText(req.query.user || req.query.userId);
+    const firebaseClientConfig = getFirebaseClientConfig();
+    const useClientLineup = STATIC_EXPORT || !isFirebaseAdminConfigured();
+
+    if (useClientLineup) {
+      return renderPage(res, "dfs-leaderboard-lineup-client", {
+        navActive: "dfs",
+        selectedWeek: week,
+        firebaseClientConfig,
+        firebaseEnabled: !!firebaseClientConfig,
+      });
+    }
+
     if (!week || !userId) {
       return res.status(400).send("Missing week (slate) or user id.");
     }
@@ -2486,6 +2442,17 @@ app.get("/dfs/leaderboard/week/:week", (req, res) => {
 });
 
 async function renderLeagueLeadersPage(res) {
+  if (STATIC_EXPORT) {
+    return renderPage(res, "historical", {
+      leaders: [],
+      topRookies: [],
+      clientSideLeaders: true,
+      navActive: "home",
+      pageTitle: "League Leaders",
+      generatedAt: null,
+    });
+  }
+
   const stats2026ByPlayer = await load2026StatsByPlayer();
   const players2026 = Array.from(stats2026ByPlayer.values());
   const { leaders, topRookies } = buildLeagueLeaders(players2026);

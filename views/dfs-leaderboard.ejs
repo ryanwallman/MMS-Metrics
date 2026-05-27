@@ -139,7 +139,7 @@
               <td><%= row.rankDisplay != null ? row.rankDisplay : row.rank %></td>
               <td>
                 <% if (lbSlateLocked && row.userId) { %>
-                <a href="/dfs/leaderboard/lineup?week=<%= encodeURIComponent(selectedWeek) %>&amp;user=<%= encodeURIComponent(row.userId) %>" class="dfs-leaderboard-player-link"><%= row.displayName %></a>
+                <a href="<%= sitePath('/dfs/leaderboard/lineup/?week=' + encodeURIComponent(selectedWeek) + '&user=' + encodeURIComponent(row.userId)) %>" class="dfs-leaderboard-player-link"><%= row.displayName %></a>
                 <% } else { %><%= row.displayName %><% } %>
               </td>
               <td class="dfs-leaderboard-pts"><% if (row.points == null) { %>—<% } else { %><strong><%= row.points %></strong><% } %></td>

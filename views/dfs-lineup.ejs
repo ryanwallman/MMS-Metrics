@@ -45,10 +45,10 @@
                   Player rating leans on <strong>career stats</strong> when available (about 85% career / 15% 2026 when both exist).
                   <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
                   <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
-                  The bottom <strong>25%</strong> of the slate by salary are all priced at <strong>$5,000</strong>, so lineups aren’t built around one leftover minimum-price pick; within that group, names are listed alphabetically.
+                  The bottom <strong>20%</strong> of the slate by salary are all priced at <strong>$5,000</strong>. Everyone else is priced on a smooth ladder from <strong>$5,100</strong> up to <strong>$12,000</strong> by offensive rating (no big jumps after the minimum tier).
                   You can browse everything without an account. To compete on the leaderboard, enter a <strong>display name</strong> (first name and last initial or full name) and save your lineup for <strong>Sunday week slates</strong> (<code>W#</code>) or <strong>Wednesday slates</strong> (<code>D…</code>). <strong>One lineup per device per slate.</strong> When you save to the database, each player’s <strong>salary is locked at that moment</strong> — the leaderboard always shows what you paid, not today’s prices. You can edit and re-save before the deadline; if you change players, new salaries apply on the next save.
                   Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
-                  <strong>Sunday</strong> slates lock at <strong>11:59 PM Eastern the night before games</strong>. <strong>Wednesday</strong> slates lock at <strong>5:00 PM Eastern on game day</strong>.
+                  <strong>Sunday</strong> slates lock at <strong>11:59 PM Eastern the night before games</strong>. <strong>Wednesday</strong> slates lock at <strong>8:00 PM Eastern on game day</strong>.
                 </p>
               </div>
             </div>
@@ -155,7 +155,7 @@
             <p class="dfs-slate-status">No slates on the schedule.</p>
             <% } else if (slate.canEdit) { %>
             <p class="dfs-slate-status dfs-slate-status--open">
-              Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong><% if (slate.slateType === 'wednesday') { %> (5:00 PM Eastern on game day)<% } else { %> (11:59 PM Eastern the night before games)<% } %> ·
+              Open for lineups through <strong><%= slate.lineupLockDeadlineLabel || 'deadline' %></strong><% if (slate.slateType === 'wednesday') { %> (8:00 PM Eastern on game day)<% } else { %> (11:59 PM Eastern the night before games)<% } %> ·
               <%= slate.games.length %> game<%= slate.games.length === 1 ? '' : 's' %> · <%= slate.teamIds.size %> teams
             </p>
             <% } else if (slate.isPast) { %>
@@ -217,16 +217,9 @@
 
           <div class="dfs-side-stack">
             <% const dfsLockDeadlineMs =
-              typeof nextLineupLockDeadlineMs !== 'undefined' && nextLineupLockDeadlineMs != null
-                ? nextLineupLockDeadlineMs
-                : (slate && slate.canEdit && slate.lineupLockDeadlineMs != null
-                    ? slate.lineupLockDeadlineMs
-                    : null);
+              slate && slate.lineupLockDeadlineMs != null ? slate.lineupLockDeadlineMs : null;
             const dfsLockDeadlineLabel =
-              typeof nextLineupLockDeadlineLabel !== 'undefined' && nextLineupLockDeadlineLabel
-                ? nextLineupLockDeadlineLabel
-                : (slate && slate.lineupLockDeadlineLabel ? slate.lineupLockDeadlineLabel : '');
-            %>
+              slate && slate.lineupLockDeadlineLabel ? slate.lineupLockDeadlineLabel : ''; %>
             <section class="dfs-lock-panel dfs-top-panel" aria-label="Lineup deadline">
               <h2 class="section-heading dfs-lock-panel__title">Lineup deadline</h2>
               <div
@@ -241,7 +234,7 @@
                 <% if (dfsLockDeadlineLabel) { %>
                 <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen"><%= dfsLockDeadlineLabel %></p>
                 <% if (slate && slate.slateType === 'wednesday') { %>
-                <p class="dfs-lock-countdown__rule">Wednesday slates lock at <strong>5:00 PM Eastern</strong> on game day.</p>
+                <p class="dfs-lock-countdown__rule">Wednesday slates lock at <strong>8:00 PM Eastern</strong> on game day.</p>
                 <% } else if (slate && slate.canEdit) { %>
                 <p class="dfs-lock-countdown__rule">Week slates lock at <strong>11:59 PM Eastern</strong> the night before games.</p>
                 <% } %>
@@ -389,7 +382,13 @@
                 </tr>
               </thead>
               <tbody>
-                <% playerPool.forEach((p) => { %>
+                <% if (typeof clientSidePool !== 'undefined' && clientSidePool) { %>
+                <tr>
+                  <td colspan="<%= (typeof showSlateStats !== 'undefined' && showSlateStats) ? 7 : 8 %>" class="dfs-leaderboard-empty">
+                    Loading player pool and salaries from Google Sheets…
+                  </td>
+                </tr>
+                <% } else { playerPool.forEach((p) => { %>
                 <% const inLineup = lineupNorms.includes(p.norm); %>
                 <tr
                   class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %>"
@@ -422,11 +421,11 @@
                   <td class="dfs-opp-cell"><%= p.opponentName %></td>
                   <td class="dfs-pitcher-cell" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%= p.opposingPitcher %></td>
                 </tr>
-                <% }) %>
+                <% }); } %>
               </tbody>
             </table>
           </div>
-          <% if (!playerPool.length) { %>
+          <% if (!(typeof clientSidePool !== 'undefined' && clientSidePool) && !playerPool.length) { %>
           <p class="dfs-empty-pool">No players in pool for this slate. Pick another date/week above.</p>
           <% } %>
         </section>
@@ -440,8 +439,20 @@
     <script type="module" src="<%= sitePath('/js/dfs-firebase.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
 
+    <% if (typeof clientSidePool !== 'undefined' && clientSidePool) { %>
     <script>
-      (function () {
+      window.__MMS_CAREER_CSV_URL__ = "<%= sitePath('/data/csv/career.csv') %>";
+      window.__DFS_LINEUP_PAGE__ = <%- JSON.stringify({
+        slateToken: selectedSlate,
+        lineupNorms: lineupNorms || [],
+        showSlateStats: typeof showSlateStats !== 'undefined' && showSlateStats
+      }) %>;
+    </script>
+    <script type="module" src="<%= sitePath('/js/dfs-lineup-pool.js') %>?v=<%= assetVersion %>"></script>
+    <% } %>
+
+    <script>
+      window.initDfsLineupPage = function () {
         const LINEUP_SIZE = <%= lineupSize %>;
         const SALARY_CAP = <%= salaryCap %>;
         const CAN_EDIT = <%= slate && slate.canEdit ? 'true' : 'false' %>;
@@ -1293,7 +1304,10 @@
         if (window.DfsLineupStore) {
           initLineupForPage();
         }
-      })();
+      };
+      <% if (!(typeof clientSidePool !== 'undefined' && clientSidePool)) { %>
+      window.initDfsLineupPage();
+      <% } %>
     </script>
   </body>
 </html>

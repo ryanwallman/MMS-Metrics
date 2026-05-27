@@ -9,6 +9,12 @@
     <main class="page-main">
       <h1 class="page-title">League Leaders</h1>
 
+      <% if (typeof clientSideLeaders !== 'undefined' && clientSideLeaders) { %>
+      <div id="leagueLeadersRoot" aria-busy="true" aria-live="polite">
+        <p class="league-leaders-loading">Loading league leaders from Google Sheets…</p>
+      </div>
+      <script type="module" src="<%= sitePath('/js/league-leaders.js') %>?v=<%= assetVersion %>"></script>
+      <% } else { %>
       <section class="leaders-section">
         <h2 class="section-heading">Top performers</h2>
         <div class="leaders-grid">
@@ -67,6 +73,7 @@
           </section>
         </div>
       </section>
+      <% } %>
     </main>
   </body>
 </html>

@@ -109,6 +109,8 @@ async function main() {
   console.log(`[patch-dfs] SITE_BASE_PATH=${siteBase}`);
   await killPortListeners(port);
   await runNpm("build:leaderboard-scoring");
+  await runNpm("build:leaderboard-lineup");
+  await runNpm("build:dfs-lineup-pool");
   await runNpm("build:matchup-predictor");
 
   const careerSrc = path.join(root, "data/csv/career.csv");

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+    <title>Lineup — DFS Leaderboard</title>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <main class="page-main dfs-page dfs-lineup-view-page" id="lineupDetailMain">
+      <div class="dfs-leaderboard-loading-screen" aria-busy="true" aria-live="polite">
+        <p class="dfs-leaderboard-loading-screen__title">Loading lineup</p>
+        <p class="dfs-leaderboard-loading-screen__hint">Fetching saved roster and scoring…</p>
+      </div>
+    </main>
+
+    <% if (typeof firebaseClientConfig !== 'undefined' && firebaseClientConfig) { %>
+    <script>window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig) %>;</script>
+    <% } %>
+    <script type="module" src="<%= sitePath('/js/dfs-leaderboard-lineup.js') %>?v=<%= assetVersion %>"></script>
+  </body>
+</html>
