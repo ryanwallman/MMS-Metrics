@@ -2,7 +2,9 @@
 
 GitHub Pages serves **static files only** — no Node/Express. This repo builds pre-rendered HTML plus assets into **`docs/`**, which you commit and push.
 
-**Live site:** https://ryanwallman.github.io/MMS-Metrics/
+**Production URL:** https://mmsmetrics.com/ (see [CUSTOM_DOMAIN.md](./CUSTOM_DOMAIN.md) for DNS + GitHub setup)
+
+**Legacy project URL:** https://ryanwallman.github.io/MMS-Metrics/ (only if you build with `npm run build:pages:github`)
 
 ## One-time GitHub setup
 
@@ -10,7 +12,8 @@ GitHub Pages serves **static files only** — no Node/Express. This repo builds 
 2. **Source:** Deploy from a branch
 3. **Branch:** `main` (or your production branch)
 4. **Folder:** `/docs`
-5. Do **not** enable GitHub Actions as the Pages source if you use branch deploy (pick one).
+5. **Custom domain:** `mmsmetrics.com` (details in [CUSTOM_DOMAIN.md](./CUSTOM_DOMAIN.md))
+6. Do **not** enable GitHub Actions as the Pages source if you use branch deploy (pick one).
 
 ## Deploy after code changes
 
@@ -71,7 +74,7 @@ npm run build:pages:branch
 npx serve docs -l 5000
 ```
 
-Open http://localhost:5000/MMS-Metrics/
+Open http://localhost:5000/ (custom domain builds use site root; use `build:pages:github` + `/MMS-Metrics/` for legacy preview)
 
 ## What works on GitHub Pages
 

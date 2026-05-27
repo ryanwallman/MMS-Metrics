@@ -63,7 +63,7 @@ var require_sheetUrls = __commonJS({
       return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
     }
     function getCareerCsvSource() {
-      const url = "/MMS-Metrics/data/csv/career.csv".trim();
+      const url = "/data/csv/career.csv".trim();
       if (url) return { type: "url", url };
       if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
       return { type: "url", url: CAREER_CSV_PUBLIC_URL };

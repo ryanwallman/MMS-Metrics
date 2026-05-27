@@ -16,9 +16,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const outDir = path.join(root, "docs");
 const repoName = (process.env.GITHUB_REPOSITORY || "").split("/")[1] || "MMS-Metrics";
-const siteBase =
-  process.env.SITE_BASE_PATH ||
-  (repoName ? `/${repoName}` : "/MMS-Metrics");
+const customDomain = String(process.env.CUSTOM_DOMAIN || "").trim();
+const envBase = process.env.SITE_BASE_PATH;
+const siteBase = (() => {
+  if (envBase != null && String(envBase).trim() !== "") {
+    return String(envBase).trim();
+  }
+  if (customDomain || envBase === "") return "";
+  return repoName ? `/${repoName}` : "/MMS-Metrics";
+})();
 
 const STATIC_ROUTES = [
   "/",
@@ -295,7 +301,15 @@ async function main() {
     await copyDir(path.join(root, "public"), outDir);
     await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
 
+    if (customDomain) {
+      await fs.writeFile(path.join(outDir, "CNAME"), `${customDomain}\n`);
+      console.log(`[static] Wrote docs/CNAME → ${customDomain}`);
+    }
+
     console.log(`[static] Done → ${outDir}`);
+    if (customDomain) {
+      console.log(`[static] Custom domain build: https://${customDomain}/`);
+    }
   } finally {
     stopServer();
   }

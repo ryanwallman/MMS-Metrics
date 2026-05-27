@@ -7,9 +7,10 @@
     "build:leaderboard-scoring": "node scripts/build-leaderboard-scoring.mjs",
     "build:matchup-predictor": "node scripts/build-matchup-predictor.mjs",
     "build:static": "node scripts/build-static-site.mjs",
-    "build:pages": "node scripts/build-static-site.mjs",
-    "build:pages:branch": "STATIC_SKIP_MATCHUP=1 SITE_BASE_PATH=/MMS-Metrics node scripts/build-static-site.mjs",
-    "patch:pages-dfs": "node scripts/patch-dfs-for-pages.mjs",
+    "build:pages": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",
+    "build:pages:branch": "STATIC_SKIP_MATCHUP=1 SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",
+    "build:pages:github": "SITE_BASE_PATH=/MMS-Metrics node scripts/build-static-site.mjs",
+    "patch:pages-dfs": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-dfs-for-pages.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

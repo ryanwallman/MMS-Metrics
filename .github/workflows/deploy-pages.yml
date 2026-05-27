@@ -21,7 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      SITE_BASE_PATH: /${{ github.event.repository.name }}
+      SITE_BASE_PATH: ""
+      CUSTOM_DOMAIN: mmsmetrics.com
       CSV_FETCH_TIMEOUT_MS: "90000"
       STATIC_FETCH_TIMEOUT_MS: "180000"
     steps:
