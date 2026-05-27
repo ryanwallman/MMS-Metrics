@@ -181,7 +181,6 @@
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType, canEdit: slate.canEdit === true, isLocked: slate.canEdit !== true } : null
       }) %>;
     </script>
-    <script type="module" src="<%= sitePath('/js/dfs-leaderboard-scoring.mjs') %>?v=<%= assetVersion %>"></script>
     <script type="module" src="<%= sitePath('/js/dfs-leaderboard.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
   </body>

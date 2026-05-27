@@ -1,6 +1,7 @@
 /**
  * Weekly DFS leaderboard (client fallback when the page is not server-rendered).
  */
+import { scoreWeeklyLeaderboard } from "./dfs-leaderboard-scoring.mjs";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
@@ -258,8 +259,8 @@ async function loadViaBrowserFirestore() {
   const db = getFirestore(app);
   const lineups = await fetchLineupsForSlate(db, page.selectedWeek);
 
-  if (page.useClientScoring && window.MmsLeaderboardScoring?.scoreWeeklyLeaderboard) {
-    return window.MmsLeaderboardScoring.scoreWeeklyLeaderboard(page.selectedWeek, lineups);
+  if (page.useClientScoring) {
+    return scoreWeeklyLeaderboard(page.selectedWeek, lineups);
   }
 
   const { res, data } = await fetchJsonWithTimeout(siteUrl("/api/dfs/leaderboard/score"), {

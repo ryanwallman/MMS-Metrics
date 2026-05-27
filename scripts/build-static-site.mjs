@@ -212,42 +212,46 @@ async function main() {
   try {
     await waitForHealth(port);
 
-    const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
-    await writeRoute(rootMatchupHtml, "/matchup-predictor");
-    const viewValues = extractSelectOptionValues(rootMatchupHtml, "view");
-    const matchupRoutes = [];
-    console.log(`[static] Exporting ${viewValues.length} schedule views…`);
-    await mapConcurrent(viewValues, 8, async (view) => {
-      const viewRoute = matchupPath(view);
-      const viewHtml = await fetchHtml(port, viewRoute);
-      await writeRoute(viewHtml, viewRoute);
-      const matchupValues = extractSelectOptionValues(viewHtml, "matchup");
-      for (const matchup of matchupValues) {
-        matchupRoutes.push(matchupPath(view, matchup));
-      }
-    });
-    console.log(`[static] Exporting ${matchupRoutes.length} matchups (parallel)…`);
-    await mapConcurrent(matchupRoutes, 24, async (route) => {
-      const html = await fetchHtml(port, route);
-      await writeRoute(html, route);
-    });
+    if (!process.env.STATIC_SKIP_MATCHUP) {
+      const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
+      await writeRoute(rootMatchupHtml, "/matchup-predictor");
+      const viewValues = extractSelectOptionValues(rootMatchupHtml, "view");
+      const matchupRoutes = [];
+      console.log(`[static] Exporting ${viewValues.length} schedule views…`);
+      await mapConcurrent(viewValues, 8, async (view) => {
+        const viewRoute = matchupPath(view);
+        const viewHtml = await fetchHtml(port, viewRoute);
+        await writeRoute(viewHtml, viewRoute);
+        const matchupValues = extractSelectOptionValues(viewHtml, "matchup");
+        for (const matchup of matchupValues) {
+          matchupRoutes.push(matchupPath(view, matchup));
+        }
+      });
+      console.log(`[static] Exporting ${matchupRoutes.length} matchups (parallel)…`);
+      await mapConcurrent(matchupRoutes, 24, async (route) => {
+        const html = await fetchHtml(port, route);
+        await writeRoute(html, route);
+      });
+    } else {
+      console.log("[static] STATIC_SKIP_MATCHUP=1 — keeping existing matchup pages in docs/");
+    }
 
     // Export pretty DFS links for static navigation.
     const dfsHtml = await fetchHtml(port, "/dfs");
-    const slateTokens = extractAllMatches(
-      dfsHtml,
-      /\/dfs\/slate\/([A-Za-z0-9%]+)/g
-    ).map((t) => decodeURIComponent(t));
+    const slateTokens = [
+      ...extractAllMatches(dfsHtml, /\/dfs\/slate\/([A-Za-z0-9%]+)/g),
+      ...extractAllMatches(dfsHtml, /\/dfs\?slate=([A-Za-z0-9%]+)/g),
+    ].map((t) => decodeURIComponent(t));
     await mapConcurrent(Array.from(new Set(slateTokens)), 6, async (token) => {
       const html = await fetchHtml(port, `/dfs?slate=${encodeURIComponent(token)}`);
       await writeRoute(html, `/dfs/slate/${encodeURIComponent(token)}`);
     });
 
     const lbHtml = await fetchHtml(port, "/dfs/leaderboard");
-    const weekTokens = extractAllMatches(
-      lbHtml,
-      /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g
-    ).map((t) => decodeURIComponent(t));
+    const weekTokens = [
+      ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
+      ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),
+    ].map((t) => decodeURIComponent(t));
     await mapConcurrent(Array.from(new Set(weekTokens)), 4, async (week) => {
       const html = await fetchHtml(port, `/dfs/leaderboard?week=${encodeURIComponent(week)}`);
       await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
@@ -257,9 +261,6 @@ async function main() {
       const html = await fetchHtml(port, route);
       await writeRoute(html, route);
     }
-
-    // GitHub Pages serves the same index.html for ?slate= / ?week= query URLs — no per-token HTML needed.
-    console.log("[static] Skipping per-slate/per-week exports (use ?query on /dfs and /dfs/leaderboard).");
 
     console.log("[static] Copying public/ …");
     await copyDir(path.join(root, "public"), outDir);

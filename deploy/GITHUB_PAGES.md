@@ -14,7 +14,8 @@ GitHub Pages serves **static files only** — no Node/Express. This repo builds 
 
 ```bash
 cp .env.example .env   # once — fill FIREBASE_* from Firebase Console
-npm run build:pages    # builds docs/ with Firebase + Google Sheets data
+npm run build:pages    # full rebuild (includes matchup predictor; slow)
+npm run patch:pages-dfs  # fast DFS + leaderboard only (~1 min)
 git add docs/
 git commit -m "Rebuild static site for Pages"
 git push

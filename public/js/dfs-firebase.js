@@ -12,14 +12,70 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 const DEVICE_KEY = "mms-dfs-device-id";
+const DEVICE_COOKIE = "mms_dfs_device_id";
 const USERNAME_KEY = "mms-dfs-username";
 const SUBMITTED_KEY = "mms-dfs-submitted-slates";
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function readCookie(name) {
+  const prefix = `${name}=`;
+  const parts = document.cookie.split(";").map((c) => c.trim());
+  for (const part of parts) {
+    if (part.startsWith(prefix)) {
+      return decodeURIComponent(part.slice(prefix.length));
+    }
+  }
+  return "";
+}
+
+function writeCookie(name, value) {
+  const maxAge = 60 * 60 * 24 * 400;
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+}
+
+function isValidDeviceId(id) {
+  return typeof id === "string" && UUID_RE.test(id);
+}
+
+function persistDeviceId(id) {
+  try {
+    localStorage.setItem(DEVICE_KEY, id);
+  } catch {
+    /* private mode / quota */
+  }
+  try {
+    sessionStorage.setItem(DEVICE_KEY, id);
+  } catch {
+    /* ignore */
+  }
+  try {
+    writeCookie(DEVICE_COOKIE, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+function readStoredDeviceId() {
+  const candidates = [
+    localStorage.getItem(DEVICE_KEY),
+    sessionStorage.getItem(DEVICE_KEY),
+    readCookie(DEVICE_COOKIE),
+  ];
+  for (const raw of candidates) {
+    const id = String(raw || "").trim();
+    if (isValidDeviceId(id)) return id;
+  }
+  return "";
+}
 
 function getOrCreateDeviceId() {
-  let id = localStorage.getItem(DEVICE_KEY);
+  let id = readStoredDeviceId();
   if (!id) {
     id = crypto.randomUUID();
-    localStorage.setItem(DEVICE_KEY, id);
+    persistDeviceId(id);
+  } else {
+    persistDeviceId(id);
   }
   return id;
 }
@@ -160,16 +216,22 @@ if (!config?.projectId) {
         throw new Error("Salary total does not match locked player prices.");
       }
 
+      const payload = {
+        slateId: slate,
+        userId: deviceId,
+        displayName: name,
+        playerNorms: norms,
+        playerSalaries: salaries,
+        salaryUsed: used,
+        updatedAt: serverTimestamp(),
+      };
+
       try {
-        await setDoc(ref, {
-          slateId: slate,
-          userId: deviceId,
-          displayName: name,
-          playerNorms: norms,
-          playerSalaries: salaries,
-          salaryUsed: used,
-          updatedAt: serverTimestamp(),
-        });
+        const existing = await getDoc(ref);
+        if (!existing.exists()) {
+          payload.createdAt = serverTimestamp();
+        }
+        await setDoc(ref, payload);
       } catch (err) {
         const code = err?.code || "";
         if (code === "permission-denied") {
