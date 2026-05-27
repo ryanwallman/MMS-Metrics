@@ -11,8 +11,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=5" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=5" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=1" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=1" />
 
   </head>
   <body>
@@ -61,7 +61,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T19:02:08.436Z">May 27, 2026, 3:02 PM ET</time>
+        <time datetime="2026-05-27T19:41:58.067Z">May 27, 2026, 3:41 PM ET</time>
       </p>
       
       
@@ -250,7 +250,9 @@
 
     
 
+    <div id="matchup-lineup-rules-host">
     
+    </div>
 
     
     <p class="matchup-predictor-prompt">Choose a matchup above to see both teams and their rosters.</p>
@@ -280,8 +282,8 @@
             .filter(Boolean);
         }
 
-        function sortedKey(arr) {
-          return [...arr].sort().join(",");
+        function benchSortedKey(arr) {
+          return [...arr].map((s) => String(s || "").trim()).filter(Boolean).sort().join(",");
         }
 
         function matchupKeyToSlug(key) {
@@ -354,40 +356,52 @@
           }
         }
 
-        function loadStored() {
-          if (!matchupKey) return { away: [], home: [] };
+        function loadStoredBench() {
+          if (!matchupKey) return { awayBench: [], homeBench: [] };
           try {
             const raw = localStorage.getItem(STORAGE_PREFIX + matchupKey);
-            if (!raw) return { away: [], home: [] };
+            if (!raw) return { awayBench: [], homeBench: [] };
             const data = JSON.parse(raw);
+            const away = data.awayBench ?? data.away;
+            const home = data.homeBench ?? data.home;
             return {
-              away: Array.isArray(data.away) ? data.away : [],
-              home: Array.isArray(data.home) ? data.home : [],
+              awayBench: Array.isArray(away) ? away : [],
+              homeBench: Array.isArray(home) ? home : [],
             };
           } catch {
-            return { away: [], home: [] };
+            return { awayBench: [], homeBench: [] };
           }
         }
 
-        function saveStored(away, home) {
+        function saveStoredBench(awayBench, homeBench) {
           if (!matchupKey) return;
           localStorage.setItem(
             STORAGE_PREFIX + matchupKey,
-            JSON.stringify({ away: [...away], home: [...home] })
+            JSON.stringify({
+              version: 1,
+              awayBench: [...awayBench],
+              homeBench: [...homeBench],
+              updatedAt: new Date().toISOString(),
+            })
           );
+        }
+
+        function applyBenchToForm(awayBench, homeBench) {
+          awayInput.value = awayBench.join(",");
+          homeInput.value = homeBench.join(",");
         }
 
         function syncButtons(awaySet, homeSet) {
           document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
-            const missing = (side === "away" ? awaySet : homeSet).has(norm);
-            btn.textContent = missing ? "Missing" : "Active";
-            btn.classList.toggle("matchup-status-btn--active", !missing);
-            btn.classList.toggle("matchup-status-btn--missing", missing);
-            btn.setAttribute("aria-pressed", missing ? "true" : "false");
+            const onBench = (side === "away" ? awaySet : homeSet).has(norm);
+            btn.textContent = onBench ? "Bench" : "Active";
+            btn.classList.toggle("matchup-status-btn--active", !onBench);
+            btn.classList.toggle("matchup-status-btn--missing", onBench);
+            btn.setAttribute("aria-pressed", onBench ? "true" : "false");
             const row = btn.closest(".matchup-roster-item");
-            if (row) row.classList.toggle("matchup-roster-item--benched", missing);
+            if (row) row.classList.toggle("matchup-roster-item--benched", onBench);
           });
         }
 
@@ -395,31 +409,47 @@
         let homeSet = new Set(parseList(homeInput.value));
 
         if (matchupKey) {
-          const stored = loadStored();
-          const serverAway = sortedKey([...awaySet]);
-          const serverHome = sortedKey([...homeSet]);
-          const storedAway = sortedKey(stored.away);
-          const storedHome = sortedKey(stored.home);
+          const stored = loadStoredBench();
+          const hasStored =
+            stored.awayBench.length > 0 || stored.homeBench.length > 0;
+          const serverAway = benchSortedKey([...awaySet]);
+          const serverHome = benchSortedKey([...homeSet]);
+          const storedAway = benchSortedKey(stored.awayBench);
+          const storedHome = benchSortedKey(stored.homeBench);
 
-          if (storedAway !== serverAway || storedHome !== serverHome) {
-            awaySet = new Set(stored.away);
-            homeSet = new Set(stored.home);
-            awayInput.value = stored.away.join(",");
-            homeInput.value = stored.home.join(",");
-            if (!isStaticSite) {
-              submitOrNavigate();
-              return;
+          if (isStaticSite || hasStored) {
+            if (storedAway !== serverAway || storedHome !== serverHome) {
+              awaySet = new Set(stored.awayBench);
+              homeSet = new Set(stored.homeBench);
+              applyBenchToForm(stored.awayBench, stored.homeBench);
+              if (!isStaticSite && !matchupCtx) {
+                submitOrNavigate();
+                return;
+              }
             }
+          } else if (awaySet.size || homeSet.size) {
+            saveStoredBench([...awaySet], [...homeSet]);
+          }
+        }
+
+        if (isStaticSite && matchupKey) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has("awayMissing") || url.searchParams.has("homeMissing")) {
+            url.searchParams.delete("awayMissing");
+            url.searchParams.delete("homeMissing");
+            window.history.replaceState({}, "", url.pathname + (url.search || ""));
           }
         }
 
         function recalcPrediction() {
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
+            const awayBench = [...awaySet];
+            const homeBench = [...homeSet];
             const pred = window.MmsMatchupPredictor.predictFromPayload(
               matchupCtx,
-              [...awaySet],
-              [...homeSet]
+              awayBench,
+              homeBench
             );
             window.MmsMatchupPredictorUi.updatePredictionUi(pred);
             const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
@@ -430,6 +460,14 @@
               awayTotal,
               homeTotal
             );
+            if (window.MmsMatchupPredictor.buildLineupEnrichment) {
+              const enrichment = window.MmsMatchupPredictor.buildLineupEnrichment(
+                matchupCtx,
+                awayBench,
+                homeBench
+              );
+              window.MmsMatchupPredictorUi.updateLineupUi(enrichment);
+            }
           } catch (err) {
             console.error("Matchup prediction update failed", err);
           }
@@ -454,9 +492,8 @@
             const set = side === "away" ? awaySet : homeSet;
             if (set.has(norm)) set.delete(norm);
             else set.add(norm);
-            awayInput.value = [...awaySet].join(",");
-            homeInput.value = [...homeSet].join(",");
-            saveStored([...awaySet], [...homeSet]);
+            applyBenchToForm([...awaySet], [...homeSet]);
+            saveStoredBench([...awaySet], [...homeSet]);
             syncButtons(awaySet, homeSet);
             if (matchupCtx) recalcPrediction();
             else if (!isStaticSite) submitOrNavigate();

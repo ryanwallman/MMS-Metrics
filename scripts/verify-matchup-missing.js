@@ -210,7 +210,8 @@ for (const sc of scenarios) {
   if (!baseline) baseline = pred;
   const entries = rosterEntriesFromNames(names, norm);
   const missing = entries.filter((e) => sc.missing.includes(e.round));
-  const mult = computeTeamMissingMultiplier(missing, 13 - sc.missing.length, ratings);
+  const active = entries.filter((e) => !sc.missing.includes(e.round));
+  const mult = computeTeamMissingMultiplier(missing, active, ratings, entries);
 
   console.log(sc.label);
   console.log(

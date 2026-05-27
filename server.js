@@ -57,6 +57,7 @@ const {
   roundMatchupN,
 } = require("./lib/matchupPredict");
 const { buildMatchupClientPayload } = require("./lib/matchupClientPayload");
+const { normalizedNameToPosition } = require("./data/playerPositions2026");
 const {
   DFS_LINEUP_SIZE,
   DFS_SALARY_CAP,
@@ -235,6 +236,16 @@ function normalizePlayerName(name) {
   let s = safeText(name).toLowerCase().replace(/[.'’]/g, "");
   s = s.replace(/\s+/g, " ").trim();
   return s;
+}
+
+function buildPositionByNormMap(playerNames) {
+  const map = new Map();
+  for (const name of playerNames || []) {
+    const norm = normalizePlayerName(name);
+    const pos = normalizedNameToPosition[norm];
+    if (pos) map.set(norm, pos);
+  }
+  return map;
 }
 
 /** For fuzzy matching, keep suffix so Jr/Sr/II/III/IV remain distinct people. */
@@ -2305,19 +2316,24 @@ async function renderMatchupPredictorPage(req, res) {
           selectedGame.home
         );
 
+        const awayPositionByNorm = buildPositionByNormMap(awayRoster?.players);
+        const homePositionByNorm = buildPositionByNormMap(homeRoster?.players);
+
         awayRoster = enrichRosterForMatchupView(
           awayRoster,
           offenseRatingByNorm,
           awayMissingSet,
           normalizePlayerName,
-          stats2026ByPlayer
+          stats2026ByPlayer,
+          awayPositionByNorm
         );
         homeRoster = enrichRosterForMatchupView(
           homeRoster,
           offenseRatingByNorm,
           homeMissingSet,
           normalizePlayerName,
-          stats2026ByPlayer
+          stats2026ByPlayer,
+          homePositionByNorm
         );
 
         const awayId = normalizeScheduleTeamId(selectedGame.awayTeamId);
@@ -2336,7 +2352,8 @@ async function renderMatchupPredictorPage(req, res) {
             offenseRatingByNorm,
             stats2026ByPlayer,
             defenseZByNorm,
-            normalizePlayerName
+            normalizePlayerName,
+            awayPositionByNorm
           );
           teamProfiles.set(awayId, awayProfile);
         }
@@ -2349,7 +2366,8 @@ async function renderMatchupPredictorPage(req, res) {
             offenseRatingByNorm,
             stats2026ByPlayer,
             defenseZByNorm,
-            normalizePlayerName
+            normalizePlayerName,
+            homePositionByNorm
           );
           teamProfiles.set(homeId, homeProfile);
         }
@@ -2402,6 +2420,10 @@ async function renderMatchupPredictorPage(req, res) {
           prediction.homeLabel = homeRoster.teamName || selectedGame.home;
 
           if (awayBaseProfile && homeBaseProfile) {
+            const matchupPositionByNorm = new Map([
+              ...awayPositionByNorm.entries(),
+              ...homePositionByNorm.entries(),
+            ]);
             matchupClient = buildMatchupClientPayload({
               awayBaseProfile,
               homeBaseProfile,
@@ -2414,6 +2436,7 @@ async function renderMatchupPredictorPage(req, res) {
               offenseRatingByNorm,
               stats2026ByPlayer,
               defenseZByNorm,
+              positionByNorm: matchupPositionByNorm,
             });
           }
         }

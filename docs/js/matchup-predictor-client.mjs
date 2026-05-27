@@ -1670,12 +1670,154 @@ var require_dfs = __commonJS({
   }
 });
 
+// lib/matchupPositions.js
+var require_matchupPositions = __commonJS({
+  "lib/matchupPositions.js"(exports, module) {
+    "use strict";
+    var POSITION_PDW = Object.freeze({
+      SS: 1.35,
+      C: 1.25,
+      CF: 1.25,
+      P: 1.15,
+      "2B": 1.1,
+      "3B": 1.05,
+      LF: 1,
+      "1B": 0.95,
+      RF: 0.9,
+      DH: 0.5
+    });
+    var DEFENSIVE_LOSS_SCALE = 10;
+    var IRRELEVANT_POSITION_TOKENS = /* @__PURE__ */ new Set([
+      "",
+      "N/A",
+      "NA",
+      "NONE",
+      "NO POSITION",
+      "NO POS",
+      "BENCH",
+      "BN",
+      "\u2014",
+      "-"
+    ]);
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function normalizePositionCode(raw) {
+      const s = safeText(raw).toUpperCase().replace(/\./g, "");
+      if (!s || IRRELEVANT_POSITION_TOKENS.has(s)) return null;
+      if (s === "SHORTSTOP") return "SS";
+      if (s === "CATCHER") return "C";
+      if (s === "CENTER" || s === "CENTERFIELD" || s === "CENTRE") return "CF";
+      if (s === "PITCHER") return "P";
+      if (s === "SECOND" || s === "SECONDBASE") return "2B";
+      if (s === "THIRD" || s === "THIRDBASE") return "3B";
+      if (s === "LEFT" || s === "LEFTFIELD") return "LF";
+      if (s === "FIRST" || s === "FIRSTBASE") return "1B";
+      if (s === "RIGHT" || s === "RIGHTFIELD") return "RF";
+      if (s === "DESIGNATED" || s === "DESIGNATEDHITTER") return "DH";
+      if (POSITION_PDW[s] != null) return s;
+      return null;
+    }
+    function isRelevantDefensivePosition(positionCode) {
+      return normalizePositionCode(positionCode) != null;
+    }
+    function positionPdw(rawPosition) {
+      const code = normalizePositionCode(rawPosition);
+      if (!code) return 1;
+      return POSITION_PDW[code] ?? 1;
+    }
+    function countFieldingSlots(activeEntries) {
+      const slots = /* @__PURE__ */ new Set();
+      for (const e of activeEntries || []) {
+        const code = normalizePositionCode(e.position);
+        if (code) slots.add(code);
+      }
+      return slots.size;
+    }
+    function rosterHasPositionData(entries) {
+      return (entries || []).some((e) => isRelevantDefensivePosition(e.position));
+    }
+    function averagePor(entries, offenseRatingByNorm) {
+      let sum = 0;
+      let n = 0;
+      for (const e of entries || []) {
+        const por = offenseRatingByNorm.get(e.norm);
+        if (por != null && Number.isFinite(por)) {
+          sum += por;
+          n += 1;
+        }
+      }
+      return n > 0 ? sum / n : 0;
+    }
+    function sumAbsenceDeltas(missing, allEntries, offenseRatingByNorm) {
+      const teamAvgPor = averagePor(allEntries, offenseRatingByNorm);
+      const lostPositions = /* @__PURE__ */ new Set();
+      let total = 0;
+      for (const m of missing || []) {
+        const por = offenseRatingByNorm.get(m.norm);
+        const porN = por != null && Number.isFinite(por) ? por : 0;
+        const offensiveImpact = teamAvgPor - porN;
+        let defensiveLoss = 0;
+        const code = normalizePositionCode(m.position);
+        if (code && !lostPositions.has(code)) {
+          defensiveLoss = positionPdw(code) * DEFENSIVE_LOSS_SCALE;
+          lostPositions.add(code);
+        }
+        total += -defensiveLoss + offensiveImpact;
+      }
+      return { total, teamAvgPor, lostPositions };
+    }
+    function multipliersFromAbsenceSum(absenceSum, missingCount) {
+      if (!missingCount) {
+        return {
+          offense: 1,
+          run: 1,
+          defense: 1,
+          runsAgainst: 1,
+          regime: "full"
+        };
+      }
+      const scaled = absenceSum / (12 + missingCount * 2.5);
+      const offenseMult = Math.max(0.08, Math.min(1.45, Math.exp(scaled * 0.55)));
+      const defenseMult = Math.max(0.12, Math.min(1.35, Math.exp(scaled * 0.42)));
+      return {
+        offense: offenseMult,
+        run: offenseMult,
+        defense: defenseMult,
+        runsAgainst: 1,
+        regime: "absence-engine"
+      };
+    }
+    module.exports = {
+      POSITION_PDW,
+      DEFENSIVE_LOSS_SCALE,
+      normalizePositionCode,
+      isRelevantDefensivePosition,
+      positionPdw,
+      countFieldingSlots,
+      rosterHasPositionData,
+      sumAbsenceDeltas,
+      multipliersFromAbsenceSum
+    };
+  }
+});
+
 // lib/matchupMissingPlayers.js
 var require_matchupMissingPlayers = __commonJS({
   "lib/matchupMissingPlayers.js"(exports, module) {
+    var {
+      countFieldingSlots,
+      rosterHasPositionData,
+      sumAbsenceDeltas,
+      multipliersFromAbsenceSum
+    } = require_matchupPositions();
     var C_PLAYER_ROUNDS = Object.freeze([11, 12, 13]);
+    var B_PLAYER_ROUNDS = Object.freeze([8, 9, 10]);
     var FIELDING_SPOTS = 10;
-    var MIN_VIABLE_ACTIVE_PLAYERS = 8;
+    var ROSTER_FULL_SIZE = 13;
+    var MIN_PLAYERS_TO_START = 8;
+    var FORFEIT_PLAYER_COUNT = 7;
+    var MIN_VIABLE_ACTIVE_PLAYERS = MIN_PLAYERS_TO_START;
     var MAX_WIN_FRACTION_CRITICAL_ROSTER = 0.099;
     function parseMissingNorms(param, normalizeName = (x) => String(x || "").trim().toLowerCase()) {
       const s = String(param || "").trim();
@@ -1688,81 +1830,105 @@ var require_matchupMissingPlayers = __commonJS({
       if (!set || !set.size) return "";
       return [...set].join(",");
     }
-    function rosterEntriesFromNames(playerNames, normalizeName = (x) => String(x || "").trim().toLowerCase()) {
-      return (playerNames || []).map((name, idx) => ({
-        round: idx + 1,
-        norm: normalizeName(name),
-        name: String(name || "").trim()
-      }));
+    function positionFromMap(positionByNorm, norm) {
+      if (!positionByNorm) return null;
+      if (positionByNorm instanceof Map) return positionByNorm.get(norm) ?? null;
+      if (typeof positionByNorm === "object") return positionByNorm[norm] ?? null;
+      return null;
+    }
+    function rosterEntriesFromNames(playerNames, normalizeName = (x) => String(x || "").trim().toLowerCase(), positionByNorm = null) {
+      return (playerNames || []).map((name, idx) => {
+        const norm = normalizeName(name);
+        return {
+          round: idx + 1,
+          norm,
+          name: String(name || "").trim(),
+          position: positionFromMap(positionByNorm, norm)
+        };
+      });
+    }
+    function fieldingPresentCount(activeEntries, allEntries) {
+      if (rosterHasPositionData(allEntries)) {
+        return countFieldingSlots(activeEntries);
+      }
+      return activeEntries.length;
     }
     function formatSignedNumber(n, decimals = 2) {
       if (n == null || !Number.isFinite(n)) return null;
       const s = n.toFixed(decimals);
       return n >= 0 ? `+${s}` : s;
     }
-    function resolveDoubleBatter(entries, missingSet) {
-      const present = entries.filter((e) => !missingSet.has(e.norm));
-      const missing = entries.filter((e) => missingSet.has(e.norm));
-      const presentCount = present.length;
+    function resolveCDoubleBatter(entries, missingSet, presentCount) {
+      if (presentCount === 8) return null;
       const cSlots = entries.filter((e) => C_PLAYER_ROUNDS.includes(e.round));
       const cPresent = cSlots.filter((e) => !missingSet.has(e.norm));
       const cMissingCount = cSlots.length - cPresent.length;
       const player10 = entries.find((e) => e.round === 10);
-      if (presentCount !== 8) {
-        if (cMissingCount === 2 && cPresent.length === 1) {
-          const c = cPresent[0];
-          return {
-            norm: c.norm,
-            name: c.name,
-            round: c.round,
-            rule: "c-one-present",
-            ruleLabel: "C-player bats twice",
-            reason: "Two of three C-players (rounds 11\u201313) are missing. The remaining C-player bats twice and may pinch-run once."
-          };
-        }
-        if (cMissingCount >= 3 && player10 && !missingSet.has(player10.norm)) {
-          return {
-            norm: player10.norm,
-            name: player10.name,
-            round: player10.round,
-            rule: "c-all-out-round-10",
-            ruleLabel: "Round 10 bats twice",
-            reason: "All three C-players (rounds 11\u201313) are out. The round 10 pick bats twice and may pinch-run once."
-          };
-        }
-      }
-      if (presentCount === 10 && missing.length === 3) {
-        const missingRounds = missing.map((m) => m.round);
-        const total = missingRounds.reduce((s, r) => s + r, 0);
-        const avg = total / missingRounds.length;
-        const targetRound = Math.ceil(avg);
-        const pickDoubleBatter = (fromRound, direction) => {
-          if (direction === "down") {
-            for (let r = fromRound; r >= 1; r -= 1) {
-              const slot2 = entries.find((e) => e.round === r);
-              if (slot2 && !missingSet.has(slot2.norm)) return slot2;
-            }
-          } else {
-            for (let r = fromRound; r <= 13; r += 1) {
-              const slot2 = entries.find((e) => e.round === r);
-              if (slot2 && !missingSet.has(slot2.norm)) return slot2;
-            }
-          }
-          return null;
+      if (cMissingCount === 2 && cPresent.length === 1) {
+        const c = cPresent[0];
+        return {
+          norm: c.norm,
+          name: c.name,
+          round: c.round,
+          rule: "c-one-present",
+          ruleLabel: "C-player bats twice",
+          reason: "Two of three C-players (rounds 11\u201313) are missing. The remaining C-player bats twice and may pinch-run once."
         };
-        const slot = pickDoubleBatter(targetRound, "down") || pickDoubleBatter(targetRound + 1, "up");
-        if (slot) {
-          return {
-            norm: slot.norm,
-            name: slot.name,
-            round: slot.round,
-            rule: "11th-batter",
-            ruleLabel: "11th spot \u2014 bats twice",
-            reason: `Ten players are active with three missing (rounds ${missingRounds.join(", ")}). Missing-round average ${avg.toFixed(2)} rounds up to slot ${targetRound}; ${slot.name} (round ${slot.round}) bats a second time for the full game.`,
-            missingRounds,
-            targetRound
-          };
+      }
+      if (cMissingCount >= 3 && player10 && !missingSet.has(player10.norm)) {
+        return {
+          norm: player10.norm,
+          name: player10.name,
+          round: player10.round,
+          rule: "c-all-out-round-10",
+          ruleLabel: "Round 10 bats twice",
+          reason: "All three C-players (rounds 11\u201313) are out. The round 10 pick bats twice and may pinch-run once."
+        };
+      }
+      return null;
+    }
+    function resolveEleventhBatterMeanRule(entries, missingSet, missing) {
+      const firstPresentFromRound = (fromRound, direction) => {
+        if (direction === "up") {
+          for (let r = fromRound; r <= ROSTER_FULL_SIZE; r += 1) {
+            const slot2 = entries.find((e) => e.round === r);
+            if (slot2 && !missingSet.has(slot2.norm)) return slot2;
+          }
+        } else {
+          for (let r = fromRound; r >= 1; r -= 1) {
+            const slot2 = entries.find((e) => e.round === r);
+            if (slot2 && !missingSet.has(slot2.norm)) return slot2;
+          }
         }
+        return null;
+      };
+      const missingRounds = missing.map((m) => m.round);
+      const total = missingRounds.reduce((s, r) => s + r, 0);
+      const avg = total / missingRounds.length;
+      const targetRound = Math.ceil(avg);
+      const atTarget = entries.find((e) => e.round === targetRound);
+      const slot = atTarget && !missingSet.has(atTarget.norm) ? atTarget : firstPresentFromRound(targetRound + 1, "up") || firstPresentFromRound(targetRound - 1, "down");
+      if (!slot) return null;
+      return {
+        norm: slot.norm,
+        name: slot.name,
+        round: slot.round,
+        rule: "11th-batter",
+        ruleLabel: "11th spot \u2014 bats twice",
+        reason: `Ten players are active with three missing (rounds ${missingRounds.join(", ")}). Average draft round ${avg.toFixed(2)} rounds up to slot ${targetRound}; ${slot.name} (round ${slot.round}) bats a second time for the full game.`,
+        missingRounds,
+        targetRound
+      };
+    }
+    function resolveDoubleBatter(entries, missingSet) {
+      const present = entries.filter((e) => !missingSet.has(e.norm));
+      const missing = entries.filter((e) => missingSet.has(e.norm));
+      const presentCount = present.length;
+      if (presentCount === 8) return null;
+      const cRule = resolveCDoubleBatter(entries, missingSet, presentCount);
+      if (cRule) return cRule;
+      if (presentCount === 10 && missing.length === 3) {
+        return resolveEleventhBatterMeanRule(entries, missingSet, missing);
       }
       return null;
     }
@@ -1897,10 +2063,10 @@ var require_matchupMissingPlayers = __commonJS({
         }
       };
     }
-    function enrichRosterForMatchupView(rosterEntry, offenseRatingByNorm, missingSet, normalizeName, stats2026ByPlayer = /* @__PURE__ */ new Map()) {
+    function enrichRosterForMatchupView(rosterEntry, offenseRatingByNorm, missingSet, normalizeName, stats2026ByPlayer = /* @__PURE__ */ new Map(), positionByNorm = null) {
       if (!rosterEntry) return rosterEntry;
       const playerNames = rosterEntry.players || [];
-      const entries = rosterEntriesFromNames(playerNames, normalizeName);
+      const entries = rosterEntriesFromNames(playerNames, normalizeName, positionByNorm);
       const doubleBatter = resolveDoubleBatter(entries, missingSet);
       const activeEntries = entries.filter((e) => !missingSet.has(e.norm));
       const playersDetailed = entries.map((e) => ({
@@ -1931,6 +2097,7 @@ var require_matchupMissingPlayers = __commonJS({
       const present = entries.filter((e) => !missingSet.has(e.norm));
       const missing = entries.filter((e) => missingSet.has(e.norm));
       const presentCount = present.length;
+      const fieldingCount = fieldingPresentCount(present, entries);
       const doubleBatter = resolveDoubleBatter(entries, missingSet);
       const impact = doubleBatter && offenseRatingByNorm.size ? buildDoubleBatterImpact(
         doubleBatter,
@@ -1939,6 +2106,45 @@ var require_matchupMissingPlayers = __commonJS({
         offenseRatingByNorm,
         stats2026ByPlayer
       ) : null;
+      if (presentCount <= FORFEIT_PLAYER_COUNT) {
+        alerts.push({
+          severity: "critical",
+          kind: "forfeit",
+          title: "Forfeit",
+          message: "MMS bylaws: a team reduced to 7 players shall forfeit. The model treats this roster as non-viable."
+        });
+      } else if (presentCount < MIN_PLAYERS_TO_START) {
+        alerts.push({
+          severity: "critical",
+          kind: "below-minimum",
+          title: "Below minimum to start",
+          message: `Only ${presentCount} active players. MMS bylaws require at least ${MIN_PLAYERS_TO_START} to start a game.`
+        });
+      }
+      if (presentCount === 8) {
+        alerts.push({
+          severity: "info",
+          kind: "eight-player",
+          title: "Eight-player lineup",
+          message: "MMS bylaws: when playing with 8 players, no player is required to bat twice."
+        });
+      }
+      if (presentCount === 9) {
+        alerts.push({
+          severity: "info",
+          kind: "nine-player",
+          title: "Nine-player lineup",
+          message: "MMS bylaws: the C-player missing rule applies to 9-player lineups (no 2026 11-batter mean rule)."
+        });
+      }
+      if (presentCount === 10 && missing.length === 3) {
+        alerts.push({
+          severity: "rule",
+          kind: "eleven-spots",
+          title: "11 batting spots required",
+          message: "MMS bylaws (2026): with 10 players present, the lineup must bat 11 spots (C-player rule or mean missing draft round)."
+        });
+      }
       if (doubleBatter) {
         alerts.push(
           alertWithDoubleBatter(
@@ -1952,13 +2158,21 @@ var require_matchupMissingPlayers = __commonJS({
             impact
           )
         );
+      } else if (presentCount === 10 && missing.length === 3) {
+        alerts.push({
+          severity: "warning",
+          kind: "eleven-spots-unresolved",
+          title: "11th batter not resolved",
+          message: "Ten active with three bench players, but no double batter could be determined from the roster draft order."
+        });
       }
-      if (presentCount < FIELDING_SPOTS) {
+      if (fieldingCount < FIELDING_SPOTS) {
+        const detail = rosterHasPositionData(entries) ? `${fieldingCount} defensive position${fieldingCount === 1 ? "" : "s"} covered` : `${presentCount} players available`;
         alerts.push({
           severity: "warning",
           kind: "roster-warning",
           title: "Short-handed",
-          message: `Only ${presentCount} players are available (fewer than ${FIELDING_SPOTS} fielding spots). Defense weakens sharply and projected runs against this team rise exponentially for each missing fielder.`
+          message: `Only ${detail} (fewer than ${FIELDING_SPOTS} fielding spots). Defense weakens sharply and projected runs against this team rise exponentially for each missing fielder.`
         });
       }
       return alerts;
@@ -1994,7 +2208,6 @@ var require_matchupMissingPlayers = __commonJS({
       });
     }
     var DRAFT_ROUND_MEDIAN = 6.5;
-    var ROSTER_FULL_SIZE = 13;
     var SHORT_HANDED_DEFENSE_CRUSH_BASE = 0.38;
     var SHORT_HANDED_RUNS_AGAINST_BY_SLOTS = Object.freeze({
       1: 1.4,
@@ -2028,7 +2241,10 @@ var require_matchupMissingPlayers = __commonJS({
       const p15 = all[Math.max(0, Math.floor(all.length * 0.15) - 1)];
       return rating <= p15 + 1e-9;
     }
-    function computeTeamMissingMultiplier(missing, presentCount, offenseRatingByNorm) {
+    function computeTeamMissingMultiplier(missing, activeEntries, offenseRatingByNorm, allEntries = null) {
+      const entries = allEntries || [...activeEntries || [], ...missing || []];
+      const presentCount = (activeEntries || []).length;
+      const fieldingPresent = fieldingPresentCount(activeEntries || [], entries);
       if (!missing.length) {
         return {
           offense: 1,
@@ -2043,8 +2259,18 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
-      if (presentCount < FIELDING_SPOTS) {
-        const slotsShort = FIELDING_SPOTS - presentCount;
+      if (rosterHasPositionData(entries) && fieldingPresent >= FIELDING_SPOTS && missing.length > 0) {
+        const { total } = sumAbsenceDeltas(missing, entries, offenseRatingByNorm);
+        const posMult = multipliersFromAbsenceSum(total, missing.length);
+        return {
+          ...posMult,
+          avgMissingRound: avgRound,
+          roundGap,
+          slotsShort: 0
+        };
+      }
+      if (fieldingPresent < FIELDING_SPOTS) {
+        const slotsShort = FIELDING_SPOTS - fieldingPresent;
         let perPlayerFactor = 1;
         for (const m of missing) {
           const rating = offenseRatingByNorm.get(m.norm) ?? 0;
@@ -2105,11 +2331,12 @@ var require_matchupMissingPlayers = __commonJS({
         slotsShort: 0
       };
     }
-    function applyMissingPlayersToProfile2(baseProfile, rosterPlayerNames, missingSet, offenseRatingByNorm, stats2026ByPlayer, defenseZByNorm, normalizeName) {
-      const entries = rosterEntriesFromNames(rosterPlayerNames, normalizeName);
+    function applyMissingPlayersToProfile2(baseProfile, rosterPlayerNames, missingSet, offenseRatingByNorm, stats2026ByPlayer, defenseZByNorm, normalizeName, positionByNorm = null) {
+      const entries = rosterEntriesFromNames(rosterPlayerNames, normalizeName, positionByNorm);
       const active = entries.filter((e) => !missingSet.has(e.norm));
       const missing = entries.filter((e) => missingSet.has(e.norm));
       const presentCount = active.length;
+      const fieldingPresent = fieldingPresentCount(active, entries);
       const doubleBatter = resolveDoubleBatter(entries, missingSet);
       const secondTurn = doubleBatter ? evaluateSecondTurnWeight(doubleBatter, missing, offenseRatingByNorm, stats2026ByPlayer) : { weight: 0 };
       const weights = activeFieldingWeights(
@@ -2132,8 +2359,9 @@ var require_matchupMissingPlayers = __commonJS({
       });
       const teamMult = computeTeamMissingMultiplier(
         missing,
-        presentCount,
-        offenseRatingByNorm
+        active,
+        offenseRatingByNorm,
+        entries
       );
       const anchorOff = baseProfile.offenseRating != null && Number.isFinite(baseProfile.offenseRating) ? baseProfile.offenseRating : offenseRating ?? 0;
       const anchorRun = baseProfile.runProd2026 != null && Number.isFinite(baseProfile.runProd2026) ? baseProfile.runProd2026 : runProd2026 ?? 0;
@@ -2167,6 +2395,7 @@ var require_matchupMissingPlayers = __commonJS({
         teamOverall: adjustedTeamOverall,
         rosterPlayerRating: adjustedOffense,
         presentCount,
+        fieldingPresentCount: fieldingPresent,
         missingCount: missing.length,
         lineupAlerts,
         teamMultiplier: teamMult.offense,
@@ -2257,6 +2486,9 @@ var require_matchupMissingPlayers = __commonJS({
     module.exports = {
       DRAFT_ROUND_MEDIAN,
       ROSTER_FULL_SIZE,
+      MIN_PLAYERS_TO_START,
+      FORFEIT_PLAYER_COUNT,
+      B_PLAYER_ROUNDS,
       MIN_VIABLE_ACTIVE_PLAYERS,
       MAX_WIN_FRACTION_CRITICAL_ROSTER,
       applyCriticalRosterWinCap,
@@ -2277,7 +2509,60 @@ var require_matchupMissingPlayers = __commonJS({
       buildDoubleBatterImpact,
       enrichRosterForMatchupView,
       evaluateMissingPlayerRules,
-      applyMissingPlayersToProfile: applyMissingPlayersToProfile2
+      applyMissingPlayersToProfile: applyMissingPlayersToProfile2,
+      fieldingPresentCount,
+      positionFromMap
+    };
+  }
+});
+
+// lib/matchupLineupClient.js
+var require_matchupLineupClient = __commonJS({
+  "lib/matchupLineupClient.js"(exports, module) {
+    "use strict";
+    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
+    var { enrichRosterForMatchupView, evaluateMissingPlayerRules } = require_matchupMissingPlayers();
+    function mapFromObject2(obj) {
+      return new Map(Object.entries(obj || {}));
+    }
+    function buildSideLineupState(players, teamName, benchNorms, ctxMaps) {
+      const missingSet = new Set(
+        (benchNorms || []).map((n) => normalizePlayerName2(n)).filter(Boolean)
+      );
+      const rosterEntry = { players: players || [], teamName: teamName || "" };
+      return enrichRosterForMatchupView(
+        rosterEntry,
+        ctxMaps.offenseRatingByNorm,
+        missingSet,
+        normalizePlayerName2,
+        ctxMaps.stats2026ByPlayer,
+        ctxMaps.positionByNorm
+      );
+    }
+    function alertsForSide(roster, teamSide, teamName) {
+      return (roster?.lineupAlerts || []).map((a) => ({
+        ...a,
+        teamSide,
+        teamName: teamName || roster?.teamName || ""
+      }));
+    }
+    function buildMatchupLineupEnrichment2(ctx, awayBenchNorms, homeBenchNorms) {
+      const offenseRatingByNorm = mapFromObject2(ctx.offenseRatingByNorm);
+      const stats2026ByPlayer = mapFromObject2(ctx.stats2026ByPlayer);
+      const positionByNorm = mapFromObject2(ctx.positionByNorm);
+      const maps = { offenseRatingByNorm, stats2026ByPlayer, positionByNorm };
+      const awayName = ctx.awayLabel || "Away";
+      const homeName = ctx.homeLabel || "Home";
+      const away = buildSideLineupState(ctx.awayPlayers, awayName, awayBenchNorms, maps);
+      const home = buildSideLineupState(ctx.homePlayers, homeName, homeBenchNorms, maps);
+      const lineupRuleAlerts = [
+        ...alertsForSide(away, "away", awayName),
+        ...alertsForSide(home, "home", homeName)
+      ];
+      return { away, home, lineupRuleAlerts };
+    }
+    module.exports = {
+      buildMatchupLineupEnrichment: buildMatchupLineupEnrichment2
     };
   }
 });
@@ -3283,6 +3568,7 @@ var require_matchupPredict = __commonJS({
 // client/matchup-predictor-entry.mjs
 var import_dfs = __toESM(require_dfs(), 1);
 var import_matchupMissingPlayers = __toESM(require_matchupMissingPlayers(), 1);
+var import_matchupLineupClient = __toESM(require_matchupLineupClient(), 1);
 var import_matchupPredict = __toESM(require_matchupPredict(), 1);
 function mapFromObject(obj) {
   return new Map(Object.entries(obj || {}));
@@ -3293,6 +3579,7 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   const offenseRatingByNorm = mapFromObject(ctx.offenseRatingByNorm);
   const stats2026ByPlayer = mapFromObject(ctx.stats2026ByPlayer);
   const defenseZByNorm = mapFromObject(ctx.defenseZByNorm);
+  const positionByNorm = mapFromObject(ctx.positionByNorm);
   let awayProfile = (0, import_matchupMissingPlayers.applyMissingPlayersToProfile)(
     ctx.awayBaseProfile,
     ctx.awayPlayers,
@@ -3300,7 +3587,8 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     offenseRatingByNorm,
     stats2026ByPlayer,
     defenseZByNorm,
-    import_dfs.normalizePlayerName
+    import_dfs.normalizePlayerName,
+    positionByNorm
   );
   let homeProfile = (0, import_matchupMissingPlayers.applyMissingPlayersToProfile)(
     ctx.homeBaseProfile,
@@ -3309,7 +3597,8 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     offenseRatingByNorm,
     stats2026ByPlayer,
     defenseZByNorm,
-    import_dfs.normalizePlayerName
+    import_dfs.normalizePlayerName,
+    positionByNorm
   );
   let prediction = (0, import_matchupPredict.predictMatchupGame)(awayProfile, homeProfile, ctx.leagueNorms, ctx.runBase);
   (0, import_matchupPredict.enrichMatchupPredictionLines)(prediction);
@@ -3321,9 +3610,11 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   return prediction;
 }
 if (typeof window !== "undefined") {
-  window.MmsMatchupPredictor = { predictFromPayload };
+  window.MmsMatchupPredictor = { predictFromPayload, buildLineupEnrichment: import_matchupLineupClient.buildMatchupLineupEnrichment };
 }
+var export_buildMatchupLineupEnrichment = import_matchupLineupClient.buildMatchupLineupEnrichment;
 export {
+  export_buildMatchupLineupEnrichment as buildMatchupLineupEnrichment,
   predictFromPayload
 };
 /*! Bundled license information:

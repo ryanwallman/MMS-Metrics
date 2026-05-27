@@ -3,6 +3,7 @@
  */
 import { normalizePlayerName } from "../lib/dfs.js";
 import { applyMissingPlayersToProfile } from "../lib/matchupMissingPlayers.js";
+import { buildMatchupLineupEnrichment } from "../lib/matchupLineupClient.js";
 import {
   predictMatchupGame,
   enrichMatchupPredictionLines,
@@ -20,6 +21,7 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   const offenseRatingByNorm = mapFromObject(ctx.offenseRatingByNorm);
   const stats2026ByPlayer = mapFromObject(ctx.stats2026ByPlayer);
   const defenseZByNorm = mapFromObject(ctx.defenseZByNorm);
+  const positionByNorm = mapFromObject(ctx.positionByNorm);
 
   let awayProfile = applyMissingPlayersToProfile(
     ctx.awayBaseProfile,
@@ -28,7 +30,8 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     offenseRatingByNorm,
     stats2026ByPlayer,
     defenseZByNorm,
-    normalizePlayerName
+    normalizePlayerName,
+    positionByNorm
   );
   let homeProfile = applyMissingPlayersToProfile(
     ctx.homeBaseProfile,
@@ -37,7 +40,8 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     offenseRatingByNorm,
     stats2026ByPlayer,
     defenseZByNorm,
-    normalizePlayerName
+    normalizePlayerName,
+    positionByNorm
   );
 
   let prediction = predictMatchupGame(awayProfile, homeProfile, ctx.leagueNorms, ctx.runBase);
@@ -51,7 +55,7 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
 }
 
 if (typeof window !== "undefined") {
-  window.MmsMatchupPredictor = { predictFromPayload };
+  window.MmsMatchupPredictor = { predictFromPayload, buildLineupEnrichment: buildMatchupLineupEnrichment };
 }
 
-export { predictFromPayload };
+export { predictFromPayload, buildMatchupLineupEnrichment };
