@@ -115,7 +115,7 @@
                   <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
                   <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
                   The bottom <strong>20%</strong> of the slate by salary are all priced at <strong>$5,000</strong>. Everyone else is priced on a smooth ladder from <strong>$5,100</strong> up to <strong>$12,000</strong> by offensive rating (no big jumps after the minimum tier).
-                  You can browse everything without an account. To compete on the leaderboard, enter a <strong>display name</strong> (first name and last initial or full name) and save your lineup for <strong>Sunday week slates</strong> (<code>W#</code>) or <strong>Wednesday slates</strong> (<code>D…</code>). <strong>One lineup per device per slate.</strong> When you save to the database, each player’s <strong>salary is locked at that moment</strong> — the leaderboard always shows what you paid, not today’s prices. You can edit and re-save before the deadline; if you change players, new salaries apply on the next save.
+                  You can browse everything without an account. To compete on the leaderboard, pick any <strong>display name</strong> (up to 24 characters) and save your lineup for <strong>Sunday week slates</strong> (<code>W#</code>) or <strong>Wednesday slates</strong> (<code>D…</code>). <strong>One lineup per device per slate.</strong> When you save to the database, each player’s <strong>salary is locked at that moment</strong> — the leaderboard always shows what you paid, not today’s prices. You can edit and re-save before the deadline; if you change players, new salaries apply on the next save.
                   Only <strong>past slates</strong> (view only) and the <strong>current slate</strong> appear below — future weeks stay hidden until it’s time to set lineups.
                   <strong>Sunday</strong> slates lock at <strong>11:59 PM Eastern the night before games</strong>. <strong>Wednesday</strong> slates lock at <strong>8:00 PM Eastern on game day</strong>.
                 </p>
@@ -137,7 +137,7 @@
             <span aria-hidden="true">×</span>
           </button>
           <p class="dfs-notice-text">
-            <strong>To compete against others,</strong> enter a display name and save your lineup for the slate.
+            <strong>To compete against others,</strong> pick 8 players, enter your name, and press <strong>Submit lineup</strong> before the deadline.
             The <a href="/dfs/leaderboard">leaderboard</a> ranks saved lineups — one entry per device per slate.
           </p>
         </section>
@@ -157,26 +157,6 @@
         </section>
       </div>
 
-      
-
-      
-      <section class="dfs-auth-bar" id="dfsPlayerBar" aria-label="Leaderboard name">
-        <label class="dfs-auth-status" for="dfsUsername">
-          <strong>Display name</strong> (shown on the leaderboard)
-        </label>
-        <div class="dfs-auth-actions">
-          <input
-            type="text"
-            id="dfsUsername"
-            class="dfs-username-input"
-            maxlength="24"
-            autocomplete="nickname"
-            placeholder="e.g. Mitch P or John Smith"
-          />
-        </div>
-        <p class="dfs-auth-hint" id="dfsPlayerHint">First name and last initial (or full name). One lineup per device per slate — update it anytime before the countdown hits zero.</p>
-        <p class="dfs-auth-status" id="dfsSubmitStatus" role="status" aria-live="polite"></p>
-      </section>
       
 
       <div class="dfs-slate-form" id="dfsSlateForm">
@@ -400,12 +380,12 @@
               </li>
               
             </ol>
+            
             <p class="dfs-lineup-actions">
-              <button type="button" class="dfs-btn dfs-btn--primary" id="saveLineupBtn" disabled>Save lineup to database</button>
               
               <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Load your saved lineup from the database">Load saved lineup</button>
               
-              <button type="button" class="dfs-btn" id="clearLineupBtn" disabled>Clear</button>
+              <button type="button" class="dfs-btn" id="clearLineupBtn" disabled>Clear lineup</button>
             </p>
             
             <p class="dfs-lineup-sync-status" id="dfsLineupSyncStatus" role="status" aria-live="polite" hidden></p>
@@ -1272,18 +1252,16 @@
           const status = document.getElementById("dfsSubmitStatus");
           if (!btn || !window.DfsLineupStore) return;
           if (!isCloudSlateKey(slateKey)) {
-            btn.textContent = "Save lineup to database";
+            btn.textContent = "Submit lineup";
             return;
           }
           if (!CAN_EDIT) {
-            btn.disabled = true;
-            btn.textContent = "Lineup locked";
             return;
           }
           try {
             const submitted = await window.DfsLineupStore.hasLineupForSlate(slateKey);
             btn.disabled = false;
-            btn.textContent = submitted ? "Update saved lineup" : "Save lineup to database";
+            btn.textContent = submitted ? "Update lineup" : "Submit lineup";
             if (status && submitted) {
               status.textContent =
                 "You have a saved lineup for " +

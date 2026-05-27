@@ -1955,6 +1955,96 @@ body > main.page-main {
   background: #fff;
 }
 
+.dfs-submit-panel {
+  margin: 16px 0 12px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #eff6ff 0%, #fef3c7 100%);
+  border: 2px solid rgba(37, 99, 235, 0.45);
+  border-radius: var(--mms-radius-sm);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.12);
+}
+
+.dfs-submit-panel__title {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  letter-spacing: -0.02em;
+}
+
+.dfs-submit-panel__lead {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.dfs-submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+
+.dfs-submit-row__label {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.dfs-submit-row__input {
+  flex: 1 1 10rem;
+  min-width: 10rem;
+  max-width: 16rem;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-width: 2px;
+}
+
+.dfs-btn--submit {
+  flex: 0 0 auto;
+  padding: 12px 22px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+}
+
+.dfs-submit-panel__status {
+  margin: 12px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dfs-submit-panel__status:empty {
+  display: none;
+}
+
+.dfs-submit-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #4b5563;
+}
+
+@media (max-width: 520px) {
+  .dfs-submit-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dfs-submit-row__input {
+    max-width: none;
+  }
+
+  .dfs-btn--submit {
+    width: 100%;
+  }
+}
+
 .dfs-slate-form {
   margin: 0 0 16px;
 }

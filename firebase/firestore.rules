@@ -44,9 +44,8 @@ service cloud.firestore {
 
     function validDisplayName(name) {
       return name is string
-        && name.size() >= 4
-        && name.size() <= 24
-        && name.matches('.* .*');
+        && name.size() >= 2
+        && name.size() <= 24;
     }
 
     /** Device-based lineup write (no Firebase Auth). Doc ID: {slateId}_{deviceId}. */

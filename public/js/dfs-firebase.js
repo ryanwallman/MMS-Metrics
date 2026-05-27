@@ -94,22 +94,11 @@ function validateUsername(name) {
   const trimmed = String(name || "")
     .trim()
     .replace(/\s+/g, " ");
+  if (trimmed.length < 2) {
+    throw new Error("Display name must be at least 2 characters.");
+  }
   if (trimmed.length > 24) {
     throw new Error("Display name must be 24 characters or fewer.");
-  }
-  if (!/^[\w .'-]+$/i.test(trimmed)) {
-    throw new Error("Use letters, spaces, and . ' - only (e.g. Mitch P or John Smith).");
-  }
-  const parts = trimmed.split(" ").filter(Boolean);
-  if (parts.length < 2) {
-    throw new Error("Use your first name and last initial or last name (e.g. Mitch P or John Smith).");
-  }
-  if (parts[0].length < 2) {
-    throw new Error("First name must be at least 2 letters.");
-  }
-  const last = parts[parts.length - 1];
-  if (last.length < 1) {
-    throw new Error("Include a last initial or last name after your first name.");
   }
   return trimmed;
 }
