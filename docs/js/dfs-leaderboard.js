@@ -1,7 +1,6 @@
 /**
  * Weekly DFS leaderboard (client fallback when the page is not server-rendered).
  */
-import { scoreWeeklyLeaderboard } from "./dfs-leaderboard-scoring.mjs";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
@@ -24,6 +23,19 @@ function siteUrl(path) {
   const base = siteBase();
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
+}
+
+function scoringModuleUrl() {
+  const script = document.querySelector('script[src*="dfs-leaderboard.js"]');
+  let v = "";
+  if (script) {
+    try {
+      v = new URL(script.src, window.location.href).searchParams.get("v") || "";
+    } catch {
+      /* ignore */
+    }
+  }
+  return siteUrl("/js/dfs-leaderboard-scoring.mjs") + (v ? `?v=${encodeURIComponent(v)}` : "");
 }
 
 function weekFromUrl() {
@@ -109,10 +121,43 @@ async function fetchLineupsForSlate(db, slateId) {
   return snap.docs.map(lineupFromDoc);
 }
 
+function buildEmptyLeaderboardResponse(pageCtx) {
+  const slate = pageCtx?.slate;
+  return {
+    selectedWeek: pageCtx.selectedWeek,
+    weekly: { rows: [], entryCount: 0 },
+    hasGamelogData: true,
+    slateHasBoxScoresForWeek: true,
+    slate: slate
+      ? {
+          label: slate.label,
+          isPast: !!slate.isPast,
+          viewToken: slate.viewToken,
+          slateType: slate.slateType,
+          canEdit: slate.canEdit === true,
+          isLocked: slate.canEdit !== true,
+        }
+      : null,
+  };
+}
+
+async function importScoringModule() {
+  try {
+    return await import(scoringModuleUrl());
+  } catch (err) {
+    console.error("Leaderboard scoring bundle failed to load", err);
+    throw new Error(
+      "Could not load the scoring module. Hard-refresh the page (Cmd+Shift+R). If it persists, rebuild with npm run build:pages and push docs/."
+    );
+  }
+}
+
 function renderPlayerCell(row, week, locked) {
   const name = esc(row.displayName);
   if (locked && row.userId && week) {
-    const href = `/dfs/leaderboard/lineup?week=${encodeURIComponent(week)}&user=${encodeURIComponent(row.userId)}`;
+    const href = siteUrl(
+      `/dfs/leaderboard/lineup?week=${encodeURIComponent(week)}&user=${encodeURIComponent(row.userId)}`
+    );
     return `<a href="${href}" class="dfs-leaderboard-player-link">${name}</a>`;
   }
   return name;
@@ -168,6 +213,11 @@ function setStatus(message, isError) {
   el.hidden = !message;
   el.className = "dfs-leaderboard-alert" + (isError ? " dfs-leaderboard-alert--error" : "");
   el.innerHTML = message ? `<p>${message}</p>` : "";
+}
+
+function setLoadingMessage(text) {
+  const el = document.querySelector(".dfs-leaderboard-loading-screen__title");
+  if (el && text) el.textContent = text;
 }
 
 function showLoadingScreen() {
@@ -257,9 +307,18 @@ async function loadViaBrowserFirestore() {
   }
   const app = getApps().length ? getApp() : initializeApp(config);
   const db = getFirestore(app);
+
+  setLoadingMessage("Loading lineups from Firebase…");
   const lineups = await fetchLineupsForSlate(db, page.selectedWeek);
 
   if (page.useClientScoring) {
+    if (!lineups.length) {
+      return buildEmptyLeaderboardResponse(page);
+    }
+    setLoadingMessage(
+      "Scoring lineups — first visit loads league sheets from Google (often 30–60 seconds)…"
+    );
+    const { scoreWeeklyLeaderboard } = await importScoringModule();
     return scoreWeeklyLeaderboard(page.selectedWeek, lineups);
   }
 
@@ -289,6 +348,7 @@ async function loadLeaderboard() {
   }
 
   showLoadingScreen();
+  setLoadingMessage("Loading leaderboard…");
   setStatus("", false);
 
   try {

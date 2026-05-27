@@ -15,8 +15,8 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "/MMS-Metrics";</script>
-<link rel="preload" href="/MMS-Metrics/styles.css?v=2" as="style" />
-<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=2" />
+<link rel="preload" href="/MMS-Metrics/styles.css?v=3" as="style" />
+<link rel="stylesheet" href="/MMS-Metrics/styles.css?v=3" />
 
     <title>DFS Leaderboard — Marlboro Men's Softball</title>
   </head>
@@ -66,7 +66,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T17:39:22.479Z">May 27, 2026, 1:39 PM ET</time>
+        <time datetime="2026-05-27T18:18:10.703Z">May 27, 2026, 2:18 PM ET</time>
       </p>
       
       
@@ -427,7 +427,23 @@
       window.__MMS_CAREER_CSV_URL__ = "/MMS-Metrics/data/csv/career.csv";
       window.__LEADERBOARD_PAGE__ = {"selectedWeek":"D20260708","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":true,"slate":{"label":"Wed, 8-Jul","isPast":false,"viewToken":"D20260708","slateType":"wednesday","canEdit":false,"isLocked":true}};
     </script>
-    <script type="module" src="/MMS-Metrics/js/dfs-leaderboard.js?v=2"></script>
+    <script>
+      window.addEventListener("error", function (ev) {
+        var src = ev.filename || "";
+        if (src.indexOf("dfs-leaderboard") === -1) return;
+        var screen = document.getElementById("leaderboardLoadingScreen");
+        if (screen) screen.hidden = true;
+        document.body.classList.add("leaderboard-ready");
+        var status = document.getElementById("leaderboardStatus");
+        if (status) {
+          status.hidden = false;
+          status.className = "dfs-leaderboard-alert dfs-leaderboard-alert--error";
+          status.innerHTML =
+            "<p>Leaderboard script failed to load. Hard-refresh (Cmd+Shift+R) or check the browser console.</p>";
+        }
+      });
+    </script>
+    <script type="module" src="/MMS-Metrics/js/dfs-leaderboard.js?v=3"></script>
     
   </body>
 </html>

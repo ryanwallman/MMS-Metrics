@@ -30,8 +30,11 @@ const {
   pickRosterEntry,
   buildNameToTeamIdMap,
   buildRosterByTeamId,
-  resolveTeamCaptain,
 } = require("./lib/teamRosters");
+const {
+  loadPowerRankingsCaptainMap,
+  lookupPowerRankingsCaptain,
+} = require("./lib/powerRankingsCaptains");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
 const {
   parseMissingNorms,
@@ -1464,12 +1467,12 @@ function applyPowerRankingsHeatMaps(rows) {
   }));
 }
 
-function buildPowerRankingsCurrentRows(teamSections, teams) {
+function buildPowerRankingsCurrentRows(teamSections, captainMap) {
   const rows = teamSections.map((t, i) => ({
     rank: i + 1,
     teamId: t.teamId,
     teamName: t.teamName,
-    captain: resolveTeamCaptain(t.teamId, t.teamName, teams),
+    captain: lookupPowerRankingsCaptain(captainMap, t.teamId, t.teamName),
     powerRating: t.teamOffenseRating,
     rosterRating: t.teamPlayerRating,
     wins: t.teamWins,
@@ -1485,9 +1488,9 @@ function buildPowerRankingsCurrentRows(teamSections, teams) {
  * Project final W-L using current record + expected wins on remaining schedule
  * (matchup predictor win % per game).
  */
-function attachCaptainsToProjectionRows(rows, teams) {
+function attachCaptainsToProjectionRows(rows, captainMap) {
   for (const row of rows) {
-    row.captain = resolveTeamCaptain(row.teamId, row.teamName, teams);
+    row.captain = lookupPowerRankingsCaptain(captainMap, row.teamId, row.teamName);
   }
   return rows;
 }
@@ -2326,15 +2329,23 @@ app.get("/power-rankings", (req, res) => {
 
 app.get("/rankings/power", async (req, res) => {
   try {
-    const [teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, scheduleRows, defenseMap] =
-      await Promise.all([
-        loadTeamRosters(),
-        loadCareerByPlayer(),
-        load2025HistoricalByPlayer(),
-        load2026StatsByPlayer(),
-        fetchCsvRows(SCHEDULE_URL),
-        loadDefensiveRatingsNormalizedMap(),
-      ]);
+    const [
+      teams,
+      careerByPlayer,
+      hist2025ByPlayer,
+      stats2026ByPlayer,
+      scheduleRows,
+      defenseMap,
+      captainMap,
+    ] = await Promise.all([
+      loadTeamRosters(),
+      loadCareerByPlayer(),
+      load2025HistoricalByPlayer(),
+      load2026StatsByPlayer(),
+      fetchCsvRows(SCHEDULE_URL),
+      loadDefensiveRatingsNormalizedMap(),
+      loadPowerRankingsCaptainMap(),
+    ]);
 
     const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
     const { moments } = weightedMomentsPerMetric(bundles);
@@ -2349,7 +2360,7 @@ app.get("/rankings/power", async (req, res) => {
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
     const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
     const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
-    const currentRankings = buildPowerRankingsCurrentRows(teamSections, teams);
+    const currentRankings = buildPowerRankingsCurrentRows(teamSections, captainMap);
 
     const runBase = leagueRunScoringBaseline(parsedScheduleGames);
     const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
@@ -2386,7 +2397,7 @@ app.get("/rankings/power", async (req, res) => {
       parsedScheduleGames
     );
     attachPowerRatingsToProjections(projection.rows, teamSections);
-    attachCaptainsToProjectionRows(projection.rows, teams);
+    attachCaptainsToProjectionRows(projection.rows, captainMap);
 
     renderPage(res, "power-rankings", {
       navActive: "power",

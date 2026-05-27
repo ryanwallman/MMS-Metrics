@@ -35,6 +35,8 @@ var require_sheetUrls = __commonJS({
     var SHEET_2026_GAMELOGS_GID = "1060099039";
     var SHEET_2026_STATS_ID = "1v1d1lfel2GYuaocKQubLSk4Yd7VeTTLDlLMU-HNnc7Q";
     var SHEET_2026_STATS_GID = "1197022486";
+    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
+    var CAPTAIN_MAPPING_GID = "0";
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR = Number("2026") || 2026;
     var careerCsvFilePath = null;
@@ -53,6 +55,11 @@ var require_sheetUrls = __commonJS({
       const u = "";
       if (u && u.trim()) return u.trim();
       return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
+    }
+    function getCaptainMappingCsvUrl() {
+      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
     }
     function getCareerCsvSource() {
       const url = "/MMS-Metrics/data/csv/career.csv".trim();
@@ -79,6 +86,9 @@ var require_sheetUrls = __commonJS({
       SCHEDULE_CALENDAR_YEAR,
       getGamelogs2026CsvUrl,
       getStats2026CsvUrl,
+      getCaptainMappingCsvUrl,
+      CAPTAIN_MAPPING_SHEET_ID,
+      CAPTAIN_MAPPING_GID,
       googleSheetCsvExportUrl,
       setCareerCsvFilePath,
       getCareerCsvSource,
@@ -743,7 +753,7 @@ var require_fetchCsvText = __commonJS({
       fetchCsvTextOverride = typeof fn === "function" ? fn : null;
     }
     function csvFetchTimeoutMs() {
-      const fromEnv = Number(process.env.CSV_FETCH_TIMEOUT_MS);
+      const fromEnv = Number("90000");
       if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
       if (process.env.STATIC_EXPORT === "1") return 9e4;
       return 0;
@@ -2355,7 +2365,65 @@ var require_teamRosters = __commonJS({
       extractRosterRange(16, 18, 0, 18);
       return rosterMap;
     }
-    async function loadTeamRosters() {
+    function normalizeScheduleTeamId(id) {
+      const n = Number(safeText(id).replace(/\s+/g, ""));
+      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : safeText(id);
+    }
+    function normalizeScheduleTeamLabel(value) {
+      return safeText(value).toLowerCase().replace(/\s+/g, " ").trim();
+    }
+    function buildNameToTeamIdMap(teams) {
+      const nameToTeamId = {};
+      for (const t of teams) {
+        const key = normalizeScheduleTeamLabel(t.teamName);
+        if (key && nameToTeamId[key] === void 0) nameToTeamId[key] = t.teamId;
+      }
+      return nameToTeamId;
+    }
+    function buildRosterByTeamId(teams) {
+      const rosterByTeamId = {};
+      for (const t of teams) {
+        const entry = {
+          teamName: t.teamName,
+          captain: t.captain || "",
+          jerseyColor: t.jerseyColor,
+          numberColor: t.numberColor,
+          players: Array.isArray(t.players) ? t.players : []
+        };
+        rosterByTeamId[String(t.teamId)] = entry;
+        rosterByTeamId[normalizeScheduleTeamId(t.teamId)] = entry;
+      }
+      return rosterByTeamId;
+    }
+    function pickRosterEntry(rosterByTeamId, nameToTeamId, teamId, displayName) {
+      const id = safeText(teamId);
+      let entry = id && rosterByTeamId[id] ? rosterByTeamId[id] : null;
+      if (entry && Array.isArray(entry.players) && entry.players.length) {
+        return { ...entry, teamId: id };
+      }
+      const altKey = normalizeScheduleTeamLabel(displayName);
+      const altId = altKey ? nameToTeamId[altKey] : null;
+      const altEntry = altId != null && altId !== "" ? rosterByTeamId[String(altId)] : null;
+      if (altEntry && Array.isArray(altEntry.players) && altEntry.players.length) {
+        return { ...altEntry, teamId: String(altId) };
+      }
+      if (entry) return { ...entry, teamId: id };
+      if (altEntry) return { ...altEntry, teamId: String(altId) };
+      return {
+        teamId: id || String(altId || ""),
+        teamName: safeText(displayName) || "Team",
+        captain: "",
+        jerseyColor: "",
+        numberColor: "",
+        players: []
+      };
+    }
+    function resolveTeamCaptain(teamId, teamName, teams) {
+      const rosterByTeamId = buildRosterByTeamId(teams);
+      const nameToTeamId = buildNameToTeamIdMap(teams);
+      return pickRosterEntry(rosterByTeamId, nameToTeamId, teamId, teamName).captain || "";
+    }
+    async function loadTeamRosterContext() {
       const [indexRows, rosterRows] = await Promise.all([
         fetchCsvRows(INDEX_URL),
         fetchCsvRows(ROSTER_URL)
@@ -2369,12 +2437,23 @@ var require_teamRosters = __commonJS({
         const players = canonicalRostersByTeamId[teamId] || rosterByCaptain.get(teamMeta.captain) || [];
         teams.push({ ...teamMeta, players });
       }
+      return { teams, rosterByCaptain };
+    }
+    async function loadTeamRosters() {
+      const { teams } = await loadTeamRosterContext();
       return teams;
     }
     module.exports = {
       buildTeamMap,
       buildRosterByCaptain,
-      loadTeamRosters
+      buildNameToTeamIdMap,
+      buildRosterByTeamId,
+      pickRosterEntry,
+      resolveTeamCaptain,
+      loadTeamRosterContext,
+      loadTeamRosters,
+      normalizeScheduleTeamId,
+      normalizeScheduleTeamLabel
     };
   }
 });

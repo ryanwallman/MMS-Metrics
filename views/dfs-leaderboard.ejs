@@ -181,6 +181,22 @@
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType, canEdit: slate.canEdit === true, isLocked: slate.canEdit !== true } : null
       }) %>;
     </script>
+    <script>
+      window.addEventListener("error", function (ev) {
+        var src = ev.filename || "";
+        if (src.indexOf("dfs-leaderboard") === -1) return;
+        var screen = document.getElementById("leaderboardLoadingScreen");
+        if (screen) screen.hidden = true;
+        document.body.classList.add("leaderboard-ready");
+        var status = document.getElementById("leaderboardStatus");
+        if (status) {
+          status.hidden = false;
+          status.className = "dfs-leaderboard-alert dfs-leaderboard-alert--error";
+          status.innerHTML =
+            "<p>Leaderboard script failed to load. Hard-refresh (Cmd+Shift+R) or check the browser console.</p>";
+        }
+      });
+    </script>
     <script type="module" src="<%= sitePath('/js/dfs-leaderboard.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
   </body>

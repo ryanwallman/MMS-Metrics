@@ -117,7 +117,7 @@ async function main() {
       ...process.env,
       STATIC_EXPORT: "1",
       SITE_BASE_PATH: siteBase,
-      ASSET_VERSION: process.env.ASSET_VERSION || "2",
+      ASSET_VERSION: process.env.ASSET_VERSION || "3",
       PORT: String(port),
       HOST: "127.0.0.1",
       NODE_ENV: "production",
@@ -127,6 +127,9 @@ async function main() {
 
   try {
     await waitForHealth();
+
+    const homeHtml = await fetchHtml("/");
+    await writeRoute(homeHtml, "/");
 
     const dfsHtml = await fetchHtml("/dfs");
     await writeRoute(dfsHtml, "/dfs");
@@ -176,13 +179,14 @@ async function main() {
   } catch {
     /* optional */
   }
-  for (const name of ["styles.css", ".nojekyll"]) {
+  for (const name of ["styles.css"]) {
     try {
       await fs.copyFile(path.join(root, "public", name), path.join(outDir, name));
     } catch {
       /* optional */
     }
   }
+  await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
   console.log("[patch-dfs] Copied public assets → docs/");
   console.log("[patch-dfs] Done.");
 }

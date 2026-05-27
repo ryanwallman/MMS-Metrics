@@ -1,80 +1,89 @@
-# GitHub Pages (static export)
+# GitHub Pages (deploy from branch)
 
-GitHub Pages serves **static files only** — no Node/Express. This repo builds pre-rendered HTML plus `public/` assets into **`docs/`**, which you commit and deploy.
+GitHub Pages serves **static files only** — no Node/Express. This repo builds pre-rendered HTML plus assets into **`docs/`**, which you commit and push.
 
-**https://ryanwallman.github.io/MMS-Metrics/**
+**Live site:** https://ryanwallman.github.io/MMS-Metrics/
 
-(Replace `MMS-Metrics` if the repository name changes.)
+## One-time GitHub setup
 
-## Deploy from branch (recommended)
+1. **Settings → Pages → Build and deployment**
+2. **Source:** Deploy from a branch
+3. **Branch:** `main` (or your production branch)
+4. **Folder:** `/docs`
+5. Do **not** enable GitHub Actions as the Pages source if you use branch deploy (pick one).
 
-1. **One-time:** GitHub → **Settings → Pages → Build and deployment → Source** → **Deploy from a branch**.
-2. Choose the branch you push to (usually **`main`**) and folder **`/docs`**.
-3. After code changes, rebuild and push:
+## Deploy after code changes
+
+From the repo root, with `.env` filled in (see `.env.example`, especially `FIREBASE_*`):
 
 ```bash
-cp .env.example .env   # once — fill FIREBASE_* from Firebase Console
-npm run build:pages    # full rebuild (includes matchup predictor; slow)
-npm run patch:pages-dfs  # fast DFS + leaderboard only (~1 min)
-git add docs/
-git commit -m "Rebuild static site for Pages"
+npm run build:pages:branch
+```
+
+This rebuilds home, power rankings, DFS, leaderboard (all weeks/slates), and JS bundles. It **reuses** existing `docs/matchup-predictor/` pages so the build finishes in a few minutes instead of hours.
+
+Then commit and push:
+
+```bash
+git add docs/ public/js/ views/ lib/ server.js package.json scripts/ deploy/
+git commit -m "Rebuild static site for GitHub Pages"
 git push
 ```
 
-Pages updates within a minute or two after the push. No GitHub Actions secrets required — Firebase keys come from your local `.env` at build time (same as `npm start` locally).
+Pages updates within 1–2 minutes. Hard-refresh the browser (Cmd+Shift+R) after deploy.
 
-### Workflow with feature branches
+### Faster DFS-only rebuild
 
-1. Develop on a feature branch (`git checkout -b my-feature`).
-2. When ready for production: merge into the **Pages branch** (e.g. `main`).
-3. On that branch, run `npm run build:pages`, commit `docs/`, and push.
+If you only changed DFS / leaderboard code:
 
-Only the branch selected in **Settings → Pages** is live. Pushes to other branches do not update the site until merged and rebuilt.
+```bash
+npm run patch:pages-dfs
+git add docs/ public/js/
+git commit -m "Rebuild DFS pages for GitHub Pages"
+git push
+```
+
+### Full rebuild (includes all matchup predictor pages)
+
+Only needed when matchup predictor HTML changes or `docs/matchup-predictor/` is missing:
+
+```bash
+npm run build:pages
+```
+
+Expect **30+ minutes** (thousands of matchup pages).
 
 ## Firebase
 
 **No Google sign-in** — lineups use a device ID + display name.
 
-1. Put web app keys in `.env` (see `.env.example`) before `npm run build:pages`.
-2. Publish Firestore rules after rule changes:
+1. Put web app keys in `.env` before any `build:pages*` command (baked into HTML at build time).
+2. Publish Firestore rules when they change:
 
 ```bash
 firebase deploy --only firestore
 ```
 
-If DFS shows “Firebase is not configured” on Pages, rebuild with a complete `.env` and push `docs/` again.
-
 ## Local preview
 
 ```bash
-npm run build:pages
+npm run build:pages:branch
 npx serve docs -l 5000
 ```
 
-Open http://localhost:5000/MMS-Metrics/ (base path matches GitHub Pages).
+Open http://localhost:5000/MMS-Metrics/
 
-Override base path:
+## What works on GitHub Pages
 
-```bash
-SITE_BASE_PATH=/MMS-Metrics npm run build:static
-```
+| Feature | On Pages |
+|---------|----------|
+| Home / league leaders | Yes (pre-rendered) |
+| Power rankings | Yes (pre-rendered; captains from captain_mapping sheet) |
+| Matchup predictor | Yes (pre-rendered view/matchup URLs) |
+| DFS lineup builder | Yes (Firestore in browser) |
+| DFS leaderboard | Yes (Firestore + client scoring; first load can take 30–60s) |
+| DFS leaderboard lineup detail (`?week=&user=`) | No server — use locked slate on builder |
 
 ## Optional: GitHub Actions
 
-`/.github/workflows/deploy-pages.yml` can still build and deploy on push (manual **workflow_dispatch** only). Use it if you prefer CI over committing `docs/`. Branch deploy and Actions both produce the same static output — pick one Pages source in Settings, not both.
-
-## Build time
-
-`npm run build:pages` pre-renders **5 routes** and fetches Google Sheets CSVs. Expect **3–15 minutes** on a typical connection.
-
-## What works on Pages
-
-| Feature | GitHub Pages |
-|---------|--------------|
-| League leaders, power rankings | Pre-rendered HTML |
-| Matchup predictor | Default view only (form changes need client-side work or Node host) |
-| DFS lineup builder | Yes — save with display name (one per device per slate) |
-| DFS leaderboard | Client-side (Firestore + Google Sheets scoring) |
-| Leaderboard lineup detail (`/dfs/leaderboard/lineup?…`) | Not exported (no server Admin SDK) |
-
-For full server-rendered pages and APIs, run `npm start` locally or use a Node host.
+`.github/workflows/deploy-pages.yml` is **manual only** (`workflow_dispatch`). Branch deploy is the recommended path.

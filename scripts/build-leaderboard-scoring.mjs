@@ -26,6 +26,8 @@ await esbuild.build({
     "process.env.GAMELOGS_2026_CSV_URL": '""',
     "process.env.STATS_2026_CSV_URL": '""',
     "process.env.CAREER_CSV_URL": `"${careerPublic}"`,
+    /** Browser bundle has no STATIC_EXPORT — still need timeouts on GitHub Pages. */
+    "process.env.CSV_FETCH_TIMEOUT_MS": '"90000"',
   },
 });
 

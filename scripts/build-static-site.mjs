@@ -177,11 +177,31 @@ async function main() {
     /* none */
   }
 
+  const skipMatchup = !!process.env.STATIC_SKIP_MATCHUP;
+  const matchupBackup = path.join(root, ".static-matchup-backup");
+  if (skipMatchup) {
+    try {
+      await fs.rm(matchupBackup, { recursive: true, force: true });
+      await fs.cp(path.join(outDir, "matchup-predictor"), matchupBackup, { recursive: true });
+      console.log("[static] Backed up existing docs/matchup-predictor for fast branch build");
+    } catch {
+      console.warn("[static] No existing matchup-predictor to preserve (full matchup export will be needed once)");
+    }
+  }
+
   await fs.rm(outDir, { recursive: true, force: true });
   await fs.mkdir(outDir, { recursive: true });
   if (preserved) {
     await fs.mkdir(preserveDir, { recursive: true });
     await fs.writeFile(path.join(preserveDir, "MIGRATION.md"), preserved);
+  }
+  if (skipMatchup) {
+    try {
+      await fs.cp(matchupBackup, path.join(outDir, "matchup-predictor"), { recursive: true });
+      console.log("[static] Restored docs/matchup-predictor from backup");
+    } catch {
+      /* no backup */
+    }
   }
 
   console.log(`[static] SITE_BASE_PATH=${siteBase}`);
@@ -252,7 +272,7 @@ async function main() {
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),
     ].map((t) => decodeURIComponent(t));
-    await mapConcurrent(Array.from(new Set(weekTokens)), 4, async (week) => {
+    await mapConcurrent(Array.from(new Set(weekTokens)), 2, async (week) => {
       const html = await fetchHtml(port, `/dfs/leaderboard?week=${encodeURIComponent(week)}`);
       await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
     });

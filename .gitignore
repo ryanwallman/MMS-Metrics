@@ -4,3 +4,4 @@ firebase/service-account.json
 firebase-service-account.json
 .DS_Store
 .venv/
+.static-matchup-backup/

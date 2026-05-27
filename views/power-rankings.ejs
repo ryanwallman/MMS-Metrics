@@ -98,8 +98,6 @@
               <th>Proj. W-L</th>
               <th>Proj. win %</th>
               <th>Exp. rest</th>
-              <th>Left</th>
-              <th>Power now</th>
               <th>Power rank now</th>
             </tr>
           </thead>
@@ -116,12 +114,6 @@
               </td>
               <td style="text-align: right" title="Rounded projected W-L minus current record">
                 <%= t.expRestRecord %>
-              </td>
-              <td style="text-align: right"><%= t.scheduledRemaining %></td>
-              <td style="text-align: right">
-                <% if (t.powerRating != null) { %>
-                <%= t.powerRating >= 0 ? "+" + t.powerRating.toFixed(2) : t.powerRating.toFixed(2) %>
-                <% } else { %>—<% } %>
               </td>
               <td style="text-align: right"><%= t.currentPowerRank != null ? t.currentPowerRank : "—" %></td>
             </tr>
