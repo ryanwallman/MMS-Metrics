@@ -61,7 +61,7 @@ service cloud.firestore {
         && validPlayerSalaries(data.playerSalaries)
         && data.salaryUsed is number
         && data.salaryUsed >= 0
-        && data.salaryUsed <= 50000;
+        && data.salaryUsed <= 60000;
     }
 
     match /lineups/{lineupId} {

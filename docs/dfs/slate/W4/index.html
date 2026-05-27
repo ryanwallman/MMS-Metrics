@@ -109,7 +109,7 @@
               <div class="dfs-info-panel__body dfs-intro">
                 <p>
                   Build an <strong>8-player</strong> lineup for the next slate with a
-                  <strong>$50,000</strong> salary cap. Salaries weight <strong>offensive rating</strong> (~80%),
+                  <strong>$60,000</strong> salary cap. Salaries weight <strong>offensive rating</strong> (~80%),
                   <strong>opponent runs allowed</strong> (~12%), and the <strong>opposing primary pitcher</strong> (~8%).
                   Player rating leans on <strong>career stats</strong> when available (about 85% career / 15% 2026 when both exist).
                   <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
@@ -337,8 +337,8 @@
             <p class="dfs-budget">
               <span id="salaryUsedLabel">$0</span>
               <span class="dfs-budget-sep">/</span>
-              $50,000
-              <span class="dfs-budget-remaining" id="salaryRemainingLabel">($50,000 left)</span>
+              $60,000
+              <span class="dfs-budget-remaining" id="salaryRemainingLabel">($60,000 left)</span>
             </p>
             <ol class="dfs-lineup-slots" id="lineupSlots">
               
@@ -584,7 +584,7 @@
     <script>
       window.initDfsLineupPage = function () {
         const LINEUP_SIZE = 8;
-        const SALARY_CAP = 50000;
+        const SALARY_CAP = 60000;
         const CAN_EDIT = false;
         const SHOW_SLATE_STATS = true;
         const STORAGE_PREFIX = "mms-dfs-lineup:";
