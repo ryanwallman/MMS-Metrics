@@ -46,6 +46,7 @@
             <tr>
               <th>Rank</th>
               <th>Team</th>
+              <th>Captain</th>
               <th>Power</th>
               <th>Record</th>
               <th>Win %</th>
@@ -59,6 +60,7 @@
             <tr>
               <td style="text-align: right"><%= t.rank %></td>
               <td><%= t.teamName %> (#<%= t.teamId %>)</td>
+              <td><%= t.captain || "—" %></td>
               <td style="text-align: right">
                 <strong><%= t.powerRating >= 0 ? "+" + t.powerRating.toFixed(2) : t.powerRating.toFixed(2) %></strong>
               </td>
@@ -91,6 +93,7 @@
             <tr>
               <th>Proj. rank</th>
               <th>Team</th>
+              <th>Captain</th>
               <th>Current</th>
               <th>Proj. W-L</th>
               <th>Proj. win %</th>
@@ -105,6 +108,7 @@
             <tr>
               <td style="text-align: right"><%= t.projectedRank %></td>
               <td><%= t.teamName %> (#<%= t.teamId %>)</td>
+              <td><%= t.captain || "—" %></td>
               <td style="text-align: right"><%= t.currentWins %>-<%= t.currentLosses %></td>
               <td style="text-align: right"><strong><%= t.projectedRecord %></strong></td>
               <td style="text-align: right">

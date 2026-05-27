@@ -144,6 +144,9 @@ async function main() {
     const lbHtml = await fetchHtml("/dfs/leaderboard");
     await writeRoute(lbHtml, "/dfs/leaderboard");
 
+    const powerHtml = await fetchHtml("/rankings/power");
+    await writeRoute(powerHtml, "/rankings/power");
+
     const weekTokens = [
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),

@@ -25,7 +25,13 @@ const {
   fetchLineupByUserAndSlate,
   slateSummaryForClient,
 } = require("./lib/dfsLeaderboard");
-const { loadTeamRosters } = require("./lib/teamRosters");
+const {
+  loadTeamRosters,
+  pickRosterEntry,
+  buildNameToTeamIdMap,
+  buildRosterByTeamId,
+  resolveTeamCaptain,
+} = require("./lib/teamRosters");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
 const {
   parseMissingNorms,
@@ -834,43 +840,6 @@ function resolveScheduleGamesForView(encodedView, payload) {
   return { selectedView: selected, games, summaryLine };
 }
 
-function buildNameToTeamIdMap(teams) {
-  const nameToTeamId = {};
-  for (const t of teams) {
-    const key = normalizeScheduleTeamLabel(t.teamName);
-    if (key && nameToTeamId[key] === undefined) nameToTeamId[key] = t.teamId;
-  }
-  return nameToTeamId;
-}
-
-function pickRosterEntry(rosterByTeamId, nameToTeamId, teamId, displayName) {
-  const id = safeText(teamId);
-  let entry = id && rosterByTeamId[id] ? rosterByTeamId[id] : null;
-
-  if (entry && Array.isArray(entry.players) && entry.players.length) {
-    return { ...entry, teamId: id };
-  }
-
-  const altKey = normalizeScheduleTeamLabel(displayName);
-  const altId = altKey ? nameToTeamId[altKey] : null;
-  const altEntry =
-    altId != null && altId !== "" ? rosterByTeamId[String(altId)] : null;
-  if (altEntry && Array.isArray(altEntry.players) && altEntry.players.length) {
-    return { ...altEntry, teamId: String(altId) };
-  }
-
-  if (entry) return { ...entry, teamId: id };
-  if (altEntry) return { ...altEntry, teamId: String(altId) };
-  return {
-    teamId: id || String(altId || ""),
-    teamName: safeText(displayName) || "Team",
-    captain: "",
-    jerseyColor: "",
-    numberColor: "",
-    players: [],
-  };
-}
-
 function matchupGameKey(game) {
   const away = safeText(game.awayTeamId);
   const home = safeText(game.homeTeamId);
@@ -1495,11 +1464,12 @@ function applyPowerRankingsHeatMaps(rows) {
   }));
 }
 
-function buildPowerRankingsCurrentRows(teamSections) {
+function buildPowerRankingsCurrentRows(teamSections, teams) {
   const rows = teamSections.map((t, i) => ({
     rank: i + 1,
     teamId: t.teamId,
     teamName: t.teamName,
+    captain: resolveTeamCaptain(t.teamId, t.teamName, teams),
     powerRating: t.teamOffenseRating,
     rosterRating: t.teamPlayerRating,
     wins: t.teamWins,
@@ -1515,6 +1485,13 @@ function buildPowerRankingsCurrentRows(teamSections) {
  * Project final W-L using current record + expected wins on remaining schedule
  * (matchup predictor win % per game).
  */
+function attachCaptainsToProjectionRows(rows, teams) {
+  for (const row of rows) {
+    row.captain = resolveTeamCaptain(row.teamId, row.teamName, teams);
+  }
+  return rows;
+}
+
 function projectSeasonStandings(teams, standingsMap, teamProfiles, leagueNorms, runBase, parsedGames) {
   const remaining = buildRemainingScheduleGames(parsedGames);
   const rowsById = new Map();
@@ -2372,7 +2349,7 @@ app.get("/rankings/power", async (req, res) => {
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
     const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
     const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
-    const currentRankings = buildPowerRankingsCurrentRows(teamSections);
+    const currentRankings = buildPowerRankingsCurrentRows(teamSections, teams);
 
     const runBase = leagueRunScoringBaseline(parsedScheduleGames);
     const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
@@ -2409,6 +2386,7 @@ app.get("/rankings/power", async (req, res) => {
       parsedScheduleGames
     );
     attachPowerRatingsToProjections(projection.rows, teamSections);
+    attachCaptainsToProjectionRows(projection.rows, teams);
 
     renderPage(res, "power-rankings", {
       navActive: "power",
@@ -2927,16 +2905,7 @@ async function renderMatchupPredictorPage(req, res) {
     if (!validMatchupKeys.has(selectedMatchup)) selectedMatchup = "";
 
     const nameToTeamId = buildNameToTeamIdMap(teams);
-    const rosterByTeamId = {};
-    for (const t of teams) {
-      rosterByTeamId[t.teamId] = {
-        teamName: t.teamName,
-        captain: t.captain,
-        jerseyColor: t.jerseyColor,
-        numberColor: t.numberColor,
-        players: Array.isArray(t.players) ? t.players : [],
-      };
-    }
+    const rosterByTeamId = buildRosterByTeamId(teams);
 
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
     const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
