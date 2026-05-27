@@ -11,6 +11,7 @@
     "build:pages:branch": "STATIC_SKIP_MATCHUP=1 SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",
     "build:pages:github": "SITE_BASE_PATH=/MMS-Metrics node scripts/build-static-site.mjs",
     "patch:pages-dfs": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-dfs-for-pages.mjs",
+    "verify:domain": "node scripts/verify-custom-domain-dns.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

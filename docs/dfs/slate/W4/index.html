@@ -11,6 +11,14 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
@@ -62,7 +70,7 @@
       
       <p class="site-updated">
         Data updated
-        <time datetime="2026-05-27T20:40:56.274Z">May 27, 2026, 4:40 PM ET</time>
+        <time datetime="2026-05-27T21:08:10.886Z">May 27, 2026, 5:08 PM ET</time>
       </p>
       
       
@@ -231,10 +239,17 @@
           
           <a
             href="/dfs/slate/D20260527"
-            class="dfs-slate-chip dfs-slate-chip--open"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260527"
             
-          >Wed, 27-May · open</a>
+          >Wed, 27-May · locked</a>
+          
+          <a
+            href="/dfs/slate/W5"
+            class="dfs-slate-chip dfs-slate-chip--open"
+            data-slate="W5"
+            
+          >Sun, 31-May • Week 5 · open</a>
           
         </nav>
         <input type="hidden" name="lineup" id="lineupInput" value="" />
@@ -244,7 +259,7 @@
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
         <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
         
-        <a href="/dfs?slate=D20260527" class="dfs-slate-lock-link">Go to open slate</a>
+        <a href="/dfs?slate=W5" class="dfs-slate-lock-link">Go to open slate</a>
         
       </p>
       
@@ -423,14 +438,14 @@
               <div
                 class="dfs-lock-countdown"
                 id="dfsLockCountdown"
-                data-deadline-ms="1779915599999"
+                data-deadline-ms="1780199999999"
                 aria-live="polite"
                 
               >
                 <p class="dfs-lock-countdown__label">Lineups lock in (New York time)</p>
                 <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
                 
-                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen">Wed, May 27, 2026, 5:00 PM EDT</p>
+                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen">Sat, May 30, 2026, 11:59 PM EDT</p>
                 
                 
               </div>

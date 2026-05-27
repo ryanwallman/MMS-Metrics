@@ -8,5 +8,13 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "<%= typeof siteBasePath !== 'undefined' ? siteBasePath : '' %>";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="<%= sitePath('/styles.css') %>?v=<%= assetVersion %>" as="style" />
 <link rel="stylesheet" href="<%= sitePath('/styles.css') %>?v=<%= assetVersion %>" />
