@@ -1812,6 +1812,7 @@ var require_matchupMissingPlayers = __commonJS({
       multipliersFromAbsenceSum
     } = require_matchupPositions();
     var C_PLAYER_ROUNDS = Object.freeze([11, 12, 13]);
+    var C_PLAYER_RULE_MIN_ACTIVE = 9;
     var B_PLAYER_ROUNDS = Object.freeze([8, 9, 10]);
     var FIELDING_SPOTS = 10;
     var ROSTER_FULL_SIZE = 13;
@@ -1859,7 +1860,7 @@ var require_matchupMissingPlayers = __commonJS({
       return n >= 0 ? `+${s}` : s;
     }
     function resolveCDoubleBatter(entries, missingSet, presentCount) {
-      if (presentCount === 8) return null;
+      if (presentCount < C_PLAYER_RULE_MIN_ACTIVE) return null;
       const cSlots = entries.filter((e) => C_PLAYER_ROUNDS.includes(e.round));
       const cPresent = cSlots.filter((e) => !missingSet.has(e.norm));
       const cMissingCount = cSlots.length - cPresent.length;
@@ -1924,9 +1925,10 @@ var require_matchupMissingPlayers = __commonJS({
       const present = entries.filter((e) => !missingSet.has(e.norm));
       const missing = entries.filter((e) => missingSet.has(e.norm));
       const presentCount = present.length;
-      if (presentCount === 8) return null;
-      const cRule = resolveCDoubleBatter(entries, missingSet, presentCount);
-      if (cRule) return cRule;
+      if (presentCount >= C_PLAYER_RULE_MIN_ACTIVE) {
+        const cRule = resolveCDoubleBatter(entries, missingSet, presentCount);
+        if (cRule) return cRule;
+      }
       if (presentCount === 10 && missing.length === 3) {
         return resolveEleventhBatterMeanRule(entries, missingSet, missing);
       }
@@ -2119,6 +2121,14 @@ var require_matchupMissingPlayers = __commonJS({
           kind: "below-minimum",
           title: "Below minimum to start",
           message: `Only ${presentCount} active players. MMS bylaws require at least ${MIN_PLAYERS_TO_START} to start a game.`
+        });
+      }
+      if (presentCount < C_PLAYER_RULE_MIN_ACTIVE) {
+        alerts.push({
+          severity: "info",
+          kind: "below-c-rule",
+          title: "C-player rule not in effect",
+          message: `MMS bylaws: the C-player missing rule applies only with ${C_PLAYER_RULE_MIN_ACTIVE} or more active players. With ${presentCount} active, no one bats twice under the C rule.`
         });
       }
       if (presentCount === 8) {
@@ -2500,6 +2510,7 @@ var require_matchupMissingPlayers = __commonJS({
       playerTalentScore,
       computeTeamMissingMultiplier,
       C_PLAYER_ROUNDS,
+      C_PLAYER_RULE_MIN_ACTIVE,
       FIELDING_SPOTS,
       parseMissingNorms,
       serializeMissingNorms,

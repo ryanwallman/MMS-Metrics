@@ -28,17 +28,31 @@ function assert(cond, msg) {
 
 console.log("=== MMS bylaws lineup rule verification ===\n");
 
-// 8 players: no double batter
+// 8 players: no double batter (C rule does not apply)
 const m8 = missingSet([9, 10, 11, 12, 13]);
 assert(resolveDoubleBatter(entries, m8) === null, "8 active → no double batter");
 
+// 8 active with 2 C missing: C rule must not apply (< 9 active)
+const m8c = missingSet([1, 2, 3, 11, 12]);
+assert(
+  resolveDoubleBatter(entries, m8c) === null,
+  "8 active with 2 C missing → no C double batter"
+);
+
+// 7 active with 2 C missing: C rule must not apply
+const m7c = missingSet([1, 2, 3, 4, 11, 12]);
+assert(
+  resolveDoubleBatter(entries, m7c) === null,
+  "7 active with 2 C missing → no C double batter"
+);
+
 // 2 C out, 1 C in (9 active) → C bats twice
-const m9c = missingSet([1, 2, 3, 4, 11, 12]);
+const m9c = missingSet([1, 2, 11, 12]);
 const db9 = resolveDoubleBatter(entries, m9c);
 assert(db9 && db9.rule === "c-one-present", "9 active, 2 C missing → remaining C bats twice");
 
 // All 3 C out (10 active) → round 10 bats twice
-const m10c = missingSet([1, 2, 3, 11, 12, 13]);
+const m10c = missingSet([11, 12, 13]);
 const db10c = resolveDoubleBatter(entries, m10c);
 assert(db10c && db10c.rule === "c-all-out-round-10", "10 active, all C out → R10 bats twice");
 
