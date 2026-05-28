@@ -431,6 +431,10 @@
         <section class="dfs-pool-section" id="dfsPoolSection" hidden>
           <div class="dfs-pool-toolbar">
             <h2 class="section-heading">Player pool</h2>
+            <p class="dfs-doubleheader-note" role="note">
+              <span class="dfs-doubleheader-badge" aria-hidden="true">2G</span>
+              Doubleheader — two games this slate; fantasy points are averaged per game (not doubled). Salary uses the average matchup.
+            </p>
             <div class="dfs-pool-toolbar-actions">
               <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
                 <span class="dfs-sort-label">Sort</span>
@@ -789,7 +793,9 @@
                 row.points +
                 '</strong><span class="dfs-score-games">' +
                 row.games +
-                " gm</span>";
+                " gm" +
+                (row.games > 1 ? " avg" : "") +
+                "</span>";
               list.appendChild(li);
             }
           }

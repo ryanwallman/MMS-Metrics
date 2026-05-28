@@ -2788,6 +2788,42 @@ body > main.page-main {
   width: 3rem;
 }
 
+.dfs-doubleheader-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-muted, #6b7280);
+  line-height: 1.45;
+}
+
+.dfs-doubleheader-badge,
+.dfs-doubleheader-tag {
+  display: inline-block;
+  margin-right: 0.35rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.dfs-doubleheader-tag {
+  margin-left: 0.4rem;
+  margin-right: 0;
+}
+
+.dfs-player-row--double-header {
+  background: rgba(254, 243, 199, 0.35);
+}
+
+.dfs-player-row--double-header.dfs-player-row--selected {
+  background: rgba(254, 243, 199, 0.55);
+}
+
 .dfs-player-row--selected {
   background: #eff6ff;
 }

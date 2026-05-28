@@ -85,6 +85,8 @@ const {
   buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
+  pickMatchupPredictorDefaultView,
+  filterScheduleOptionsToDfsVisibility,
   resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
 
@@ -1845,7 +1847,12 @@ app.get("/dfs", async (req, res) => {
     }
     const playerPoolWithStats = playerPool.map((p) => {
       const row = slateStats.byNorm[p.norm] || { points: 0, games: 0 };
-      return { ...p, slatePoints: row.points, slateGames: row.games };
+      return {
+        ...p,
+        slatePoints: row.points,
+        slateGames: row.games,
+        doubleHeader: Boolean(p.doubleHeader || row.games >= 2),
+      };
     });
 
     const scored =
@@ -2133,15 +2140,37 @@ async function renderMatchupPredictorPage(req, res) {
       const wedDigits = safeText(req.query.wed).replace(/^D/i, "").toUpperCase();
       if (/^\d{8}$/.test(wedDigits)) viewParam = `D${wedDigits}`;
     }
+    const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+    const nowMs = Date.now();
+
     if (!viewParam) {
       viewParam =
+        pickMatchupPredictorDefaultView(payload, refIso, nowMs) ||
         pickSmartDefaultScheduleView(localCalendarIso(), payload) ||
         payload.scheduleOptions.find((o) => /^W\d+$/i.test(o.value))?.value ||
         payload.scheduleOptions[0]?.value ||
         "";
     }
 
-    const scheduleOptions = payload.scheduleOptions || [];
+    const hasExplicitView =
+      !!viewFromPath ||
+      !!safeText(req.query.view) ||
+      (req.query.week !== undefined && req.query.week !== null && safeText(req.query.week) !== "") ||
+      /^\d{8}$/.test(safeText(req.query.wed).replace(/^D/i, ""));
+
+    if (!hasExplicitView && viewParam && !req.params?.matchup) {
+      return res.redirect(
+        302,
+        sitePath(`/matchup-predictor/view/${encodeURIComponent(viewParam)}`)
+      );
+    }
+
+    const scheduleOptions = filterScheduleOptionsToDfsVisibility(
+      payload.scheduleOptions || [],
+      payload,
+      refIso,
+      nowMs
+    );
     const { selectedView, games, summaryLine } = resolveScheduleGamesForView(viewParam, payload);
 
     const matchupOptions = buildMatchupOptionsForGames(games);

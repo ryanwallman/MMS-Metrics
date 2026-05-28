@@ -6,6 +6,7 @@
     "start": "node server.js",
     "build:leaderboard-scoring": "node scripts/build-leaderboard-scoring.mjs",
     "build:matchup-predictor": "node scripts/build-matchup-predictor.mjs",
+    "build:matchup-predictor-nav": "node scripts/build-matchup-predictor-nav.mjs",
     "build:leaderboard-lineup": "node scripts/build-leaderboard-lineup.mjs",
     "build:league-leaders": "node scripts/build-league-leaders.mjs",
     "build:power-rankings": "node scripts/build-power-rankings.mjs",

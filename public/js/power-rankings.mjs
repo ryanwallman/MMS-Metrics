@@ -960,6 +960,81 @@ var require_dfs = __commonJS({
       const key = captainLastName(t.captain);
       return PITCHER_STATS_BY_TEAM_KEY[key] || null;
     }
+    var MAX_SLATE_GAMES_PER_TEAM = 2;
+    function pushTeamSlateMatchup(matchupByTeam, teamId, matchup) {
+      const tid = safeText(teamId);
+      if (!tid) return;
+      if (!matchupByTeam.has(tid)) matchupByTeam.set(tid, []);
+      const list = matchupByTeam.get(tid);
+      if (list.length >= MAX_SLATE_GAMES_PER_TEAM) return;
+      list.push(matchup);
+    }
+    function joinDoubleheaderLabels(labels) {
+      const slice = labels.slice(0, MAX_SLATE_GAMES_PER_TEAM);
+      if (slice.length === 2 && slice[0] === slice[1]) return slice[0];
+      return slice.join(" \xB7 ");
+    }
+    function formatVsOpponents(matchups, teams) {
+      if (!matchups?.length) return "";
+      const labels = matchups.map((m) => {
+        const opp = teams.find((x) => safeText(x.teamId) === safeText(m.opponentId));
+        return opp?.teamName || `Team ${m.opponentId}`;
+      });
+      return joinDoubleheaderLabels(labels);
+    }
+    function formatOpposingPitchers(matchups, teams) {
+      if (!matchups?.length) return "\u2014";
+      const labels = matchups.map((m) => {
+        const pit = pitcherForTeamId(m.opponentId, teams);
+        const name = pit?.primaryPitcher ? safeText(pit.primaryPitcher) : "";
+        return name || "\u2014";
+      });
+      return joinDoubleheaderLabels(labels) || "\u2014";
+    }
+    function averageOpposingPitcherTooltip(matchups, teams) {
+      const pits = matchups.slice(0, MAX_SLATE_GAMES_PER_TEAM).map((m) => pitcherForTeamId(m.opponentId, teams)).filter(Boolean);
+      if (!pits.length) return { baa: null, runsG: null };
+      const baa = pits.reduce((s, p) => s + toNumber(p.baa), 0) / pits.length;
+      const runsG = pits.reduce((s, p) => s + toNumber(p.runsPerG), 0) / pits.length;
+      return { baa: Math.round(baa * 1e3) / 1e3, runsG: Math.round(runsG * 100) / 100 };
+    }
+    function computePlayerSalaryForMatchups({
+      offenseRating,
+      matchups,
+      teams,
+      scheduleRunRates,
+      leagueAvgRag
+    }) {
+      if (!matchups?.length) {
+        return computePlayerSalary({
+          offenseRating,
+          opponentRunsAgainst: null,
+          opponentPitcher: null,
+          leagueAvgRag
+        });
+      }
+      let compositeSum = 0;
+      for (const m of matchups) {
+        const oppId = m.opponentId;
+        const oppRates = scheduleRunRates?.get?.(oppId);
+        const oppPitcher = pitcherForTeamId(oppId, teams);
+        compositeSum += computeSalaryComposite({
+          offenseRating,
+          opponentRunsAgainst: oppRates?.runsAgainstPerGame ?? null,
+          opponentPitcher: oppPitcher,
+          leagueAvgRag
+        });
+      }
+      return salaryFromComposite(compositeSum / matchups.length);
+    }
+    function averageFantasyPointsFromLogs(logs) {
+      if (!logs.length) return { points: 0, games: 0 };
+      const total = logs.reduce((sum, l) => sum + l.points, 0);
+      return {
+        points: Math.round(total / logs.length * 10) / 10,
+        games: logs.length
+      };
+    }
     function scheduleVenueFromGame(game) {
       const g = game || {};
       const loc = safeText(g.location);
@@ -1259,6 +1334,24 @@ var require_dfs = __commonJS({
     function resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs = Date.now()) {
       return buildDfsSlateOptions(schedulePayload, refIso, nowMs).find((o) => o.canEdit)?.value || null;
     }
+    function pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs = Date.now()) {
+      const active = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs);
+      if (active) return active;
+      const visible = filterVisibleDfsSlateOptions(
+        buildDfsSlateOptions(schedulePayload, refIso, nowMs)
+      );
+      if (visible.length) return visible[visible.length - 1].value;
+      const opts = schedulePayload?.scheduleOptions || [];
+      return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
+    }
+    function filterScheduleOptionsToDfsVisibility(scheduleOptions, schedulePayload, refIso, nowMs = Date.now()) {
+      const visible = new Set(
+        filterVisibleDfsSlateOptions(buildDfsSlateOptions(schedulePayload, refIso, nowMs)).map(
+          (o) => safeText(o.value).toUpperCase()
+        )
+      );
+      return (scheduleOptions || []).filter((o) => visible.has(safeText(o.value).toUpperCase()));
+    }
     function buildSlateFromToken(viewToken, schedulePayload, refIso, slateOptions, nowMs = Date.now()) {
       const v = safeText(viewToken).toUpperCase();
       if (!v) return null;
@@ -1358,29 +1451,33 @@ var require_dfs = __commonJS({
       for (const g of slate.games) {
         const awayId = safeText(g.awayTeamId);
         const homeId = safeText(g.homeTeamId);
-        matchupByTeam.set(awayId, { opponentId: homeId, side: "away", game: g });
-        matchupByTeam.set(homeId, { opponentId: awayId, side: "home", game: g });
+        pushTeamSlateMatchup(matchupByTeam, awayId, { opponentId: homeId, side: "away", game: g });
+        pushTeamSlateMatchup(matchupByTeam, homeId, { opponentId: awayId, side: "home", game: g });
       }
       const pool = [];
       for (const t of teams) {
         const tid = safeText(t.teamId);
         if (!teamIds.has(tid)) continue;
-        const match = matchupByTeam.get(tid);
-        const oppId = match?.opponentId || "";
-        const oppRates = scheduleRunRates?.get?.(oppId);
-        const oppPitcher = pitcherForTeamId(oppId, teams);
-        const oppTeam = teams.find((x) => safeText(x.teamId) === oppId);
+        const matchups = matchupByTeam.get(tid) || [];
+        const primary = matchups[0];
         const teamCode = teamCodeById.get(tid) || "";
         const venueSet = venueByTeam.get(tid);
-        const venueJoined = venueSet && venueSet.size ? [...venueSet].join(" \xB7 ") : scheduleVenueFromGame(match?.game);
+        const venueJoined = venueSet && venueSet.size ? [...venueSet].join(" \xB7 ") : scheduleVenueFromGame(primary?.game);
+        const opponentName = formatVsOpponents(matchups, teams);
+        const opposingPitcher = formatOpposingPitchers(matchups, teams);
+        const pitcherTooltip = averageOpposingPitcherTooltip(matchups, teams);
+        const scheduledGames = matchups.length;
+        const doubleHeader = scheduledGames >= 2;
+        const gameLabel = matchups.map((m) => m.game ? `${m.game.away} @ ${m.game.home}` : "").filter(Boolean).join(" \xB7 ");
         for (const playerName of t.players || []) {
           const norm = normalizePlayerName(playerName);
           const rating = offenseRatingByNorm.get(norm) ?? 0;
           const row26 = stats2026ByPlayer.get(norm);
-          const salary = computePlayerSalary({
+          const salary = computePlayerSalaryForMatchups({
             offenseRating: rating,
-            opponentRunsAgainst: oppRates?.runsAgainstPerGame ?? null,
-            opponentPitcher: oppPitcher,
+            matchups,
+            teams,
+            scheduleRunRates,
             leagueAvgRag
           });
           pool.push({
@@ -1392,15 +1489,17 @@ var require_dfs = __commonJS({
             offenseRating: Math.round(rating * 100) / 100,
             salary,
             // raw; bottom tier adjusted below
-            opponentId: oppId,
-            opponentName: oppTeam?.teamName || `Team ${oppId}`,
-            opponentRunsAgainst: oppRates?.runsAgainstPerGame ?? null,
-            opposingPitcher: oppPitcher?.primaryPitcher || "\u2014",
-            pitcherBaa: oppPitcher?.baa ?? null,
-            pitcherRunsG: oppPitcher?.runsPerG ?? null,
+            opponentId: primary?.opponentId || "",
+            opponentName,
+            opponentRunsAgainst: null,
+            opposingPitcher,
+            pitcherBaa: pitcherTooltip.baa,
+            pitcherRunsG: pitcherTooltip.runsG,
             pa2026: row26 ? toNumber(row26.PA) : 0,
             gameField: venueJoined || "\u2014",
-            gameLabel: match?.game ? `${match.game.away} @ ${match.game.home}` : ""
+            gameLabel,
+            scheduledGames,
+            doubleHeader
           });
         }
       }
@@ -1493,13 +1592,13 @@ var require_dfs = __commonJS({
         const relevant = logs.filter(
           (l) => isoSet.has(l.iso) && safeText(l.teamCode).toUpperCase() === code
         );
-        const pts = relevant.reduce((sum, l) => sum + l.points, 0);
+        const { points: pts, games } = averageFantasyPointsFromLogs(relevant);
         total += pts;
         breakdown.push({
           norm,
           name: p?.name || norm,
-          points: Math.round(pts * 10) / 10,
-          games: relevant.length
+          points: pts,
+          games
         });
       }
       return { total: Math.round(total * 10) / 10, breakdown };
@@ -1536,12 +1635,12 @@ var require_dfs = __commonJS({
         const logs = (gamelogs.byNorm.get(p.norm) || []).filter(
           (l) => isoSet.has(l.iso) && safeText(l.teamCode).toUpperCase() === code
         );
-        const pts = logs.reduce((sum, l) => sum + l.points, 0);
+        const { points: pts, games } = averageFantasyPointsFromLogs(logs);
         if (logs.length) hasStats = true;
         byNorm[p.norm] = {
           name: p.name,
-          points: Math.round(pts * 10) / 10,
-          games: logs.length
+          points: pts,
+          games
         };
       }
       return { byNorm, hasStats };
@@ -1677,6 +1776,8 @@ var require_dfs = __commonJS({
       buildDfsSlateOptions,
       filterVisibleDfsSlateOptions,
       resolveActiveDfsSlateToken,
+      pickMatchupPredictorDefaultView,
+      filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
       buildSlateFromToken,
       computePlayerSalary,

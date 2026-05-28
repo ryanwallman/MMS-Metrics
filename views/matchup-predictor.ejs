@@ -257,6 +257,9 @@
 
     </form>
     </main>
+    <% if (typeof staticSite !== 'undefined' && staticSite) { %>
+    <script type="module" src="<%= sitePath('/js/matchup-predictor-nav.mjs') %>?v=<%= assetVersion %>"></script>
+    <% } %>
     <% if (typeof matchupClient !== 'undefined' && matchupClient) { %>
     <script>window.__MATCHUP_CLIENT__ = <%- JSON.stringify(matchupClient) %>;</script>
     <script src="<%= sitePath('/js/matchup-predictor-ui.js') %>?v=<%= assetVersion %>"></script>

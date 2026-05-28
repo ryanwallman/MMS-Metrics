@@ -180,6 +180,15 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor failed"))));
   });
 
+  console.log("[static] Building matchup predictor nav bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:matchup-predictor-nav"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor-nav failed"))));
+  });
+
   console.log("[static] Building leaderboard lineup client bundle…");
   await new Promise((resolve, reject) => {
     const child = spawn("npm", ["run", "build:leaderboard-lineup"], {

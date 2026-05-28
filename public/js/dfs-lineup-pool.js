@@ -72,15 +72,19 @@ function renderPoolRows(data) {
       const field = p.gameField != null ? p.gameField : "—";
       const pitcherTitle =
         p.pitcherBaa != null ? `BAA ${p.pitcherBaa}, Runs/G ${p.pitcherRunsG}` : "";
+      const dh = p.doubleHeader ? " dfs-player-row--double-header" : "";
+      const dhAttr = p.doubleHeader
+        ? ' data-double-header="1" title="Doubleheader — 2 games; points averaged per game"'
+        : "";
       return `<tr
-        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}"
+        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}${dh}"
         data-norm="${escAttr(p.norm)}"
         data-name="${escAttr(p.name)}"
         data-team="${escAttr(p.teamName)}"
         data-salary="${p.salary}"
         data-field="${escAttr(field)}"
         data-points="${p.slatePoints != null ? p.slatePoints : 0}"
-        data-games="${p.slateGames != null ? p.slateGames : 0}"
+        data-games="${p.slateGames != null ? p.slateGames : 0}"${dhAttr}
       >
         ${
           showStats
@@ -91,7 +95,11 @@ function renderPoolRows(data) {
                 inLineup ? "true" : "false"
               }">${inLineup ? "−" : "+"}</button></td>`
         }
-        <td class="dfs-player-name">${esc(p.name)}</td>
+        <td class="dfs-player-name">${esc(p.name)}${
+          p.doubleHeader
+            ? '<span class="dfs-doubleheader-tag" title="Two games this slate">2G</span>'
+            : ""
+        }</td>
         <td>${esc(p.teamName)}</td>
         <td class="dfs-field-cell" title="Diamond / short-field from schedule">${esc(field)}</td>
         <td class="dfs-salary-cell">$${Number(p.salary).toLocaleString()}</td>
