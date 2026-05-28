@@ -2,6 +2,11 @@
  * Load DFS player pool from Google Sheets on GitHub Pages, then boot lineup UI.
  */
 import { loadDfsLineupPool } from "./dfs-lineup-pool.mjs";
+import {
+  setupLineupLockCountdown,
+  navigateToOpenDfsSlate,
+  dfsLineupUrl,
+} from "./dfs-lock-countdown.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
@@ -119,7 +124,48 @@ async function main() {
   }
 
   try {
+    const requestedToken = String(page.slateToken || "")
+      .trim()
+      .toUpperCase();
     const data = await loadDfsLineupPool(page.slateToken, page.lineupNorms || []);
+
+    if (
+      !data.slate?.canEdit &&
+      data.activeSlateToken &&
+      data.activeSlateToken !== requestedToken
+    ) {
+      navigateToOpenDfsSlate(data.activeSlateToken);
+      return;
+    }
+
+    if (typeof window.setDfsCanEdit === "function") {
+      window.setDfsCanEdit(!!data.slate?.canEdit);
+    } else {
+      window.__DFS_CAN_EDIT__ = !!data.slate?.canEdit;
+    }
+
+    const countdownWrap = document.getElementById("dfsLockCountdown");
+    if (countdownWrap && data.lockDeadlineMs != null) {
+      countdownWrap.setAttribute("data-deadline-ms", String(data.lockDeadlineMs));
+      const whenEl = document.getElementById("dfsLockCountdownWhen");
+      if (whenEl && data.lockDeadlineLabel) {
+        whenEl.textContent = data.lockDeadlineLabel;
+        whenEl.hidden = false;
+      }
+    }
+
+    setupLineupLockCountdown({
+      deadlineMs: data.lockDeadlineMs,
+      onLocked: async () => {
+        const fresh = await loadDfsLineupPool("", page.lineupNorms || []);
+        if (fresh.activeSlateToken && fresh.activeSlateToken !== requestedToken) {
+          navigateToOpenDfsSlate(fresh.activeSlateToken);
+          return;
+        }
+        window.location.replace(`${dfsLineupUrl(requestedToken)}?t=${Date.now()}`);
+      },
+    });
+
     renderPoolRows(data);
     updateSiteUpdated(data.fetchedAt);
     if (typeof window.initDfsLineupPage === "function") {

@@ -1241,7 +1241,7 @@ var require_dfs = __commonJS({
           isActive: canEdit,
           isFuture: false,
           isViewOnly: !canEdit,
-          isLocked: false,
+          isLocked: !canEdit,
           isVisibleInPicker,
           lineupLockDeadlineLabel: formatLineupLockDeadlineEst(o.lineupLockDeadlineMs, o.value)
         };
@@ -2730,7 +2730,11 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       loadDfsLeaderboardScoringContext,
       getCachedDfsLeaderboardScoringContext: getCachedDfsLeaderboardScoringContext2,
       loadWeeklySchedule,
-      setNodeCareerReader
+      setNodeCareerReader,
+      loadCareerByPlayer,
+      load2025HistoricalByPlayer,
+      buildParsedScheduleGames,
+      fetchCsvRows
     };
   }
 });

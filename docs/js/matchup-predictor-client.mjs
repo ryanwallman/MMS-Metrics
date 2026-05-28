@@ -1241,7 +1241,7 @@ var require_dfs = __commonJS({
           isActive: canEdit,
           isFuture: false,
           isViewOnly: !canEdit,
-          isLocked: false,
+          isLocked: !canEdit,
           isVisibleInPicker,
           lineupLockDeadlineLabel: formatLineupLockDeadlineEst(o.lineupLockDeadlineMs, o.value)
         };
@@ -3588,7 +3588,8 @@ var require_matchupPredict = __commonJS({
       predictSeasonGameWinProbs,
       enrichMatchupPredictionLines: enrichMatchupPredictionLines2,
       americanMoneylinePair: americanMoneylinePair2,
-      roundMatchupN
+      roundMatchupN,
+      finishedScheduleGameDedupeKey
     };
   }
 });

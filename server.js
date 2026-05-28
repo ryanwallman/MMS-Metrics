@@ -37,6 +37,7 @@ const {
   loadPowerRankingsCaptainMap,
   lookupPowerRankingsCaptain,
 } = require("./lib/powerRankingsCaptains");
+const { buildPowerRankingsPageData } = require("./lib/powerRankingsPageData");
 const { careerIncludes2025Set } = require("./data/careerIncludes2025Names");
 const {
   parseMissingNorms,
@@ -84,6 +85,7 @@ const {
   buildLeaderboardSlateFromToken,
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
+  resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
 
 const app = express();
@@ -1707,89 +1709,29 @@ app.get("/power-rankings", (req, res) => {
 
 app.get("/rankings/power", async (req, res) => {
   try {
-    const [
-      teams,
-      careerByPlayer,
-      hist2025ByPlayer,
-      stats2026ByPlayer,
-      scheduleRows,
-      defenseMap,
-      captainMap,
-    ] = await Promise.all([
-      loadTeamRosters(),
-      loadCareerByPlayer(),
-      load2025HistoricalByPlayer(),
-      load2026StatsByPlayer(),
-      fetchCsvRows(SCHEDULE_URL),
-      loadDefensiveRatingsNormalizedMap(),
-      loadPowerRankingsCaptainMap(),
-    ]);
-
-    const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
-    const { moments } = weightedMomentsPerMetric(bundles);
-    const leagueRows = buildOffensivePlayerRows(
-      teams,
-      careerByPlayer,
-      hist2025ByPlayer,
-      stats2026ByPlayer,
-      moments
-    );
-
-    const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-    const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
-    const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
-    const currentRankings = buildPowerRankingsCurrentRows(teamSections, captainMap);
-
-    const runBase = leagueRunScoringBaseline(parsedScheduleGames);
-    const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
-    const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-    const teamOverallById = new Map();
-    for (const sec of teamSections) {
-      teamOverallById.set(normalizeScheduleTeamId(sec.teamId), sec);
+    if (STATIC_EXPORT) {
+      return renderPage(res, "power-rankings", {
+        navActive: "power",
+        pageTitle: "Power Rankings",
+        clientSidePowerRankings: true,
+        regularSeasonGames: REGULAR_SEASON_GAMES,
+        currentRankings: [],
+        projectionRows: [],
+        remainingGamesSimulated: 0,
+        remainingGamesTotal: 0,
+        teamOverallWeights: {
+          player: TEAM_OVERALL_WEIGHT_PLAYER,
+          record: TEAM_OVERALL_WEIGHT_RECORD,
+          sos: TEAM_OVERALL_WEIGHT_SOS,
+        },
+      });
     }
 
-    const rosterByTeamId = {};
-    for (const t of teams) {
-      rosterByTeamId[t.teamId] = { players: t.players || [], teamName: t.teamName };
-    }
-
-    const { zByNorm: defenseZByNorm } = buildDefenseZByNorm(defenseMap, stats2026ByPlayer);
-    const teamProfiles = buildTeamMatchupProfiles(
-      teams,
-      rosterByTeamId,
-      offenseRatingByNorm,
-      stats2026ByPlayer,
-      defenseZByNorm,
-      standingsMap,
-      teamOverallById,
-      scheduleRunRates
-    );
-    const leagueNorms = buildMatchupLeagueNorms(teamProfiles);
-
-    const projection = projectSeasonStandings(
-      teams,
-      standingsMap,
-      teamProfiles,
-      leagueNorms,
-      runBase,
-      parsedScheduleGames
-    );
-    attachPowerRatingsToProjections(projection.rows, teamSections);
-    attachCaptainsToProjectionRows(projection.rows, captainMap);
-
+    const data = await buildPowerRankingsPageData();
     renderPage(res, "power-rankings", {
       navActive: "power",
       pageTitle: "Power Rankings",
-      regularSeasonGames: REGULAR_SEASON_GAMES,
-      currentRankings,
-      projectionRows: projection.rows,
-      remainingGamesSimulated: projection.remainingGamesSimulated,
-      remainingGamesTotal: projection.remainingGamesTotal,
-      teamOverallWeights: {
-        player: TEAM_OVERALL_WEIGHT_PLAYER,
-        record: TEAM_OVERALL_WEIGHT_RECORD,
-        sos: TEAM_OVERALL_WEIGHT_SOS,
-      },
+      ...data,
     });
   } catch (error) {
     res.status(500).send(`Failed to build power rankings: ${error.message}`);
@@ -1931,6 +1873,7 @@ app.get("/dfs", async (req, res) => {
     }
 
     const firebaseClientConfig = getFirebaseClientConfig();
+    const lockDeadline = resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs);
 
     renderPage(res, "dfs-lineup", {
       navActive: "dfs",
@@ -1940,6 +1883,8 @@ app.get("/dfs", async (req, res) => {
       activeSlateToken,
       allSlatesLocked,
       canEdit,
+      dfsLockDeadlineMs: lockDeadline.deadlineMs,
+      dfsLockDeadlineLabel: lockDeadline.deadlineLabel,
       selectedSlate: slate?.viewToken || "",
       clientSidePool: STATIC_EXPORT,
       playerPool: STATIC_EXPORT ? [] : playerPoolWithStats,

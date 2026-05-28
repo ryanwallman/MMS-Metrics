@@ -199,6 +199,15 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:league-leaders failed"))));
   });
 
+  console.log("[static] Building power rankings client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:power-rankings"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:power-rankings failed"))));
+  });
+
   console.log("[static] Building DFS lineup pool client bundle…");
   await new Promise((resolve, reject) => {
     const child = spawn("npm", ["run", "build:dfs-lineup-pool"], {

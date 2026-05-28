@@ -214,10 +214,17 @@
           
           <a
             href="/dfs/slate/D20260527"
-            class="dfs-slate-chip dfs-slate-chip--open"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260527"
             
-          >Wed, 27-May · open</a>
+          >Wed, 27-May · locked</a>
+          
+          <a
+            href="/dfs/slate/W5"
+            class="dfs-slate-chip dfs-slate-chip--open"
+            data-slate="W5"
+            
+          >Sun, 31-May • Week 5 · open</a>
           
         </nav>
         <input type="hidden" name="lineup" id="lineupInput" value="" />
@@ -227,7 +234,7 @@
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
         <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
         
-        <a href="/dfs?slate=D20260527" class="dfs-slate-lock-link">Go to open slate</a>
+        <a href="/dfs?slate=W5" class="dfs-slate-lock-link">Go to open slate</a>
         
       </p>
       
@@ -493,11 +500,37 @@
     <script type="module" src="/js/dfs-lineup-pool.js?v=1"></script>
     
 
+    <script type="module">
+      import {
+        setupLineupLockCountdown,
+        navigateToOpenDfsSlate,
+      } from "/js/dfs-lock-countdown.js?v=1";
+
+      const initialDeadline =
+        1778716799999;
+
+      setupLineupLockCountdown({
+        deadlineMs: initialDeadline,
+        onLocked: () => navigateToOpenDfsSlate(null),
+      });
+    </script>
+
     <script>
       window.initDfsLineupPage = function () {
         const LINEUP_SIZE = 8;
         const SALARY_CAP = 60000;
-        const CAN_EDIT = false;
+        var CAN_EDIT = false;
+        window.setDfsCanEdit = function (editable) {
+          CAN_EDIT = !!editable;
+          const page = document.querySelector(".dfs-page");
+          if (page) page.classList.toggle("dfs-page--readonly", !CAN_EDIT);
+          const poolSection = document.getElementById("dfsPoolSection");
+          if (poolSection) poolSection.hidden = !CAN_EDIT;
+          const submitPanel = document.getElementById("dfsSubmitPanel");
+          if (submitPanel) submitPanel.hidden = !CAN_EDIT;
+          const clearBtn = document.getElementById("clearLineupBtn");
+          if (clearBtn) clearBtn.disabled = !CAN_EDIT;
+        };
         const SHOW_SLATE_STATS = true;
         const STORAGE_PREFIX = "mms-dfs-lineup:";
         const slateKey = "D20260513";
@@ -514,61 +547,6 @@
           });
         });
 
-        (function setupLineupLockCountdown() {
-          const wrap = document.getElementById("dfsLockCountdown");
-          const closed = document.getElementById("dfsLockCountdownClosed");
-          const timerEl = document.getElementById("dfsLockCountdownTimer");
-          if (!wrap || !timerEl) return;
-
-          const raw = wrap.getAttribute("data-deadline-ms");
-          const deadlineMs = raw ? Number(raw) : NaN;
-          if (!Number.isFinite(deadlineMs)) {
-            wrap.hidden = true;
-            if (closed) closed.hidden = false;
-            return;
-          }
-          if (closed) closed.hidden = true;
-          wrap.hidden = false;
-
-          function pad2(n) {
-            return String(n).padStart(2, "0");
-          }
-
-          function formatRemaining(ms) {
-            if (ms <= 0) return null;
-            const totalSec = Math.floor(ms / 1000);
-            const days = Math.floor(totalSec / 86400);
-            const hours = Math.floor((totalSec % 86400) / 3600);
-            const minutes = Math.floor((totalSec % 3600) / 60);
-            const seconds = totalSec % 60;
-            const parts = [];
-            if (days > 0) parts.push(days + "d");
-            parts.push(pad2(hours) + "h");
-            parts.push(pad2(minutes) + "m");
-            parts.push(pad2(seconds) + "s");
-            return parts.join(" ");
-          }
-
-          function hidePlayerPoolAfterLock() {
-            const poolSection = document.getElementById("dfsPoolSection");
-            if (poolSection) poolSection.hidden = true;
-          }
-
-          function tick() {
-            const left = deadlineMs - Date.now();
-            const text = formatRemaining(left);
-            if (!text) {
-              timerEl.textContent = "Locked";
-              wrap.classList.add("dfs-lock-countdown--expired");
-              hidePlayerPoolAfterLock();
-              return;
-            }
-            timerEl.textContent = text;
-          }
-
-          tick();
-          window.setInterval(tick, 1000);
-        })();
 
         (function setupDfsIntroInfo() {
           const btn = document.getElementById("dfsIntroBtn");
