@@ -819,6 +819,7 @@ var require_dfs = __commonJS({
     var PITCHER_SALARY_WEIGHT = 0.08;
     var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.85;
     var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.15;
+    var DFS_DOUBLEHEADER_SALARY_BOOST = 1.18;
     var DFS_SCORING = Object.freeze({
       single: 3,
       double: 5,
@@ -969,10 +970,14 @@ var require_dfs = __commonJS({
       if (list.length >= MAX_SLATE_GAMES_PER_TEAM) return;
       list.push(matchup);
     }
-    function joinDoubleheaderLabels(labels) {
-      const slice = labels.slice(0, MAX_SLATE_GAMES_PER_TEAM);
-      if (slice.length === 2 && slice[0] === slice[1]) return slice[0];
-      return slice.join(" \xB7 ");
+    function formatDoubleheaderCellText(labels) {
+      const slice = (labels || []).slice(0, MAX_SLATE_GAMES_PER_TEAM).map((l) => safeText(l) || "\u2014");
+      if (!slice.length) return "";
+      if (slice.length === 1) return slice[0];
+      if (slice[0] === slice[1]) return slice[0];
+      return `${slice[0]}
+/
+${slice[1]}`;
     }
     function formatVsOpponents(matchups, teams) {
       if (!matchups?.length) return "";
@@ -980,7 +985,7 @@ var require_dfs = __commonJS({
         const opp = teams.find((x) => safeText(x.teamId) === safeText(m.opponentId));
         return opp?.teamName || `Team ${m.opponentId}`;
       });
-      return joinDoubleheaderLabels(labels);
+      return formatDoubleheaderCellText(labels);
     }
     function formatOpposingPitchers(matchups, teams) {
       if (!matchups?.length) return "\u2014";
@@ -989,7 +994,12 @@ var require_dfs = __commonJS({
         const name = pit?.primaryPitcher ? safeText(pit.primaryPitcher) : "";
         return name || "\u2014";
       });
-      return joinDoubleheaderLabels(labels) || "\u2014";
+      return formatDoubleheaderCellText(labels) || "\u2014";
+    }
+    function formatGameFieldsFromMatchups(matchups) {
+      if (!matchups?.length) return "\u2014";
+      const labels = matchups.map((m) => scheduleVenueFromGame(m?.game) || "\u2014");
+      return formatDoubleheaderCellText(labels) || "\u2014";
     }
     function averageOpposingPitcherTooltip(matchups, teams) {
       const pits = matchups.slice(0, MAX_SLATE_GAMES_PER_TEAM).map((m) => pitcherForTeamId(m.opponentId, teams)).filter(Boolean);
@@ -1025,13 +1035,17 @@ var require_dfs = __commonJS({
           leagueAvgRag
         });
       }
-      return salaryFromComposite(compositeSum / matchups.length);
+      let composite = compositeSum / matchups.length;
+      if (matchups.length >= 2) {
+        composite = Math.min(1, composite * DFS_DOUBLEHEADER_SALARY_BOOST);
+      }
+      return salaryFromComposite(composite);
     }
     function averageFantasyPointsFromLogs(logs) {
       if (!logs.length) return { points: 0, games: 0 };
       const total = logs.reduce((sum, l) => sum + l.points, 0);
       return {
-        points: Math.round(total / logs.length * 10) / 10,
+        points: Math.round(total / logs.length),
         games: logs.length
       };
     }
@@ -1437,16 +1451,6 @@ var require_dfs = __commonJS({
         }
       }
       const leagueAvgRag = ragValues.length > 0 ? ragValues.reduce((a, b) => a + b, 0) / ragValues.length : 12;
-      const venueByTeam = /* @__PURE__ */ new Map();
-      for (const g of slate.games) {
-        const label = scheduleVenueFromGame(g);
-        if (!label) continue;
-        for (const tid of [safeText(g.awayTeamId), safeText(g.homeTeamId)]) {
-          if (!tid) continue;
-          if (!venueByTeam.has(tid)) venueByTeam.set(tid, /* @__PURE__ */ new Set());
-          venueByTeam.get(tid).add(label);
-        }
-      }
       const matchupByTeam = /* @__PURE__ */ new Map();
       for (const g of slate.games) {
         const awayId = safeText(g.awayTeamId);
@@ -1461,8 +1465,7 @@ var require_dfs = __commonJS({
         const matchups = matchupByTeam.get(tid) || [];
         const primary = matchups[0];
         const teamCode = teamCodeById.get(tid) || "";
-        const venueSet = venueByTeam.get(tid);
-        const venueJoined = venueSet && venueSet.size ? [...venueSet].join(" \xB7 ") : scheduleVenueFromGame(primary?.game);
+        const gameField = formatGameFieldsFromMatchups(matchups);
         const opponentName = formatVsOpponents(matchups, teams);
         const opposingPitcher = formatOpposingPitchers(matchups, teams);
         const pitcherTooltip = averageOpposingPitcherTooltip(matchups, teams);
@@ -1496,7 +1499,7 @@ var require_dfs = __commonJS({
             pitcherBaa: pitcherTooltip.baa,
             pitcherRunsG: pitcherTooltip.runsG,
             pa2026: row26 ? toNumber(row26.PA) : 0,
-            gameField: venueJoined || "\u2014",
+            gameField,
             gameLabel,
             scheduledGames,
             doubleHeader
@@ -1601,7 +1604,7 @@ var require_dfs = __commonJS({
           games
         });
       }
-      return { total: Math.round(total * 10) / 10, breakdown };
+      return { total: Math.round(total), breakdown };
     }
     function resolvePreviousDfsSlate(currentViewToken, schedulePayload) {
       const v = safeText(currentViewToken).toUpperCase();
@@ -1662,7 +1665,7 @@ var require_dfs = __commonJS({
           games: row.games
         });
       }
-      return { total: Math.round(total * 10) / 10, breakdown };
+      return { total: Math.round(total), breakdown };
     }
     function referenceIsoForScheduleYear(calendarYear) {
       const now = /* @__PURE__ */ new Date();

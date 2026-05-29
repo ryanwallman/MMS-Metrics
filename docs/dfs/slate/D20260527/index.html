@@ -433,7 +433,7 @@
             <h2 class="section-heading">Player pool</h2>
             <p class="dfs-doubleheader-note" role="note">
               <span class="dfs-doubleheader-badge" aria-hidden="true">2G</span>
-              Doubleheader — two games this slate; fantasy points are averaged per game (not doubled). Salary uses the average matchup.
+              Doubleheader — two games this slate. Points are the average of both games, rounded to a whole number. Salary includes a modest boost for extra plate appearances.
             </p>
             <div class="dfs-pool-toolbar-actions">
               <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
@@ -741,7 +741,7 @@
           for (const norm of lineup) {
             total += (slatePointsByNorm[norm] || { points: 0 }).points;
           }
-          return Math.round(total * 10) / 10;
+          return Math.round(total);
         }
 
         function updateLineupHeadingScore(total) {
@@ -799,8 +799,8 @@
               list.appendChild(li);
             }
           }
-          const rounded = Math.round(total * 10) / 10;
-          if (totalEl) totalEl.textContent = rounded.toString();
+          const rounded = Math.round(total);
+          if (totalEl) totalEl.textContent = String(rounded);
           updateLineupHeadingScore(rounded);
         }
 
@@ -837,7 +837,7 @@
               " gm</span>";
             list.appendChild(li);
           }
-          totalEl.textContent = (Math.round(total * 10) / 10).toString();
+          totalEl.textContent = String(Math.round(total));
         }
 
         function syncUi() {

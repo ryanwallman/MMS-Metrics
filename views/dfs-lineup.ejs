@@ -348,7 +348,7 @@
             <h2 class="section-heading">Player pool</h2>
             <p class="dfs-doubleheader-note" role="note">
               <span class="dfs-doubleheader-badge" aria-hidden="true">2G</span>
-              Doubleheader — two games this slate; fantasy points are averaged per game (not doubled). Salary uses the average matchup.
+              Doubleheader — two games this slate. Points are the average of both games, rounded to a whole number. Salary includes a modest boost for extra plate appearances.
             </p>
             <div class="dfs-pool-toolbar-actions">
               <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
@@ -398,15 +398,14 @@
                 <% } else { playerPool.forEach((p) => { %>
                 <% const inLineup = lineupNorms.includes(p.norm); %>
                 <tr
-                  class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %><%= p.doubleHeader ? ' dfs-player-row--double-header' : '' %>"
+                  class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %>"
                   data-norm="<%= p.norm %>"
                   data-name="<%= p.name %>"
                   data-team="<%= p.teamName %>"
                   data-salary="<%= p.salary %>"
-                  data-field="<%- String(p.gameField != null ? p.gameField : '—').replace(/&/g, '&amp;').replace(/"/g, '&quot;') %>"
+                  data-field="<%- String(p.gameField != null ? p.gameField : '—').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/\n/g, ' ') %>"
                   data-points="<%= p.slatePoints != null ? p.slatePoints : 0 %>"
                   data-games="<%= p.slateGames != null ? p.slateGames : 0 %>"
-                  <% if (p.doubleHeader) { %>data-double-header="1" title="Doubleheader — 2 games; points averaged per game"<% } %>
                 >
                   <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %>
                   <td>
@@ -422,14 +421,14 @@
                     <%= p.name %><% if (p.doubleHeader) { %><span class="dfs-doubleheader-tag" title="Two games this slate">2G</span><% } %>
                   </td>
                   <td><%= p.teamName %></td>
-                  <td class="dfs-field-cell" title="Diamond / short-field from schedule (Field, Short Field)"><%= p.gameField || "—" %></td>
+                  <td class="dfs-field-cell dfs-cell-preline" title="Diamond / short-field from schedule (Field, Short Field)"><%= p.gameField || "—" %></td>
                   <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
                   <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
                   <td class="dfs-points-cell"><strong><%= p.slatePoints %></strong></td>
                   <td class="dfs-games-cell"><%= p.slateGames %></td>
                   <% } %>
-                  <td class="dfs-opp-cell"><%= p.opponentName %></td>
-                  <td class="dfs-pitcher-cell" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%= p.opposingPitcher %></td>
+                  <td class="dfs-opp-cell dfs-cell-preline"><%= p.opponentName %></td>
+                  <td class="dfs-pitcher-cell dfs-cell-preline" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%= p.opposingPitcher %></td>
                 </tr>
                 <% }); } %>
               </tbody>
@@ -698,7 +697,7 @@
           for (const norm of lineup) {
             total += (slatePointsByNorm[norm] || { points: 0 }).points;
           }
-          return Math.round(total * 10) / 10;
+          return Math.round(total);
         }
 
         function updateLineupHeadingScore(total) {
@@ -756,8 +755,8 @@
               list.appendChild(li);
             }
           }
-          const rounded = Math.round(total * 10) / 10;
-          if (totalEl) totalEl.textContent = rounded.toString();
+          const rounded = Math.round(total);
+          if (totalEl) totalEl.textContent = String(rounded);
           updateLineupHeadingScore(rounded);
         }
 
@@ -794,7 +793,7 @@
               " gm</span>";
             list.appendChild(li);
           }
-          totalEl.textContent = (Math.round(total * 10) / 10).toString();
+          totalEl.textContent = String(Math.round(total));
         }
 
         function syncUi() {

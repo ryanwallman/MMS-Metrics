@@ -72,19 +72,16 @@ function renderPoolRows(data) {
       const field = p.gameField != null ? p.gameField : "—";
       const pitcherTitle =
         p.pitcherBaa != null ? `BAA ${p.pitcherBaa}, Runs/G ${p.pitcherRunsG}` : "";
-      const dh = p.doubleHeader ? " dfs-player-row--double-header" : "";
-      const dhAttr = p.doubleHeader
-        ? ' data-double-header="1" title="Doubleheader — 2 games; points averaged per game"'
-        : "";
+      const fieldAttr = escAttr(String(field).replace(/\n/g, " "));
       return `<tr
-        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}${dh}"
+        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}"
         data-norm="${escAttr(p.norm)}"
         data-name="${escAttr(p.name)}"
         data-team="${escAttr(p.teamName)}"
         data-salary="${p.salary}"
-        data-field="${escAttr(field)}"
+        data-field="${fieldAttr}"
         data-points="${p.slatePoints != null ? p.slatePoints : 0}"
-        data-games="${p.slateGames != null ? p.slateGames : 0}"${dhAttr}
+        data-games="${p.slateGames != null ? p.slateGames : 0}"
       >
         ${
           showStats
@@ -101,7 +98,7 @@ function renderPoolRows(data) {
             : ""
         }</td>
         <td>${esc(p.teamName)}</td>
-        <td class="dfs-field-cell" title="Diamond / short-field from schedule">${esc(field)}</td>
+        <td class="dfs-field-cell dfs-cell-preline" title="Diamond / short-field from schedule">${esc(field)}</td>
         <td class="dfs-salary-cell">$${Number(p.salary).toLocaleString()}</td>
         ${
           showStats
@@ -109,8 +106,8 @@ function renderPoolRows(data) {
                <td class="dfs-games-cell">${esc(p.slateGames)}</td>`
             : ""
         }
-        <td class="dfs-opp-cell">${esc(p.opponentName)}</td>
-        <td class="dfs-pitcher-cell" title="${escAttr(pitcherTitle)}">${esc(
+        <td class="dfs-opp-cell dfs-cell-preline">${esc(p.opponentName)}</td>
+        <td class="dfs-pitcher-cell dfs-cell-preline" title="${escAttr(pitcherTitle)}">${esc(
           p.opposingPitcher
         )}</td>
       </tr>`;

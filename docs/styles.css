@@ -2816,12 +2816,10 @@ body > main.page-main {
   margin-right: 0;
 }
 
-.dfs-player-row--double-header {
-  background: rgba(254, 243, 199, 0.35);
-}
-
-.dfs-player-row--double-header.dfs-player-row--selected {
-  background: rgba(254, 243, 199, 0.55);
+.dfs-cell-preline {
+  white-space: pre-line;
+  line-height: 1.35;
+  vertical-align: top;
 }
 
 .dfs-player-row--selected {
