@@ -4,6 +4,7 @@
  * Run: npm run build:power-rankings
  */
 import * as esbuild from "esbuild";
+import fs from "node:fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -26,4 +27,9 @@ await esbuild.build({
   },
 });
 
+await fs.copyFile(
+  path.join(root, "client/power-rankings-viz.mjs"),
+  path.join(root, "public/js/power-rankings-viz.mjs")
+);
 console.log("Wrote public/js/power-rankings.mjs");
+console.log("Wrote public/js/power-rankings-viz.mjs");

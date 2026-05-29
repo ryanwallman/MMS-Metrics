@@ -2,6 +2,7 @@
  * Power Rankings — live data from Google Sheets (GitHub Pages + static export).
  */
 import { fetchPowerRankingsData } from "./power-rankings.mjs";
+import { mountPowerRankingsViz, renderVizTabShell } from "./power-rankings-viz.mjs";
 
 function siteBasePath() {
   const b = typeof window !== "undefined" ? window.__SITE_BASE_PATH__ : "";
@@ -52,6 +53,13 @@ function updateSiteUpdated(iso) {
     meta.insertBefore(wrap, meta.firstChild);
   }
   wrap.innerHTML = `Data updated <time datetime="${esc(iso)}">${esc(formatDataUpdatedLabel(iso))}</time>`;
+}
+
+function renderTabs() {
+  return `<nav class="power-rankings-tabs" role="tablist" aria-label="Power rankings views">
+    <button type="button" class="power-rankings-tab power-rankings-tab--active" role="tab" id="prTabRankings" aria-selected="true" aria-controls="powerRankingsPanelRankings" data-tab="rankings">Rankings</button>
+    <button type="button" class="power-rankings-tab" role="tab" id="prTabViz" aria-selected="false" aria-controls="powerRankingsPanelViz" data-tab="viz">Data Visualization</button>
+  </nav>`;
 }
 
 function renderCurrentTable(rows) {
@@ -172,12 +180,49 @@ function renderExplainer(data) {
     </section>`;
 }
 
+function renderRankingsPanel(data) {
+  return `${renderExplainer(data)}
+    ${renderCurrentTable(data.currentRankings)}
+    ${renderProjectionTable(data.projectionRows, data.regularSeasonGames)}`;
+}
+
+function wireTabs(root) {
+  const tabs = root.querySelectorAll(".power-rankings-tab");
+  const panelRankings = root.querySelector("#powerRankingsPanelRankings");
+  const panelViz = root.querySelector("#powerRankingsPanelViz");
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => {
+      const isViz = tab.dataset.tab === "viz";
+      for (const t of tabs) {
+        const active = t === tab;
+        t.classList.toggle("power-rankings-tab--active", active);
+        t.setAttribute("aria-selected", active ? "true" : "false");
+      }
+      panelRankings.hidden = isViz;
+      panelViz.hidden = !isViz;
+    });
+  }
+}
+
+let cachedVizData = null;
+
 function renderPage(data) {
   const root = document.getElementById("powerRankingsRoot");
   if (!root) return;
-  root.innerHTML = `${renderExplainer(data)}
-    ${renderCurrentTable(data.currentRankings)}
-    ${renderProjectionTable(data.projectionRows, data.regularSeasonGames)}`;
+
+  cachedVizData = data.vizData || null;
+
+  root.innerHTML = `${renderTabs()}
+    <div id="powerRankingsPanelRankings" role="tabpanel" aria-labelledby="prTabRankings">
+      ${renderRankingsPanel(data)}
+    </div>
+    <div id="powerRankingsPanelViz" role="tabpanel" aria-labelledby="prTabViz" hidden>
+      ${renderVizTabShell()}
+    </div>`;
+
+  wireTabs(root);
+  mountPowerRankingsViz(document.getElementById("powerRankingsVizRoot"), cachedVizData, esc);
   root.removeAttribute("aria-busy");
 }
 
@@ -190,8 +235,7 @@ function renderError(message) {
   root.removeAttribute("aria-busy");
   document.getElementById("powerRankingsRetry")?.addEventListener("click", () => {
     root.setAttribute("aria-busy", "true");
-    root.innerHTML =
-      '<p class="league-leaders-loading">Loading...</p>';
+    root.innerHTML = '<p class="league-leaders-loading">Loading...</p>';
     load();
   });
 }

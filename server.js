@@ -1729,11 +1729,20 @@ app.get("/rankings/power", async (req, res) => {
       });
     }
 
-    const data = await buildPowerRankingsPageData();
     renderPage(res, "power-rankings", {
       navActive: "power",
       pageTitle: "Power Rankings",
-      ...data,
+      clientSidePowerRankings: true,
+      regularSeasonGames: REGULAR_SEASON_GAMES,
+      currentRankings: [],
+      projectionRows: [],
+      remainingGamesSimulated: 0,
+      remainingGamesTotal: 0,
+      teamOverallWeights: {
+        player: TEAM_OVERALL_WEIGHT_PLAYER,
+        record: TEAM_OVERALL_WEIGHT_RECORD,
+        sos: TEAM_OVERALL_WEIGHT_SOS,
+      },
     });
   } catch (error) {
     res.status(500).send(`Failed to build power rankings: ${error.message}`);
