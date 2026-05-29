@@ -191,7 +191,7 @@ function renderError(message) {
   document.getElementById("powerRankingsRetry")?.addEventListener("click", () => {
     root.setAttribute("aria-busy", "true");
     root.innerHTML =
-      '<p class="league-leaders-loading">Loading power rankings from Google Sheets…</p>';
+      '<p class="league-leaders-loading">Loading...</p>';
     load();
   });
 }

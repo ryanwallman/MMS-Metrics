@@ -392,7 +392,7 @@
                 <% if (typeof clientSidePool !== 'undefined' && clientSidePool) { %>
                 <tr>
                   <td colspan="<%= (typeof showSlateStats !== 'undefined' && showSlateStats) ? 7 : 8 %>" class="dfs-leaderboard-empty">
-                    Loading player pool and salaries from Google Sheets…
+                    Loading...
                   </td>
                 </tr>
                 <% } else { playerPool.forEach((p) => { %>
@@ -923,7 +923,7 @@
             try {
               btn.disabled = true;
               const prevLabel = btn.textContent;
-              btn.textContent = "Loading…";
+              btn.textContent = "Loading...";
               await pullLineupFromDatabase();
               btn.textContent = prevLabel;
             } catch (err) {

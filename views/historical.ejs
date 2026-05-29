@@ -11,7 +11,7 @@
 
       <% if (typeof clientSideLeaders !== 'undefined' && clientSideLeaders) { %>
       <div id="leagueLeadersRoot" aria-busy="true" aria-live="polite">
-        <p class="league-leaders-loading">Loading league leaders from Google Sheets…</p>
+        <p class="league-leaders-loading">Loading...</p>
       </div>
       <script type="module" src="<%= sitePath('/js/league-leaders.js') %>?v=<%= assetVersion %>"></script>
       <% } else { %>

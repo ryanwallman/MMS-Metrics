@@ -477,7 +477,7 @@
                 
                 <tr>
                   <td colspan="7" class="dfs-leaderboard-empty">
-                    Loading player pool and salaries from Google Sheets…
+                    Loading...
                   </td>
                 </tr>
                 
@@ -967,7 +967,7 @@
             try {
               btn.disabled = true;
               const prevLabel = btn.textContent;
-              btn.textContent = "Loading…";
+              btn.textContent = "Loading...";
               await pullLineupFromDatabase();
               btn.textContent = prevLabel;
             } catch (err) {

@@ -126,7 +126,7 @@ function renderError(message) {
   document.getElementById("leagueLeadersRetry")?.addEventListener("click", () => {
     root.setAttribute("aria-busy", "true");
     root.innerHTML =
-      '<p class="league-leaders-loading">Loading league leaders from Google Sheets…</p>';
+      '<p class="league-leaders-loading">Loading...</p>';
     load();
   });
 }

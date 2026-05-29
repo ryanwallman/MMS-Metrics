@@ -11,6 +11,14 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
@@ -58,11 +66,6 @@
       
     </nav>
     <div class="site-header-meta">
-      
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:29.368Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
       
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
@@ -118,104 +121,12 @@
               Sun, 17-May • Week 4
             </option>
             
-            <option value="D20260527" selected>
+            <option value="D20260527" >
               Wed, 27-May
             </option>
             
-            <option value="W5" >
+            <option value="W5" selected>
               Sun, 31-May • Week 5
-            </option>
-            
-            <option value="D20260603" >
-              Wed, 3-Jun
-            </option>
-            
-            <option value="W6" >
-              Sun, 7-Jun • Week 6
-            </option>
-            
-            <option value="D20260610" >
-              Wed, 10-Jun
-            </option>
-            
-            <option value="W7" >
-              Sun, 14-Jun • Week 7
-            </option>
-            
-            <option value="D20260617" >
-              Wed, 17-Jun
-            </option>
-            
-            <option value="W8" >
-              Sun, 21-Jun • Week 8
-            </option>
-            
-            <option value="D20260624" >
-              Wed, 24-Jun
-            </option>
-            
-            <option value="W9" >
-              Sun, 28-Jun • Week 9
-            </option>
-            
-            <option value="D20260701" >
-              Wed, 1-Jul
-            </option>
-            
-            <option value="W10" >
-              Sun, 5-Jul • Week 10
-            </option>
-            
-            <option value="D20260708" >
-              Wed, 8-Jul
-            </option>
-            
-            <option value="W11" >
-              Sun, 12-Jul • Week 11
-            </option>
-            
-            <option value="D20260715" >
-              Wed, 15-Jul
-            </option>
-            
-            <option value="W12" >
-              Sun, 19-Jul • Week 12
-            </option>
-            
-            <option value="D20260722" >
-              Wed, 22-Jul
-            </option>
-            
-            <option value="W13" >
-              Sun, 26-Jul • Week 13
-            </option>
-            
-            <option value="D20260729" >
-              Wed, 29-Jul
-            </option>
-            
-            <option value="W14" >
-              Sun, 2-Aug • Week 14
-            </option>
-            
-            <option value="D20260805" >
-              Wed, 5-Aug
-            </option>
-            
-            <option value="W15" >
-              Sun, 9-Aug • Week 15
-            </option>
-            
-            <option value="W16" >
-              Sun, 16-Aug • Week 16
-            </option>
-            
-            <option value="W17" >
-              Sun, 23-Aug • Week 17
-            </option>
-            
-            <option value="W18" >
-              Sun, 30-Aug • Week 18
             </option>
             
           </select>
@@ -231,12 +142,52 @@
           >
             <option value="" selected>— Select a game —</option>
             
-            <option value="17|1" >
-              EB CONSTRUCTION @ ENGAGE PEO · 8:15 PM
+            <option value="5|17" >
+              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM
             </option>
             
-            <option value="12|5" >
-              LHRGC LAW @ GODDARD HOME · 8:15 PM
+            <option value="10|13" >
+              GAME CHANGER @ MONMOUTH GYM · 8:30 AM
+            </option>
+            
+            <option value="14|11" >
+              NEW HORIZON @ SHORE SMILE · 8:30 AM
+            </option>
+            
+            <option value="7|1" >
+              FRADKIN LAW @ ENGAGE PEO · 9:00 AM
+            </option>
+            
+            <option value="12|15" >
+              LHRGC LAW @ TEC-TEL · 9:00 AM
+            </option>
+            
+            <option value="8|2" >
+              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM
+            </option>
+            
+            <option value="17|13" >
+              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM
+            </option>
+            
+            <option value="18|6" >
+              CG TAX @ PROCARE · 10:30 AM
+            </option>
+            
+            <option value="5|1" >
+              GODDARD HOME @ ENGAGE PEO · 10:45 AM
+            </option>
+            
+            <option value="11|7" >
+              SHORE SMILE @ FRADKIN LAW · 10:45 AM
+            </option>
+            
+            <option value="3|9" >
+              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM
+            </option>
+            
+            <option value="16|4" >
+              TUSCANYROSE @ URWAY HEALTH · 6:00 PM
             </option>
             
           </select>
@@ -245,7 +196,7 @@
       <noscript><button type="submit">Go</button></noscript>
 
     
-    <p class="matchup-predictor-summary">Wed, 27-May</p>
+    <p class="matchup-predictor-summary">Week 5 (Sun, 31-May games only)</p>
     
 
     
@@ -260,6 +211,9 @@
 
     </form>
     </main>
+    
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
     
     <script>
       (function () {

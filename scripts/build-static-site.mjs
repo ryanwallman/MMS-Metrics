@@ -8,6 +8,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
+import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 
 const require = createRequire(import.meta.url);
 const { matchupKeyToSlug } = require("../lib/matchupSlug.js");
@@ -316,7 +317,11 @@ async function main() {
         await writeRoute(html, route);
       });
     } else {
-      console.log("[static] STATIC_SKIP_MATCHUP=1 — keeping existing matchup pages in docs/");
+      console.log(
+        "[static] STATIC_SKIP_MATCHUP=1 — refreshing /matchup-predictor index, keeping view pages"
+      );
+      const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
+      await writeRoute(rootMatchupHtml, "/matchup-predictor");
     }
 
     // Export pretty DFS links for static navigation.
@@ -348,6 +353,17 @@ async function main() {
     console.log("[static] Copying public/ …");
     await copyDir(path.join(root, "public"), outDir);
     await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
+
+    const matchupDir = path.join(outDir, "matchup-predictor");
+    try {
+      await fs.access(matchupDir);
+      const { patched, skipped } = await patchMatchupPredictorNavHtml(matchupDir, siteBase);
+      console.log(
+        `[static] Matchup nav script: patched ${patched} page(s), ${skipped} already had it`
+      );
+    } catch {
+      /* no matchup export */
+    }
 
     if (customDomain) {
       await fs.writeFile(path.join(outDir, "CNAME"), `${customDomain}\n`);

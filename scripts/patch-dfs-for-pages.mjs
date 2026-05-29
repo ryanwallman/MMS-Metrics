@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Fast GitHub Pages patch: rebuild DFS JS bundles and re-export DFS/leaderboard HTML only.
- * Does not touch matchup-predictor static pages (full build: npm run build:pages).
+ * Fast GitHub Pages patch: rebuild DFS JS bundles and re-export DFS/leaderboard HTML.
+ * Also refreshes matchup-predictor index + nav redirect script (not full view export).
  */
 import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
@@ -112,6 +113,7 @@ async function main() {
   await runNpm("build:leaderboard-lineup");
   await runNpm("build:dfs-lineup-pool");
   await runNpm("build:matchup-predictor");
+  await runNpm("build:matchup-predictor-nav");
 
   const careerSrc = path.join(root, "data/csv/career.csv");
   const careerDest = path.join(root, "public/data/csv/career.csv");
@@ -168,6 +170,9 @@ async function main() {
       );
       await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
     }
+
+    const matchupHtml = await fetchHtml("/matchup-predictor");
+    await writeRoute(matchupHtml, "/matchup-predictor");
   } finally {
     if (!server.killed) server.kill("SIGKILL");
   }
@@ -194,6 +199,18 @@ async function main() {
     }
   }
   await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
+
+  const matchupDir = path.join(outDir, "matchup-predictor");
+  try {
+    await fs.access(matchupDir);
+    const { patched, skipped } = await patchMatchupPredictorNavHtml(matchupDir, siteBase);
+    console.log(
+      `[patch-dfs] Matchup nav script: patched ${patched} page(s), ${skipped} already had it`
+    );
+  } catch {
+    /* no matchup pages */
+  }
+
   console.log("[patch-dfs] Copied public assets → docs/");
   console.log("[patch-dfs] Done.");
 }

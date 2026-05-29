@@ -194,7 +194,7 @@ function setStatus(message, isError) {
 
 function setLoadingMessage() {
   const el = document.querySelector(".dfs-leaderboard-loading-screen__title");
-  if (el) el.textContent = "Loading";
+  if (el) el.textContent = "Loading...";
 }
 
 function showLoadingScreen() {
