@@ -1454,12 +1454,22 @@ body > main.page-main {
 
 .power-rankings-viz-root {
   margin-top: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+#powerRankingsPanelViz {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .pr-viz-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pr-viz-card {
@@ -1468,6 +1478,14 @@ body > main.page-main {
   background: #fff;
   padding: 16px 16px 18px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.pr-viz-mount {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pr-viz-card__head {
@@ -1534,6 +1552,13 @@ body > main.page-main {
 .pr-bar-race__chart-wrap {
   max-height: 420px;
   overflow: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pr-bar-race {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pr-bar-race__chart {
@@ -1584,12 +1609,25 @@ body > main.page-main {
   font-variant-numeric: tabular-nums;
 }
 
+.pr-radar {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .pr-radar__pickers {
   display: flex;
   flex-wrap: wrap;
   gap: 12px 20px;
   margin-bottom: 10px;
   font-size: 14px;
+}
+
+.pr-radar__pickers label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1 1 140px;
 }
 
 .pr-radar__pickers select {
@@ -1626,10 +1664,25 @@ body > main.page-main {
   fill: #64748b;
 }
 
+.pr-trend {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pr-trend__scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 .pr-trend__svg {
   width: 100%;
   height: auto;
   display: block;
+  min-width: 280px;
+  max-width: 720px;
 }
 
 .pr-trend__tick {
@@ -1675,6 +1728,81 @@ body > main.page-main {
 .pr-heat-wrap {
   max-height: 420px;
   overflow: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pr-heat-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pr-heat-tier {
+  border: 1px solid var(--mms-border, #e2e8f0);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.pr-heat-tier--a {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.pr-heat-tier--b {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.pr-heat-tier--c {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.pr-heat-tier__title {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.pr-heat-tier__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.pr-heat-tier--a .pr-heat-tier__badge {
+  background: #22c55e;
+  color: #fff;
+}
+
+.pr-heat-tier--b .pr-heat-tier__badge {
+  background: #f59e0b;
+  color: #fff;
+}
+
+.pr-heat-tier--c .pr-heat-tier__badge {
+  background: #64748b;
+  color: #fff;
+}
+
+.pr-heat-tier .pr-heat-wrap {
+  max-height: none;
+  border-radius: 0;
 }
 
 .pr-heat-table th,
@@ -1712,14 +1840,90 @@ body > main.page-main {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
+  .power-rankings-tabs {
+    gap: 6px;
+  }
+
+  .power-rankings-tab {
+    flex: 1 1 calc(50% - 6px);
+    padding: 10px 12px;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .pr-viz-card {
+    padding: 12px;
+  }
+
+  .pr-viz-card__title {
+    font-size: 16px;
+  }
+
+  .pr-viz-card__desc {
+    font-size: 13px;
+  }
+
+  .pr-bar-race__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pr-bar-race__scrub-label {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+
   .pr-bar-race__row {
-    grid-template-columns: 24px minmax(64px, 1fr) minmax(0, 1.5fr) 44px;
+    grid-template-columns: 20px minmax(0, 1fr) minmax(0, 1.6fr) 38px;
     gap: 4px;
   }
 
+  .pr-bar-race__name,
+  .pr-bar-race__value {
+    font-size: 11px;
+  }
+
+  .pr-radar__pickers {
+    flex-direction: column;
+  }
+
+  .pr-radar__pickers label {
+    width: 100%;
+  }
+
   .pr-radar__pickers select {
-    min-width: 120px;
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    max-width: 100%;
+  }
+
+  .pr-trend__legend {
+    max-height: 96px;
+  }
+
+  .pr-heat-table {
+    font-size: 12px;
+  }
+
+  .pr-heat-cell {
+    min-width: 44px;
+    padding: 6px 4px;
+  }
+
+  .pr-heat-team {
+    font-size: 12px;
+    max-width: 7.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 640px) {
+  .pr-bar-race__row {
+    grid-template-columns: 18px minmax(0, 0.9fr) minmax(0, 1.4fr) 34px;
   }
 }
 

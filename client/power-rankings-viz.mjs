@@ -2,7 +2,7 @@
  * Power rankings data visualizations (bar race, radar, trends, heatmap).
  */
 
-const ROW_H = 34;
+const ROW_H = 30;
 
 export function mountPowerRankingsViz(root, vizData, esc) {
   if (!root || !vizData) return;
@@ -339,11 +339,13 @@ function mountPowerTrend(mount, vizData, esc) {
 
   mount.innerHTML = `
     <div class="pr-trend">
-      <svg class="pr-trend__svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="Weekly power rating trends">
-        ${grid}
-        ${paths}
-        ${xLabels}
-      </svg>
+      <div class="pr-trend__scroll">
+        <svg class="pr-trend__svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Weekly power rating trends">
+          ${grid}
+          ${paths}
+          ${xLabels}
+        </svg>
+      </div>
       <div class="pr-trend__legend"></div>
     </div>`;
 
@@ -388,36 +390,55 @@ function mountStatHeatmap(mount, vizData, esc) {
   }
 
   const sorted = [...profiles].sort((a, b) => b.ops - a.ops);
+  const tierSize = Math.ceil(sorted.length / 3);
+  const tiers = [
+    { key: "A", label: "Tier A", teams: sorted.slice(0, tierSize) },
+    { key: "B", label: "Tier B", teams: sorted.slice(tierSize, tierSize * 2) },
+    { key: "C", label: "Tier C", teams: sorted.slice(tierSize * 2) },
+  ].filter((t) => t.teams.length);
+
   const head = categories.map((c) => `<th>${esc(c.label)}</th>`).join("");
-  const body = sorted
-    .map((team) => {
-      const cells = categories
-        .map((cat) => {
-          const val = team[cat.key];
-          const display =
-            cat.key === "hr" ? Math.round(val) : Number.isFinite(val) ? val.toFixed(3) : "—";
-          return `<td class="pr-heat-cell" style="${team.heatStyle[cat.key] || ""}">${display}</td>`;
-        })
-        .join("");
-      return `<tr>
+
+  function renderTierRows(teams) {
+    return teams
+      .map((team) => {
+        const cells = categories
+          .map((cat) => {
+            const val = team[cat.key];
+            const display =
+              cat.key === "hr" ? Math.round(val) : Number.isFinite(val) ? val.toFixed(3) : "—";
+            return `<td class="pr-heat-cell" style="${team.heatStyle[cat.key] || ""}">${display}</td>`;
+          })
+          .join("");
+        return `<tr>
         <th scope="row" class="pr-heat-team">
           <span class="pr-heat-dot" style="background:${team.color}"></span>${esc(team.teamName)}
         </th>
         ${cells}
       </tr>`;
-    })
+      })
+      .join("");
+  }
+
+  const tierBlocks = tiers
+    .map(
+      (tier) => `<section class="pr-heat-tier pr-heat-tier--${tier.key.toLowerCase()}">
+      <h4 class="pr-heat-tier__title"><span class="pr-heat-tier__badge">${tier.key}</span> ${esc(tier.label)}</h4>
+      <div class="rankings-table-wrap pr-heat-wrap">
+        <table class="page-table pr-heat-table">
+          <thead>
+            <tr><th>Team</th>${head}</tr>
+          </thead>
+          <tbody>${renderTierRows(tier.teams)}</tbody>
+        </table>
+      </div>
+    </section>`
+    )
     .join("");
 
   mount.innerHTML = `
-    <div class="rankings-table-wrap pr-heat-wrap">
-      <table class="page-table pr-heat-table">
-        <thead>
-          <tr><th>Team</th>${head}</tr>
-        </thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>
-    <p class="pr-viz-footnote">Darker green = higher value within each stat column.</p>`;
+    <div class="pr-heat-tiers">${tierBlocks}</div>
+    <p class="pr-viz-footnote">Teams grouped by overall OPS (Tier A highest). Green = stronger within each stat column.</p>`;
 }
 
 export function renderVizTabShell() {
