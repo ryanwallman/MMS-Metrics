@@ -2863,6 +2863,11 @@ var require_dfsLeaderboardScoringContext = __commonJS({
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
 var import_dfs = __toESM(require_dfs(), 1);
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
+function hideLoadingOverlay() {
+  if (typeof window !== "undefined" && window.MmsLoadingScreen) {
+    window.MmsLoadingScreen.hide();
+  }
+}
 function sitePath(path) {
   const base = typeof window !== "undefined" && window.__SITE_BASE_PATH__ != null ? String(window.__SITE_BASE_PATH__) : "";
   const p = path.startsWith("/") ? path : `/${path}`;
@@ -2876,16 +2881,33 @@ function hasViewQueryParams(url) {
 }
 async function ensureMatchupPredictorActiveView() {
   const path = window.location.pathname || "";
-  if (path.includes("/view/")) return;
+  if (path.includes("/view/")) {
+    hideLoadingOverlay();
+    return;
+  }
   const url = new URL(window.location.href);
-  if (hasViewQueryParams(url)) return;
-  const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
-  const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
-  const active = (0, import_dfs.pickMatchupPredictorDefaultView)(payload, refIso);
-  if (!active) return;
-  const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
-  if (path.endsWith(target) || path.includes(`/view/${encodeURIComponent(active)}`)) return;
-  window.location.replace(target);
+  if (hasViewQueryParams(url)) {
+    hideLoadingOverlay();
+    return;
+  }
+  try {
+    const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
+    const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
+    const active = (0, import_dfs.pickMatchupPredictorDefaultView)(payload, refIso);
+    if (!active) {
+      hideLoadingOverlay();
+      return;
+    }
+    const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
+    if (path.endsWith(target) || path.includes(`/view/${encodeURIComponent(active)}`)) {
+      hideLoadingOverlay();
+      return;
+    }
+    window.location.replace(target);
+  } catch (err) {
+    hideLoadingOverlay();
+    throw err;
+  }
 }
 if (typeof window !== "undefined") {
   ensureMatchupPredictorActiveView().catch((err) => {

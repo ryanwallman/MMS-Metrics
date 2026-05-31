@@ -2,6 +2,11 @@
  * Weekly DFS leaderboard (client fallback when the page is not server-rendered).
  */
 import { scoreWeeklyLeaderboard, fetchLiveSlateDefaults } from "./dfs-leaderboard-scoring.mjs";
+import {
+  showMmsLoadingScreen,
+  hideMmsLoadingScreen,
+  setMmsLoadingMessage,
+} from "./mms-loading-screen.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
@@ -193,30 +198,15 @@ function setStatus(message, isError) {
 }
 
 function setLoadingMessage() {
-  const el = document.querySelector(".dfs-leaderboard-loading-screen__title");
-  if (el) el.textContent = "Loading...";
+  setMmsLoadingMessage();
 }
 
 function showLoadingScreen() {
-  const screen = document.getElementById("leaderboardLoadingScreen");
-  if (screen) {
-    screen.hidden = false;
-    screen.setAttribute("aria-busy", "true");
-  }
-  document.body.classList.remove("leaderboard-ready");
-  const main = document.querySelector(".dfs-leaderboard-page");
-  if (main) main.classList.add("dfs-leaderboard-page--loading");
+  showMmsLoadingScreen();
 }
 
 function hideLoadingScreen() {
-  const screen = document.getElementById("leaderboardLoadingScreen");
-  if (screen) {
-    screen.hidden = true;
-    screen.setAttribute("aria-busy", "false");
-  }
-  document.body.classList.add("leaderboard-ready");
-  const main = document.querySelector(".dfs-leaderboard-page");
-  if (main) main.classList.remove("dfs-leaderboard-page--loading");
+  hideMmsLoadingScreen();
 }
 
 function updateWeeklyBanner(data, pageCtx) {

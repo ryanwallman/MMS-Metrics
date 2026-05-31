@@ -4,6 +4,7 @@
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { loadLineupDetail } from "./dfs-leaderboard-lineup.mjs";
+import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
 
 const config = window.__FIREBASE_CONFIG__;
 
@@ -33,9 +34,11 @@ function paramsFromUrl() {
 function renderError(message) {
   const main = document.getElementById("lineupDetailMain");
   if (!main) return;
+  main.classList.remove("mms-page-main--loading");
   main.innerHTML = `<section class="dfs-leaderboard-alert dfs-leaderboard-alert--error" role="alert"><p>${esc(
     message
   )}</p><p><a href="${siteUrl("/dfs/leaderboard")}" class="dfs-btn">← Leaderboard</a></p></section>`;
+  hideMmsLoadingScreen();
 }
 
 function renderDetail(detail, week) {
@@ -104,6 +107,8 @@ function renderDetail(detail, week) {
     </div>`;
 
   document.title = `${detail.displayName || "Lineup"} — ${detail.slate?.label || week} — DFS`;
+  main.classList.remove("mms-page-main--loading");
+  hideMmsLoadingScreen();
 }
 
 async function main() {

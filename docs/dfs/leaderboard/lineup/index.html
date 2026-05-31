@@ -76,11 +76,24 @@
 </header>
 
 
-    <main class="page-main dfs-page dfs-lineup-view-page" id="lineupDetailMain">
-      <div class="dfs-leaderboard-loading-screen" aria-busy="true" aria-live="polite">
-        <p class="dfs-leaderboard-loading-screen__title">Loading...</p>
-      </div>
-    </main>
+    
+<div
+  id="mmsLoadingScreen"
+  class="mms-loading-screen"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  aria-label="Loading..."
+>
+  <div class="mms-loading-screen__panel">
+    <div class="mms-loading-screen__spinner" aria-hidden="true"></div>
+    <h2 class="mms-loading-screen__title">Loading...</h2>
+  </div>
+</div>
+
+
+
+    <main class="page-main dfs-page dfs-lineup-view-page mms-page-main--loading" id="lineupDetailMain"></main>
 
     
     <script>window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};</script>

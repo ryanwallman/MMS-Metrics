@@ -5,6 +5,12 @@ import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import { referenceIsoForScheduleYear, pickMatchupPredictorDefaultView } from "../lib/dfs.js";
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
 
+function hideLoadingOverlay() {
+  if (typeof window !== "undefined" && window.MmsLoadingScreen) {
+    window.MmsLoadingScreen.hide();
+  }
+}
+
 function sitePath(path) {
   const base =
     typeof window !== "undefined" && window.__SITE_BASE_PATH__ != null
@@ -23,20 +29,37 @@ function hasViewQueryParams(url) {
 
 export async function ensureMatchupPredictorActiveView() {
   const path = window.location.pathname || "";
-  if (path.includes("/view/")) return;
+  if (path.includes("/view/")) {
+    hideLoadingOverlay();
+    return;
+  }
 
   const url = new URL(window.location.href);
-  if (hasViewQueryParams(url)) return;
+  if (hasViewQueryParams(url)) {
+    hideLoadingOverlay();
+    return;
+  }
 
-  const payload = await loadWeeklySchedule();
-  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-  const active = pickMatchupPredictorDefaultView(payload, refIso);
-  if (!active) return;
+  try {
+    const payload = await loadWeeklySchedule();
+    const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+    const active = pickMatchupPredictorDefaultView(payload, refIso);
+    if (!active) {
+      hideLoadingOverlay();
+      return;
+    }
 
-  const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
-  if (path.endsWith(target) || path.includes(`/view/${encodeURIComponent(active)}`)) return;
+    const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
+    if (path.endsWith(target) || path.includes(`/view/${encodeURIComponent(active)}`)) {
+      hideLoadingOverlay();
+      return;
+    }
 
-  window.location.replace(target);
+    window.location.replace(target);
+  } catch (err) {
+    hideLoadingOverlay();
+    throw err;
+  }
 }
 
 if (typeof window !== "undefined") {

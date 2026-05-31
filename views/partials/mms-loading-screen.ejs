@@ -1,0 +1,15 @@
+<% if (typeof showMmsLoadingScreen !== 'undefined' && showMmsLoadingScreen) { %>
+<div
+  id="mmsLoadingScreen"
+  class="mms-loading-screen"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  aria-label="Loading..."
+>
+  <div class="mms-loading-screen__panel">
+    <div class="mms-loading-screen__spinner" aria-hidden="true"></div>
+    <h2 class="mms-loading-screen__title">Loading...</h2>
+  </div>
+</div>
+<% } %>

@@ -3,31 +3,20 @@
 <% const serverRendered = typeof serverRenderedStandings !== 'undefined' && serverRenderedStandings; %>
 <% const lbSlateLocked = (typeof slateLocked !== 'undefined' && slateLocked) || (slate && slate.canEdit !== true); %>
 <% const tableColspan = lbSlateLocked ? 4 : 3; %>
+<% const showPageLoading = canLoadStandings && !serverRendered; %>
 <html lang="en">
   <head>
     <%- include("partials/site-head") %>
     <title>DFS Leaderboard — Marlboro Men's Softball</title>
   </head>
-  <body class="dfs-leaderboard-page<%= serverRendered ? ' leaderboard-ready' : '' %>">
+  <body class="dfs-leaderboard-page<%= serverRendered ? ' mms-page-ready leaderboard-ready' : '' %>">
     <%- include("partials/site-header") %>
 
-    <% if (canLoadStandings && !serverRendered) { %>
-    <div
-      id="leaderboardLoadingScreen"
-      class="dfs-leaderboard-loading-screen"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      aria-label="Loading..."
-    >
-      <div class="dfs-leaderboard-loading-screen__panel">
-        <div class="dfs-leaderboard-loading-screen__spinner" aria-hidden="true"></div>
-        <h2 class="dfs-leaderboard-loading-screen__title">Loading...</h2>
-      </div>
-    </div>
+    <% if (showPageLoading) { %>
+    <%- include("partials/mms-loading-screen", { showMmsLoadingScreen: true }) %>
     <% } %>
 
-    <main class="page-main dfs-page dfs-leaderboard-page<%= canLoadStandings && !serverRendered ? ' dfs-leaderboard-page--loading' : '' %>">
+    <main class="page-main dfs-page dfs-leaderboard-page<%= showPageLoading ? ' dfs-leaderboard-page--loading mms-page-main--loading' : '' %>">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Leaderboard</h1>
         <p class="dfs-page-head-actions">
@@ -185,9 +174,9 @@
       window.addEventListener("error", function (ev) {
         var src = ev.filename || "";
         if (src.indexOf("dfs-leaderboard") === -1) return;
-        var screen = document.getElementById("leaderboardLoadingScreen");
+        var screen = document.getElementById("mmsLoadingScreen");
         if (screen) screen.hidden = true;
-        document.body.classList.add("leaderboard-ready");
+        document.body.classList.add("mms-page-ready", "leaderboard-ready");
         var status = document.getElementById("leaderboardStatus");
         if (status) {
           status.hidden = false;

@@ -340,7 +340,7 @@ async function main() {
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),
     ].map((t) => decodeURIComponent(t));
-    await mapConcurrent(Array.from(new Set(weekTokens)), 2, async (week) => {
+    await mapConcurrent(Array.from(new Set(weekTokens)), 4, async (week) => {
       const html = await fetchHtml(port, `/dfs/leaderboard?week=${encodeURIComponent(week)}`);
       await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
     });

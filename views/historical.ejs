@@ -6,13 +6,15 @@
   <body>
     <%- include("partials/site-header") %>
 
-    <main class="page-main">
+    <% if (typeof clientSideLeaders !== 'undefined' && clientSideLeaders) { %>
+    <%- include("partials/mms-loading-screen", { showMmsLoadingScreen: true }) %>
+    <% } %>
+
+    <main class="page-main<%= (typeof clientSideLeaders !== 'undefined' && clientSideLeaders) ? ' mms-page-main--loading' : '' %>">
       <h1 class="page-title">League Leaders</h1>
 
       <% if (typeof clientSideLeaders !== 'undefined' && clientSideLeaders) { %>
-      <div id="leagueLeadersRoot" aria-busy="true" aria-live="polite">
-        <p class="league-leaders-loading">Loading...</p>
-      </div>
+      <div id="leagueLeadersRoot" aria-busy="true" aria-live="polite"></div>
       <script type="module" src="<%= sitePath('/js/league-leaders.js') %>?v=<%= assetVersion %>"></script>
       <% } else { %>
       <section class="leaders-section">

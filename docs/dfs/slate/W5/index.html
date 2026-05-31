@@ -76,7 +76,26 @@
 </header>
 
 
-    <main class="page-main dfs-page dfs-page--readonly">
+    
+    
+<div
+  id="mmsLoadingScreen"
+  class="mms-loading-screen"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  aria-label="Loading..."
+>
+  <div class="mms-loading-screen__panel">
+    <div class="mms-loading-screen__spinner" aria-hidden="true"></div>
+    <h2 class="mms-loading-screen__title">Loading...</h2>
+  </div>
+</div>
+
+
+    
+
+    <main class="page-main dfs-page dfs-page--readonly mms-page-main--loading">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Lineup Builder</h1>
         <div class="dfs-page-head-actions">
@@ -575,11 +594,6 @@
               </thead>
               <tbody>
                 
-                <tr>
-                  <td colspan="7" class="dfs-leaderboard-empty">
-                    Loading...
-                  </td>
-                </tr>
                 
               </tbody>
             </table>
@@ -1403,6 +1417,7 @@
           } else if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
             syncUi();
           }
+          if (window.MmsLoadingScreen) window.MmsLoadingScreen.hide();
         }
 
         window.addEventListener(
@@ -1414,7 +1429,15 @@
         );
         if (window.DfsLineupStore) {
           initLineupForPage();
+        } else if (!window.__FIREBASE_CONFIG__?.projectId) {
+          if (window.MmsLoadingScreen) window.MmsLoadingScreen.hide();
         }
+
+        window.setTimeout(function () {
+          if (window.MmsLoadingScreen && !document.body.classList.contains("mms-page-ready")) {
+            window.MmsLoadingScreen.hide();
+          }
+        }, 20000);
       };
       
     </script>

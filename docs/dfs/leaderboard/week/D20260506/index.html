@@ -3,6 +3,7 @@
 
 
 
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -81,22 +82,25 @@
 
 
     
-    <div
-      id="leaderboardLoadingScreen"
-      class="dfs-leaderboard-loading-screen"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-      aria-label="Loading..."
-    >
-      <div class="dfs-leaderboard-loading-screen__panel">
-        <div class="dfs-leaderboard-loading-screen__spinner" aria-hidden="true"></div>
-        <h2 class="dfs-leaderboard-loading-screen__title">Loading...</h2>
-      </div>
-    </div>
+    
+<div
+  id="mmsLoadingScreen"
+  class="mms-loading-screen"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  aria-label="Loading..."
+>
+  <div class="mms-loading-screen__panel">
+    <div class="mms-loading-screen__spinner" aria-hidden="true"></div>
+    <h2 class="mms-loading-screen__title">Loading...</h2>
+  </div>
+</div>
+
+
     
 
-    <main class="page-main dfs-page dfs-leaderboard-page dfs-leaderboard-page--loading">
+    <main class="page-main dfs-page dfs-leaderboard-page dfs-leaderboard-page--loading mms-page-main--loading">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Leaderboard</h1>
         <p class="dfs-page-head-actions">
@@ -439,9 +443,9 @@
       window.addEventListener("error", function (ev) {
         var src = ev.filename || "";
         if (src.indexOf("dfs-leaderboard") === -1) return;
-        var screen = document.getElementById("leaderboardLoadingScreen");
+        var screen = document.getElementById("mmsLoadingScreen");
         if (screen) screen.hidden = true;
-        document.body.classList.add("leaderboard-ready");
+        document.body.classList.add("mms-page-ready", "leaderboard-ready");
         var status = document.getElementById("leaderboardStatus");
         if (status) {
           status.hidden = false;

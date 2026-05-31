@@ -2,6 +2,7 @@
  * League Leaders home page — live stats from Google Sheets (GitHub Pages).
  */
 import { fetchLeagueLeadersData } from "./league-leaders.mjs";
+import { hideMmsLoadingScreen, showMmsLoadingScreen } from "./mms-loading-screen.js";
 
 function esc(text) {
   const el = document.createElement("span");
@@ -114,6 +115,7 @@ function renderLeaders({ leaders, topRookies }) {
       </div>
     </section>`;
   root.removeAttribute("aria-busy");
+  hideMmsLoadingScreen();
 }
 
 function renderError(message) {
@@ -123,10 +125,11 @@ function renderError(message) {
     message
   )}</p><p><button type="button" class="dfs-btn" id="leagueLeadersRetry">Try again</button></p></section>`;
   root.removeAttribute("aria-busy");
+  hideMmsLoadingScreen();
   document.getElementById("leagueLeadersRetry")?.addEventListener("click", () => {
     root.setAttribute("aria-busy", "true");
-    root.innerHTML =
-      '<p class="league-leaders-loading">Loading...</p>';
+    root.innerHTML = "";
+    showMmsLoadingScreen();
     load();
   });
 }

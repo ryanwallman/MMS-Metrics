@@ -3,6 +3,7 @@
  */
 import { fetchPowerRankingsData } from "./power-rankings.mjs";
 import { mountPowerRankingsViz, renderVizTabShell } from "./power-rankings-viz.mjs";
+import { hideMmsLoadingScreen, showMmsLoadingScreen } from "./mms-loading-screen.js";
 
 function siteBasePath() {
   const b = typeof window !== "undefined" ? window.__SITE_BASE_PATH__ : "";
@@ -224,6 +225,7 @@ function renderPage(data) {
   wireTabs(root);
   mountPowerRankingsViz(document.getElementById("powerRankingsVizRoot"), cachedVizData, esc);
   root.removeAttribute("aria-busy");
+  hideMmsLoadingScreen();
 }
 
 function renderError(message) {
@@ -233,9 +235,11 @@ function renderError(message) {
     message
   )}</p><p><button type="button" class="dfs-btn" id="powerRankingsRetry">Try again</button></p></section>`;
   root.removeAttribute("aria-busy");
+  hideMmsLoadingScreen();
   document.getElementById("powerRankingsRetry")?.addEventListener("click", () => {
     root.setAttribute("aria-busy", "true");
-    root.innerHTML = '<p class="league-leaders-loading">Loading...</p>';
+    root.innerHTML = "";
+    showMmsLoadingScreen();
     load();
   });
 }

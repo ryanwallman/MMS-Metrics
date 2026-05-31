@@ -2398,6 +2398,7 @@ async function renderMatchupPredictorPage(req, res) {
       homeMissingSerialized,
       lineupRuleAlerts,
       matchupClient,
+      matchupPageReady: hasExplicitView,
     });
   } catch (error) {
     res.status(500).send(`Failed to load matchup predictor: ${error.message}`);

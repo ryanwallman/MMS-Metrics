@@ -7,6 +7,7 @@ import {
   navigateToOpenDfsSlate,
   dfsLineupUrl,
 } from "./dfs-lock-countdown.js";
+import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
@@ -120,6 +121,7 @@ function showPoolError(message) {
   if (tbody) {
     tbody.innerHTML = `<tr><td colspan="8" class="dfs-leaderboard-empty">${esc(message)}</td></tr>`;
   }
+  hideMmsLoadingScreen();
 }
 
 function isBareDfsIndexPath() {

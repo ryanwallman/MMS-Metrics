@@ -3426,6 +3426,7 @@ body > main.page-main {
   margin-bottom: 16px;
 }
 
+.mms-loading-screen,
 .dfs-leaderboard-loading-screen {
   position: fixed;
   inset: 0;
@@ -3438,10 +3439,12 @@ body > main.page-main {
   backdrop-filter: blur(4px);
 }
 
+.mms-loading-screen[hidden],
 .dfs-leaderboard-loading-screen[hidden] {
   display: none;
 }
 
+.mms-loading-screen__panel,
 .dfs-leaderboard-loading-screen__panel {
   max-width: 28rem;
   width: 100%;
@@ -3453,6 +3456,7 @@ body > main.page-main {
   box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
 }
 
+.mms-loading-screen__spinner,
 .dfs-leaderboard-loading-screen__spinner {
   width: 44px;
   height: 44px;
@@ -3460,15 +3464,16 @@ body > main.page-main {
   border: 4px solid rgba(37, 99, 235, 0.15);
   border-top-color: var(--mms-brand, #2563eb);
   border-radius: 50%;
-  animation: dfs-leaderboard-spin 0.85s linear infinite;
+  animation: mms-loading-spin 0.85s linear infinite;
 }
 
-@keyframes dfs-leaderboard-spin {
+@keyframes mms-loading-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
+.mms-loading-screen__title,
 .dfs-leaderboard-loading-screen__title {
   margin: 0 0 12px;
   font-family: var(--mms-display, inherit);
@@ -3477,6 +3482,7 @@ body > main.page-main {
   color: var(--mms-brand, #2563eb);
 }
 
+.mms-loading-screen__message,
 .dfs-leaderboard-loading-screen__message {
   margin: 0 0 12px;
   font-size: 0.95rem;
@@ -3485,21 +3491,25 @@ body > main.page-main {
   text-align: left;
 }
 
+.mms-loading-screen__hint,
 .dfs-leaderboard-loading-screen__hint {
   margin: 0;
   font-size: 0.85rem;
   color: #6b7280;
 }
 
+body.mms-page-ready .mms-page-main--loading,
 body.leaderboard-ready .dfs-leaderboard-page--loading {
   filter: none;
 }
 
+body.mms-page-ready .mms-page-main--loading .dfs-leaderboard-table-wrap,
 body.leaderboard-ready .dfs-leaderboard-page--loading .dfs-leaderboard-table-wrap {
   opacity: 1;
   pointer-events: auto;
 }
 
+.mms-page-main--loading .dfs-leaderboard-table-wrap,
 .dfs-leaderboard-page--loading .dfs-leaderboard-table-wrap {
   opacity: 0.35;
   pointer-events: none;
