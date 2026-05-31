@@ -159,8 +159,18 @@ async function mapConcurrent(items, limit, fn) {
   return results;
 }
 
+async function killPort(p) {
+  try {
+    const { execSync } = await import("node:child_process");
+    execSync(`lsof -ti :${p} | xargs kill -9 2>/dev/null || true`, { stdio: "ignore" });
+  } catch {
+    /* none */
+  }
+}
+
 async function main() {
   const port = Number(process.env.STATIC_EXPORT_PORT) || 3847;
+  await killPort(port);
 
   console.log("[static] Building leaderboard scoring bundle…");
   await new Promise((resolve, reject) => {
@@ -295,6 +305,7 @@ async function main() {
 
   try {
     await waitForHealth(port);
+    await fetchHtml(port, "/healthz");
 
     if (!process.env.STATIC_SKIP_MATCHUP) {
       const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
@@ -340,7 +351,7 @@ async function main() {
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),
     ].map((t) => decodeURIComponent(t));
-    await mapConcurrent(Array.from(new Set(weekTokens)), 4, async (week) => {
+    await mapConcurrent(Array.from(new Set(weekTokens)), 2, async (week) => {
       const html = await fetchHtml(port, `/dfs/leaderboard?week=${encodeURIComponent(week)}`);
       await writeRoute(html, `/dfs/leaderboard/week/${encodeURIComponent(week)}`);
     });
@@ -376,6 +387,7 @@ async function main() {
     }
   } finally {
     stopServer();
+    await killPort(port);
   }
 }
 
