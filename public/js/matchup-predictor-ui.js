@@ -205,6 +205,19 @@
     );
   }
 
+  function renderPlayerNameHtml(p) {
+    if (p.isReplacement && p.replacedName) {
+      return (
+        '<span class="matchup-roster-replaced-name">' +
+        escapeHtml(p.replacedName) +
+        "</span> " +
+        escapeHtml(p.name) +
+        '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>'
+      );
+    }
+    return escapeHtml(p.name);
+  }
+
   function updateRosterRows(roster, side) {
     if (!roster || !roster.playersDetailed) return;
     for (const p of roster.playersDetailed) {
@@ -214,6 +227,7 @@
       if (!btn) continue;
       const onBench = !!p.missing;
       btn.textContent = onBench ? "Bench" : "Active";
+      btn.setAttribute("data-norm", p.norm);
       btn.classList.toggle("matchup-status-btn--active", !onBench);
       btn.classList.toggle("matchup-status-btn--missing", onBench);
       btn.setAttribute("aria-pressed", onBench ? "true" : "false");
@@ -221,6 +235,8 @@
       if (row) {
         row.classList.toggle("matchup-roster-item--benched", onBench);
         row.classList.toggle("matchup-roster-item--hits-twice", !!p.hitsTwice);
+        const nameEl = row.querySelector(".matchup-roster-name");
+        if (nameEl) nameEl.innerHTML = renderPlayerNameHtml(p);
         let badge = row.querySelector(".matchup-roster-double-badge");
         if (p.hitsTwice) {
           if (!badge) {
@@ -228,7 +244,6 @@
             badge.className = "matchup-roster-double-badge";
             badge.title = "Bats twice for the 11th lineup spot";
             badge.textContent = "2× lineup";
-            const nameEl = row.querySelector(".matchup-roster-name");
             if (nameEl && nameEl.nextSibling) {
               nameEl.parentNode.insertBefore(badge, nameEl.nextSibling);
             } else {
@@ -240,6 +255,43 @@
         }
       }
     }
+  }
+
+  function normPlayerName(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[.'’]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function applyReplacementDisplay(originalPlayers, side, byOriginalNorm) {
+    if (!originalPlayers?.length) return;
+    const col = document.querySelector(".schedule-roster-col--" + side);
+    if (!col) return;
+    const items = col.querySelectorAll(".matchup-roster-item");
+    items.forEach((row, idx) => {
+      const originalName = originalPlayers[idx];
+      if (!originalName) return;
+      const norm = normPlayerName(originalName);
+      const repl = byOriginalNorm?.get?.(norm);
+      const nameEl = row.querySelector(".matchup-roster-name");
+      const btn = row.querySelector("[data-lineup-toggle]");
+      if (repl) {
+        if (nameEl) {
+          nameEl.innerHTML =
+            '<span class="matchup-roster-replaced-name">' +
+            escapeHtml(repl.original) +
+            "</span> " +
+            escapeHtml(repl.replacement) +
+            '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>';
+        }
+        if (btn) btn.setAttribute("data-norm", repl.replacementNorm);
+      } else {
+        if (nameEl) nameEl.textContent = originalName;
+        if (btn) btn.setAttribute("data-norm", norm);
+      }
+    });
   }
 
   function updateLineupUi(enrichment) {
@@ -276,5 +328,6 @@
     updatePredictionUi,
     updateActiveCounts,
     updateLineupUi,
+    applyReplacementDisplay,
   };
 })();

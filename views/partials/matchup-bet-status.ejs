@@ -1,0 +1,8 @@
+<% const betStatus = typeof status !== 'undefined' ? status : null; %>
+<% if (betStatus === 'hit') { %>
+<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
+<% } else if (betStatus === 'miss') { %>
+<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
+<% } else if (betStatus === 'push') { %>
+<span class="matchup-bet-tag matchup-bet-tag--push">Push</span>
+<% } %>

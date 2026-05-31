@@ -14,7 +14,7 @@
     <% roster.playersDetailed.forEach((p) => { %>
     <li class="matchup-roster-item<%= p.missing ? ' matchup-roster-item--benched' : '' %><%= p.hitsTwice ? ' matchup-roster-item--hits-twice' : '' %>">
       <span class="matchup-roster-pick">R<%= p.round %></span>
-      <span class="matchup-roster-name"><%= p.name %></span>
+      <span class="matchup-roster-name"><% if (p.isReplacement && p.replacedName) { %><span class="matchup-roster-replaced-name"><%= p.replacedName %></span> <%= p.name %><span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span><% } else { %><%= p.name %><% } %></span>
       <% if (p.hitsTwice) { %>
       <span class="matchup-roster-double-badge" title="Bats twice for the 11th lineup spot">2× lineup</span>
       <% } %>

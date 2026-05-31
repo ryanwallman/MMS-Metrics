@@ -59,7 +59,18 @@ const {
   americanMoneylinePair,
   roundMatchupN,
 } = require("./lib/matchupPredict");
+const {
+  findParsedGameForMatchup,
+  isParsedGameFinished,
+  gradeMatchupModelBets,
+} = require("./lib/matchupGameResult");
 const { buildMatchupClientPayload } = require("./lib/matchupClientPayload");
+const {
+  getCachedPlayerReplacements,
+  applyReplacementsToPlayerNames,
+  remapLineupNorms,
+  filterReplacementsForDate,
+} = require("./lib/playerReplacements");
 const { normalizedNameToPosition } = require("./data/playerPositions2026");
 const {
   DFS_LINEUP_SIZE,
@@ -86,6 +97,7 @@ const {
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
   pickMatchupPredictorDefaultView,
+  filterScheduleOptionsForMatchupPredictor,
   filterScheduleOptionsToDfsVisibility,
   resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
@@ -692,7 +704,7 @@ function gamesForSundayWeekNumber(weekNum, sundayAsc, gamesByIso) {
   const sunIso = sundayAsc[i];
   const chunk = gamesByIso.get(sunIso);
   if (!chunk) return [];
-  return sortScheduleGameRows(chunk).map(({ _iso, ...rest }) => rest);
+  return sortScheduleGameRows(chunk).map(({ _iso, ...rest }) => ({ ...rest, isoDate: _iso || rest.isoDate }));
 }
 
 function isValidScheduleTeamNumber(value) {
@@ -861,7 +873,7 @@ function resolveScheduleGamesForView(encodedView, payload) {
     const iso = compactDayDigitsToIso(digits);
     if (iso && weekdayFromIso(iso) === 3) {
       const rows = payload.gamesByIso.get(iso) || [];
-      games = sortScheduleGameRows(rows).map(({ _iso, ...rest }) => rest);
+      games = sortScheduleGameRows(rows).map(({ _iso, ...rest }) => ({ ...rest, isoDate: _iso || rest.isoDate }));
       summaryLine = payload.dateLabelByIso.get(iso) || iso;
     } else {
       games = [];
@@ -1768,6 +1780,7 @@ app.get("/dfs", async (req, res) => {
       stats2026ByPlayer,
       schedulePayload,
       gamelogs,
+      replacements,
     ] = await Promise.all([
       loadTeamRosters(),
       loadCareerByPlayer(),
@@ -1775,6 +1788,7 @@ app.get("/dfs", async (req, res) => {
       load2026StatsByPlayer(),
       loadWeeklySchedule(),
       load2026GamelogsByPlayer(),
+      getCachedPlayerReplacements(),
     ]);
 
     const scheduleRows = await fetchCsvRows(SCHEDULE_URL);
@@ -1838,12 +1852,14 @@ app.get("/dfs", async (req, res) => {
       scheduleRunRates,
       stats2026ByPlayer,
       teamCodeById,
+      replacementByOriginalNorm: replacements.byOriginalNorm,
     });
 
     const poolByNorm = new Map(playerPool.map((p) => [p.norm, p]));
-    const lineupNorms = safeText(req.query.lineup)
-      .split(",")
-      .map((s) => normalizePlayerName(s))
+    const lineupNorms = remapLineupNorms(
+      safeText(req.query.lineup).split(",").filter(Boolean),
+      replacements.byOriginalNorm
+    )
       .filter((n) => poolByNorm.has(n))
       .slice(0, DFS_LINEUP_SIZE);
 
@@ -2129,6 +2145,7 @@ async function renderMatchupPredictorPage(req, res) {
       stats2026ByPlayer,
       scheduleRows,
       defenseMap,
+      replacements,
     ] = await Promise.all([
       loadWeeklySchedule(),
       loadTeamRosters(),
@@ -2137,7 +2154,9 @@ async function renderMatchupPredictorPage(req, res) {
       load2026StatsByPlayer(),
       fetchCsvRows(SCHEDULE_URL),
       loadDefensiveRatingsNormalizedMap(),
+      getCachedPlayerReplacements(),
     ]);
+    const { byOriginalNorm } = replacements;
 
     const viewFromPath = safeText(req.params?.view);
     let viewParam = viewFromPath || safeText(req.query.view);
@@ -2174,11 +2193,8 @@ async function renderMatchupPredictorPage(req, res) {
       );
     }
 
-    const scheduleOptions = filterScheduleOptionsToDfsVisibility(
-      payload.scheduleOptions || [],
-      payload,
-      refIso,
-      nowMs
+    const scheduleOptions = filterScheduleOptionsForMatchupPredictor(
+      payload.scheduleOptions || []
     );
     const { selectedView, games, summaryLine } = resolveScheduleGamesForView(viewParam, payload);
 
@@ -2236,12 +2252,25 @@ async function renderMatchupPredictorPage(req, res) {
     let awayRoster = null;
     let homeRoster = null;
     let prediction = null;
+    let gameResult = null;
     let lineupRuleAlerts = [];
     let matchupClient = null;
+
+    const viewIso =
+      /^D\d{8}$/i.test(selectedView)
+        ? compactDayDigitsToIso(safeText(selectedView).replace(/^D/i, ""))
+        : /^W\d+$/i.test(selectedView)
+          ? payload.sundayIsosSorted?.[Number(selectedView.slice(1)) - 1] || null
+          : null;
 
     if (selectedMatchup) {
       selectedGame = findGameByMatchupKey(games, selectedMatchup);
       if (selectedGame) {
+        const matchupReplacements = filterReplacementsForDate(
+          byOriginalNorm,
+          selectedGame.isoDate
+        );
+
         awayRoster = pickRosterEntry(
           rosterByTeamId,
           nameToTeamId,
@@ -2255,8 +2284,17 @@ async function renderMatchupPredictorPage(req, res) {
           selectedGame.home
         );
 
-        const awayPositionByNorm = buildPositionByNormMap(awayRoster?.players);
-        const homePositionByNorm = buildPositionByNormMap(homeRoster?.players);
+        const awayEffectivePlayers = applyReplacementsToPlayerNames(
+          awayRoster?.players,
+          matchupReplacements
+        );
+        const homeEffectivePlayers = applyReplacementsToPlayerNames(
+          homeRoster?.players,
+          matchupReplacements
+        );
+
+        const awayPositionByNorm = buildPositionByNormMap(awayEffectivePlayers);
+        const homePositionByNorm = buildPositionByNormMap(homeEffectivePlayers);
 
         awayRoster = enrichRosterForMatchupView(
           awayRoster,
@@ -2264,7 +2302,8 @@ async function renderMatchupPredictorPage(req, res) {
           awayMissingSet,
           normalizePlayerName,
           stats2026ByPlayer,
-          awayPositionByNorm
+          awayPositionByNorm,
+          matchupReplacements
         );
         homeRoster = enrichRosterForMatchupView(
           homeRoster,
@@ -2272,7 +2311,8 @@ async function renderMatchupPredictorPage(req, res) {
           homeMissingSet,
           normalizePlayerName,
           stats2026ByPlayer,
-          homePositionByNorm
+          homePositionByNorm,
+          matchupReplacements
         );
 
         const awayId = normalizeScheduleTeamId(selectedGame.awayTeamId);
@@ -2286,7 +2326,7 @@ async function renderMatchupPredictorPage(req, res) {
           awayBaseProfile = { ...awayProfile };
           awayProfile = applyMissingPlayersToProfile(
             awayProfile,
-            awayRoster.players,
+            awayEffectivePlayers,
             awayMissingSet,
             offenseRatingByNorm,
             stats2026ByPlayer,
@@ -2300,7 +2340,7 @@ async function renderMatchupPredictorPage(req, res) {
           homeBaseProfile = { ...homeProfile };
           homeProfile = applyMissingPlayersToProfile(
             homeProfile,
-            homeRoster.players,
+            homeEffectivePlayers,
             homeMissingSet,
             offenseRatingByNorm,
             stats2026ByPlayer,
@@ -2358,6 +2398,20 @@ async function renderMatchupPredictorPage(req, res) {
           prediction.awayLabel = awayRoster.teamName || selectedGame.away;
           prediction.homeLabel = homeRoster.teamName || selectedGame.home;
 
+          const parsedGame = findParsedGameForMatchup(
+            parsedScheduleGames,
+            selectedGame,
+            viewIso
+          );
+          if (isParsedGameFinished(parsedGame)) {
+            gameResult = gradeMatchupModelBets(
+              parsedGame,
+              prediction,
+              prediction.awayLabel,
+              prediction.homeLabel
+            );
+          }
+
           if (awayBaseProfile && homeBaseProfile) {
             const matchupPositionByNorm = new Map([
               ...awayPositionByNorm.entries(),
@@ -2368,8 +2422,14 @@ async function renderMatchupPredictorPage(req, res) {
               homeBaseProfile,
               leagueNorms,
               runBase,
-              awayPlayers: awayRoster.players,
-              homePlayers: homeRoster.players,
+              awayPlayers: awayEffectivePlayers,
+              homePlayers: homeEffectivePlayers,
+              awayPlayersOriginal: awayRoster.players,
+              homePlayersOriginal: homeRoster.players,
+              replacementByOriginalNorm: matchupReplacements,
+              gameIsoDate: selectedGame.isoDate || viewIso || null,
+              isFinishedGame: Boolean(gameResult),
+              gameResult,
               awayLabel: prediction.awayLabel,
               homeLabel: prediction.homeLabel,
               offenseRatingByNorm,
@@ -2393,7 +2453,8 @@ async function renderMatchupPredictorPage(req, res) {
       selectedGame,
       awayRoster,
       homeRoster,
-      prediction,
+      prediction: gameResult ? null : prediction,
+      gameResult,
       awayMissingSerialized,
       homeMissingSerialized,
       lineupRuleAlerts,

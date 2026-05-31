@@ -61,7 +61,94 @@
     <p class="matchup-predictor-summary"><%= scheduleSummary %></p>
     <% } %>
 
-    <% if (prediction) { %>
+    <% if (typeof gameResult !== 'undefined' && gameResult) { %>
+    <% const gr = gameResult; const mp = gr.modelPrediction || {}; const bets = gr.bets || {}; %>
+    <section class="matchup-prediction matchup-prediction--final">
+      <h2>Final result</h2>
+      <p class="matchup-prediction-note">
+        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
+      </p>
+
+      <div class="matchup-pred-win-row matchup-pred-win-row--final">
+        <div class="matchup-pred-team matchup-pred-away<%= gr.winnerSide === 'away' ? ' matchup-pred-team--winner' : '' %>">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span><%= gr.awayLabel %></span>
+          <span class="matchup-pred-score"><%= gr.awayScore %></span>
+        </div>
+        <div class="matchup-pred-team matchup-pred-home<%= gr.winnerSide === 'home' ? ' matchup-pred-team--winner' : '' %>">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span><%= gr.homeLabel %></span>
+          <span class="matchup-pred-score"><%= gr.homeScore %></span>
+        </div>
+      </div>
+
+      <div class="page-table-wrap">
+      <table class="matchup-pred-lines page-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th>Team / pick</th>
+            <th>Value</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="matchup-lines-row--final-score">
+            <td>Final score</td>
+            <% if (gr.winnerSide === 'away') { %>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span><%= gr.awayLabel %></td>
+            <% } else if (gr.winnerSide === 'home') { %>
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span><%= gr.homeLabel %></td>
+            <% } else { %>
+            <td class="matchup-lines-team matchup-lines-team--both">Tie</td>
+            <% } %>
+            <td class="matchup-lines-value matchup-lines-score">
+              <span class="matchup-score-runs <%= gr.winnerSide === 'away' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= gr.awayScore %></span>
+              <span class="matchup-score-sep">–</span>
+              <span class="matchup-score-runs <%= gr.winnerSide === 'home' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= gr.homeScore %></span>
+            </td>
+            <td class="matchup-bet-result">Actual</td>
+          </tr>
+          <% const ou = bets.overUnder || {}; %>
+          <tr>
+            <td>Over / under (total runs)</td>
+            <td class="matchup-lines-team matchup-lines-team--both"><%= ou.pick === 'over' ? 'Over' : ou.pick === 'under' ? 'Under' : '—' %></td>
+            <td class="matchup-lines-value"><strong>O/U <%= ou.line %></strong> <span class="matchup-bet-actual">(<%= gr.total %> runs)</span></td>
+            <td class="matchup-bet-result"><%- include('partials/matchup-bet-status', { status: ou.status }) %></td>
+          </tr>
+          <% const rl = bets.runLine || {}; %>
+          <% const rlSide = rl.side; %>
+          <% const rlTeam = rlSide === 'away' ? gr.awayLabel : rlSide === 'home' ? gr.homeLabel : '—'; %>
+          <tr class="matchup-lines-row--runline">
+            <td>Run line</td>
+            <% if (rlSide === 'away') { %>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span><%= gr.awayLabel %></td>
+            <% } else if (rlSide === 'home') { %>
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span><%= gr.homeLabel %></td>
+            <% } else { %>
+            <td class="matchup-lines-team">—</td>
+            <% } %>
+            <td class="matchup-lines-value"><strong><%= rl.line %></strong></td>
+            <td class="matchup-bet-result"><%- include('partials/matchup-bet-status', { status: rl.status }) %></td>
+          </tr>
+          <% const ml = bets.moneyline || {}; %>
+          <% const mlAway = bets.moneylineAway || {}; %>
+          <% const mlHome = bets.moneylineHome || {}; %>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span><%= gr.awayLabel %><% if (ml.favoriteSide === 'away') { %> <span class="matchup-bet-model-pick">Model pick</span><% } %></td>
+            <td class="matchup-lines-value"><strong><%= mp.lines && mp.lines.moneylineAway ? mp.lines.moneylineAway : '—' %></strong></td>
+            <td class="matchup-bet-result"><%- include('partials/matchup-bet-status', { status: mlAway.status }) %></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span><%= gr.homeLabel %><% if (ml.favoriteSide === 'home') { %> <span class="matchup-bet-model-pick">Model pick</span><% } %></td>
+            <td class="matchup-lines-value"><strong><%= mp.lines && mp.lines.moneylineHome ? mp.lines.moneylineHome : '—' %></strong></td>
+            <td class="matchup-bet-result"><%- include('partials/matchup-bet-status', { status: mlHome.status }) %></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+    <% } else if (prediction) { %>
     <section class="matchup-prediction">
       <h2>Model prediction</h2>
       <p class="matchup-prediction-note">
@@ -127,7 +214,7 @@
             if (!isNaN(awayRunsNum) && !isNaN(homeRunsNum)) {
               let mag = Math.abs(homeRunsNum - awayRunsNum);
               if (mag < 1e-9) mag = 0.5;
-              runLineValue = '+' + (Math.abs(mag % 1) < 1e-9 ? String(Math.round(mag)) : mag.toFixed(1));
+              runLineValue = Math.abs(mag % 1) < 1e-9 ? String(Math.round(mag)) : mag.toFixed(1);
             } else {
               runLineValue = '—';
             }
@@ -242,8 +329,13 @@
     <% if (selectedGame) { %>
     <% const rosterAwayName = (awayRoster && awayRoster.teamName) || selectedGame.away; %>
     <% const rosterHomeName = (homeRoster && homeRoster.teamName) || selectedGame.home; %>
+    <% const isFinishedGame = typeof gameResult !== 'undefined' && gameResult; %>
     <section class="matchup-predictor-rosters">
+      <% if (!isFinishedGame) { %>
       <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      <% } else { %>
+      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      <% } %>
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span><%= rosterAwayName %></span>
         <span class="matchup-predictor-at">@</span>
@@ -283,6 +375,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -451,6 +544,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -482,8 +576,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -495,6 +655,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");

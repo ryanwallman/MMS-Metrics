@@ -531,6 +531,13 @@ var require_sheetUrls = __commonJS({
     var SHEET_2026_STATS_GID = "1197022486";
     var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
     var CAPTAIN_MAPPING_GID = "0";
+    var REPLACEMENTS_SHEET_ID = "1aYG02LsmBEpZCQap-f81YyEjTaR6a8asPlzNe0n31b0";
+    var REPLACEMENTS_GID = "0";
+    function getReplacementsCsvUrl() {
+      const u = process.env.REPLACEMENTS_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(REPLACEMENTS_SHEET_ID, REPLACEMENTS_GID);
+    }
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
     var careerCsvFilePath = null;
@@ -581,8 +588,11 @@ var require_sheetUrls = __commonJS({
       getGamelogs2026CsvUrl,
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
       CAPTAIN_MAPPING_SHEET_ID,
       CAPTAIN_MAPPING_GID,
+      REPLACEMENTS_SHEET_ID,
+      REPLACEMENTS_GID,
       googleSheetCsvExportUrl,
       setCareerCsvFilePath,
       getCareerCsvSource,
@@ -1363,6 +1373,9 @@ ${slice[1]}`;
       const opts = schedulePayload?.scheduleOptions || [];
       return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
     }
+    function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
+      return scheduleOptions || [];
+    }
     function filterScheduleOptionsToDfsVisibility(scheduleOptions, schedulePayload, refIso, nowMs = Date.now()) {
       const visible = new Set(
         filterVisibleDfsSlateOptions(buildDfsSlateOptions(schedulePayload, refIso, nowMs)).map(
@@ -1445,7 +1458,8 @@ ${slice[1]}`;
       offenseRatingByNorm,
       scheduleRunRates,
       stats2026ByPlayer,
-      teamCodeById
+      teamCodeById,
+      replacementByOriginalNorm = null
     }) {
       const teamIds = slate.teamIds;
       if (!teamIds.size) return [];
@@ -1478,7 +1492,10 @@ ${slice[1]}`;
         const doubleHeader = scheduledGames >= 2;
         const gameLabel = matchups.map((m) => m.game ? `${m.game.away} @ ${m.game.home}` : "").filter(Boolean).join(" \xB7 ");
         for (const playerName of t.players || []) {
-          const norm = normalizePlayerName(playerName);
+          const origNorm = normalizePlayerName(playerName);
+          const repl = replacementByOriginalNorm?.get(origNorm);
+          const effectiveName = repl ? repl.replacement : playerName;
+          const norm = repl ? repl.replacementNorm : origNorm;
           const rating = offenseRatingByNorm.get(norm) ?? 0;
           const row26 = stats2026ByPlayer.get(norm);
           const salary = computePlayerSalaryForMatchups({
@@ -1490,7 +1507,7 @@ ${slice[1]}`;
           });
           pool.push({
             norm,
-            name: playerName,
+            name: effectiveName,
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -1790,6 +1807,7 @@ ${slice[1]}`;
       resolveActiveDfsSlateToken,
       resolveMostRecentlyLockedSlateToken,
       pickMatchupPredictorDefaultView,
+      filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
       buildSlateFromToken,

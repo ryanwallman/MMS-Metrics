@@ -38,6 +38,13 @@ var require_sheetUrls = __commonJS({
     var SHEET_2026_STATS_GID = "1197022486";
     var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
     var CAPTAIN_MAPPING_GID = "0";
+    var REPLACEMENTS_SHEET_ID = "1aYG02LsmBEpZCQap-f81YyEjTaR6a8asPlzNe0n31b0";
+    var REPLACEMENTS_GID = "0";
+    function getReplacementsCsvUrl() {
+      const u = process.env.REPLACEMENTS_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(REPLACEMENTS_SHEET_ID, REPLACEMENTS_GID);
+    }
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR2 = Number("2026") || 2026;
     var careerCsvFilePath = null;
@@ -88,8 +95,11 @@ var require_sheetUrls = __commonJS({
       getGamelogs2026CsvUrl,
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
       CAPTAIN_MAPPING_SHEET_ID,
       CAPTAIN_MAPPING_GID,
+      REPLACEMENTS_SHEET_ID,
+      REPLACEMENTS_GID,
       googleSheetCsvExportUrl,
       setCareerCsvFilePath,
       getCareerCsvSource,
@@ -1363,6 +1373,9 @@ ${slice[1]}`;
       const opts = schedulePayload?.scheduleOptions || [];
       return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
     }
+    function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
+      return scheduleOptions || [];
+    }
     function filterScheduleOptionsToDfsVisibility(scheduleOptions, schedulePayload, refIso, nowMs = Date.now()) {
       const visible = new Set(
         filterVisibleDfsSlateOptions(buildDfsSlateOptions(schedulePayload, refIso, nowMs)).map(
@@ -1445,7 +1458,8 @@ ${slice[1]}`;
       offenseRatingByNorm,
       scheduleRunRates,
       stats2026ByPlayer,
-      teamCodeById
+      teamCodeById,
+      replacementByOriginalNorm = null
     }) {
       const teamIds = slate.teamIds;
       if (!teamIds.size) return [];
@@ -1478,7 +1492,10 @@ ${slice[1]}`;
         const doubleHeader = scheduledGames >= 2;
         const gameLabel = matchups.map((m) => m.game ? `${m.game.away} @ ${m.game.home}` : "").filter(Boolean).join(" \xB7 ");
         for (const playerName of t.players || []) {
-          const norm = normalizePlayerName(playerName);
+          const origNorm = normalizePlayerName(playerName);
+          const repl = replacementByOriginalNorm?.get(origNorm);
+          const effectiveName = repl ? repl.replacement : playerName;
+          const norm = repl ? repl.replacementNorm : origNorm;
           const rating = offenseRatingByNorm.get(norm) ?? 0;
           const row26 = stats2026ByPlayer.get(norm);
           const salary = computePlayerSalaryForMatchups({
@@ -1490,7 +1507,7 @@ ${slice[1]}`;
           });
           pool.push({
             norm,
-            name: playerName,
+            name: effectiveName,
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -1790,6 +1807,7 @@ ${slice[1]}`;
       resolveActiveDfsSlateToken: resolveActiveDfsSlateToken2,
       resolveMostRecentlyLockedSlateToken: resolveMostRecentlyLockedSlateToken2,
       pickMatchupPredictorDefaultView,
+      filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
       buildSlateFromToken,
@@ -1952,7 +1970,8 @@ var require_dfsLeaderboard = __commonJS({
       scheduleRunRates,
       stats2026ByPlayer,
       teamCodeById,
-      gamelogs
+      gamelogs,
+      replacementByOriginalNorm = null
     }) {
       const playerPool = buildDfsPlayerPool({
         teams,
@@ -1960,7 +1979,8 @@ var require_dfsLeaderboard = __commonJS({
         offenseRatingByNorm,
         scheduleRunRates,
         stats2026ByPlayer,
-        teamCodeById
+        teamCodeById,
+        replacementByOriginalNorm
       });
       const poolByNorm = new Map(playerPool.map((p) => [p.norm, p]));
       return { poolByNorm, teamCodeById, gamelogs };
@@ -2596,6 +2616,178 @@ var require_teamRosters = __commonJS({
   }
 });
 
+// lib/playerReplacements.js
+var require_playerReplacements = __commonJS({
+  "lib/playerReplacements.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { getReplacementsCsvUrl } = require_sheetUrls();
+    var { createMemoryCache } = require_memoryCache();
+    var { normalizePlayerName } = require_dfs();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function parseReplacementDateCell(cell) {
+      let s = safeText(cell).replace(/^\ufeff/g, "");
+      if (!s) return null;
+      s = s.replace(/[\u00a0\u202f]/g, " ").trim().replace(/^["']+|["']+$/g, "");
+      const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      const slashMatch = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{2,4})/.exec(s);
+      if (!slashMatch) return null;
+      const month = String(slashMatch[1]).padStart(2, "0");
+      const day = String(slashMatch[2]).padStart(2, "0");
+      let year = Number(slashMatch[3]);
+      if (!Number.isFinite(year)) return null;
+      if (year < 100) year += 2e3;
+      return `${year}-${month}-${day}`;
+    }
+    function isReplacementActiveForDate(entry, gameIsoDate) {
+      if (!entry) return false;
+      if (!entry.replacementDateIso) return true;
+      if (!gameIsoDate) return false;
+      return safeText(gameIsoDate) >= entry.replacementDateIso;
+    }
+    function filterReplacementsForDate(byOriginalNorm, gameIsoDate) {
+      if (!byOriginalNorm?.size) return /* @__PURE__ */ new Map();
+      if (!gameIsoDate) return /* @__PURE__ */ new Map();
+      const filtered = /* @__PURE__ */ new Map();
+      for (const [norm, entry] of byOriginalNorm.entries()) {
+        if (isReplacementActiveForDate(entry, gameIsoDate)) filtered.set(norm, entry);
+      }
+      return filtered;
+    }
+    function parseReplacementsRows(rows) {
+      const list = [];
+      const byOriginalNorm = /* @__PURE__ */ new Map();
+      const replacementNorms = /* @__PURE__ */ new Set();
+      for (let i = 0; i < (rows || []).length; i += 1) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const original = safeText(row[0]);
+        const replacement = safeText(row[1]);
+        const replacementDateRaw = safeText(row[2]);
+        if (!original || !replacement) continue;
+        if (i === 0 && /original/i.test(original) && (/new/i.test(replacement) || /replacement/i.test(replacement))) {
+          continue;
+        }
+        const originalNorm = normalizePlayerName(original);
+        const replacementNorm = normalizePlayerName(replacement);
+        if (!originalNorm || !replacementNorm || originalNorm === replacementNorm) continue;
+        const replacementDateIso = parseReplacementDateCell(replacementDateRaw);
+        const entry = {
+          original,
+          replacement,
+          originalNorm,
+          replacementNorm,
+          replacementDateIso,
+          replacementDateRaw: replacementDateRaw || null
+        };
+        list.push(entry);
+        byOriginalNorm.set(originalNorm, entry);
+        replacementNorms.add(replacementNorm);
+      }
+      return { list, byOriginalNorm, replacementNorms };
+    }
+    function emptyReplacementContext() {
+      return { list: [], byOriginalNorm: /* @__PURE__ */ new Map(), replacementNorms: /* @__PURE__ */ new Set() };
+    }
+    function resolveEffectivePlayer(originalName, byOriginalNorm) {
+      const norm = normalizePlayerName(originalName);
+      const repl = byOriginalNorm?.get(norm);
+      if (repl) {
+        return {
+          name: repl.replacement,
+          norm: repl.replacementNorm,
+          replacedName: repl.original,
+          isReplacement: true
+        };
+      }
+      return {
+        name: String(originalName || "").trim(),
+        norm,
+        replacedName: null,
+        isReplacement: false
+      };
+    }
+    function applyReplacementsToPlayerNames(playerNames, byOriginalNorm) {
+      return (playerNames || []).map(
+        (name) => resolveEffectivePlayer(name, byOriginalNorm).name
+      );
+    }
+    function remapLineupNorms(lineupNorms, byOriginalNorm) {
+      return (lineupNorms || []).map((n) => {
+        const norm = normalizePlayerName(n);
+        const repl = byOriginalNorm?.get(norm);
+        return repl ? repl.replacementNorm : norm;
+      }).filter(Boolean);
+    }
+    function positionFromMap(positionByNorm, norm) {
+      if (!positionByNorm || norm == null) return null;
+      if (positionByNorm instanceof Map) return positionByNorm.get(norm) || null;
+      return positionByNorm[norm] || null;
+    }
+    function buildRosterEntriesWithReplacements(playerNames, normalizeName = normalizePlayerName, positionByNorm = null, byOriginalNorm = null) {
+      return (playerNames || []).map((name, idx) => {
+        const eff = resolveEffectivePlayer(name, byOriginalNorm);
+        return {
+          round: idx + 1,
+          norm: eff.norm,
+          name: eff.name,
+          replacedName: eff.replacedName,
+          isReplacement: eff.isReplacement,
+          position: positionFromMap(positionByNorm, eff.norm)
+        };
+      });
+    }
+    async function loadPlayerReplacements() {
+      try {
+        const text = await fetchCsvText(getReplacementsCsvUrl());
+        const parsed = Papa.parse(text, { skipEmptyLines: true });
+        return parseReplacementsRows(parsed.data || []);
+      } catch (err) {
+        console.error("Could not load player replacements sheet", err);
+        return emptyReplacementContext();
+      }
+    }
+    var replacementsCache = createMemoryCache(
+      Number(process.env.REPLACEMENTS_CACHE_TTL_MS) || 5 * 60 * 1e3,
+      "replacements"
+    );
+    function getCachedPlayerReplacements() {
+      return replacementsCache.get("player-replacements", loadPlayerReplacements);
+    }
+    function serializeReplacementsForClient(byOriginalNorm) {
+      const out = {};
+      if (!byOriginalNorm) return out;
+      for (const [norm, entry] of byOriginalNorm.entries()) {
+        out[norm] = {
+          original: entry.original,
+          replacement: entry.replacement,
+          originalNorm: entry.originalNorm,
+          replacementNorm: entry.replacementNorm,
+          replacementDateIso: entry.replacementDateIso || null
+        };
+      }
+      return out;
+    }
+    module.exports = {
+      parseReplacementDateCell,
+      isReplacementActiveForDate,
+      filterReplacementsForDate,
+      parseReplacementsRows,
+      resolveEffectivePlayer,
+      applyReplacementsToPlayerNames,
+      remapLineupNorms,
+      buildRosterEntriesWithReplacements,
+      loadPlayerReplacements,
+      getCachedPlayerReplacements,
+      emptyReplacementContext,
+      serializeReplacementsForClient
+    };
+  }
+});
+
 // lib/stats2026Loader.js
 var require_stats2026Loader = __commonJS({
   "lib/stats2026Loader.js"(exports, module) {
@@ -2675,6 +2867,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return Papa.parse(csvText).data;
     }
     var { loadTeamRosters } = require_teamRosters();
+    var { getCachedPlayerReplacements } = require_playerReplacements();
     function parseScheduleSheetDate(displayDate) {
       const s = safeText(displayDate);
       if (!s) return null;
@@ -3196,14 +3389,16 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         hist2025ByPlayer,
         stats2026ByPlayer,
         schedulePayload,
-        gamelogs
+        gamelogs,
+        replacements
       ] = await Promise.all([
         loadTeamRosters(),
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
         load2026StatsByPlayer(),
         loadWeeklySchedule2(),
-        load2026GamelogsByPlayer()
+        load2026GamelogsByPlayer(),
+        getCachedPlayerReplacements()
       ]);
       const parsedScheduleGames = schedulePayload.parsedGames || [];
       const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
@@ -3229,7 +3424,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
           scheduleRunRates,
           stats2026ByPlayer,
           teamCodeById,
-          gamelogs
+          gamelogs,
+          replacementByOriginalNorm: replacements.byOriginalNorm
         }
       };
     }

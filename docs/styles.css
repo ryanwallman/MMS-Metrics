@@ -1195,6 +1195,27 @@ body > main.page-main {
   margin-left: -8px;
 }
 
+.matchup-roster-replaced-name {
+  text-decoration: line-through;
+  color: var(--color-muted, #6b7280);
+  margin-right: 0.25rem;
+}
+
+.matchup-replacement-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
 .matchup-roster-double-badge {
   flex: 0 0 auto;
   padding: 2px 8px;
@@ -1225,6 +1246,86 @@ body > main.page-main {
 .matchup-prediction h2 {
   margin: 0 0 10px;
   font-size: 1.25rem;
+}
+
+.matchup-prediction--final {
+  background: linear-gradient(160deg, #ecfdf5 0%, #f8fafc 55%, #fff 100%);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.matchup-pred-win-row--final {
+  margin-bottom: 20px;
+}
+
+.matchup-pred-score {
+  font-size: 2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.matchup-pred-team--winner .matchup-pred-score {
+  color: #047857;
+}
+
+.matchup-bet-result {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.matchup-bet-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.matchup-bet-tag--hit {
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+}
+
+.matchup-bet-tag--miss {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
+
+.matchup-bet-tag--push {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+}
+
+.matchup-bet-actual {
+  font-size: 0.85em;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.matchup-bet-model-pick {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
+.matchup-status-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .matchup-prediction-note {
