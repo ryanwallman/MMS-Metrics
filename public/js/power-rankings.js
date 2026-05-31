@@ -153,7 +153,7 @@ function renderProjectionTable(rows, regularSeasonGames) {
 }
 
 function renderExplainer(data) {
-  const w = data.teamOverallWeights || { player: 0.3, record: 0.5, sos: 0.2 };
+  const w = data.teamOverallWeights || { player: 0.4, record: 0.45, sos: 0.15 };
   const simNote =
     data.remainingGamesTotal > 0
       ? `<p style="margin-bottom: 0;">

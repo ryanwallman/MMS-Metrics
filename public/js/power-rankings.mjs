@@ -4407,9 +4407,9 @@ var require_offenseRankingsPage = __commonJS({
     }
     var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
     var OFFENSE_RATING_WEIGHT_2026 = 0.3;
-    var TEAM_OVERALL_WEIGHT_PLAYER = 0.3;
-    var TEAM_OVERALL_WEIGHT_RECORD = 0.5;
-    var TEAM_OVERALL_WEIGHT_SOS = 0.2;
+    var TEAM_OVERALL_WEIGHT_PLAYER = 0.4;
+    var TEAM_OVERALL_WEIGHT_RECORD = 0.45;
+    var TEAM_OVERALL_WEIGHT_SOS = 0.15;
     var OFFENSE_METRIC_WEIGHTS = Object.freeze({
       ops: 0.52,
       iso: 0.16,

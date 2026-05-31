@@ -9,7 +9,7 @@
     <main class="page-main">
     <% const metricLabels = { ops: 'OPS (AVG + SLG, no walks)', iso: 'ISO (SLG − AVG)', tbPerPa: 'TB / PA', runProd: '(R + RBI) / PA' }; %>
     <% const ratingBlend = typeof ratingWeights !== 'undefined' ? ratingWeights : { historical: 0.7, current2026: 0.3 }; %>
-    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.3, record: 0.5, sos: 0.2 }; %>
+    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.4, record: 0.45, sos: 0.15 }; %>
     <h1 class="page-title">Offensive Rankings</h1>
 
     <section class="rankings-explainer">

@@ -11,7 +11,7 @@
     <% } %>
 
     <main class="page-main<%= (typeof clientSidePowerRankings !== 'undefined' && clientSidePowerRankings) ? ' mms-page-main--loading' : '' %>">
-    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.3, record: 0.5, sos: 0.2 }; %>
+    <% const teamBlend = typeof teamOverallWeights !== 'undefined' ? teamOverallWeights : { player: 0.4, record: 0.45, sos: 0.15 }; %>
     <h1 class="page-title">Power Rankings</h1>
 
     <% if (typeof clientSidePowerRankings !== 'undefined' && clientSidePowerRankings) { %>
