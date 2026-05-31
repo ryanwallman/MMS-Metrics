@@ -11,11 +11,20 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
   </head>
-  <body>
+  
+  <body class=&#34;mms-page-ready&#34;>
     <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
@@ -59,11 +68,6 @@
     </nav>
     <div class="site-header-meta">
       
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:29.799Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
-      
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
       
@@ -71,6 +75,8 @@
   </div>
 </header>
 
+
+    
 
     <main class="page-main">
     <h1 class="page-title">Matchup Predictor</h1>
@@ -277,27 +283,21 @@
     
 
     
-    <section class="matchup-prediction">
-      <h2>Model prediction</h2>
+    
+    <section class="matchup-prediction matchup-prediction--final">
+      <h2>Final result</h2>
       <p class="matchup-prediction-note">
-        <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
-        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
-        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
       </p>
 
-      
-      
-      
-      <div class="matchup-pred-win-row">
-        <div class="matchup-pred-team matchup-pred-away">
+      <div class="matchup-pred-win-row matchup-pred-win-row--final">
+        <div class="matchup-pred-team matchup-pred-away matchup-pred-team--winner">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>EB CONSTRUCTION</span>
-          <span class="matchup-pred-pct">67.3%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:67.3%"></span></span>
+          <span class="matchup-pred-score">17</span>
         </div>
         <div class="matchup-pred-team matchup-pred-home">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>TUSCANYROSE</span>
-          <span class="matchup-pred-pct">32.7%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:32.7%"></span></span>
+          <span class="matchup-pred-score">7</span>
         </div>
       </div>
 
@@ -306,32 +306,33 @@
         <thead>
           <tr>
             <th>Line</th>
-            <th>Team</th>
+            <th>Team / pick</th>
             <th>Value</th>
+            <th>Result</th>
           </tr>
         </thead>
         <tbody>
-          
-          
-          
           <tr class="matchup-lines-row--final-score">
-            <td>Predicted final score</td>
+            <td>Final score</td>
             
             <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>EB CONSTRUCTION</td>
             
             <td class="matchup-lines-value matchup-lines-score">
-              <span class="matchup-score-runs matchup-score-runs--winner">14</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">17</span>
               <span class="matchup-score-sep">–</span>
               <span class="matchup-score-runs matchup-score-runs--loser">7</span>
             </td>
+            <td class="matchup-bet-result">Actual</td>
           </tr>
+          
           <tr>
             <td>Over / under (total runs)</td>
-            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
-            <td class="matchup-lines-value"><strong>O/U 21</strong></td>
+            <td class="matchup-lines-team matchup-lines-team--both">—</td>
+            <td class="matchup-lines-value"><strong>O/U 20.5</strong> <span class="matchup-bet-actual">(24 runs)</span></td>
+            <td class="matchup-bet-result">
+
+</td>
           </tr>
-          
-          
           
           
           
@@ -340,17 +341,35 @@
             
             <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>EB CONSTRUCTION</td>
             
-            <td class="matchup-lines-value"><strong>+7</strong></td>
+            <td class="matchup-lines-value"><strong>7.5</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
+
+</td>
           </tr>
+          
+          
+          
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>EB CONSTRUCTION</td>
-            <td class="matchup-lines-value"><strong>-240</strong></td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>EB CONSTRUCTION <span class="matchup-bet-model-pick">Model pick</span></td>
+            <td class="matchup-lines-value"><strong>-250</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
+
+</td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>TUSCANYROSE</td>
-            <td class="matchup-lines-value"><strong>+195</strong></td>
+            <td class="matchup-lines-value"><strong>+200</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
+
+</td>
           </tr>
         </tbody>
       </table>
@@ -365,8 +384,11 @@
     
     
     
+    
     <section class="matchup-predictor-rosters">
-      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      
+      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>EB CONSTRUCTION</span>
         <span class="matchup-predictor-at">@</span>
@@ -780,7 +802,10 @@
     </form>
     </main>
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"17","teamName":"EB CONSTRUCTION","offenseRating":0.23805970149253736,"runProd2026":0.5522388059701493,"defenseZ":0,"winPct":0.75,"sosOppWinPct":0.35,"teamOverall":0.31,"rosterPlayerRating":0.23805970149253736,"scheduleGames":4,"runsPerGame":14.5,"runsAgainstPerGame":10,"runDiffPerGame":4.5},"homeBaseProfile":{"teamId":"16","teamName":"TUSCANYROSE","offenseRating":-0.2631313131313131,"runProd2026":0.2727272727272727,"defenseZ":0,"winPct":0,"sosOppWinPct":0.7100000000000001,"teamOverall":-0.76,"rosterPlayerRating":-0.2631313131313131,"scheduleGames":5,"runsPerGame":5.6,"runsAgainstPerGame":15.4,"runDiffPerGame":-9.8},"awayPlayers":["Cole Fluta","Eric Becker","Joe Mamone","Jeff Beja","Matt Whelen","Alex Goldfarb","James Pezzulo","Chris Curti","Jesse Panassidi","Rich Hartly","Bill Chiusano","Reid Goldfarb","Joe Olivencia"],"homePlayers":["Mike Santaromita","Christian Gaglio","Dave Polzer","Joe Pargament","Ryan Cumber","Andy Pargament","Rich Allen","Jeff Arnold","Brock Hor","Joel Podos","Lou Baffuto","Ralph Calabro","Jay Podos"],"awayLabel":"EB CONSTRUCTION","homeLabel":"TUSCANYROSE","offenseRatingByNorm":{"cole fluta":1.85,"eric becker":1.51,"joe mamone":0.77,"jeff beja":0.63,"matt whelen":0.13,"alex goldfarb":-0.63,"james pezzulo":0.14,"chris curti":0.32,"jesse panassidi":-0.75,"rich hartly":-0.71,"bill chiusano":-0.51,"reid goldfarb":-0.41,"joe olivencia":-0.44,"mike santaromita":2.96,"christian gaglio":-1.79,"dave polzer":0.84,"joe pargament":-0.23,"ryan cumber":0.39,"andy pargament":-0.05,"rich allen":-0.58,"jeff arnold":-0.77,"brock hor":0,"joel podos":-0.53,"lou baffuto":-1.56,"ralph calabro":-2.92,"jay podos":-1.26},"stats2026ByPlayer":{"cole fluta":{"PA":"18","Runs":"8","RBI":"7"},"eric becker":{"PA":"18","Runs":"7","RBI":"8"},"joe mamone":{"PA":"18","Runs":"9","RBI":"3"},"jeff beja":{"PA":"18","Runs":"3","RBI":"8"},"matt whelen":{"PA":"18","Runs":"7","RBI":"4"},"alex goldfarb":{"PA":"15","Runs":"1","RBI":"1"},"james pezzulo":{"PA":"16","Runs":"2","RBI":"8"},"chris curti":{"PA":"14","Runs":"3","RBI":"5"},"jesse panassidi":{"PA":"14","Runs":"4","RBI":"0"},"rich hartly":{"PA":"14","Runs":"4","RBI":"1"},"bill chiusano":{"PA":"10","Runs":"3","RBI":"2"},"reid goldfarb":{"PA":"14","Runs":"2","RBI":"3"},"joe olivencia":{"PA":"14","Runs":"5","RBI":"3"},"mike santaromita":{"PA":"19","Runs":"6","RBI":"8"},"christian gaglio":{"PA":"14","Runs":"1","RBI":"1"},"dave polzer":{"PA":"19","Runs":"5","RBI":"2"},"joe pargament":{"PA":"20","Runs":"5","RBI":"1"},"ryan cumber":{"PA":"19","Runs":"2","RBI":"2"},"andy pargament":{"PA":"18","Runs":"1","RBI":"3"},"rich allen":{"PA":"16","Runs":"2","RBI":"4"},"jeff arnold":{"PA":"15","Runs":"2","RBI":"1"},"brock hor":{"PA":"7","Runs":"1","RBI":"1"},"joel podos":{"PA":"10","Runs":"1","RBI":"1"},"lou baffuto":{"PA":"17","Runs":"0","RBI":"1"},"ralph calabro":{"PA":"11","Runs":"0","RBI":"0"},"jay podos":{"PA":"13","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"17","teamName":"EB CONSTRUCTION","offenseRating":0.24959839357429725,"runProd2026":0.5582329317269076,"defenseZ":0,"winPct":0.8571428571428571,"sosOppWinPct":0.4387755102040816,"teamOverall":0.78,"rosterPlayerRating":0.24959839357429725,"scheduleGames":7,"runsPerGame":14.857142857142858,"runsAgainstPerGame":7.571428571428571,"runDiffPerGame":7.285714285714286},"homeBaseProfile":{"teamId":"16","teamName":"TUSCANYROSE","offenseRating":-0.2632323232323232,"runProd2026":0.2727272727272727,"defenseZ":0,"winPct":0,"sosOppWinPct":0.6357142857142858,"teamOverall":-0.92,"rosterPlayerRating":-0.2632323232323232,"scheduleGames":5,"runsPerGame":5.6,"runsAgainstPerGame":15.4,"runDiffPerGame":-9.8},"awayPlayers":["Cole Fluta","Eric Becker","Joe Mamone","Jeff Beja","Matt Whelen","Alex Goldfarb","James Pezzulo","Chris Curti","Jesse Panassidi","Rich Hartly","Bill Chiusano","Reid Goldfarb","Joe Olivencia"],"homePlayers":["Mike Santaromita","Christian Gaglio","Dave Polzer","Joe Pargament","Ryan Cumber","Andy Pargament","Rich Allen","Jeff Arnold","Brock Hor","Joel Podos","Lou Baffuto","Ralph Calabro","Jay Podos"],"awayPlayersOriginal":["Cole Fluta","Eric Becker","Joe Mamone","Jeff Beja","Matt Whelen","Alex Goldfarb","James Pezzulo","Chris Curti","Jesse Panassidi","Rich Hartly","Bill Chiusano","Reid Goldfarb","Joe Olivencia"],"homePlayersOriginal":["Mike Santaromita","Christian Gaglio","Dave Polzer","Joe Pargament","Ryan Cumber","Andy Pargament","Rich Allen","Jeff Arnold","Brock Hor","Joel Podos","Lou Baffuto","Ralph Calabro","Jay Podos"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":17,"homeScore":7,"total":24,"winnerSide":"away","winnerLabel":"EB CONSTRUCTION","awayLabel":"EB CONSTRUCTION","homeLabel":"TUSCANYROSE","bets":{"overUnder":{"line":"20.5","pick":"push","actualTotal":24,"status":null},"runLine":{"side":"away","line":"7.5","status":"hit"},"moneyline":{"favoriteSide":"away","status":"hit"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":68.4,"home":31.6},"winPctFromRuns":{"away":87.5,"home":12.5},"projectedRuns":{"away":"14","home":"6.5","total":"20.5","marginHome":"-7.5"},"scheduleRates":{"away":{"runsPerGame":14.9,"runsAgainstPerGame":7.6},"home":{"runsPerGame":5.6,"runsAgainstPerGame":15.4}},"lines":{"overUnder":"20.5","finalScore":{"winnerSide":"away","score":"14 – 6.5"},"runLine":{"side":"away","value":"7.5"},"impliedScore":"14 – 6.5","moneylineAway":"-250","moneylineHome":"+200"},"strength":{"away":0.9,"home":-1.82},"runBaselineGames":54,"leagueAvgRunsPerTeam":10.3,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.24959839357429725,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":-0.2632323232323232,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"EB CONSTRUCTION","homeLabel":"TUSCANYROSE"}},"awayLabel":"EB CONSTRUCTION","homeLabel":"TUSCANYROSE","offenseRatingByNorm":{"cole fluta":2.03,"eric becker":1.3,"joe mamone":0.68,"jeff beja":0.69,"matt whelen":0.42,"alex goldfarb":-0.39,"james pezzulo":0.07,"chris curti":0.36,"jesse panassidi":-0.68,"rich hartly":-0.82,"bill chiusano":-0.62,"reid goldfarb":-0.41,"joe olivencia":-0.53,"mike santaromita":2.96,"christian gaglio":-1.79,"dave polzer":0.83,"joe pargament":-0.23,"ryan cumber":0.39,"andy pargament":-0.05,"rich allen":-0.58,"jeff arnold":-0.77,"brock hor":0,"joel podos":-0.53,"lou baffuto":-1.55,"ralph calabro":-2.92,"jay podos":-1.26},"stats2026ByPlayer":{"cole fluta":{"PA":"22","Runs":"10","RBI":"9"},"eric becker":{"PA":"22","Runs":"8","RBI":"8"},"joe mamone":{"PA":"22","Runs":"10","RBI":"3"},"jeff beja":{"PA":"22","Runs":"4","RBI":"12"},"matt whelen":{"PA":"22","Runs":"10","RBI":"6"},"alex goldfarb":{"PA":"19","Runs":"3","RBI":"3"},"james pezzulo":{"PA":"20","Runs":"3","RBI":"10"},"chris curti":{"PA":"18","Runs":"4","RBI":"6"},"jesse panassidi":{"PA":"18","Runs":"5","RBI":"0"},"rich hartly":{"PA":"18","Runs":"4","RBI":"1"},"bill chiusano":{"PA":"14","Runs":"4","RBI":"2"},"reid goldfarb":{"PA":"14","Runs":"2","RBI":"3"},"joe olivencia":{"PA":"18","Runs":"5","RBI":"4"},"mike santaromita":{"PA":"19","Runs":"6","RBI":"8"},"christian gaglio":{"PA":"14","Runs":"1","RBI":"1"},"dave polzer":{"PA":"19","Runs":"5","RBI":"2"},"joe pargament":{"PA":"20","Runs":"5","RBI":"1"},"ryan cumber":{"PA":"19","Runs":"2","RBI":"2"},"andy pargament":{"PA":"18","Runs":"1","RBI":"3"},"rich allen":{"PA":"16","Runs":"2","RBI":"4"},"jeff arnold":{"PA":"15","Runs":"2","RBI":"1"},"brock hor":{"PA":"7","Runs":"1","RBI":"1"},"joel podos":{"PA":"10","Runs":"1","RBI":"1"},"lou baffuto":{"PA":"17","Runs":"0","RBI":"1"},"ralph calabro":{"PA":"11","Runs":"0","RBI":"0"},"jay podos":{"PA":"13","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -797,6 +822,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -965,6 +991,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -996,8 +1023,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -1009,6 +1102,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
@@ -1024,8 +1122,7 @@
         });
       })();
     </script>
-      <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
-</body>
+  </body>
 </html>
 
 

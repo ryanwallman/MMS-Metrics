@@ -11,11 +11,20 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
   </head>
-  <body>
+  
+  <body class=&#34;mms-page-ready&#34;>
     <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
@@ -59,11 +68,6 @@
     </nav>
     <div class="site-header-meta">
       
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:30.632Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
-      
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
       
@@ -71,6 +75,8 @@
   </div>
 </header>
 
+
+    
 
     <main class="page-main">
     <h1 class="page-title">Matchup Predictor</h1>
@@ -263,13 +269,13 @@
       <div class="matchup-pred-win-row">
         <div class="matchup-pred-team matchup-pred-away">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>SHORE SMILE</span>
-          <span class="matchup-pred-pct">43.1%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:43.1%"></span></span>
+          <span class="matchup-pred-pct">44.1%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:44.1%"></span></span>
         </div>
         <div class="matchup-pred-team matchup-pred-home">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>URWAY HEALTH</span>
-          <span class="matchup-pred-pct">56.9%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:56.9%"></span></span>
+          <span class="matchup-pred-pct">55.9%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:55.9%"></span></span>
         </div>
       </div>
 
@@ -294,13 +300,13 @@
             <td class="matchup-lines-value matchup-lines-score">
               <span class="matchup-score-runs matchup-score-runs--loser">8.5</span>
               <span class="matchup-score-sep">–</span>
-              <span class="matchup-score-runs matchup-score-runs--winner">11</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">10.5</span>
             </td>
           </tr>
           <tr>
             <td>Over / under (total runs)</td>
             <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
-            <td class="matchup-lines-value"><strong>O/U 19.5</strong></td>
+            <td class="matchup-lines-value"><strong>O/U 19</strong></td>
           </tr>
           
           
@@ -312,17 +318,17 @@
             
             <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span>URWAY HEALTH</td>
             
-            <td class="matchup-lines-value"><strong>+2.5</strong></td>
+            <td class="matchup-lines-value"><strong>2</strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>SHORE SMILE</td>
-            <td class="matchup-lines-value"><strong>+120</strong></td>
+            <td class="matchup-lines-value"><strong>+115</strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>URWAY HEALTH</td>
-            <td class="matchup-lines-value"><strong>-145</strong></td>
+            <td class="matchup-lines-value"><strong>-140</strong></td>
           </tr>
         </tbody>
       </table>
@@ -337,8 +343,11 @@
     
     
     
+    
     <section class="matchup-predictor-rosters">
+      
       <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>SHORE SMILE</span>
         <span class="matchup-predictor-at">@</span>
@@ -752,7 +761,10 @@
     </form>
     </main>
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"11","teamName":"SHORE SMILE","offenseRating":0.3249600000000001,"runProd2026":0.44,"defenseZ":0,"winPct":0.25,"sosOppWinPct":0.48750000000000004,"teamOverall":-0.47,"rosterPlayerRating":0.3249600000000001,"scheduleGames":4,"runsPerGame":7.25,"runsAgainstPerGame":16.5,"runDiffPerGame":-9.25},"homeBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":0.03705555555555556,"runProd2026":0.40555555555555556,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5,"teamOverall":0,"rosterPlayerRating":0.03705555555555556,"scheduleGames":4,"runsPerGame":9.5,"runsAgainstPerGame":9.25,"runDiffPerGame":0.25},"awayPlayers":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"homePlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"awayLabel":"SHORE SMILE","homeLabel":"URWAY HEALTH","offenseRatingByNorm":{"michael kleschinsky jr":2.74,"nick villani":1.07,"mike klecko":0.79,"kevin kleschinsky":0.69,"jeremy levine":1.22,"pete kokoszka":0.09,"mike villani":0.35,"jim lombardi":-0.74,"michael kleschinsky sr":0.36,"will perez":-1.03,"anthony fazzino":-0.71,"paul lombardi":-0.89,"nick kleschinsky":-1.65,"dennis oconnor":4.06,"chris baldino":0.13,"justin bykofsky":0.59,"nick dinapoli":0.72,"jason feingold":-0.72,"robbie juergens":0.35,"chip costa":0.58,"seamus coyle":0.48,"john maguire":-0.75,"carlo tanzola":-1.59,"ken feingold":-0.54,"john fisher":-2.92,"darren wald":-0.74},"stats2026ByPlayer":{"michael kleschinsky jr":{"PA":"11","Runs":"5","RBI":"7"},"nick villani":{"PA":"11","Runs":"5","RBI":"3"},"mike klecko":{"PA":"11","Runs":"1","RBI":"4"},"kevin kleschinsky":{"PA":"7","Runs":"1","RBI":"1"},"jeremy levine":{"PA":"11","Runs":"6","RBI":"2"},"pete kokoszka":{"PA":"11","Runs":"2","RBI":"1"},"mike villani":{"PA":"10","Runs":"1","RBI":"2"},"jim lombardi":{"PA":"9","Runs":"3","RBI":"0"},"michael kleschinsky sr":{"PA":"14","Runs":"2","RBI":"4"},"will perez":{"PA":"5","Runs":"0","RBI":"1"},"anthony fazzino":{"PA":"9","Runs":"1","RBI":"0"},"paul lombardi":{"PA":"9","Runs":"0","RBI":"2"},"nick kleschinsky":{"PA":"7","Runs":"1","RBI":"0"},"dennis oconnor":{"PA":"12","Runs":"6","RBI":"6"},"chris baldino":{"PA":"16","Runs":"5","RBI":"2"},"justin bykofsky":{"PA":"17","Runs":"6","RBI":"1"},"nick dinapoli":{"PA":"17","Runs":"4","RBI":"2"},"jason feingold":{"PA":"15","Runs":"2","RBI":"3"},"robbie juergens":{"PA":"12","Runs":"3","RBI":"3"},"chip costa":{"PA":"16","Runs":"3","RBI":"8"},"seamus coyle":{"PA":"12","Runs":"2","RBI":"1"},"john maguire":{"PA":"15","Runs":"2","RBI":"2"},"carlo tanzola":{"PA":"13","Runs":"1","RBI":"1"},"ken feingold":{"PA":"13","Runs":"1","RBI":"4"},"john fisher":{"PA":"9","Runs":"0","RBI":"0"},"darren wald":{"PA":"13","Runs":"3","RBI":"2"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"11","teamName":"SHORE SMILE","offenseRating":0.2113725490196078,"runProd2026":0.37254901960784315,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.45634920634920634,"teamOverall":-0.37,"rosterPlayerRating":0.2113725490196078,"scheduleGames":6,"runsPerGame":7.833333333333333,"runsAgainstPerGame":13.5,"runDiffPerGame":-5.666666666666667},"homeBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":0.03572222222222217,"runProd2026":0.40555555555555556,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5416666666666667,"teamOverall":0.12,"rosterPlayerRating":0.03572222222222217,"scheduleGames":4,"runsPerGame":9.5,"runsAgainstPerGame":9.25,"runDiffPerGame":0.25},"awayPlayers":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"homePlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"awayPlayersOriginal":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"homePlayersOriginal":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-08-05","isFinishedGame":false,"gameResult":null,"awayLabel":"SHORE SMILE","homeLabel":"URWAY HEALTH","offenseRatingByNorm":{"michael kleschinsky jr":2.74,"nick villani":0.77,"mike klecko":0.72,"kevin kleschinsky":0.44,"jeremy levine":0.85,"pete kokoszka":0.1,"mike villani":0.34,"jim lombardi":-0.74,"michael kleschinsky sr":0.31,"will perez":-1.03,"anthony fazzino":-0.69,"paul lombardi":-0.92,"nick kleschinsky":-1.57,"dennis oconnor":4.05,"chris baldino":0.13,"justin bykofsky":0.59,"nick dinapoli":0.72,"jason feingold":-0.72,"robbie juergens":0.35,"chip costa":0.58,"seamus coyle":0.47,"john maguire":-0.75,"carlo tanzola":-1.59,"ken feingold":-0.54,"john fisher":-2.92,"darren wald":-0.74},"stats2026ByPlayer":{"michael kleschinsky jr":{"PA":"11","Runs":"5","RBI":"7"},"nick villani":{"PA":"14","Runs":"5","RBI":"3"},"mike klecko":{"PA":"14","Runs":"1","RBI":"4"},"kevin kleschinsky":{"PA":"10","Runs":"1","RBI":"1"},"jeremy levine":{"PA":"14","Runs":"6","RBI":"2"},"pete kokoszka":{"PA":"14","Runs":"3","RBI":"1"},"mike villani":{"PA":"12","Runs":"1","RBI":"2"},"jim lombardi":{"PA":"9","Runs":"3","RBI":"0"},"michael kleschinsky sr":{"PA":"17","Runs":"2","RBI":"4"},"will perez":{"PA":"7","Runs":"0","RBI":"1"},"anthony fazzino":{"PA":"11","Runs":"1","RBI":"0"},"paul lombardi":{"PA":"11","Runs":"0","RBI":"3"},"nick kleschinsky":{"PA":"9","Runs":"1","RBI":"0"},"dennis oconnor":{"PA":"12","Runs":"6","RBI":"6"},"chris baldino":{"PA":"16","Runs":"5","RBI":"2"},"justin bykofsky":{"PA":"17","Runs":"6","RBI":"1"},"nick dinapoli":{"PA":"17","Runs":"4","RBI":"2"},"jason feingold":{"PA":"15","Runs":"2","RBI":"3"},"robbie juergens":{"PA":"12","Runs":"3","RBI":"3"},"chip costa":{"PA":"16","Runs":"3","RBI":"8"},"seamus coyle":{"PA":"12","Runs":"2","RBI":"1"},"john maguire":{"PA":"15","Runs":"2","RBI":"2"},"carlo tanzola":{"PA":"13","Runs":"1","RBI":"1"},"ken feingold":{"PA":"13","Runs":"1","RBI":"4"},"john fisher":{"PA":"9","Runs":"0","RBI":"0"},"darren wald":{"PA":"13","Runs":"3","RBI":"2"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -769,6 +781,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -937,6 +950,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -968,8 +982,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -981,6 +1061,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
@@ -996,8 +1081,7 @@
         });
       })();
     </script>
-      <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
-</body>
+  </body>
 </html>
 
 

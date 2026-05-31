@@ -11,11 +11,20 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
   </head>
-  <body>
+  
+  <body class=&#34;mms-page-ready&#34;>
     <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
@@ -59,11 +68,6 @@
     </nav>
     <div class="site-header-meta">
       
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:29.858Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
-      
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
       
@@ -71,6 +75,8 @@
   </div>
 </header>
 
+
+    
 
     <main class="page-main">
     <h1 class="page-title">Matchup Predictor</h1>
@@ -232,55 +238,51 @@
             <option value="" >— Select a game —</option>
             
             <option value="5|17" >
-              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM
+              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM · 13-2 GOLDFARB
             </option>
             
             <option value="10|13" >
-              GAME CHANGER @ MONMOUTH GYM · 8:30 AM
+              GAME CHANGER @ MONMOUTH GYM · 8:30 AM · 16-3 MARRONE
             </option>
             
             <option value="14|11" >
-              NEW HORIZON @ SHORE SMILE · 8:30 AM
+              NEW HORIZON @ SHORE SMILE · 8:30 AM · 12-10 MEYER
             </option>
             
             <option value="7|1" >
-              FRADKIN LAW @ ENGAGE PEO · 9:00 AM
+              FRADKIN LAW @ ENGAGE PEO · 9:00 AM · 4-2 POLLOCK
             </option>
             
             <option value="12|15" >
-              LHRGC LAW @ TEC-TEL · 9:00 AM
+              LHRGC LAW @ TEC-TEL · 9:00 AM · 16-9 LAROCCA
             </option>
             
             <option value="8|2" >
-              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM
+              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM · 5-1 BOMENBLIT
             </option>
             
             <option value="17|13" >
-              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM
+              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM · 19-0 GOLDFARB F/7
             </option>
             
             <option value="18|6" selected>
-              CG TAX @ PROCARE · 10:30 AM
+              CG TAX @ PROCARE · 10:30 AM · 5-4 CARROLL F/11
             </option>
             
             <option value="5|1" >
-              GODDARD HOME @ ENGAGE PEO · 10:45 AM
+              GODDARD HOME @ ENGAGE PEO · 10:45 AM · 16-10 GODDARD
             </option>
             
             <option value="11|7" >
-              SHORE SMILE @ FRADKIN LAW · 10:45 AM
+              SHORE SMILE @ FRADKIN LAW · 10:45 AM · 8-3 LOMBARDI
             </option>
             
             <option value="3|9" >
-              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM
+              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM · 10-1 WALLMAN
             </option>
             
             <option value="16|4" >
               TUSCANYROSE @ URWAY HEALTH · 6:00 PM
-            </option>
-            
-            <option value="16|14" >
-              TUSCANYROSE @ NEW HORIZON · 8:00 PM
             </option>
             
           </select>
@@ -293,27 +295,21 @@
     
 
     
-    <section class="matchup-prediction">
-      <h2>Model prediction</h2>
+    
+    <section class="matchup-prediction matchup-prediction--final">
+      <h2>Final result</h2>
       <p class="matchup-prediction-note">
-        <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
-        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
-        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
       </p>
 
-      
-      
-      
-      <div class="matchup-pred-win-row">
+      <div class="matchup-pred-win-row matchup-pred-win-row--final">
         <div class="matchup-pred-team matchup-pred-away">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>CG TAX, AUDIT AND ADVISORY</span>
-          <span class="matchup-pred-pct">63.1%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:63.1%"></span></span>
+          <span class="matchup-pred-score">4</span>
         </div>
-        <div class="matchup-pred-team matchup-pred-home">
+        <div class="matchup-pred-team matchup-pred-home matchup-pred-team--winner">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>PROCARE REHAB</span>
-          <span class="matchup-pred-pct">36.9%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:36.9%"></span></span>
+          <span class="matchup-pred-score">5</span>
         </div>
       </div>
 
@@ -322,32 +318,33 @@
         <thead>
           <tr>
             <th>Line</th>
-            <th>Team</th>
+            <th>Team / pick</th>
             <th>Value</th>
+            <th>Result</th>
           </tr>
         </thead>
         <tbody>
-          
-          
-          
           <tr class="matchup-lines-row--final-score">
-            <td>Predicted final score</td>
+            <td>Final score</td>
             
-            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>CG TAX, AUDIT AND ADVISORY</td>
+            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>PROCARE REHAB</td>
             
             <td class="matchup-lines-value matchup-lines-score">
-              <span class="matchup-score-runs matchup-score-runs--winner">12</span>
+              <span class="matchup-score-runs matchup-score-runs--loser">4</span>
               <span class="matchup-score-sep">–</span>
-              <span class="matchup-score-runs matchup-score-runs--loser">7.5</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">5</span>
             </td>
+            <td class="matchup-bet-result">Actual</td>
           </tr>
+          
           <tr>
             <td>Over / under (total runs)</td>
-            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
-            <td class="matchup-lines-value"><strong>O/U 19.5</strong></td>
+            <td class="matchup-lines-team matchup-lines-team--both">—</td>
+            <td class="matchup-lines-value"><strong>O/U 17.5</strong> <span class="matchup-bet-actual">(9 runs)</span></td>
+            <td class="matchup-bet-result">
+
+</td>
           </tr>
-          
-          
           
           
           
@@ -356,17 +353,35 @@
             
             <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>CG TAX, AUDIT AND ADVISORY</td>
             
-            <td class="matchup-lines-value"><strong>+4.5</strong></td>
+            <td class="matchup-lines-value"><strong>3.5</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
+
+</td>
           </tr>
+          
+          
+          
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>CG TAX, AUDIT AND ADVISORY</td>
-            <td class="matchup-lines-value"><strong>-195</strong></td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>CG TAX, AUDIT AND ADVISORY <span class="matchup-bet-model-pick">Model pick</span></td>
+            <td class="matchup-lines-value"><strong>-170</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
+
+</td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>PROCARE REHAB</td>
-            <td class="matchup-lines-value"><strong>+160</strong></td>
+            <td class="matchup-lines-value"><strong>+140</strong></td>
+            <td class="matchup-bet-result">
+
+<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
+
+</td>
           </tr>
         </tbody>
       </table>
@@ -381,8 +396,11 @@
     
     
     
+    
     <section class="matchup-predictor-rosters">
-      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      
+      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>CG TAX, AUDIT AND ADVISORY</span>
         <span class="matchup-predictor-at">@</span>
@@ -796,7 +814,10 @@
     </form>
     </main>
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"18","teamName":"CG TAX, AUDIT AND ADVISORY","offenseRating":0.3416666666666667,"runProd2026":0.4930555555555556,"defenseZ":0,"winPct":1,"sosOppWinPct":0.26666666666666666,"teamOverall":0.71,"rosterPlayerRating":0.3416666666666667,"scheduleGames":3,"runsPerGame":12.333333333333334,"runsAgainstPerGame":5.666666666666667,"runDiffPerGame":6.666666666666667},"homeBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.1931884057971015,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":0.4,"sosOppWinPct":0.45999999999999996,"teamOverall":-0.36,"rosterPlayerRating":-0.1931884057971015,"scheduleGames":5,"runsPerGame":7.4,"runsAgainstPerGame":12.2,"runDiffPerGame":-4.8},"awayPlayers":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"homePlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"awayLabel":"CG TAX, AUDIT AND ADVISORY","homeLabel":"PROCARE REHAB","offenseRatingByNorm":{"nick turano":3.96,"eddie fausak":0.83,"andrew rodriguez":-0.13,"anthony turano":-0.06,"joe joraskie":1.07,"mike heitzner":-0.16,"joseph lewicki":0.51,"jorge rivera":-0.66,"jake heitzner":-0.27,"vinny spitaletto":0.68,"frank ermel":-0.21,"justin bickoff":-0.85,"pat ciaglia":-0.69,"tom carroll":3.4,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.2,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.27},"stats2026ByPlayer":{"nick turano":{"PA":"12","Runs":"6","RBI":"8"},"eddie fausak":{"PA":"12","Runs":"5","RBI":"1"},"andrew rodriguez":{"PA":"12","Runs":"3","RBI":"3"},"anthony turano":{"PA":"11","Runs":"4","RBI":"2"},"joe joraskie":{"PA":"11","Runs":"4","RBI":"3"},"mike heitzner":{"PA":"9","Runs":"2","RBI":"2"},"joseph lewicki":{"PA":"11","Runs":"1","RBI":"2"},"jorge rivera":{"PA":"11","Runs":"2","RBI":"3"},"jake heitzner":{"PA":"11","Runs":"2","RBI":"0"},"vinny spitaletto":{"PA":"11","Runs":"4","RBI":"3"},"frank ermel":{"PA":"11","Runs":"2","RBI":"2"},"justin bickoff":{"PA":"11","Runs":"0","RBI":"2"},"pat ciaglia":{"PA":"11","Runs":"2","RBI":"3"},"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"18","teamName":"CG TAX, AUDIT AND ADVISORY","offenseRating":0.34083333333333343,"runProd2026":0.4930555555555556,"defenseZ":0,"winPct":0.75,"sosOppWinPct":0.35119047619047616,"teamOverall":0.39,"rosterPlayerRating":0.34083333333333343,"scheduleGames":4,"runsPerGame":10.25,"runsAgainstPerGame":5.5,"runDiffPerGame":4.75},"homeBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.19169082125603867,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.48611111111111116,"teamOverall":-0.09,"rosterPlayerRating":-0.19169082125603867,"scheduleGames":6,"runsPerGame":7,"runsAgainstPerGame":10.833333333333334,"runDiffPerGame":-3.8333333333333335},"awayPlayers":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"homePlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"awayPlayersOriginal":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"homePlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-05-31","isFinishedGame":true,"gameResult":{"awayScore":4,"homeScore":5,"total":9,"winnerSide":"home","winnerLabel":"PROCARE REHAB","awayLabel":"CG TAX, AUDIT AND ADVISORY","homeLabel":"PROCARE REHAB","bets":{"overUnder":{"line":"17.5","pick":"push","actualTotal":9,"status":null},"runLine":{"side":"away","line":"3.5","status":"miss"},"moneyline":{"favoriteSide":"away","status":"miss"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":60.5,"home":39.5},"winPctFromRuns":{"away":71.3,"home":28.7},"projectedRuns":{"away":"10.5","home":"7","total":"17.5","marginHome":"-3.5"},"scheduleRates":{"away":{"runsPerGame":10.3,"runsAgainstPerGame":5.5},"home":{"runsPerGame":7,"runsAgainstPerGame":10.8}},"lines":{"overUnder":"17.5","finalScore":{"winnerSide":"away","score":"10.5 – 7"},"runLine":{"side":"away","value":"3.5"},"impliedScore":"10.5 – 7","moneylineAway":"-170","moneylineHome":"+140"},"strength":{"away":0.52,"home":-0.89},"runBaselineGames":54,"leagueAvgRunsPerTeam":10.3,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.34083333333333343,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":-0.19169082125603867,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"CG TAX, AUDIT AND ADVISORY","homeLabel":"PROCARE REHAB"}},"awayLabel":"CG TAX, AUDIT AND ADVISORY","homeLabel":"PROCARE REHAB","offenseRatingByNorm":{"nick turano":3.95,"eddie fausak":0.83,"andrew rodriguez":-0.13,"anthony turano":-0.06,"joe joraskie":1.07,"mike heitzner":-0.16,"joseph lewicki":0.51,"jorge rivera":-0.66,"jake heitzner":-0.27,"vinny spitaletto":0.68,"frank ermel":-0.21,"justin bickoff":-0.85,"pat ciaglia":-0.69,"tom carroll":3.4,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.19,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.26},"stats2026ByPlayer":{"nick turano":{"PA":"12","Runs":"6","RBI":"8"},"eddie fausak":{"PA":"12","Runs":"5","RBI":"1"},"andrew rodriguez":{"PA":"12","Runs":"3","RBI":"3"},"anthony turano":{"PA":"11","Runs":"4","RBI":"2"},"joe joraskie":{"PA":"11","Runs":"4","RBI":"3"},"mike heitzner":{"PA":"9","Runs":"2","RBI":"2"},"joseph lewicki":{"PA":"11","Runs":"1","RBI":"2"},"jorge rivera":{"PA":"11","Runs":"2","RBI":"3"},"jake heitzner":{"PA":"11","Runs":"2","RBI":"0"},"vinny spitaletto":{"PA":"11","Runs":"4","RBI":"3"},"frank ermel":{"PA":"11","Runs":"2","RBI":"2"},"justin bickoff":{"PA":"11","Runs":"0","RBI":"2"},"pat ciaglia":{"PA":"11","Runs":"2","RBI":"3"},"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -813,6 +834,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -981,6 +1003,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -1012,8 +1035,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -1025,6 +1114,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
@@ -1040,8 +1134,7 @@
         });
       })();
     </script>
-      <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
-</body>
+  </body>
 </html>
 
 

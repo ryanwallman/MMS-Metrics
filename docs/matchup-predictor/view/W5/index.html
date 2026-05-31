@@ -11,11 +11,20 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
   </head>
-  <body>
+  
+  <body class=&#34;mms-page-ready&#34;>
     <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
@@ -59,11 +68,6 @@
     </nav>
     <div class="site-header-meta">
       
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:29.469Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
-      
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
       
@@ -71,6 +75,8 @@
   </div>
 </header>
 
+
+    
 
     <main class="page-main">
     <h1 class="page-title">Matchup Predictor</h1>
@@ -232,55 +238,51 @@
             <option value="" selected>— Select a game —</option>
             
             <option value="5|17" >
-              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM
+              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM · 13-2 GOLDFARB
             </option>
             
             <option value="10|13" >
-              GAME CHANGER @ MONMOUTH GYM · 8:30 AM
+              GAME CHANGER @ MONMOUTH GYM · 8:30 AM · 16-3 MARRONE
             </option>
             
             <option value="14|11" >
-              NEW HORIZON @ SHORE SMILE · 8:30 AM
+              NEW HORIZON @ SHORE SMILE · 8:30 AM · 12-10 MEYER
             </option>
             
             <option value="7|1" >
-              FRADKIN LAW @ ENGAGE PEO · 9:00 AM
+              FRADKIN LAW @ ENGAGE PEO · 9:00 AM · 4-2 POLLOCK
             </option>
             
             <option value="12|15" >
-              LHRGC LAW @ TEC-TEL · 9:00 AM
+              LHRGC LAW @ TEC-TEL · 9:00 AM · 16-9 LAROCCA
             </option>
             
             <option value="8|2" >
-              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM
+              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM · 5-1 BOMENBLIT
             </option>
             
             <option value="17|13" >
-              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM
+              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM · 19-0 GOLDFARB F/7
             </option>
             
             <option value="18|6" >
-              CG TAX @ PROCARE · 10:30 AM
+              CG TAX @ PROCARE · 10:30 AM · 5-4 CARROLL F/11
             </option>
             
             <option value="5|1" >
-              GODDARD HOME @ ENGAGE PEO · 10:45 AM
+              GODDARD HOME @ ENGAGE PEO · 10:45 AM · 16-10 GODDARD
             </option>
             
             <option value="11|7" >
-              SHORE SMILE @ FRADKIN LAW · 10:45 AM
+              SHORE SMILE @ FRADKIN LAW · 10:45 AM · 8-3 LOMBARDI
             </option>
             
             <option value="3|9" >
-              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM
+              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM · 10-1 WALLMAN
             </option>
             
             <option value="16|4" >
               TUSCANYROSE @ URWAY HEALTH · 6:00 PM
-            </option>
-            
-            <option value="16|14" >
-              TUSCANYROSE @ NEW HORIZON · 8:00 PM
             </option>
             
           </select>
@@ -305,6 +307,9 @@
     </form>
     </main>
     
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
+    
     <script>
       (function () {
         const form = document.getElementById("matchupForm");
@@ -318,6 +323,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -486,6 +492,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -517,8 +524,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -530,6 +603,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
@@ -545,8 +623,7 @@
         });
       })();
     </script>
-      <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
-</body>
+  </body>
 </html>
 
 

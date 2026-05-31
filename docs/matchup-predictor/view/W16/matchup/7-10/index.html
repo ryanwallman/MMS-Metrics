@@ -11,11 +11,20 @@
   rel="stylesheet"
 />
 <script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
 <link rel="preload" href="/styles.css?v=1" as="style" />
 <link rel="stylesheet" href="/styles.css?v=1" />
 
   </head>
-  <body>
+  
+  <body class=&#34;mms-page-ready&#34;>
     <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
@@ -59,11 +68,6 @@
     </nav>
     <div class="site-header-meta">
       
-      <p class="site-updated">
-        Data updated
-        <time datetime="2026-05-27T20:00:30.762Z">May 27, 2026, 4:00 PM ET</time>
-      </p>
-      
       
       <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
       
@@ -71,6 +75,8 @@
   </div>
 </header>
 
+
+    
 
     <main class="page-main">
     <h1 class="page-title">Matchup Predictor</h1>
@@ -291,13 +297,13 @@
       <div class="matchup-pred-win-row">
         <div class="matchup-pred-team matchup-pred-away">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>FRADKIN LAW</span>
-          <span class="matchup-pred-pct">59.3%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:59.3%"></span></span>
+          <span class="matchup-pred-pct">57.9%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:57.9%"></span></span>
         </div>
         <div class="matchup-pred-team matchup-pred-home">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>GAME CHANGER</span>
-          <span class="matchup-pred-pct">40.7%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:40.7%"></span></span>
+          <span class="matchup-pred-pct">42.1%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:42.1%"></span></span>
         </div>
       </div>
 
@@ -320,15 +326,15 @@
             <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>FRADKIN LAW</td>
             
             <td class="matchup-lines-value matchup-lines-score">
-              <span class="matchup-score-runs matchup-score-runs--winner">12.5</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">11</span>
               <span class="matchup-score-sep">–</span>
-              <span class="matchup-score-runs matchup-score-runs--loser">9.5</span>
+              <span class="matchup-score-runs matchup-score-runs--loser">8.5</span>
             </td>
           </tr>
           <tr>
             <td>Over / under (total runs)</td>
             <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
-            <td class="matchup-lines-value"><strong>O/U 22</strong></td>
+            <td class="matchup-lines-value"><strong>O/U 19.5</strong></td>
           </tr>
           
           
@@ -340,17 +346,17 @@
             
             <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>FRADKIN LAW</td>
             
-            <td class="matchup-lines-value"><strong>+3</strong></td>
+            <td class="matchup-lines-value"><strong>2.5</strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>FRADKIN LAW</td>
-            <td class="matchup-lines-value"><strong>-165</strong></td>
+            <td class="matchup-lines-value"><strong>-155</strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>GAME CHANGER</td>
-            <td class="matchup-lines-value"><strong>+135</strong></td>
+            <td class="matchup-lines-value"><strong>+125</strong></td>
           </tr>
         </tbody>
       </table>
@@ -365,8 +371,11 @@
     
     
     
+    
     <section class="matchup-predictor-rosters">
+      
       <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>FRADKIN LAW</span>
         <span class="matchup-predictor-at">@</span>
@@ -687,14 +696,14 @@
     
     <li class="matchup-roster-item">
       <span class="matchup-roster-pick">R8</span>
-      <span class="matchup-roster-name">Andy Kessler</span>
+      <span class="matchup-roster-name"><span class="matchup-roster-replaced-name">Andy Kessler</span> Chris Frometa<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span></span>
       
       <button
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
         data-side="home"
-        data-norm="andy kessler"
+        data-norm="chris frometa"
         aria-pressed="false"
       >Active</button>
     </li>
@@ -780,7 +789,10 @@
     </form>
     </main>
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23698394028308722,"std":0.23375392980821122},"runProd":{"mean":0.4648345904020478,"std":0.08907906680338382},"runsPerGame":{"mean":11.021296296296297,"std":2.7805586388902626},"runsAgainstPerGame":{"mean":10.828703703703702,"std":2.900036214948181},"teamOverall":{"mean":0.07111111111111111,"std":0.40247689911470397},"winPct":{"mean":0.5138888888888888,"std":0.23851715263008955},"sos":{"mean":0.4931481481481483,"std":0.11043144749271414},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":41,"avgTotalRuns":21.951219512195124,"avgRunsPerTeam":10.975609756097562,"avgRunsAgainstPerGame":10.975609756097562},"awayBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.2800526315789474,"runProd2026":0.5210526315789473,"defenseZ":0,"winPct":0.8,"sosOppWinPct":0.43,"teamOverall":0.57,"rosterPlayerRating":0.2800526315789474,"scheduleGames":5,"runsPerGame":13,"runsAgainstPerGame":8.2,"runDiffPerGame":4.8},"homeBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.07932126696832587,"runProd2026":0.4253393665158371,"defenseZ":0,"winPct":0.2,"sosOppWinPct":0.52,"teamOverall":-0.59,"rosterPlayerRating":0.07932126696832587,"scheduleGames":5,"runsPerGame":9.6,"runsAgainstPerGame":13.6,"runDiffPerGame":-4},"awayPlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"awayLabel":"FRADKIN LAW","homeLabel":"GAME CHANGER","offenseRatingByNorm":{"phil corde":2,"ed fradkin":2.37,"patrick brock":2.02,"joe picarello":0.26,"rob corde":2.5,"nolan ruthberg":0.43,"gary szemcsak":-0.43,"cameron gille":-1.36,"dylan jacoby":-2.46,"pat pingaro":-0.56,"justin jacoby":-1.33,"marc persily":-0.15,"jonathan okun":-1.64,"pablo gonzales":1.09,"matt hill":2.29,"mark yutko":0.29,"jon hempstead":1.17,"aj greenspan":-0.12,"adam greenspan":0.97,"evan steinberg":0.32,"andy kessler":-0.97,"ben kessler":-0.51,"steve messina":-0.28,"marcus baquero":-1.28,"daniel kessler":-1.47,"david unterweiser":-1.34},"stats2026ByPlayer":{"phil corde":{"PA":"18","Runs":"7","RBI":"8"},"ed fradkin":{"PA":"18","Runs":"5","RBI":"9"},"patrick brock":{"PA":"13","Runs":"7","RBI":"1"},"joe picarello":{"PA":"17","Runs":"5","RBI":"3"},"rob corde":{"PA":"17","Runs":"8","RBI":"11"},"nolan ruthberg":{"PA":"17","Runs":"7","RBI":"3"},"gary szemcsak":{"PA":"7","Runs":"2","RBI":"2"},"cameron gille":{"PA":"20","Runs":"3","RBI":"1"},"dylan jacoby":{"PA":"14","Runs":"1","RBI":"1"},"pat pingaro":{"PA":"16","Runs":"2","RBI":"4"},"justin jacoby":{"PA":"3","Runs":"0","RBI":"0"},"marc persily":{"PA":"14","Runs":"5","RBI":"2"},"jonathan okun":{"PA":"16","Runs":"1","RBI":"1"},"pablo gonzales":{"PA":"21","Runs":"9","RBI":"4"},"matt hill":{"PA":"21","Runs":"8","RBI":"11"},"mark yutko":{"PA":"21","Runs":"5","RBI":"5"},"jon hempstead":{"PA":"18","Runs":"6","RBI":"8"},"aj greenspan":{"PA":"12","Runs":"2","RBI":"3"},"adam greenspan":{"PA":"15","Runs":"2","RBI":"4"},"evan steinberg":{"PA":"16","Runs":"5","RBI":"4"},"andy kessler":{"PA":"13","Runs":"2","RBI":"1"},"ben kessler":{"PA":"15","Runs":"1","RBI":"2"},"steve messina":{"PA":"14","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"21","Runs":"2","RBI":"1"},"daniel kessler":{"PA":"17","Runs":"2","RBI":"3"},"david unterweiser":{"PA":"17","Runs":"2","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.34576763485477185,"runProd2026":0.5103734439834025,"defenseZ":0,"winPct":0.5714285714285714,"sosOppWinPct":0.4183673469387755,"teamOverall":0.14,"rosterPlayerRating":0.34576763485477185,"scheduleGames":7,"runsPerGame":10,"runsAgainstPerGame":7.571428571428571,"runDiffPerGame":2.4285714285714284},"homeBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.07832579185520364,"runProd2026":0.4253393665158371,"defenseZ":0,"winPct":0.16666666666666666,"sosOppWinPct":0.49603174603174605,"teamOverall":-0.71,"rosterPlayerRating":0.07832579185520364,"scheduleGames":6,"runsPerGame":8.5,"runsAgainstPerGame":14,"runDiffPerGame":-5.5},"awayPlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Chris Frometa","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"awayPlayersOriginal":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayersOriginal":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-08-16","isFinishedGame":false,"gameResult":null,"awayLabel":"FRADKIN LAW","homeLabel":"GAME CHANGER","offenseRatingByNorm":{"phil corde":2.19,"ed fradkin":2.52,"patrick brock":2.52,"joe picarello":0.25,"rob corde":2.47,"nolan ruthberg":0.09,"gary szemcsak":0.11,"cameron gille":-0.91,"dylan jacoby":-2.55,"pat pingaro":-0.6,"justin jacoby":-1.1,"marc persily":-0.27,"jonathan okun":-1.68,"pablo gonzales":1.09,"matt hill":2.28,"mark yutko":0.29,"jon hempstead":1.16,"aj greenspan":-0.12,"adam greenspan":0.97,"evan steinberg":0.32,"ben kessler":-0.51,"steve messina":-0.28,"marcus baquero":-1.28,"daniel kessler":-1.47,"david unterweiser":-1.33},"stats2026ByPlayer":{"phil corde":{"PA":"22","Runs":"9","RBI":"11"},"ed fradkin":{"PA":"22","Runs":"7","RBI":"10"},"patrick brock":{"PA":"17","Runs":"11","RBI":"3"},"joe picarello":{"PA":"21","Runs":"5","RBI":"4"},"rob corde":{"PA":"21","Runs":"10","RBI":"12"},"nolan ruthberg":{"PA":"21","Runs":"8","RBI":"4"},"gary szemcsak":{"PA":"11","Runs":"3","RBI":"3"},"cameron gille":{"PA":"24","Runs":"3","RBI":"1"},"dylan jacoby":{"PA":"17","Runs":"1","RBI":"1"},"pat pingaro":{"PA":"20","Runs":"2","RBI":"6"},"justin jacoby":{"PA":"7","Runs":"0","RBI":"0"},"marc persily":{"PA":"18","Runs":"5","RBI":"2"},"jonathan okun":{"PA":"20","Runs":"1","RBI":"1"},"pablo gonzales":{"PA":"21","Runs":"9","RBI":"4"},"matt hill":{"PA":"21","Runs":"8","RBI":"11"},"mark yutko":{"PA":"21","Runs":"5","RBI":"5"},"jon hempstead":{"PA":"18","Runs":"6","RBI":"8"},"aj greenspan":{"PA":"12","Runs":"2","RBI":"3"},"adam greenspan":{"PA":"15","Runs":"2","RBI":"4"},"evan steinberg":{"PA":"16","Runs":"5","RBI":"4"},"ben kessler":{"PA":"15","Runs":"1","RBI":"2"},"steve messina":{"PA":"14","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"21","Runs":"2","RBI":"1"},"daniel kessler":{"PA":"17","Runs":"2","RBI":"3"},"david unterweiser":{"PA":"17","Runs":"2","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -797,6 +809,7 @@
         const STORAGE_PREFIX = "mms-matchup-lineup:";
         const matchupKey = form.getAttribute("data-matchup-key") || "";
         const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
 
         function parseList(value) {
           return value
@@ -965,6 +978,7 @@
         }
 
         function recalcPrediction() {
+          if (isFinishedGame) return;
           if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
           try {
             const awayBench = [...awaySet];
@@ -996,8 +1010,74 @@
           }
         }
 
-        syncButtons(awaySet, homeSet);
-        if (matchupCtx) recalcPrediction();
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        initMatchupClient();
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
@@ -1009,6 +1089,11 @@
         });
 
         document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
           btn.addEventListener("click", () => {
             const side = btn.getAttribute("data-side");
             const norm = btn.getAttribute("data-norm");
@@ -1024,8 +1109,7 @@
         });
       })();
     </script>
-      <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
-</body>
+  </body>
 </html>
 
 
