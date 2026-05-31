@@ -460,10 +460,10 @@
     <script type="module" src="<%= sitePath('/js/dfs-lineup-pool.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
 
+    <% if (!(typeof clientSidePool !== 'undefined' && clientSidePool)) { %>
     <script type="module">
       import {
         setupLineupLockCountdown,
-        navigateToOpenDfsSlate,
       } from "<%= sitePath('/js/dfs-lock-countdown.js') %>?v=<%= assetVersion %>";
 
       const initialDeadline =
@@ -471,9 +471,12 @@
 
       setupLineupLockCountdown({
         deadlineMs: initialDeadline,
-        onLocked: () => navigateToOpenDfsSlate(null),
+        onLocked: () => {
+          window.location.reload();
+        },
       });
     </script>
+    <% } %>
 
     <script>
       window.initDfsLineupPage = function () {

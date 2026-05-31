@@ -221,10 +221,17 @@
           
           <a
             href="/dfs/slate/W5"
-            class="dfs-slate-chip dfs-slate-chip--open"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W5"
             
-          >Sun, 31-May • Week 5 · open</a>
+          >Sun, 31-May • Week 5 · locked</a>
+          
+          <a
+            href="/dfs/slate/D20260603"
+            class="dfs-slate-chip dfs-slate-chip--open"
+            data-slate="D20260603"
+            
+          >Wed, 3-Jun · open</a>
           
         </nav>
         <input type="hidden" name="lineup" id="lineupInput" value="" />
@@ -234,7 +241,7 @@
       <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
         <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
         
-        <a href="/dfs?slate=W5" class="dfs-slate-lock-link">Go to open slate</a>
+        <a href="/dfs?slate=D20260603" class="dfs-slate-lock-link">Go to open slate</a>
         
       </p>
       
@@ -504,20 +511,7 @@
     <script type="module" src="/js/dfs-lineup-pool.js?v=1"></script>
     
 
-    <script type="module">
-      import {
-        setupLineupLockCountdown,
-        navigateToOpenDfsSlate,
-      } from "/js/dfs-lock-countdown.js?v=1";
-
-      const initialDeadline =
-        1778111999999;
-
-      setupLineupLockCountdown({
-        deadlineMs: initialDeadline,
-        onLocked: () => navigateToOpenDfsSlate(null),
-      });
-    </script>
+    
 
     <script>
       window.initDfsLineupPage = function () {

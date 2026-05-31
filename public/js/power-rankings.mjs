@@ -1348,7 +1348,18 @@ ${slice[1]}`;
     function resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs = Date.now()) {
       return buildDfsSlateOptions(schedulePayload, refIso, nowMs).find((o) => o.canEdit)?.value || null;
     }
+    function resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs = Date.now()) {
+      const options = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
+      const activeIdx = options.findIndex((o) => o.canEdit);
+      if (activeIdx > 0) return options[activeIdx - 1].value;
+      if (activeIdx === 0) return options[0].value;
+      const locked = options.filter((o) => o.lineupDeadlinePassed);
+      if (locked.length) return locked[locked.length - 1].value;
+      return options.length ? options[options.length - 1].value : null;
+    }
     function pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs = Date.now()) {
+      const locked = resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs);
+      if (locked) return locked;
       const active = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs);
       if (active) return active;
       const visible = filterVisibleDfsSlateOptions(
@@ -1689,7 +1700,11 @@ ${slice[1]}`;
         };
       });
     }
-    function defaultLeaderboardWeek(weekOptions) {
+    function defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs = Date.now()) {
+      if (schedulePayload && refIso) {
+        const token = resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs);
+        if (token && (weekOptions || []).some((w) => w.value === token)) return token;
+      }
       const past = (weekOptions || []).filter((w) => w.isPast);
       if (past.length) return past[past.length - 1].value;
       const all = weekOptions || [];
@@ -1779,6 +1794,7 @@ ${slice[1]}`;
       buildDfsSlateOptions,
       filterVisibleDfsSlateOptions,
       resolveActiveDfsSlateToken,
+      resolveMostRecentlyLockedSlateToken,
       pickMatchupPredictorDefaultView,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,

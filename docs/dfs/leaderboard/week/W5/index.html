@@ -107,7 +107,7 @@
       <p class="page-note dfs-intro">
         Saved lineups for the selected slate are loaded from Firebase and ranked by total fantasy points.
         Scoring uses the same per-player slate points shown on the <a href="/dfs">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
-         Salary stays hidden until the slate locks.
+         Tap a name to view that player’s saved lineup.
       </p>
 
       
@@ -189,7 +189,7 @@
               data-href="/dfs/leaderboard/week/W5"
               selected
             >
-              Sun, 31-May • Week 5 (upcoming)
+              Sun, 31-May • Week 5
             </option>
             
             <option
@@ -385,7 +385,12 @@
       <section class="dfs-slate-banner" aria-label="Selected slate">
         <h2 class="dfs-slate-title">Sun, 31-May • Week 5</h2>
         
-        <p class="dfs-slate-status" id="weeklySlateStatus">This week has not finished yet — points appear after Sunday’s games.</p>
+        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyGamelogGap"  role="status">
+          Game results don’t cover this slate’s dates yet — scores stay at zero until those games are in the sheet.
+        </p>
+        
+        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyEntryCount" hidden></p>
+        
         
       </section>
       
@@ -397,13 +402,13 @@
               <th scope="col">Rank</th>
               <th scope="col">Player</th>
               <th scope="col">Points</th>
-              
+              <th scope="col">Salary at save</th>
             </tr>
           </thead>
           <tbody id="leaderboardWeeklyBody">
             
             <tr>
-              <td colspan="3" class="dfs-leaderboard-empty">Loading...</td>
+              <td colspan="4" class="dfs-leaderboard-empty">Loading...</td>
             </tr>
             
           </tbody>
@@ -428,7 +433,7 @@
     <script>
       window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};
       window.__MMS_CAREER_CSV_URL__ = "/data/csv/career.csv";
-      window.__LEADERBOARD_PAGE__ = {"selectedWeek":"W5","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":false,"slate":{"label":"Sun, 31-May • Week 5","isPast":false,"viewToken":"W5","slateType":"sunday","canEdit":true,"isLocked":false}};
+      window.__LEADERBOARD_PAGE__ = {"selectedWeek":"W5","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":true,"slate":{"label":"Sun, 31-May • Week 5","isPast":true,"viewToken":"W5","slateType":"sunday","canEdit":false,"isLocked":true}};
     </script>
     <script>
       window.addEventListener("error", function (ev) {

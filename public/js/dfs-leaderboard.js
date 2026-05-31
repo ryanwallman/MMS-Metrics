@@ -1,7 +1,7 @@
 /**
  * Weekly DFS leaderboard (client fallback when the page is not server-rendered).
  */
-import { scoreWeeklyLeaderboard } from "./dfs-leaderboard-scoring.mjs";
+import { scoreWeeklyLeaderboard, fetchLiveSlateDefaults } from "./dfs-leaderboard-scoring.mjs";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
@@ -311,8 +311,39 @@ async function loadViaBrowserFirestore() {
   return data;
 }
 
+async function ensureLeaderboardDefaultWeek() {
+  if (!page || page.serverRendered) return false;
+
+  let defaults;
+  try {
+    defaults = await fetchLiveSlateDefaults();
+  } catch (err) {
+    console.error("Leaderboard default week lookup failed", err);
+    return false;
+  }
+
+  const urlWeek = weekFromUrl();
+  if (urlWeek) return false;
+
+  const target = String(defaults.defaultLockedSlateToken || "")
+    .trim()
+    .toUpperCase();
+  if (!target) return false;
+
+  const current = String(page.selectedWeek || "")
+    .trim()
+    .toUpperCase();
+  if (current === target) return false;
+
+  window.location.replace(siteUrl(`/dfs/leaderboard/week/${encodeURIComponent(target)}/`));
+  return true;
+}
+
 async function loadLeaderboard() {
   if (!page || page.serverRendered) {
+    return;
+  }
+  if (await ensureLeaderboardDefaultWeek()) {
     return;
   }
   if (!page.selectedWeek) {

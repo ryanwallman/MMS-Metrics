@@ -39,7 +39,7 @@ var require_sheetUrls = __commonJS({
     var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
     var CAPTAIN_MAPPING_GID = "0";
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
-    var SCHEDULE_CALENDAR_YEAR = Number("2026") || 2026;
+    var SCHEDULE_CALENDAR_YEAR2 = Number("2026") || 2026;
     var careerCsvFilePath = null;
     function setCareerCsvFilePath(filePath) {
       careerCsvFilePath = filePath ? String(filePath) : null;
@@ -84,7 +84,7 @@ var require_sheetUrls = __commonJS({
       ROSTER_URL,
       HIST_2025_STATS_URL,
       CAREER_CSV_PUBLIC_URL,
-      SCHEDULE_CALENDAR_YEAR,
+      SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
       getGamelogs2026CsvUrl,
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
@@ -1339,11 +1339,22 @@ ${slice[1]}`;
     function filterVisibleDfsSlateOptions(options) {
       return (options || []).filter((o) => o.isVisibleInPicker);
     }
-    function resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs = Date.now()) {
+    function resolveActiveDfsSlateToken2(schedulePayload, refIso, nowMs = Date.now()) {
       return buildDfsSlateOptions(schedulePayload, refIso, nowMs).find((o) => o.canEdit)?.value || null;
     }
+    function resolveMostRecentlyLockedSlateToken2(schedulePayload, refIso, nowMs = Date.now()) {
+      const options = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
+      const activeIdx = options.findIndex((o) => o.canEdit);
+      if (activeIdx > 0) return options[activeIdx - 1].value;
+      if (activeIdx === 0) return options[0].value;
+      const locked = options.filter((o) => o.lineupDeadlinePassed);
+      if (locked.length) return locked[locked.length - 1].value;
+      return options.length ? options[options.length - 1].value : null;
+    }
     function pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs = Date.now()) {
-      const active = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs);
+      const locked = resolveMostRecentlyLockedSlateToken2(schedulePayload, refIso, nowMs);
+      if (locked) return locked;
+      const active = resolveActiveDfsSlateToken2(schedulePayload, refIso, nowMs);
       if (active) return active;
       const visible = filterVisibleDfsSlateOptions(
         buildDfsSlateOptions(schedulePayload, refIso, nowMs)
@@ -1661,7 +1672,7 @@ ${slice[1]}`;
       }
       return { total: Math.round(total), breakdown };
     }
-    function referenceIsoForScheduleYear(calendarYear) {
+    function referenceIsoForScheduleYear2(calendarYear) {
       const now = /* @__PURE__ */ new Date();
       const y = calendarYear || now.getFullYear();
       const m = String(now.getMonth() + 1).padStart(2, "0");
@@ -1683,7 +1694,11 @@ ${slice[1]}`;
         };
       });
     }
-    function defaultLeaderboardWeek(weekOptions) {
+    function defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs = Date.now()) {
+      if (schedulePayload && refIso) {
+        const token = resolveMostRecentlyLockedSlateToken2(schedulePayload, refIso, nowMs);
+        if (token && (weekOptions || []).some((w) => w.value === token)) return token;
+      }
       const past = (weekOptions || []).filter((w) => w.isPast);
       if (past.length) return past[past.length - 1].value;
       const all = weekOptions || [];
@@ -1763,7 +1778,7 @@ ${slice[1]}`;
       buildLastWeekPointsByNorm,
       scoreLineupForSlate,
       scoreLineupFromPointsMap,
-      referenceIsoForScheduleYear,
+      referenceIsoForScheduleYear: referenceIsoForScheduleYear2,
       listWeekSlateOptions,
       listLeaderboardSlateOptions,
       defaultLeaderboardWeek,
@@ -1772,7 +1787,8 @@ ${slice[1]}`;
       slateFirstIso,
       buildDfsSlateOptions,
       filterVisibleDfsSlateOptions,
-      resolveActiveDfsSlateToken,
+      resolveActiveDfsSlateToken: resolveActiveDfsSlateToken2,
+      resolveMostRecentlyLockedSlateToken: resolveMostRecentlyLockedSlateToken2,
       pickMatchupPredictorDefaultView,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
@@ -2631,7 +2647,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     var {
       SCHEDULE_URL,
       HIST_2025_STATS_URL,
-      SCHEDULE_CALENDAR_YEAR,
+      SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
       resolveCareerCsvSource
     } = require_sheetUrls();
     var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
@@ -2681,11 +2697,11 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const day = Number(match[2]);
       const monthNum = monthAbbrToNum[match[3].slice(0, 3).toLowerCase()];
       if (!monthNum || !Number.isFinite(day) || day < 1 || day > 31) return null;
-      const dt = new Date(SCHEDULE_CALENDAR_YEAR, monthNum - 1, day);
-      if (dt.getFullYear() !== SCHEDULE_CALENDAR_YEAR || dt.getMonth() !== monthNum - 1 || dt.getDate() !== day) {
+      const dt = new Date(SCHEDULE_CALENDAR_YEAR2, monthNum - 1, day);
+      if (dt.getFullYear() !== SCHEDULE_CALENDAR_YEAR2 || dt.getMonth() !== monthNum - 1 || dt.getDate() !== day) {
         return null;
       }
-      const iso = `${String(SCHEDULE_CALENDAR_YEAR)}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const iso = `${String(SCHEDULE_CALENDAR_YEAR2)}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       return { iso, label: s };
     }
     function weekdayFromIso(iso) {
@@ -2855,7 +2871,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       for (const b of bytes) binary += String.fromCharCode(b);
       return btoa(binary);
     }
-    async function loadWeeklySchedule() {
+    async function loadWeeklySchedule2() {
       const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL), loadTeamRosters()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
@@ -3186,7 +3202,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
         load2026StatsByPlayer(),
-        loadWeeklySchedule(),
+        loadWeeklySchedule2(),
         load2026GamelogsByPlayer()
       ]);
       const parsedScheduleGames = schedulePayload.parsedGames || [];
@@ -3227,7 +3243,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     module.exports = {
       loadDfsLeaderboardScoringContext,
       getCachedDfsLeaderboardScoringContext,
-      loadWeeklySchedule,
+      loadWeeklySchedule: loadWeeklySchedule2,
       setNodeCareerReader,
       loadCareerByPlayer,
       load2025HistoricalByPlayer,
@@ -3248,17 +3264,17 @@ var require_dfsLeaderboardResponse = __commonJS({
       buildLeaderboardSlateFromToken,
       defaultLeaderboardWeek,
       listLeaderboardSlateOptions,
-      referenceIsoForScheduleYear,
+      referenceIsoForScheduleYear: referenceIsoForScheduleYear2,
       slateHasGamelogDates
     } = require_dfs();
     var { getCachedDfsLeaderboardScoringContext } = require_dfsLeaderboardScoringContext();
-    var { SCHEDULE_CALENDAR_YEAR } = require_sheetUrls();
+    var { SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2 } = require_sheetUrls();
     async function buildWeeklyLeaderboardResponse2(selectedWeek, lineups) {
       const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
-      const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+      const refIso = referenceIsoForScheduleYear2(SCHEDULE_CALENDAR_YEAR2);
       const nowMs = Date.now();
       const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
-      const week = selectedWeek && weekOptions.some((w) => w.value === selectedWeek) ? selectedWeek : defaultLeaderboardWeek(weekOptions);
+      const week = selectedWeek && weekOptions.some((w) => w.value === selectedWeek) ? selectedWeek : defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs);
       const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
       const weekly = slate && Array.isArray(lineups) ? await buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps) : { rows: [], entryCount: 0 };
       return {
@@ -3276,15 +3292,28 @@ var require_dfsLeaderboardResponse = __commonJS({
 // client/leaderboard-scoring-entry.mjs
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_dfsLeaderboardResponse = __toESM(require_dfsLeaderboardResponse(), 1);
+var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
+var import_dfs = __toESM(require_dfs(), 1);
+var import_sheetUrls2 = __toESM(require_sheetUrls(), 1);
 var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
 (0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
 async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
   return (0, import_dfsLeaderboardResponse.buildWeeklyLeaderboardResponse)(selectedWeek, lineups);
 }
+async function fetchLiveSlateDefaults() {
+  const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
+  const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls2.SCHEDULE_CALENDAR_YEAR);
+  const nowMs = Date.now();
+  return {
+    activeSlateToken: (0, import_dfs.resolveActiveDfsSlateToken)(payload, refIso, nowMs),
+    defaultLockedSlateToken: (0, import_dfs.resolveMostRecentlyLockedSlateToken)(payload, refIso, nowMs)
+  };
+}
 if (typeof window !== "undefined") {
-  window.MmsLeaderboardScoring = { scoreWeeklyLeaderboard };
+  window.MmsLeaderboardScoring = { scoreWeeklyLeaderboard, fetchLiveSlateDefaults };
 }
 export {
+  fetchLiveSlateDefaults,
   scoreWeeklyLeaderboard
 };
 /*! Bundled license information:

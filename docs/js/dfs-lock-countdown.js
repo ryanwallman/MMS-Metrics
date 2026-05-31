@@ -15,9 +15,28 @@ export function dfsLineupUrl(slateToken) {
   return `${base}/dfs/slate/${encodeURIComponent(t)}`;
 }
 
-/** Reload DFS on the next editable slate (or full refresh if season is over). */
-export function navigateToOpenDfsSlate(activeSlateToken) {
-  const url = `${dfsLineupUrl(activeSlateToken)}?t=${Date.now()}`;
+async function resolveOpenSlateToken(activeSlateToken) {
+  let token = String(activeSlateToken || "")
+    .trim()
+    .toUpperCase();
+  if (token) return token;
+  const loader = typeof window !== "undefined" ? window.MmsDfsLineupPool?.loadDfsLineupPool : null;
+  if (!loader) return "";
+  try {
+    const data = await loader("", []);
+    return String(data.activeSlateToken || "")
+      .trim()
+      .toUpperCase();
+  } catch (err) {
+    console.error("Could not resolve open DFS slate", err);
+    return "";
+  }
+}
+
+/** Navigate to the open editable slate (live schedule when token omitted). */
+export async function navigateToOpenDfsSlate(activeSlateToken) {
+  const token = await resolveOpenSlateToken(activeSlateToken);
+  const url = `${dfsLineupUrl(token)}?t=${Date.now()}`;
   window.location.replace(url);
 }
 

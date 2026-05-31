@@ -2062,7 +2062,7 @@ app.get("/dfs/leaderboard", async (req, res) => {
     const selectedWeek =
       weekParam && weekOptions.some((w) => w.value === weekParam)
         ? weekParam
-        : defaultLeaderboardWeek(weekOptions);
+        : defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs);
 
     if (safeText(req.query.tab).toLowerCase() === "cumulative") {
       return res.redirect(

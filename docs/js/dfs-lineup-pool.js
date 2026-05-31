@@ -122,8 +122,15 @@ function showPoolError(message) {
   }
 }
 
+function isBareDfsIndexPath() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const base = String(window.__SITE_BASE_PATH__ || "").replace(/\/+$/, "");
+  const dfsRoot = `${base}/dfs`.replace(/\/+$/, "") || "/dfs";
+  return path === dfsRoot || path === "/dfs";
+}
+
 async function main() {
-  if (!page?.slateToken) {
+  if (!page?.slateToken && !isBareDfsIndexPath()) {
     showPoolError("No slate selected.");
     return;
   }
@@ -132,7 +139,15 @@ async function main() {
     const requestedToken = String(page.slateToken || "")
       .trim()
       .toUpperCase();
-    const data = await loadDfsLineupPool(page.slateToken, page.lineupNorms || []);
+    const data = await loadDfsLineupPool(page.slateToken || "", page.lineupNorms || []);
+
+    if (isBareDfsIndexPath() && data.activeSlateToken) {
+      const active = String(data.activeSlateToken).trim().toUpperCase();
+      if (active && active !== requestedToken) {
+        navigateToOpenDfsSlate(active);
+        return;
+      }
+    }
 
     if (
       !data.slate?.canEdit &&
@@ -163,8 +178,8 @@ async function main() {
       deadlineMs: data.lockDeadlineMs,
       onLocked: async () => {
         const fresh = await loadDfsLineupPool("", page.lineupNorms || []);
-        if (fresh.activeSlateToken && fresh.activeSlateToken !== requestedToken) {
-          navigateToOpenDfsSlate(fresh.activeSlateToken);
+        if (fresh.activeSlateToken) {
+          await navigateToOpenDfsSlate(fresh.activeSlateToken);
           return;
         }
         window.location.replace(`${dfsLineupUrl(requestedToken)}?t=${Date.now()}`);

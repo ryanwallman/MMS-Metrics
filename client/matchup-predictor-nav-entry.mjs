@@ -1,5 +1,5 @@
 /**
- * GitHub Pages: send /matchup-predictor to the DFS-open slate (live schedule).
+ * GitHub Pages: send /matchup-predictor to the most recently locked slate (live schedule).
  */
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import { referenceIsoForScheduleYear, pickMatchupPredictorDefaultView } from "../lib/dfs.js";
