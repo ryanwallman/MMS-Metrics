@@ -35,6 +35,7 @@ const {
 } = require("./lib/teamRosters");
 const {
   loadPowerRankingsCaptainMap,
+  loadCaptainTeamCodeById,
   lookupPowerRankingsCaptain,
 } = require("./lib/powerRankingsCaptains");
 const { buildPowerRankingsPageData } = require("./lib/powerRankingsPageData");
@@ -65,6 +66,13 @@ const {
   gradeMatchupModelBets,
 } = require("./lib/matchupGameResult");
 const { buildMatchupClientPayload } = require("./lib/matchupClientPayload");
+const { applyGamelogMissingForFinishedGame } = require("./lib/matchupGamelogMissing");
+const {
+  filterScheduleGamesBeforeIso,
+  buildStats2026ByPlayerFromGamelogsBefore,
+} = require("./lib/matchupHistoricalSnapshot");
+const { buildMatchupLeagueContext } = require("./lib/matchupLeagueContext");
+const { getMatchupPredictorAudit } = require("./lib/matchupPredictorAudit");
 const {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -2146,6 +2154,8 @@ async function renderMatchupPredictorPage(req, res) {
       scheduleRows,
       defenseMap,
       replacements,
+      gamelogs,
+      captainTeamCodeById,
     ] = await Promise.all([
       loadWeeklySchedule(),
       loadTeamRosters(),
@@ -2155,8 +2165,14 @@ async function renderMatchupPredictorPage(req, res) {
       fetchCsvRows(SCHEDULE_URL),
       loadDefensiveRatingsNormalizedMap(),
       getCachedPlayerReplacements(),
+      load2026GamelogsByPlayer(),
+      loadCaptainTeamCodeById(),
     ]);
     const { byOriginalNorm } = replacements;
+    const teamCodeById = new Map([
+      ...buildTeamCodeById(teams, stats2026ByPlayer),
+      ...captainTeamCodeById,
+    ]);
 
     const viewFromPath = safeText(req.params?.view);
     let viewParam = viewFromPath || safeText(req.query.view);
@@ -2208,45 +2224,42 @@ async function renderMatchupPredictorPage(req, res) {
     const rosterByTeamId = buildRosterByTeamId(teams);
 
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-    const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
-    const runBase = leagueRunScoringBaseline(parsedScheduleGames);
-    const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
-
-    const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
-    const { moments } = weightedMomentsPerMetric(bundles);
-    const leagueRows = buildOffensivePlayerRows(
+    const predictorAuditPromise = getMatchupPredictorAudit({
+      parsedScheduleGames,
+      teams,
+      rosterByTeamId,
+      nameToTeamId,
+      careerByPlayer,
+      hist2025ByPlayer,
+      stats2026ByPlayer,
+      defenseMap,
+      gamelogs,
+      teamCodeById,
+      replacementByOriginalNorm: byOriginalNorm,
+      sundayIsosSorted: payload.sundayIsosSorted,
+    }).catch((err) => {
+      console.error("[MMS] Matchup predictor audit:", err.message || err);
+      return null;
+    });
+    let {
+      runBase,
+      offenseRatingByNorm,
+      defenseZByNorm,
+      teamProfiles,
+      leagueNorms,
+    } = buildMatchupLeagueContext({
       teams,
       careerByPlayer,
       hist2025ByPlayer,
       stats2026ByPlayer,
-      moments
-    );
-    const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-
-    const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
-    const teamOverallById = new Map();
-    for (const sec of teamSections) {
-      const sid = normalizeScheduleTeamId(sec.teamId);
-      teamOverallById.set(sid, sec);
-    }
-
-    const { zByNorm: defenseZByNorm } = buildDefenseZByNorm(defenseMap, stats2026ByPlayer);
-    const teamProfiles = buildTeamMatchupProfiles(
-      teams,
+      parsedScheduleGames,
+      defenseMap,
       rosterByTeamId,
-      offenseRatingByNorm,
-      stats2026ByPlayer,
-      defenseZByNorm,
-      standingsMap,
-      teamOverallById,
-      scheduleRunRates
-    );
-    const leagueNorms = buildMatchupLeagueNorms(teamProfiles);
+    });
+    let activeStats2026 = stats2026ByPlayer;
 
     const awayMissingSet = parseMissingNorms(req.query.awayMissing, normalizePlayerName);
     const homeMissingSet = parseMissingNorms(req.query.homeMissing, normalizePlayerName);
-    const awayMissingSerialized = serializeMissingNorms(awayMissingSet);
-    const homeMissingSerialized = serializeMissingNorms(homeMissingSet);
 
     let selectedGame = null;
     let awayRoster = null;
@@ -2293,6 +2306,49 @@ async function renderMatchupPredictorPage(req, res) {
           matchupReplacements
         );
 
+        const parsedGameForMissing = findParsedGameForMatchup(
+          parsedScheduleGames,
+          selectedGame,
+          viewIso
+        );
+        if (isParsedGameFinished(parsedGameForMissing)) {
+          awayMissingSet.clear();
+          homeMissingSet.clear();
+          applyGamelogMissingForFinishedGame({
+            awayMissingSet,
+            homeMissingSet,
+            selectedGame,
+            viewIso,
+            parsedScheduleGames,
+            gamelogs,
+            teamCodeById,
+            awayEffectivePlayers,
+            homeEffectivePlayers,
+            normalizeName: normalizePlayerName,
+          });
+
+          const gameIso = safeText(selectedGame.isoDate || viewIso);
+          if (gameIso && gamelogs?.byNorm?.size) {
+            const histStats = buildStats2026ByPlayerFromGamelogsBefore(gamelogs, gameIso);
+            const histGames = filterScheduleGamesBeforeIso(parsedScheduleGames, gameIso);
+            const histCtx = buildMatchupLeagueContext({
+              teams,
+              careerByPlayer,
+              hist2025ByPlayer,
+              stats2026ByPlayer: histStats.size ? histStats : stats2026ByPlayer,
+              parsedScheduleGames: histGames,
+              defenseMap,
+              rosterByTeamId,
+            });
+            runBase = histCtx.runBase;
+            offenseRatingByNorm = histCtx.offenseRatingByNorm;
+            defenseZByNorm = histCtx.defenseZByNorm;
+            teamProfiles = histCtx.teamProfiles;
+            leagueNorms = histCtx.leagueNorms;
+            activeStats2026 = histStats.size ? histStats : stats2026ByPlayer;
+          }
+        }
+
         const awayPositionByNorm = buildPositionByNormMap(awayEffectivePlayers);
         const homePositionByNorm = buildPositionByNormMap(homeEffectivePlayers);
 
@@ -2301,7 +2357,7 @@ async function renderMatchupPredictorPage(req, res) {
           offenseRatingByNorm,
           awayMissingSet,
           normalizePlayerName,
-          stats2026ByPlayer,
+          activeStats2026,
           awayPositionByNorm,
           matchupReplacements
         );
@@ -2310,7 +2366,7 @@ async function renderMatchupPredictorPage(req, res) {
           offenseRatingByNorm,
           homeMissingSet,
           normalizePlayerName,
-          stats2026ByPlayer,
+          activeStats2026,
           homePositionByNorm,
           matchupReplacements
         );
@@ -2329,7 +2385,7 @@ async function renderMatchupPredictorPage(req, res) {
             awayEffectivePlayers,
             awayMissingSet,
             offenseRatingByNorm,
-            stats2026ByPlayer,
+            activeStats2026,
             defenseZByNorm,
             normalizePlayerName,
             awayPositionByNorm
@@ -2343,7 +2399,7 @@ async function renderMatchupPredictorPage(req, res) {
             homeEffectivePlayers,
             homeMissingSet,
             offenseRatingByNorm,
-            stats2026ByPlayer,
+            activeStats2026,
             defenseZByNorm,
             normalizePlayerName,
             homePositionByNorm
@@ -2365,6 +2421,13 @@ async function renderMatchupPredictorPage(req, res) {
         ];
 
         if (awayProfile && homeProfile) {
+          const parsedGame = findParsedGameForMatchup(
+            parsedScheduleGames,
+            selectedGame,
+            viewIso
+          );
+          const isFinishedGame = isParsedGameFinished(parsedGame);
+
           // Fixed league norms (full-roster baseline) — do not rebuild from adjusted profiles or
           // missing-player penalties get normalized away in z-scores.
           prediction = predictMatchupGame(awayProfile, homeProfile, leagueNorms, runBase);
@@ -2398,12 +2461,7 @@ async function renderMatchupPredictorPage(req, res) {
           prediction.awayLabel = awayRoster.teamName || selectedGame.away;
           prediction.homeLabel = homeRoster.teamName || selectedGame.home;
 
-          const parsedGame = findParsedGameForMatchup(
-            parsedScheduleGames,
-            selectedGame,
-            viewIso
-          );
-          if (isParsedGameFinished(parsedGame)) {
+          if (isFinishedGame) {
             gameResult = gradeMatchupModelBets(
               parsedGame,
               prediction,
@@ -2433,7 +2491,7 @@ async function renderMatchupPredictorPage(req, res) {
               awayLabel: prediction.awayLabel,
               homeLabel: prediction.homeLabel,
               offenseRatingByNorm,
-              stats2026ByPlayer,
+              stats2026ByPlayer: activeStats2026,
               defenseZByNorm,
               positionByNorm: matchupPositionByNorm,
             });
@@ -2441,6 +2499,18 @@ async function renderMatchupPredictorPage(req, res) {
         }
       }
     }
+
+    const awayMissingSerialized = serializeMissingNorms(awayMissingSet);
+    const homeMissingSerialized = serializeMissingNorms(homeMissingSet);
+    const predictorAudit = await predictorAuditPromise;
+    const predictorRecord = predictorAudit
+      ? {
+          wins: predictorAudit.wins,
+          losses: predictorAudit.losses,
+          decided: predictorAudit.decided,
+          winPct: predictorAudit.winPct,
+        }
+      : null;
 
     renderPage(res, "matchup-predictor", {
       navActive: "matchup",
@@ -2460,6 +2530,8 @@ async function renderMatchupPredictorPage(req, res) {
       lineupRuleAlerts,
       matchupClient,
       matchupPageReady: hasExplicitView,
+      predictorRecord,
+      predictorAudit,
     });
   } catch (error) {
     res.status(500).send(`Failed to load matchup predictor: ${error.message}`);

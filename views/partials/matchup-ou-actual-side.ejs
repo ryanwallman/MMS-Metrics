@@ -1,0 +1,8 @@
+<% const side = typeof actualSide !== 'undefined' ? actualSide : null; %>
+<% if (side === 'over') { %>
+<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--over">Over</span>
+<% } else if (side === 'under') { %>
+<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--under">Under</span>
+<% } else if (side === 'push') { %>
+<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--push">Push</span>
+<% } %>

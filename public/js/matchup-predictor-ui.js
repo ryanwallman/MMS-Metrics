@@ -6,6 +6,25 @@
     if (el) el.textContent = text;
   }
 
+  function favoriteSideFromPct(awayPct, homePct) {
+    if (awayPct > homePct) return "away";
+    if (homePct > awayPct) return "home";
+    return null;
+  }
+
+  function winnerSideFromPrediction(prediction) {
+    const fs = prediction.lines?.finalScore;
+    if (fs?.winnerSide) return fs.winnerSide;
+    const awayR = parseFloat(prediction.projectedRuns?.away);
+    const homeR = parseFloat(prediction.projectedRuns?.home);
+    if (!Number.isFinite(awayR) || !Number.isFinite(homeR)) return null;
+    if (awayR > homeR) return "away";
+    if (homeR > awayR) return "home";
+    const awayPct = prediction.winPct?.away;
+    const homePct = prediction.winPct?.home;
+    return homePct >= awayPct ? "home" : "away";
+  }
+
   function updatePredictionUi(prediction) {
     if (!prediction) return;
     const section = document.querySelector(".matchup-prediction");
@@ -13,6 +32,7 @@
 
     const awayPct = prediction.winPct.away;
     const homePct = prediction.winPct.home;
+    const modelPickSide = prediction.favoriteSide || favoriteSideFromPct(awayPct, homePct);
     const awayName = prediction.awayLabel || "Away";
     const homeName = prediction.homeLabel || "Home";
 
@@ -29,8 +49,8 @@
       const bar = awayTeam.querySelector(".matchup-pred-bar");
       if (bar) {
         bar.style.width = `${awayPct}%`;
-        bar.classList.toggle("matchup-pred-bar--leader", awayPct >= homePct);
-        bar.classList.toggle("matchup-pred-bar--trailer", awayPct < homePct);
+        bar.classList.toggle("matchup-pred-bar--leader", modelPickSide === "away");
+        bar.classList.toggle("matchup-pred-bar--trailer", modelPickSide !== "away");
       }
     }
     if (homeTeam) {
@@ -44,19 +64,17 @@
       const bar = homeTeam.querySelector(".matchup-pred-bar");
       if (bar) {
         bar.style.width = `${homePct}%`;
-        bar.classList.toggle("matchup-pred-bar--leader", homePct >= awayPct);
-        bar.classList.toggle("matchup-pred-bar--trailer", homePct < awayPct);
+        bar.classList.toggle("matchup-pred-bar--leader", modelPickSide === "home");
+        bar.classList.toggle("matchup-pred-bar--trailer", modelPickSide !== "home");
       }
     }
 
     const tbody = section.querySelector(".matchup-pred-lines tbody");
     if (!tbody) return;
 
-    const finalScore = prediction.lines.finalScore || {};
-    let winnerSide = finalScore.winnerSide;
-    if (!winnerSide) {
-      winnerSide = homePct > awayPct ? "home" : awayPct > homePct ? "away" : homePct >= awayPct ? "home" : "away";
-    }
+    const winnerSide = winnerSideFromPrediction(prediction);
+    const runLineSide =
+      prediction.lines?.runLine?.side || winnerSide;
 
     const rows = tbody.querySelectorAll("tr");
     rows.forEach((row) => {
@@ -94,10 +112,6 @@
         setText(row.cells[2], "O/U " + prediction.lines.overUnder);
       } else if (line === "Run line") {
         const runLine = prediction.lines.runLine || {};
-        let runLineSide = runLine.side;
-        if (!runLineSide) {
-          runLineSide = homePct > awayPct ? "home" : awayPct > homePct ? "away" : homePct >= awayPct ? "home" : "away";
-        }
         const teamCell = row.cells[1];
         if (teamCell) {
           teamCell.className =
@@ -118,9 +132,35 @@
         if (isAway) {
           const strong = row.cells[2]?.querySelector("strong");
           if (strong) strong.textContent = prediction.lines.moneylineAway || "—";
+          if (teamCell) {
+            const pick = teamCell.querySelector(".matchup-bet-model-pick");
+            if (modelPickSide === "away") {
+              if (!pick) {
+                teamCell.insertAdjacentHTML(
+                  "beforeend",
+                  ' <span class="matchup-bet-model-pick">Model pick</span>'
+                );
+              }
+            } else if (pick) {
+              pick.remove();
+            }
+          }
         } else if (isHome) {
           const strong = row.cells[2]?.querySelector("strong");
           if (strong) strong.textContent = prediction.lines.moneylineHome || "—";
+          if (teamCell) {
+            const pick = teamCell.querySelector(".matchup-bet-model-pick");
+            if (modelPickSide === "home") {
+              if (!pick) {
+                teamCell.insertAdjacentHTML(
+                  "beforeend",
+                  ' <span class="matchup-bet-model-pick">Model pick</span>'
+                );
+              }
+            } else if (pick) {
+              pick.remove();
+            }
+          }
         }
       }
     });

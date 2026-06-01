@@ -86,6 +86,199 @@ pre {
   color: var(--mms-brand-ink);
 }
 
+/* Shared width / alignment with .matchup-prediction */
+.matchup-predictor-panel {
+  max-width: min(720px, 100%);
+  box-sizing: border-box;
+  border-radius: var(--mms-radius);
+  box-shadow: var(--mms-shadow);
+}
+
+.matchup-predictor-record-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 1rem;
+  margin: 0 0 16px;
+  padding: 14px 20px;
+  background: linear-gradient(160deg, #eff6ff 0%, #fffbeb 45%, #f8fafc 100%);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.matchup-predictor-record-label {
+  font-family: var(--mms-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--mms-brand-ink);
+  line-height: 1.2;
+}
+
+.matchup-predictor-record-value {
+  font-family: var(--mms-display);
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.matchup-predictor-record-pct {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.matchup-ml-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.18rem 0.55rem;
+  font-family: var(--mms-display);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #065f46;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.matchup-prediction-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.85rem;
+  margin-bottom: 0.35rem;
+}
+
+.matchup-prediction-title-row h2 {
+  margin: 0;
+}
+
+.power-rankings-projection-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.matchup-predictor-record {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.75rem;
+  font-family: var(--mms-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.matchup-predictor-record--calibrated {
+  color: #1e3a5f;
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+}
+
+.matchup-predictor-audit {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.matchup-audit-details {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafbfc;
+  padding: 0.75rem 1rem 1rem;
+}
+
+.matchup-audit-summary {
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1rem;
+  font-family: var(--mms-display);
+  font-weight: 700;
+  color: var(--mms-brand-ink);
+  list-style: none;
+}
+
+.matchup-audit-summary::-webkit-details-marker {
+  display: none;
+}
+
+.matchup-audit-summary-title {
+  font-size: 1.05rem;
+}
+
+.matchup-audit-summary-meta {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.matchup-audit-note,
+.matchup-audit-empty {
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #475569;
+}
+
+.matchup-audit-heading {
+  margin: 1.25rem 0 0.5rem;
+  font-family: var(--mms-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--mms-brand-ink);
+}
+
+.matchup-audit-table-wrap {
+  overflow-x: auto;
+}
+
+.matchup-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.matchup-audit-table th,
+.matchup-audit-table td {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.matchup-audit-table th {
+  font-weight: 700;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.matchup-audit-table a {
+  color: #0f766e;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.matchup-audit-table a:hover {
+  text-decoration: underline;
+}
+
+.matchup-audit-table--misses td:nth-child(4) {
+  font-variant-numeric: tabular-nums;
+}
+
 .section-heading {
   margin: 0 0 12px;
   font-family: var(--mms-display);
@@ -1237,10 +1430,6 @@ body > main.page-main {
   padding: 18px 20px;
   background: linear-gradient(160deg, #eff6ff 0%, #fffbeb 45%, #f8fafc 100%);
   border: 1px solid rgba(59, 130, 246, 0.28);
-  border-radius: var(--mms-radius);
-  max-width: min(720px, 100%);
-  box-sizing: border-box;
-  box-shadow: var(--mms-shadow);
 }
 
 .matchup-prediction h2 {
@@ -1306,6 +1495,29 @@ body > main.page-main {
   font-size: 0.85em;
   color: #6b7280;
   font-weight: 500;
+}
+
+.matchup-bet-result .matchup-bet-actual + .matchup-bet-tag,
+.matchup-bet-result .matchup-bet-actual + .matchup-ou-side {
+  margin-left: 0.5rem;
+}
+
+.matchup-ou-side--over {
+  color: #1e40af;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.matchup-ou-side--under {
+  color: #5b21b6;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+}
+
+.matchup-ou-side--push {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
 }
 
 .matchup-bet-model-pick {

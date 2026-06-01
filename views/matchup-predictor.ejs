@@ -23,6 +23,16 @@
     >
       <input type="hidden" name="awayMissing" id="awayMissing" value="<%= typeof awayMissingSerialized !== 'undefined' ? awayMissingSerialized : '' %>" />
       <input type="hidden" name="homeMissing" id="homeMissing" value="<%= typeof homeMissingSerialized !== 'undefined' ? homeMissingSerialized : '' %>" />
+
+      <% if (typeof predictorRecord !== 'undefined' && predictorRecord && predictorRecord.decided > 0) { %>
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          <%= predictorRecord.wins %>–<%= predictorRecord.losses %><% if (predictorRecord.winPct != null) { %><span class="matchup-predictor-record-pct"> (<%= predictorRecord.winPct %>%)</span><% } %>
+        </span>
+      </div>
+      <% } %>
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -63,10 +73,10 @@
 
     <% if (typeof gameResult !== 'undefined' && gameResult) { %>
     <% const gr = gameResult; const mp = gr.modelPrediction || {}; const bets = gr.bets || {}; %>
-    <section class="matchup-prediction matchup-prediction--final">
+    <section class="matchup-prediction matchup-predictor-panel matchup-prediction--final">
       <h2>Final result</h2>
       <p class="matchup-prediction-note">
-        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
+        This game is complete. Scores are from the schedule sheet. Model lines use stats and records through the day before this game (frozen pre-game snapshot) and are graded against the actual outcome.
       </p>
 
       <div class="matchup-pred-win-row matchup-pred-win-row--final">
@@ -111,8 +121,10 @@
           <tr>
             <td>Over / under (total runs)</td>
             <td class="matchup-lines-team matchup-lines-team--both"><%= ou.pick === 'over' ? 'Over' : ou.pick === 'under' ? 'Under' : '—' %></td>
-            <td class="matchup-lines-value"><strong>O/U <%= ou.line %></strong> <span class="matchup-bet-actual">(<%= gr.total %> runs)</span></td>
-            <td class="matchup-bet-result"><%- include('partials/matchup-bet-status', { status: ou.status }) %></td>
+            <td class="matchup-lines-value"><strong>O/U <%= ou.line %></strong></td>
+            <td class="matchup-bet-result">
+              <span class="matchup-bet-actual"><%= gr.total %> runs</span><%- include('partials/matchup-ou-actual-side', { actualSide: ou.actualSide }) %>
+            </td>
           </tr>
           <% const rl = bets.runLine || {}; %>
           <% const rlSide = rl.side; %>
@@ -149,27 +161,29 @@
       </div>
     </section>
     <% } else if (prediction) { %>
-    <section class="matchup-prediction">
+    <section class="matchup-prediction matchup-predictor-panel">
       <h2>Model prediction</h2>
       <p class="matchup-prediction-note">
         <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
-        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
-        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+        plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
+        batting twice) adjust team strength. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input.
       </p>
 
       <% const awayWinPct = prediction.winPct.away; const homeWinPct = prediction.winPct.home; %>
+      <% const modelPickSide = prediction.favoriteSide || (awayWinPct > homeWinPct ? 'away' : (homeWinPct > awayWinPct ? 'home' : null)); %>
       <% const awayTeamName = prediction.awayLabel || (typeof selectedGame !== "undefined" && selectedGame ? selectedGame.away : "Away"); %>
       <% const homeTeamName = prediction.homeLabel || (typeof selectedGame !== "undefined" && selectedGame ? selectedGame.home : "Home"); %>
       <div class="matchup-pred-win-row">
         <div class="matchup-pred-team matchup-pred-away">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span><%= awayTeamName %></span>
           <span class="matchup-pred-pct"><%= awayWinPct %>%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= awayWinPct >= homeWinPct ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= awayWinPct %>%"></span></span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= modelPickSide === 'away' ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= awayWinPct %>%"></span></span>
         </div>
         <div class="matchup-pred-team matchup-pred-home">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span><%= homeTeamName %></span>
           <span class="matchup-pred-pct"><%= homeWinPct %>%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= homeWinPct >= awayWinPct ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= homeWinPct %>%"></span></span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar <%= modelPickSide === 'home' ? 'matchup-pred-bar--leader' : 'matchup-pred-bar--trailer' %>" style="width:<%= homeWinPct %>%"></span></span>
         </div>
       </div>
 
@@ -185,7 +199,15 @@
         <tbody>
           <% const finalScore = prediction.lines.finalScore || {}; %>
           <% let winnerSide = finalScore.winnerSide; %>
-          <% if (!winnerSide) { winnerSide = homeWinPct > awayWinPct ? 'home' : (awayWinPct > homeWinPct ? 'away' : (homeWinPct >= awayWinPct ? 'home' : 'away')); } %>
+          <% if (!winnerSide) {
+            const awayR = parseFloat(prediction.projectedRuns.away);
+            const homeR = parseFloat(prediction.projectedRuns.home);
+            if (!isNaN(awayR) && !isNaN(homeR)) {
+              if (awayR > homeR) winnerSide = 'away';
+              else if (homeR > awayR) winnerSide = 'home';
+              else winnerSide = homeWinPct >= awayWinPct ? 'home' : 'away';
+            }
+          } %>
           <tr class="matchup-lines-row--final-score">
             <td>Predicted final score</td>
             <% if (winnerSide === 'away') { %>
@@ -206,7 +228,7 @@
           </tr>
           <% const runLine = prediction.lines.runLine || {}; %>
           <% let runLineSide = runLine.side; %>
-          <% if (!runLineSide) { runLineSide = homeWinPct > awayWinPct ? 'home' : (awayWinPct > homeWinPct ? 'away' : (homeWinPct >= awayWinPct ? 'home' : 'away')); } %>
+          <% if (!runLineSide) { runLineSide = winnerSide; } %>
           <% let runLineValue = runLine.value; %>
           <% if (!runLineValue || runLineValue === '—') {
             const awayRunsNum = parseFloat(prediction.projectedRuns.away);
@@ -230,12 +252,12 @@
           </tr>
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span><%= awayTeamName %></td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span><%= awayTeamName %><% if (modelPickSide === 'away') { %> <span class="matchup-bet-model-pick">Model pick</span><% } %></td>
             <td class="matchup-lines-value"><strong><%= prediction.lines.moneylineAway %></strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span><%= homeTeamName %></td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span><%= homeTeamName %><% if (modelPickSide === 'home') { %> <span class="matchup-bet-model-pick">Model pick</span><% } %></td>
             <td class="matchup-lines-value"><strong><%= prediction.lines.moneylineHome %></strong></td>
           </tr>
         </tbody>
@@ -334,7 +356,7 @@
       <% if (!isFinishedGame) { %>
       <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
       <% } else { %>
-      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      <p class="matchup-roster-hint">Rosters for this completed game. Players marked <strong>MG</strong> (missed game) in the game logs are shown on the bench.</p>
       <% } %>
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span><%= rosterAwayName %></span>
@@ -353,6 +375,86 @@
     <% } %>
 
     </form>
+
+    <% if (typeof predictorAudit !== 'undefined' && predictorAudit && predictorAudit.decided > 0) { %>
+    <% const pa = predictorAudit; %>
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta"><%= pa.decided %> graded games · <%= pa.closeMisses.length %> close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under <%= pa.closeCallThresholdPct %>% (coin-flip territory).
+        </p>
+
+        <% if (pa.weeks && pa.weeks.length) { %>
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% pa.weeks.forEach((wk) => { %>
+              <tr>
+                <td>W<%= wk.weekNumber %></td>
+                <td><%= wk.games %></td>
+                <td><%= wk.base.wins %>–<%= wk.base.losses %></td>
+                <td><%= wk.closeMisses %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+
+        <% if (pa.closeMisses && pa.closeMisses.length) { %>
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% pa.closeMisses.forEach((miss) => { %>
+              <tr>
+                <td><% if (miss.weekNumber != null) { %>W<%= miss.weekNumber %><% } else { %>—<% } %></td>
+                <td>
+                  <% if (miss.link) { %>
+                  <a href="<%= sitePath(miss.link) %>"><%= miss.label %></a>
+                  <% } else { %>
+                  <%= miss.label %>
+                  <% } %>
+                </td>
+                <td><%= miss.predictedTeam %></td>
+                <td><%= miss.favoredWinPct %>%</td>
+                <td><%= miss.actualWinner %></td>
+                <td><%= miss.score %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <% } else { %>
+        <p class="matchup-audit-empty">No close misses yet — the model either picked confidently or got the coin flips right.</p>
+        <% } %>
+      </details>
+    </section>
+    <% } %>
     </main>
     <% if (typeof staticSite !== 'undefined' && staticSite) { %>
     <script type="module" src="<%= sitePath('/js/matchup-predictor-nav.mjs') %>?v=<%= assetVersion %>"></script>
@@ -519,7 +621,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);
