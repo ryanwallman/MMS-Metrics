@@ -1361,11 +1361,24 @@ ${slice[1]}`;
       if (locked.length) return locked[locked.length - 1].value;
       return options.length ? options[options.length - 1].value : null;
     }
+    function resolveNextUpcomingScheduleViewToken(schedulePayload, refIso) {
+      const ref = safeText(refIso);
+      if (!ref) return null;
+      for (const o of schedulePayload?.scheduleOptions || []) {
+        const value = safeText(o.value).toUpperCase();
+        if (!/^(W\d+|D\d{8})$/.test(value)) continue;
+        const firstIso = slateFirstIso(value, schedulePayload);
+        if (firstIso && firstIso.localeCompare(ref) >= 0) return value;
+      }
+      return null;
+    }
     function pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs = Date.now()) {
-      const locked = resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs);
-      if (locked) return locked;
       const active = resolveActiveDfsSlateToken(schedulePayload, refIso, nowMs);
       if (active) return active;
+      const upcoming = resolveNextUpcomingScheduleViewToken(schedulePayload, refIso);
+      if (upcoming) return upcoming;
+      const locked = resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs);
+      if (locked) return locked;
       const visible = filterVisibleDfsSlateOptions(
         buildDfsSlateOptions(schedulePayload, refIso, nowMs)
       );
@@ -1813,6 +1826,7 @@ ${slice[1]}`;
       filterVisibleDfsSlateOptions,
       resolveActiveDfsSlateToken,
       resolveMostRecentlyLockedSlateToken,
+      resolveNextUpcomingScheduleViewToken,
       pickMatchupPredictorDefaultView,
       filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
