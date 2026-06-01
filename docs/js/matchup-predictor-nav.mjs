@@ -833,11 +833,11 @@ var require_dfs = __commonJS({
       run: 2,
       walk: 2
     });
-    function safeText(value) {
+    function safeText2(value) {
       return (value || "").toString().trim();
     }
     function normalizePlayerName(name) {
-      let s = safeText(name).toLowerCase().replace(/[.'’]/g, "");
+      let s = safeText2(name).toLowerCase().replace(/[.'’]/g, "");
       s = s.replace(/\s+/g, " ").trim();
       return s;
     }
@@ -893,24 +893,24 @@ var require_dfs = __commonJS({
       return pool;
     }
     function captainLastName(captain) {
-      const parts = safeText(captain).split(/\s+/).filter(Boolean);
+      const parts = safeText2(captain).split(/\s+/).filter(Boolean);
       return parts.length ? parts[parts.length - 1].toUpperCase() : "";
     }
     function weekdayFromIso(iso) {
-      const [y, m, d] = safeText(iso).split("-").map(Number);
+      const [y, m, d] = safeText2(iso).split("-").map(Number);
       if (!y || !m || !d) return -1;
       return new Date(y, m - 1, d, 12, 0, 0).getDay();
     }
     function dfsScoringIsoDatesForToken(viewToken, schedulePayload) {
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       const out = /* @__PURE__ */ new Set();
       if (/^W\d+$/.test(v)) {
         const wn = Number(v.slice(1));
         const sunIso = schedulePayload.sundayIsosSorted?.[wn - 1];
-        if (sunIso) out.add(safeText(sunIso));
+        if (sunIso) out.add(safeText2(sunIso));
         const chunk = schedulePayload.gamesByIso?.get(sunIso) || [];
         for (const g of chunk) {
-          if (g._iso) out.add(safeText(g._iso));
+          if (g._iso) out.add(safeText2(g._iso));
         }
       } else if (/^D\d{8}$/.test(v)) {
         const digits = v.replace(/^D/, "");
@@ -918,13 +918,13 @@ var require_dfs = __commonJS({
         out.add(iso);
         const chunk = schedulePayload.gamesByIso?.get(iso) || [];
         for (const g of chunk) {
-          if (g._iso) out.add(safeText(g._iso));
+          if (g._iso) out.add(safeText2(g._iso));
         }
       }
       if (out.size === 0) {
         const games = resolveGamesForViewToken(v, schedulePayload);
         for (const g of games) {
-          if (g._iso) out.add(safeText(g._iso));
+          if (g._iso) out.add(safeText2(g._iso));
         }
       }
       return [...out].filter(Boolean).sort((a, b) => a.localeCompare(b));
@@ -932,11 +932,11 @@ var require_dfs = __commonJS({
     function buildTeamCodeById(teams, stats2026ByPlayer) {
       const votes = /* @__PURE__ */ new Map();
       for (const t of teams) {
-        const id = safeText(t.teamId);
+        const id = safeText2(t.teamId);
         const tally = /* @__PURE__ */ new Map();
         for (const name of t.players || []) {
           const row = stats2026ByPlayer.get(normalizePlayerName(name));
-          const code = row ? safeText(row.Team) : "";
+          const code = row ? safeText2(row.Team) : "";
           if (!code) continue;
           tally.set(code, (tally.get(code) || 0) + 1);
         }
@@ -948,7 +948,7 @@ var require_dfs = __commonJS({
             bestN = n;
           }
         }
-        if (best) votes.set(id, safeText(best).toUpperCase());
+        if (best) votes.set(id, safeText2(best).toUpperCase());
       }
       return votes;
     }
@@ -960,14 +960,14 @@ var require_dfs = __commonJS({
       return map;
     }
     function pitcherForTeamId(teamId, teams) {
-      const t = teams.find((x) => safeText(x.teamId) === safeText(teamId));
+      const t = teams.find((x) => safeText2(x.teamId) === safeText2(teamId));
       if (!t) return null;
       const key = captainLastName(t.captain);
       return PITCHER_STATS_BY_TEAM_KEY[key] || null;
     }
     var MAX_SLATE_GAMES_PER_TEAM = 2;
     function pushTeamSlateMatchup(matchupByTeam, teamId, matchup) {
-      const tid = safeText(teamId);
+      const tid = safeText2(teamId);
       if (!tid) return;
       if (!matchupByTeam.has(tid)) matchupByTeam.set(tid, []);
       const list = matchupByTeam.get(tid);
@@ -975,7 +975,7 @@ var require_dfs = __commonJS({
       list.push(matchup);
     }
     function formatDoubleheaderCellText(labels) {
-      const slice = (labels || []).slice(0, MAX_SLATE_GAMES_PER_TEAM).map((l) => safeText(l) || "\u2014");
+      const slice = (labels || []).slice(0, MAX_SLATE_GAMES_PER_TEAM).map((l) => safeText2(l) || "\u2014");
       if (!slice.length) return "";
       if (slice.length === 1) return slice[0];
       if (slice[0] === slice[1]) return slice[0];
@@ -986,7 +986,7 @@ ${slice[1]}`;
     function formatVsOpponents(matchups, teams) {
       if (!matchups?.length) return "";
       const labels = matchups.map((m) => {
-        const opp = teams.find((x) => safeText(x.teamId) === safeText(m.opponentId));
+        const opp = teams.find((x) => safeText2(x.teamId) === safeText2(m.opponentId));
         return opp?.teamName || `Team ${m.opponentId}`;
       });
       return formatDoubleheaderCellText(labels);
@@ -995,7 +995,7 @@ ${slice[1]}`;
       if (!matchups?.length) return "\u2014";
       const labels = matchups.map((m) => {
         const pit = pitcherForTeamId(m.opponentId, teams);
-        const name = pit?.primaryPitcher ? safeText(pit.primaryPitcher) : "";
+        const name = pit?.primaryPitcher ? safeText2(pit.primaryPitcher) : "";
         return name || "\u2014";
       });
       return formatDoubleheaderCellText(labels) || "\u2014";
@@ -1055,9 +1055,9 @@ ${slice[1]}`;
     }
     function scheduleVenueFromGame(game) {
       const g = game || {};
-      const loc = safeText(g.location);
+      const loc = safeText2(g.location);
       if (loc && loc !== "-") return loc;
-      return safeText(g.field) || "";
+      return safeText2(g.field) || "";
     }
     function normalizeOffenseRating(rating) {
       return clamp((toNumber(rating) + 2.5) / 5.5, 0, 1);
@@ -1141,9 +1141,9 @@ ${slice[1]}`;
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
-        if (g.awayTeamId) teamIds.add(safeText(g.awayTeamId));
-        if (g.homeTeamId) teamIds.add(safeText(g.homeTeamId));
-        if (g._iso) isoDates.add(safeText(g._iso));
+        if (g.awayTeamId) teamIds.add(safeText2(g.awayTeamId));
+        if (g.homeTeamId) teamIds.add(safeText2(g.homeTeamId));
+        if (g._iso) isoDates.add(safeText2(g._iso));
       }
       for (const iso of dfsScoringIsoDatesForToken(viewToken, schedulePayload)) {
         isoDates.add(iso);
@@ -1153,7 +1153,7 @@ ${slice[1]}`;
       const wn = isWeek ? Number(viewToken.slice(1)) : null;
       const sunIso = isWeek ? schedulePayload.sundayIsosSorted[wn - 1] : null;
       const firstIso = isWeek ? sunIso : [...isoDates][0];
-      const ref = safeText(referenceIso);
+      const ref = safeText2(referenceIso);
       const isPast = firstIso && ref && firstIso < ref;
       let label = schedulePayload.dateLabelByIso?.get?.(firstIso) || firstIso || viewToken;
       if (isWeek) {
@@ -1173,7 +1173,7 @@ ${slice[1]}`;
       };
     }
     function slateFirstIso(viewToken, schedulePayload) {
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       if (/^W\d+$/.test(v)) {
         const wn = Number(v.slice(1));
         return schedulePayload.sundayIsosSorted?.[wn - 1] || null;
@@ -1200,7 +1200,7 @@ ${slice[1]}`;
       return y * 1e4 + m * 100 + d;
     }
     function startOfNyCalendarDayUtcMs(isoDate) {
-      const [y, mo, da] = safeText(isoDate).split("-").map(Number);
+      const [y, mo, da] = safeText2(isoDate).split("-").map(Number);
       if (!y || !mo || !da) return NaN;
       const target = y * 1e4 + mo * 100 + da;
       let lo = Date.UTC(y, mo - 1, da - 1, 12, 0, 0, 0);
@@ -1215,14 +1215,14 @@ ${slice[1]}`;
       return hi;
     }
     function lineupLockDeadlineMsFromFirstGameIso(firstIso) {
-      const iso = safeText(firstIso);
+      const iso = safeText2(firstIso);
       if (!iso) return null;
       const gameDayStartMs = startOfNyCalendarDayUtcMs(iso);
       if (!Number.isFinite(gameDayStartMs)) return null;
       return gameDayStartMs - 1;
     }
     function instantAtNyLocalTime(isoDate, hour24, minute = 0) {
-      const iso = safeText(isoDate);
+      const iso = safeText2(isoDate);
       if (!iso) return NaN;
       const [y, mo, da] = iso.split("-").map(Number);
       if (!y || !mo || !da) return NaN;
@@ -1251,8 +1251,8 @@ ${slice[1]}`;
       return hi;
     }
     function lineupLockDeadlineMsForSlate(viewToken, firstIso) {
-      const v = safeText(viewToken).toUpperCase();
-      const iso = safeText(firstIso);
+      const v = safeText2(viewToken).toUpperCase();
+      const iso = safeText2(firstIso);
       if (!iso) return null;
       if (/^D\d{8}$/.test(v)) {
         const atEightPm = instantAtNyLocalTime(iso, 20, 0);
@@ -1262,7 +1262,7 @@ ${slice[1]}`;
     }
     function formatLineupLockDeadlineEst(lockMs, viewToken) {
       if (lockMs == null || !Number.isFinite(lockMs)) return "";
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       const displayMs = /^D\d{8}$/.test(v) ? lockMs + 1 : lockMs;
       return new Intl.DateTimeFormat("en-US", {
         timeZone: "America/New_York",
@@ -1306,7 +1306,7 @@ ${slice[1]}`;
         (o) => /^(W\d+|D\d{8})$/i.test(o.value)
       );
       const enriched = raw.map((o) => {
-        const value = safeText(o.value).toUpperCase();
+        const value = safeText2(o.value).toUpperCase();
         const firstIso = slateFirstIso(value, schedulePayload);
         const lineupLockDeadlineMs = lineupLockDeadlineMsForSlate(value, firstIso);
         const deadlinePassed = lineupLockDeadlineMs != null ? nowMs > lineupLockDeadlineMs : true;
@@ -1317,7 +1317,7 @@ ${slice[1]}`;
           lineupLockDeadlineMs,
           lineupDeadlinePassed: deadlinePassed,
           /** Calendar “today” vs game day — informational only */
-          gameDayPassedByCalendar: !!(firstIso && safeText(refIso) && firstIso < safeText(refIso)),
+          gameDayPassedByCalendar: !!(firstIso && safeText2(refIso) && firstIso < safeText2(refIso)),
           slateKind: /^W\d+$/.test(value) ? "week" : "wednesday"
         };
       });
@@ -1362,10 +1362,10 @@ ${slice[1]}`;
       return options.length ? options[options.length - 1].value : null;
     }
     function resolveNextUpcomingScheduleViewToken(schedulePayload, refIso) {
-      const ref = safeText(refIso);
+      const ref = safeText2(refIso);
       if (!ref) return null;
       for (const o of schedulePayload?.scheduleOptions || []) {
-        const value = safeText(o.value).toUpperCase();
+        const value = safeText2(o.value).toUpperCase();
         if (!/^(W\d+|D\d{8})$/.test(value)) continue;
         const firstIso = slateFirstIso(value, schedulePayload);
         if (firstIso && firstIso.localeCompare(ref) >= 0) return value;
@@ -1384,7 +1384,7 @@ ${slice[1]}`;
       );
       if (visible.length) return visible[visible.length - 1].value;
       const opts = schedulePayload?.scheduleOptions || [];
-      return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
+      return opts.length ? safeText2(opts[opts.length - 1].value).toUpperCase() : "";
     }
     function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
       return scheduleOptions || [];
@@ -1392,22 +1392,22 @@ ${slice[1]}`;
     function filterScheduleOptionsToDfsVisibility(scheduleOptions, schedulePayload, refIso, nowMs = Date.now()) {
       const visible = new Set(
         filterVisibleDfsSlateOptions(buildDfsSlateOptions(schedulePayload, refIso, nowMs)).map(
-          (o) => safeText(o.value).toUpperCase()
+          (o) => safeText2(o.value).toUpperCase()
         )
       );
-      return (scheduleOptions || []).filter((o) => visible.has(safeText(o.value).toUpperCase()));
+      return (scheduleOptions || []).filter((o) => visible.has(safeText2(o.value).toUpperCase()));
     }
     function buildSlateFromToken(viewToken, schedulePayload, refIso, slateOptions, nowMs = Date.now()) {
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       if (!v) return null;
       const opt = (slateOptions || []).find((o) => o.value === v);
       const games = resolveGamesForViewToken(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
-        if (g.awayTeamId) teamIds.add(safeText(g.awayTeamId));
-        if (g.homeTeamId) teamIds.add(safeText(g.homeTeamId));
-        if (g._iso) isoDates.add(safeText(g._iso));
+        if (g.awayTeamId) teamIds.add(safeText2(g.awayTeamId));
+        if (g.homeTeamId) teamIds.add(safeText2(g.homeTeamId));
+        if (g._iso) isoDates.add(safeText2(g._iso));
       }
       for (const iso of dfsScoringIsoDatesForToken(v, schedulePayload)) {
         isoDates.add(iso);
@@ -1415,7 +1415,7 @@ ${slice[1]}`;
       const isWeek = /^W\d+$/.test(v);
       const wn = isWeek ? Number(v.slice(1)) : null;
       const firstIso = slateFirstIso(v, schedulePayload) || [...isoDates][0] || null;
-      const ref = safeText(refIso);
+      const ref = safeText2(refIso);
       const lineupLockDeadlineMs = lineupLockDeadlineMsForSlate(v, firstIso);
       const lineupDeadlinePassedFallback = lineupLockDeadlineMs != null ? nowMs > lineupLockDeadlineMs : true;
       const gameDayPassedByCalendar = !!(firstIso && ref && firstIso < ref);
@@ -1449,7 +1449,7 @@ ${slice[1]}`;
       };
     }
     function resolveGamesForViewToken(viewToken, payload) {
-      const v = safeText(viewToken);
+      const v = safeText2(viewToken);
       if (/^W\d+$/i.test(v)) {
         const wn = Number(v.slice(1));
         const sunIso = payload.sundayIsosSorted[wn - 1];
@@ -1485,14 +1485,14 @@ ${slice[1]}`;
       const leagueAvgRag = ragValues.length > 0 ? ragValues.reduce((a, b) => a + b, 0) / ragValues.length : 12;
       const matchupByTeam = /* @__PURE__ */ new Map();
       for (const g of slate.games) {
-        const awayId = safeText(g.awayTeamId);
-        const homeId = safeText(g.homeTeamId);
+        const awayId = safeText2(g.awayTeamId);
+        const homeId = safeText2(g.homeTeamId);
         pushTeamSlateMatchup(matchupByTeam, awayId, { opponentId: homeId, side: "away", game: g });
         pushTeamSlateMatchup(matchupByTeam, homeId, { opponentId: awayId, side: "home", game: g });
       }
       const pool = [];
       for (const t of teams) {
-        const tid = safeText(t.teamId);
+        const tid = safeText2(t.teamId);
         if (!teamIds.has(tid)) continue;
         const matchups = matchupByTeam.get(tid) || [];
         const primary = matchups[0];
@@ -1546,7 +1546,7 @@ ${slice[1]}`;
       return pool;
     }
     function parseGamelogDateCell(cell) {
-      let s = safeText(cell).replace(/^\ufeff/g, "");
+      let s = safeText2(cell).replace(/^\ufeff/g, "");
       if (!s) return null;
       s = s.replace(/[\u00a0\u202f]/g, " ").trim().replace(/^["']+|["']+$/g, "");
       const m = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{4})/.exec(s);
@@ -1562,28 +1562,28 @@ ${slice[1]}`;
         const rows = parsed.data || [];
         if (rows.length < 3) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
         const headerRow = rows.find(
-          (r) => safeText(r[0]).replace(/^\ufeff/, "") === "Team" && safeText(r[1]) === "Date"
+          (r) => safeText2(r[0]).replace(/^\ufeff/, "") === "Team" && safeText2(r[1]) === "Date"
         );
         if (!headerRow) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
         const headerIdx = rows.indexOf(headerRow);
-        const h = headerRow.map((x) => safeText(x));
+        const h = headerRow.map((x) => safeText2(x));
         const col = (name) => h.indexOf(name);
         const byNorm = /* @__PURE__ */ new Map();
         const bySlateKey = /* @__PURE__ */ new Map();
         const gameIsos = /* @__PURE__ */ new Set();
         for (let i = headerIdx + 1; i < rows.length; i += 1) {
           const row = rows[i];
-          const teamCode = safeText(row[col("Team")]).toUpperCase();
+          const teamCode = safeText2(row[col("Team")]).toUpperCase();
           const iso = parseGamelogDateCell(row[col("Date")]);
-          const player = safeText(row[col("Player")]);
+          const player = safeText2(row[col("Player")]);
           if (!teamCode || !iso || !player) continue;
           gameIsos.add(iso);
           const norm = normalizePlayerName(player);
           const entry = {
             teamCode,
             iso,
-            opponentCode: safeText(row[col("Opponent ID")]),
-            gameId: safeText(row[col("Game ID")]),
+            opponentCode: safeText2(row[col("Opponent ID")]),
+            gameId: safeText2(row[col("Game ID")]),
             player,
             missedGame: (() => {
               const mgCol = col("MG");
@@ -1633,9 +1633,9 @@ ${slice[1]}`;
       for (const norm of lineupNorms) {
         const p = poolByNorm.get(norm);
         const logs = gamelogs.byNorm.get(norm) || [];
-        const code = safeText(p?.teamCode).toUpperCase();
+        const code = safeText2(p?.teamCode).toUpperCase();
         const relevant = logs.filter(
-          (l) => isoSet.has(l.iso) && safeText(l.teamCode).toUpperCase() === code
+          (l) => isoSet.has(l.iso) && safeText2(l.teamCode).toUpperCase() === code
         );
         const { points: pts, games } = averageFantasyPointsFromLogs(relevant);
         total += pts;
@@ -1649,7 +1649,7 @@ ${slice[1]}`;
       return { total: Math.round(total), breakdown };
     }
     function resolvePreviousDfsSlate(currentViewToken, schedulePayload) {
-      const v = safeText(currentViewToken).toUpperCase();
+      const v = safeText2(currentViewToken).toUpperCase();
       if (!/^W\d+$/.test(v)) return null;
       const weekOptions = (schedulePayload.scheduleOptions || []).filter(
         (o) => /^W\d+$/i.test(o.value)
@@ -1676,9 +1676,9 @@ ${slice[1]}`;
       const byNorm = {};
       let hasStats = false;
       for (const p of playerPool) {
-        const code = safeText(p.teamCode).toUpperCase();
+        const code = safeText2(p.teamCode).toUpperCase();
         const logs = (gamelogs.byNorm.get(p.norm) || []).filter(
-          (l) => isoSet.has(l.iso) && safeText(l.teamCode).toUpperCase() === code
+          (l) => isoSet.has(l.iso) && safeText2(l.teamCode).toUpperCase() === code
         );
         const { points: pts, games } = averageFantasyPointsFromLogs(logs);
         if (logs.length) hasStats = true;
@@ -1718,7 +1718,7 @@ ${slice[1]}`;
     }
     function listWeekSlateOptions(schedulePayload, refIso) {
       return (schedulePayload.scheduleOptions || []).filter((o) => /^W\d+$/i.test(o.value)).map((o) => {
-        const value = safeText(o.value).toUpperCase();
+        const value = safeText2(o.value).toUpperCase();
         const weekNumber = Number(value.slice(1));
         const sunIso = schedulePayload.sundayIsosSorted[weekNumber - 1];
         const isPast = !!(sunIso && refIso && sunIso < refIso);
@@ -1742,15 +1742,15 @@ ${slice[1]}`;
       return all.length ? all[all.length - 1].value : "";
     }
     function buildWeekSlateFromToken(viewToken, schedulePayload, refIso) {
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       if (!/^W\d+$/.test(v)) return null;
       const games = resolveGamesForViewToken(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
-        if (g.awayTeamId) teamIds.add(safeText(g.awayTeamId));
-        if (g.homeTeamId) teamIds.add(safeText(g.homeTeamId));
-        if (g._iso) isoDates.add(safeText(g._iso));
+        if (g.awayTeamId) teamIds.add(safeText2(g.awayTeamId));
+        if (g.homeTeamId) teamIds.add(safeText2(g.homeTeamId));
+        if (g._iso) isoDates.add(safeText2(g._iso));
       }
       for (const iso of dfsScoringIsoDatesForToken(v, schedulePayload)) {
         isoDates.add(iso);
@@ -1758,7 +1758,7 @@ ${slice[1]}`;
       const weekNumber = Number(v.slice(1));
       const firstIso = schedulePayload.sundayIsosSorted[weekNumber - 1];
       const opt = (schedulePayload.scheduleOptions || []).find(
-        (o) => safeText(o.value).toUpperCase() === v
+        (o) => safeText2(o.value).toUpperCase() === v
       );
       return {
         viewToken: v,
@@ -1772,14 +1772,14 @@ ${slice[1]}`;
       };
     }
     function buildLeaderboardSlateFromToken(viewToken, schedulePayload, refIso, nowMs = Date.now()) {
-      const v = safeText(viewToken).toUpperCase();
+      const v = safeText2(viewToken).toUpperCase();
       if (!/^(W\d+|D\d{8})$/i.test(v)) return null;
       const slateOptions = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
       return buildSlateFromToken(v, schedulePayload, refIso, slateOptions, nowMs);
     }
     function listLeaderboardSlateOptions(schedulePayload, refIso, nowMs = Date.now()) {
       return (schedulePayload.scheduleOptions || []).filter((o) => /^(W\d+|D\d{8})$/i.test(o.value)).map((o) => {
-        const value = safeText(o.value).toUpperCase();
+        const value = safeText2(o.value).toUpperCase();
         const isWeek = /^W\d+$/.test(value);
         const weekNumber = isWeek ? Number(value.slice(1)) : null;
         const sunIso = isWeek ? schedulePayload.sundayIsosSorted?.[weekNumber - 1] || null : null;
@@ -2109,7 +2109,7 @@ var require_teamRosters = __commonJS({
     var { canonicalRostersByTeamId } = require_customRosters2026();
     var { fetchCsvText } = require_fetchCsvText();
     var { INDEX_URL, ROSTER_URL } = require_sheetUrls();
-    function safeText(value) {
+    function safeText2(value) {
       return (value || "").toString().trim();
     }
     async function fetchCsvRows(url) {
@@ -2120,11 +2120,11 @@ var require_teamRosters = __commonJS({
       const teamMap = /* @__PURE__ */ new Map();
       for (let i = 1; i < indexRows.length; i += 1) {
         const row = indexRows[i];
-        const teamId = safeText(row[4]);
-        const captain = safeText(row[5]);
-        const teamName = safeText(row[7]);
-        const jerseyColor = safeText(row[10]) || "#1f2937";
-        const numberColor = safeText(row[11]) || "#ffffff";
+        const teamId = safeText2(row[4]);
+        const captain = safeText2(row[5]);
+        const teamName = safeText2(row[7]);
+        const jerseyColor = safeText2(row[10]) || "#1f2937";
+        const numberColor = safeText2(row[11]) || "#ffffff";
         if (!teamId || !captain) continue;
         teamMap.set(teamId, { teamId, captain, teamName, jerseyColor, numberColor });
       }
@@ -2134,11 +2134,11 @@ var require_teamRosters = __commonJS({
       const rosterMap = /* @__PURE__ */ new Map();
       function extractRosterRange(captainRowIndex, playerStartRowIndex, startCol, endCol) {
         for (let col = startCol; col <= endCol; col += 1) {
-          const captain = safeText(rosterRows[captainRowIndex] && rosterRows[captainRowIndex][col]);
+          const captain = safeText2(rosterRows[captainRowIndex] && rosterRows[captainRowIndex][col]);
           if (!captain) continue;
           const players = [];
           for (let r = playerStartRowIndex; r < playerStartRowIndex + 13; r += 1) {
-            const player = safeText(rosterRows[r] && rosterRows[r][col]);
+            const player = safeText2(rosterRows[r] && rosterRows[r][col]);
             if (player) players.push(player);
           }
           rosterMap.set(captain, players);
@@ -2149,11 +2149,11 @@ var require_teamRosters = __commonJS({
       return rosterMap;
     }
     function normalizeScheduleTeamId(id) {
-      const n = Number(safeText(id).replace(/\s+/g, ""));
-      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : safeText(id);
+      const n = Number(safeText2(id).replace(/\s+/g, ""));
+      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : safeText2(id);
     }
     function normalizeScheduleTeamLabel(value) {
-      return safeText(value).toLowerCase().replace(/\s+/g, " ").trim();
+      return safeText2(value).toLowerCase().replace(/\s+/g, " ").trim();
     }
     function buildNameToTeamIdMap(teams) {
       const nameToTeamId = {};
@@ -2179,7 +2179,7 @@ var require_teamRosters = __commonJS({
       return rosterByTeamId;
     }
     function pickRosterEntry(rosterByTeamId, nameToTeamId, teamId, displayName) {
-      const id = safeText(teamId);
+      const id = safeText2(teamId);
       let entry = id && rosterByTeamId[id] ? rosterByTeamId[id] : null;
       if (entry && Array.isArray(entry.players) && entry.players.length) {
         return { ...entry, teamId: id };
@@ -2194,7 +2194,7 @@ var require_teamRosters = __commonJS({
       if (altEntry) return { ...altEntry, teamId: String(altId) };
       return {
         teamId: id || String(altId || ""),
-        teamName: safeText(displayName) || "Team",
+        teamName: safeText2(displayName) || "Team",
         captain: "",
         jerseyColor: "",
         numberColor: "",
@@ -2249,11 +2249,11 @@ var require_playerReplacements = __commonJS({
     var { getReplacementsCsvUrl } = require_sheetUrls();
     var { createMemoryCache } = require_memoryCache();
     var { normalizePlayerName } = require_dfs();
-    function safeText(value) {
+    function safeText2(value) {
       return (value || "").toString().trim();
     }
     function parseReplacementDateCell(cell) {
-      let s = safeText(cell).replace(/^\ufeff/g, "");
+      let s = safeText2(cell).replace(/^\ufeff/g, "");
       if (!s) return null;
       s = s.replace(/[\u00a0\u202f]/g, " ").trim().replace(/^["']+|["']+$/g, "");
       const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -2271,7 +2271,7 @@ var require_playerReplacements = __commonJS({
       if (!entry) return false;
       if (!entry.replacementDateIso) return true;
       if (!gameIsoDate) return false;
-      return safeText(gameIsoDate) >= entry.replacementDateIso;
+      return safeText2(gameIsoDate) >= entry.replacementDateIso;
     }
     function filterReplacementsForDate(byOriginalNorm, gameIsoDate) {
       if (!byOriginalNorm?.size) return /* @__PURE__ */ new Map();
@@ -2289,9 +2289,9 @@ var require_playerReplacements = __commonJS({
       for (let i = 0; i < (rows || []).length; i += 1) {
         const row = rows[i];
         if (!row || !row.length) continue;
-        const original = safeText(row[0]);
-        const replacement = safeText(row[1]);
-        const replacementDateRaw = safeText(row[2]);
+        const original = safeText2(row[0]);
+        const replacement = safeText2(row[1]);
+        const replacementDateRaw = safeText2(row[2]);
         if (!original || !replacement) continue;
         if (i === 0 && /original/i.test(original) && (/new/i.test(replacement) || /replacement/i.test(replacement))) {
           continue;
@@ -2420,13 +2420,13 @@ var require_stats2026Loader = __commonJS({
     var { fetchCsvText } = require_fetchCsvText();
     var { getStats2026CsvUrl } = require_sheetUrls();
     var { normalizePlayerName } = require_dfs();
-    function safeText(value) {
+    function safeText2(value) {
       return (value || "").toString().trim();
     }
     async function load2026StatsByPlayer() {
       const csvText = await fetchCsvText(getStats2026CsvUrl());
       const rows = Papa.parse(csvText).data;
-      const headers = (rows[1] || []).map((h) => safeText(h));
+      const headers = (rows[1] || []).map((h) => safeText2(h));
       const dataRows = rows.slice(2);
       const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
       if (nameIndex === -1) {
@@ -2434,11 +2434,11 @@ var require_stats2026Loader = __commonJS({
       }
       const statsByPlayer = /* @__PURE__ */ new Map();
       for (const row of dataRows) {
-        const playerName = safeText(row[nameIndex]);
+        const playerName = safeText2(row[nameIndex]);
         if (!playerName) continue;
         const stats = {};
         for (let i = 0; i < headers.length; i += 1) {
-          stats[headers[i]] = safeText(row[i]);
+          stats[headers[i]] = safeText2(row[i]);
         }
         statsByPlayer.set(normalizePlayerName(playerName), stats);
       }
@@ -2480,7 +2480,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     function setNodeCareerReader(fn) {
       nodeReadCareerCsv = typeof fn === "function" ? fn : null;
     }
-    function safeText(value) {
+    function safeText2(value) {
       return (value || "").toString().trim();
     }
     function toNumber(value) {
@@ -2494,7 +2494,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     var { loadTeamRosters } = require_teamRosters();
     var { getCachedPlayerReplacements } = require_playerReplacements();
     function parseScheduleSheetDate(displayDate) {
-      const s = safeText(displayDate);
+      const s = safeText2(displayDate);
       if (!s) return null;
       const match = /^([A-Za-z]{3}),\s*(\d{1,2})-([A-Za-z]{3})$/.exec(s);
       if (!match) return null;
@@ -2527,10 +2527,10 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return new Date(y, m - 1, d, 12, 0, 0).getDay();
     }
     function scheduleIsoToCompactDigits(isoDate) {
-      return safeText(isoDate).replace(/\D+/g, "");
+      return safeText2(isoDate).replace(/\D+/g, "");
     }
     function scheduleStartTimeSortKey(timeStr) {
-      const compact = safeText(timeStr).toLowerCase().replace(/\./g, "").replace(/\s+/g, "").trim();
+      const compact = safeText2(timeStr).toLowerCase().replace(/\./g, "").replace(/\s+/g, "").trim();
       if (!compact || compact === "-" || compact === "ppd" || compact === "tbd" || compact === "postponed") {
         return 1e9;
       }
@@ -2555,36 +2555,36 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         const ka = scheduleStartTimeSortKey(a.time);
         const kb = scheduleStartTimeSortKey(b.time);
         if (ka !== kb) return ka - kb;
-        return safeText(a.home).localeCompare(safeText(b.home));
+        return safeText2(a.home).localeCompare(safeText2(b.home));
       });
     }
     function optionalScheduleScore(cell) {
-      const t = safeText(cell);
+      const t = safeText2(cell);
       if (!t || /^#?n\/?a$/i.test(t) || /^ppd$/i.test(t)) return NaN;
       const n = Number(t);
       return Number.isFinite(n) ? n : NaN;
     }
     function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
       if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
-      const rs = safeText(resultCell).trim();
+      const rs = safeText2(resultCell).trim();
       if (!/^#?n\/?a$/i.test(rs) && !/^-$/.test(rs) && rs) return rs;
-      const w = safeText(winnerCell);
+      const w = safeText2(winnerCell);
       if (!/^#?n\/?a$/i.test(w) && w !== "-") return `${awayScore}\u2013${homeScore} (${w})`;
       return `${awayScore}\u2013${homeScore}`;
     }
     function isValidScheduleTeamNumber(value) {
-      const raw = safeText(value).replace(/\s+/g, "");
+      const raw = safeText2(value).replace(/\s+/g, "");
       if (/^n\/?a$/i.test(raw) || /^#+$/.test(raw)) return false;
       const n = Number(raw);
       return Number.isInteger(n) && n >= 1 && n <= 18;
     }
     function normalizeScheduleTeamId(id) {
-      const n = Number(safeText(id).replace(/\s+/g, ""));
-      return Number.isInteger(n) ? String(n) : safeText(id);
+      const n = Number(safeText2(id).replace(/\s+/g, ""));
+      return Number.isInteger(n) ? String(n) : safeText2(id);
     }
     function scheduleHeaderRowNormalized(headers) {
       return (headers || []).map(
-        (x) => safeText(x).replace(/^\ufeff/g, "").toLowerCase()
+        (x) => safeText2(x).replace(/^\ufeff/g, "").toLowerCase()
       );
     }
     function scheduleColumnFirstOf(normalizedHeaders, candidates) {
@@ -2598,7 +2598,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     function buildScheduleDiamondLocationLabel(fieldMain, fieldShort) {
       const parts = [];
       for (const p of [fieldMain, fieldShort]) {
-        const t = safeText(p);
+        const t = safeText2(p);
         if (!t || t === "-") continue;
         if (parts.length && parts[parts.length - 1] === t) continue;
         parts.push(t);
@@ -2624,42 +2624,42 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       };
     }
     function buildParsedScheduleGames(scheduleRows, teams) {
-      const headers = (scheduleRows[0] || []).map((h) => safeText(h));
+      const headers = (scheduleRows[0] || []).map((h) => safeText2(h));
       const rows = scheduleRows.slice(1);
       const idx = scheduleCsvColumnIndex(headers);
       if (idx.date === -1 || idx.awayId === -1 || idx.homeId === -1) {
         throw new Error("Schedule CSV missing required columns.");
       }
       const teamNameById = new Map(
-        teams.map((t) => [safeText(t.teamId), safeText(t.teamName) || `Team ${t.teamId}`])
+        teams.map((t) => [safeText2(t.teamId), safeText2(t.teamName) || `Team ${t.teamId}`])
       );
       const parsedGames = [];
       for (let i = 0; i < rows.length; i += 1) {
         const row = rows[i];
-        const awayId = safeText(row[idx.awayId]);
-        const homeId = safeText(row[idx.homeId]);
+        const awayId = safeText2(row[idx.awayId]);
+        const homeId = safeText2(row[idx.homeId]);
         if (!isValidScheduleTeamNumber(awayId) || !isValidScheduleTeamNumber(homeId)) continue;
-        const dateDisplay = safeText(row[idx.date]);
+        const dateDisplay = safeText2(row[idx.date]);
         const parsedDate = parseScheduleSheetDate(dateDisplay);
         if (!parsedDate) continue;
-        const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
-        const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
+        const field = idx.field >= 0 ? safeText2(row[idx.field]) : "";
+        const fieldShort = idx.shortField >= 0 ? safeText2(row[idx.shortField]) : "";
         parsedGames.push({
           awayId,
           homeId,
-          awayName: safeText(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`,
-          homeName: safeText(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`,
+          awayName: safeText2(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`,
+          homeName: safeText2(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`,
           dateDisplay,
           isoDate: parsedDate.iso,
           field,
           venueLabel: buildScheduleDiamondLocationLabel(field, fieldShort),
-          time: idx.time >= 0 ? safeText(row[idx.time]) : "",
-          gameId: idx.gameId >= 0 ? safeText(row[idx.gameId]) : "",
+          time: idx.time >= 0 ? safeText2(row[idx.time]) : "",
+          gameId: idx.gameId >= 0 ? safeText2(row[idx.gameId]) : "",
           rowIndex: i,
           awayScore: optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : ""),
           homeScore: optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : ""),
-          winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
-          resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : ""
+          winnerCsv: idx.winner >= 0 ? safeText2(row[idx.winner]) : "",
+          resultCsv: idx.result >= 0 ? safeText2(row[idx.result]) : ""
         });
       }
       return parsedGames;
@@ -2667,12 +2667,12 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     function finishedScheduleGameDedupeKey(g) {
       const awayId = normalizeScheduleTeamId(g.awayId);
       const homeId = normalizeScheduleTeamId(g.homeId);
-      const gid = safeText(g.gameId);
+      const gid = safeText2(g.gameId);
       if (gid) return `gid|${gid}`;
       return `m|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
     }
     function normalizeScheduleTeamLabel(value) {
-      return safeText(value).toLowerCase().replace(/\s+/g, " ");
+      return safeText2(value).toLowerCase().replace(/\s+/g, " ");
     }
     function buildScheduleRosterPayloadB64(rosterByTeamId, teams) {
       const nameToTeamId = {};
@@ -2708,8 +2708,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}|${g.venueLabel}`;
         if (seen.has(dedupeKey)) continue;
         seen.add(dedupeKey);
-        const awayTeamId = String(Number(safeText(g.awayId).replace(/\s+/g, "")));
-        const homeTeamId = String(Number(safeText(g.homeId).replace(/\s+/g, "")));
+        const awayTeamId = String(Number(safeText2(g.awayId).replace(/\s+/g, "")));
+        const homeTeamId = String(Number(safeText2(g.homeId).replace(/\s+/g, "")));
         const row = {
           home: g.homeName,
           away: g.awayName,
@@ -2768,13 +2768,13 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     var { load2026StatsByPlayer } = require_stats2026Loader();
     async function load2025HistoricalByPlayer() {
       const rows = await fetchCsvRows(HIST_2025_STATS_URL);
-      const headers = (rows[0] || []).map((h) => safeText(h));
+      const headers = (rows[0] || []).map((h) => safeText2(h));
       const dataRows = rows.slice(1);
       const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
       if (nameIndex === -1) throw new Error("2025 historical CSV missing Player column.");
       const byPlayer = /* @__PURE__ */ new Map();
       for (const row of dataRows) {
-        const playerName = safeText(row[nameIndex]);
+        const playerName = safeText2(row[nameIndex]);
         if (!playerName) continue;
         const singles = toNumber(row[6]);
         const doubles = toNumber(row[7]);
@@ -2784,7 +2784,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         const ab = toNumber(row[2]);
         byPlayer.set(normalizePlayerName(playerName), {
           player: playerName,
-          team: safeText(row[1]),
+          team: safeText2(row[1]),
           pa: ab + bb,
           ab,
           h: toNumber(row[3]),
@@ -2808,7 +2808,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         csvText = await fetchCsvText(src.url);
       }
       const rows = Papa.parse(csvText).data;
-      const headers = (rows[0] || []).map((h) => safeText(h).toLowerCase());
+      const headers = (rows[0] || []).map((h) => safeText2(h).toLowerCase());
       const dataRows = rows.slice(1);
       const idx = {
         name: headers.indexOf("player_name"),
@@ -2823,7 +2823,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       if (idx.name === -1) throw new Error("Career CSV missing player_name column.");
       const byPlayer = /* @__PURE__ */ new Map();
       for (const row of dataRows) {
-        const name = safeText(row[idx.name]);
+        const name = safeText2(row[idx.name]);
         if (!name) continue;
         byPlayer.set(normalizePlayerName(name), {
           player: name,
@@ -3078,6 +3078,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
 var import_dfs = __toESM(require_dfs(), 1);
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
+var USER_PICKED_VIEW_KEY = "mms-matchup-user-picked-view";
 function hideLoadingOverlay() {
   if (typeof window !== "undefined" && window.MmsLoadingScreen) {
     window.MmsLoadingScreen.hide();
@@ -3088,40 +3089,92 @@ function sitePath(path) {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
+function safeText(value) {
+  return (value || "").toString().trim();
+}
 function hasViewQueryParams(url) {
   if (url.searchParams.get("view")) return true;
   if (url.searchParams.get("week")) return true;
   const wed = (url.searchParams.get("wed") || "").replace(/^D/i, "");
   return /^\d{8}$/.test(wed);
 }
-async function ensureMatchupPredictorActiveView() {
-  const path = window.location.pathname || "";
-  if (path.includes("/view/")) {
-    hideLoadingOverlay();
-    return;
+function viewTokenFromPath(pathname) {
+  const m = pathname.match(/\/matchup-predictor\/view\/([^/]+)/i);
+  return m ? decodeURIComponent(m[1]).toUpperCase() : "";
+}
+async function resolveDefaultViewToken() {
+  try {
+    const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
+    const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
+    const view = safeText((0, import_dfs.pickMatchupPredictorDefaultView)(payload, refIso)).toUpperCase();
+    if (view) return view;
+  } catch {
   }
+  try {
+    const res = await fetch(sitePath("/matchup-predictor/default-view.json"), {
+      cache: "no-store"
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const view = safeText(data?.view).toUpperCase();
+      if (view) return view;
+    }
+  } catch {
+  }
+  return "";
+}
+async function ensureMatchupPredictorActiveView() {
+  const pathname = window.location.pathname || "";
   const url = new URL(window.location.href);
   if (hasViewQueryParams(url)) {
     hideLoadingOverlay();
     return;
   }
+  const currentView = viewTokenFromPath(pathname);
+  const isRoot = !currentView;
+  const hasMatchup = /\/matchup\//.test(pathname);
+  if (isRoot) {
+    try {
+      sessionStorage.removeItem(USER_PICKED_VIEW_KEY);
+    } catch {
+    }
+  }
   try {
-    const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
-    const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
-    const active = (0, import_dfs.pickMatchupPredictorDefaultView)(payload, refIso);
+    const active = await resolveDefaultViewToken();
     if (!active) {
       hideLoadingOverlay();
       return;
     }
     const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
-    if (path.endsWith(target) || path.includes(`/view/${encodeURIComponent(active)}`)) {
+    const userPickedView = (() => {
+      try {
+        return sessionStorage.getItem(USER_PICKED_VIEW_KEY) === "1";
+      } catch {
+        return false;
+      }
+    })();
+    if (isRoot) {
+      if (!pathname.includes(`/view/${encodeURIComponent(active)}`)) {
+        window.location.replace(target);
+        return;
+      }
       hideLoadingOverlay();
       return;
     }
-    window.location.replace(target);
+    if (!hasMatchup && !userPickedView && currentView && currentView !== active) {
+      window.location.replace(target);
+      return;
+    }
+    hideLoadingOverlay();
   } catch (err) {
     hideLoadingOverlay();
     throw err;
+  }
+}
+function markMatchupUserPickedView() {
+  try {
+    sessionStorage.setItem(USER_PICKED_VIEW_KEY, "1");
+  } catch {
   }
 }
 if (typeof window !== "undefined") {
@@ -3130,7 +3183,8 @@ if (typeof window !== "undefined") {
   });
 }
 export {
-  ensureMatchupPredictorActiveView
+  ensureMatchupPredictorActiveView,
+  markMatchupUserPickedView
 };
 /*! Bundled license information:
 

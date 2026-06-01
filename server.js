@@ -2213,6 +2213,31 @@ app.get("/matchup-predictor/season-record.json", async (_req, res) => {
   }
 });
 
+async function loadMatchupPredictorDefaultViewMeta() {
+  const payload = await loadWeeklySchedule();
+  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+  const view = pickMatchupPredictorDefaultView(payload, refIso, Date.now());
+  if (!view) return null;
+  return {
+    view: safeText(view).toUpperCase(),
+    refIso,
+    computedAt: new Date().toISOString(),
+  };
+}
+
+app.get("/matchup-predictor/default-view.json", async (_req, res) => {
+  try {
+    const meta = await loadMatchupPredictorDefaultViewMeta();
+    if (!meta?.view) {
+      return res.status(404).json({ error: "Default view unavailable" });
+    }
+    res.setHeader("Cache-Control", "public, max-age=120");
+    return res.json(meta);
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Failed to load default view" });
+  }
+});
+
 async function renderMatchupPredictorPage(req, res) {
   try {
     const [

@@ -186,6 +186,16 @@ async function main() {
       console.warn(`[matchup-export] season-record.json → ${recordRes.status}`);
     }
 
+    const defaultRes = await fetch(`http://127.0.0.1:${port}/matchup-predictor/default-view.json`);
+    if (defaultRes.ok) {
+      const defaultMeta = await defaultRes.json();
+      const defaultPath = path.join(outDir, "matchup-predictor/default-view.json");
+      await fs.writeFile(defaultPath, JSON.stringify(defaultMeta), "utf8");
+      console.log(`[matchup-export] wrote matchup-predictor/default-view.json → ${defaultMeta.view}`);
+    } else {
+      console.warn(`[matchup-export] default-view.json → ${defaultRes.status}`);
+    }
+
     const rootHtml = await fetchHtml(defaultRoute);
     await writeRoute(rootHtml, "/matchup-predictor");
 

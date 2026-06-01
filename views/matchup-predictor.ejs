@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <%- include("partials/site-head") %>
+    <script>
+    (function () {
+      var base = typeof window.__SITE_BASE_PATH__ !== "undefined" ? String(window.__SITE_BASE_PATH__ || "") : "";
+      function sitePath(p) { return base + (p.charAt(0) === "/" ? p : "/" + p); }
+      var path = location.pathname || "";
+      if (path.indexOf("/view/") >= 0) return;
+      var q = new URLSearchParams(location.search);
+      if (q.get("view") || q.get("week") || /^\d{8}$/.test((q.get("wed") || "").replace(/^D/i, ""))) return;
+      fetch(sitePath("/matchup-predictor/default-view.json"), { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.view) return;
+          var target = sitePath("/matchup-predictor/view/" + encodeURIComponent(d.view));
+          if (path.indexOf("/view/") < 0) location.replace(target);
+        })
+        .catch(function () {});
+    })();
+    </script>
   </head>
   <% const mmsMatchupLoading = typeof staticSite !== 'undefined' && staticSite && !(typeof matchupPageReady !== 'undefined' && matchupPageReady); %>
   <body<%= mmsMatchupLoading ? '' : ' class="mms-page-ready"' %>>
@@ -778,6 +796,11 @@
         });
 
         viewSelect.addEventListener("change", () => {
+          try {
+            sessionStorage.setItem("mms-matchup-user-picked-view", "1");
+          } catch {
+            /* private mode */
+          }
           matchupSelect.value = "";
           submitOrNavigate();
         });
