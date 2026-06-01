@@ -88,8 +88,18 @@
       id="matchupForm"
       data-matchup-key="8|9"
     >
-      <input type="hidden" name="awayMissing" id="awayMissing" value="" />
-      <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+      <input type="hidden" name="awayMissing" id="awayMissing" value="michael bernstein,joe tracey,richie bomenblit" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="eric rosenstock,shawn adelsberg" />
+
+      
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
+        </span>
+      </div>
+      
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -284,10 +294,10 @@
 
     
     
-    <section class="matchup-prediction matchup-prediction--final">
+    <section class="matchup-prediction matchup-predictor-panel matchup-prediction--final">
       <h2>Final result</h2>
       <p class="matchup-prediction-note">
-        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
+        This game is complete. Scores are from the schedule sheet. Model lines use stats and records through the day before this game (frozen pre-game snapshot) and are graded against the actual outcome.
       </p>
 
       <div class="matchup-pred-win-row matchup-pred-win-row--final">
@@ -328,10 +338,14 @@
           <tr>
             <td>Over / under (total runs)</td>
             <td class="matchup-lines-team matchup-lines-team--both">—</td>
-            <td class="matchup-lines-value"><strong>O/U 18</strong> <span class="matchup-bet-actual">(23 runs)</span></td>
+            <td class="matchup-lines-value"><strong>O/U 20</strong></td>
             <td class="matchup-bet-result">
+              <span class="matchup-bet-actual">23 runs</span>
 
-</td>
+<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--over">Over</span>
+
+
+            </td>
           </tr>
           
           
@@ -379,6 +393,76 @@
 
     <div id="matchup-lineup-rules-host">
     
+    
+    
+    
+    <section class="matchup-lineup-alerts matchup-bats-twice-section" aria-label="Bats twice in the lineup">
+      <h2 class="matchup-lineup-alerts-title">Bats twice in the lineup</h2>
+      
+      
+      <div class="matchup-lineup-alert matchup-lineup-alert--rule matchup-lineup-alert--double-batter">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag">Away</span> JERSEY ALLSTARS</p>
+        <p class="matchup-lineup-alert-heading"><strong>11th spot — bats twice</strong></p>
+        <p class="matchup-lineup-alert-msg">Steve Ushkowitz (round 5) takes the extra turn in the batting order.</p>
+        <div class="matchup-double-batter-card">
+          <p class="matchup-double-batter-who">
+            <span class="matchup-double-batter-badge">2× in lineup</span>
+            <strong>Steve Ushkowitz</strong>
+            <span class="matchup-double-batter-meta">(Round 5 pick)</span>
+          </p>
+          <p class="matchup-double-batter-reason">Ten players are active with three missing (rounds 2, 3, 4). Average draft round 3.00 rounds up to slot 3; Steve Ushkowitz (round 5) bats a second time for the full game.</p>
+          
+          
+          <p class="matchup-double-batter-missing"><strong>Out of lineup:</strong> Michael Bernstein, Joe Tracey, Richie Bomenblit</p>
+          
+          <dl class="matchup-double-batter-stats">
+            <div class="matchup-double-batter-stat">
+              <dt>Offensive +/-</dt>
+              <dd>+0.84</dd>
+            </div>
+            <div class="matchup-double-batter-stat">
+              <dt>2026 run production</dt>
+              <dd>0.500 R+RBI per PA</dd>
+            </div>
+            
+            <div class="matchup-double-batter-stat">
+              <dt>Lineup weight</dt>
+              <dd>11.4% → <strong>11.5%</strong> of team offense</dd>
+            </div>
+            
+          </dl>
+          <p class="matchup-double-batter-effect">
+            <strong>Prediction impact:</strong>
+            Missing players still hurt — the extra turn only partly fills the gap.
+            
+            Average offensive +/- of who's out: <strong>+1.71</strong>.
+            Steve Ushkowitz is <strong>+0.84</strong> (gap <strong>-0.87</strong> vs missing).
+            
+            The model credits <strong>1%</strong> of a full extra lineup turn (not automatic 2×).
+            
+            <strong>Steve Ushkowitz is not as strong as who's missing</strong> — batting twice does not make this lineup stronger overall.
+            
+            
+          </p>
+          
+        </div>
+      </div>
+      
+    </section>
+    
+    
+    <section class="matchup-roster-notes" aria-label="Roster notes">
+      <h2 class="matchup-roster-notes-title">Roster notes (MMS bylaws)</h2>
+      
+      <div class="matchup-lineup-alert matchup-lineup-alert--rule">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag">Away</span> JERSEY ALLSTARS</p>
+        <p class="matchup-lineup-alert-heading"><strong>11 batting spots required</strong></p>
+        <p class="matchup-lineup-alert-msg">MMS bylaws (2026): with 10 players present, the lineup must bat 11 spots (C-player rule or mean missing draft round).</p>
+      </div>
+      
+    </section>
+    
+    
     </div>
 
     
@@ -387,7 +471,7 @@
     
     <section class="matchup-predictor-rosters">
       
-      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      <p class="matchup-roster-hint">Rosters for this completed game. Players marked <strong>MG</strong> (missed game) in the game logs are shown on the bench.</p>
       
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>JERSEY ALLSTARS</span>
@@ -404,7 +488,7 @@
   
   <p class="schedule-roster-captain">Captain: BOMENBLIT</p>
   
-  <p class="matchup-roster-active-count">13 of 13 active</p>
+  <p class="matchup-roster-active-count">10 of 13 active</p>
 
   
   <ol class="matchup-roster-list">
@@ -423,51 +507,53 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R2</span>
       <span class="matchup-roster-name">Michael Bernstein</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="michael bernstein"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R3</span>
       <span class="matchup-roster-name">Joe Tracey</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="joe tracey"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R4</span>
       <span class="matchup-roster-name">Richie Bomenblit</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="richie bomenblit"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--hits-twice">
       <span class="matchup-roster-pick">R5</span>
       <span class="matchup-roster-name">Steve Ushkowitz</span>
+      
+      <span class="matchup-roster-double-badge" title="Bats twice for the 11th lineup spot">2× lineup</span>
       
       <button
         type="button"
@@ -604,7 +690,7 @@
   
   <p class="schedule-roster-captain">Captain: ROSENSTOCK</p>
   
-  <p class="matchup-roster-active-count">13 of 13 active</p>
+  <p class="matchup-roster-active-count">11 of 13 active</p>
 
   
   <ol class="matchup-roster-list">
@@ -665,18 +751,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R5</span>
       <span class="matchup-roster-name">Eric Rosenstock</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="home"
         data-norm="eric rosenstock"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -749,18 +835,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R11</span>
       <span class="matchup-roster-name">Shawn Adelsberg</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="home"
         data-norm="shawn adelsberg"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -800,12 +886,194 @@
     
 
     </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">55 graded games · 7 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>4–7</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>9–5</td>
+                <td>0</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W1/matchup/7-8">FRADKIN LAW @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>52.5%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>4–11</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>51.5%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W3/matchup/3-5">PRINCETON BRAIN @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>52.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.5%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/12-10">LHRGC LAW @ GAME CHANGER</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>52.6%</td>
+                <td>LHRGC LAW</td>
+                <td>19–9</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
     </main>
     
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
     
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"8","teamName":"JERSEY ALLSTARS","offenseRating":0.20137168141592923,"runProd2026":0.42920353982300885,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.48412698412698413,"teamOverall":0.43,"rosterPlayerRating":0.20137168141592923,"scheduleGames":6,"runsPerGame":9,"runsAgainstPerGame":6.666666666666667,"runDiffPerGame":2.3333333333333335},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.4892888888888888,"runProd2026":0.41333333333333333,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.496031746031746,"teamOverall":-0.17,"rosterPlayerRating":0.4892888888888888,"scheduleGames":6,"runsPerGame":8.333333333333334,"runsAgainstPerGame":11,"runDiffPerGame":-2.6666666666666665},"awayPlayers":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":5,"homeScore":18,"total":23,"winnerSide":"home","winnerLabel":"ACE ALUMINUM","awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM","bets":{"overUnder":{"line":"18","pick":"push","actualTotal":23,"status":null},"runLine":{"side":"away","line":"1","status":"miss"},"moneyline":{"favoriteSide":"away","status":"miss"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":52.6,"home":47.4},"winPctFromRuns":{"away":56.5,"home":43.5},"projectedRuns":{"away":"9.5","home":"8.5","total":"18","marginHome":"-1"},"scheduleRates":{"away":{"runsPerGame":9,"runsAgainstPerGame":6.7},"home":{"runsPerGame":8.3,"runsAgainstPerGame":11}},"lines":{"overUnder":"18","finalScore":{"winnerSide":"away","score":"9.5 – 8.5"},"runLine":{"side":"away","value":"1"},"impliedScore":"9.5 – 8.5","moneylineAway":"-120","moneylineHome":"+100"},"strength":{"away":0.21,"home":0.21},"runBaselineGames":54,"leagueAvgRunsPerTeam":10.3,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.20137168141592923,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.4892888888888888,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM"}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"eric bomenblit":1.51,"michael bernstein":-0.34,"joe tracey":1.17,"richie bomenblit":0.84,"steve ushkowitz":1.05,"jeff martinez":0.54,"jeff friedman":0.08,"rick schindelheim":0.51,"emile rythmel":0.01,"josh walker":-0.13,"joe demaio":-0.86,"brian walker":-0.42,"paul kamras":-1.54,"martin blackburn":2.2,"zack derosa":1.91,"ronnie carlin":0.03,"brad goldstein":2.42,"eric rosenstock":1.09,"brett easton":0.29,"marc carlin":0.4,"bob bilodeau":0.68,"mike rosenstock":-0.27,"steven oran":0.36,"shawn adelsberg":-1.11,"lenny sarcona":-0.28,"logan fauci":-2.2},"stats2026ByPlayer":{"eric bomenblit":{"PA":"20","Runs":"7","RBI":"4"},"michael bernstein":{"PA":"16","Runs":"6","RBI":"5"},"joe tracey":{"PA":"12","Runs":"6","RBI":"1"},"richie bomenblit":{"PA":"16","Runs":"2","RBI":"8"},"steve ushkowitz":{"PA":"24","Runs":"10","RBI":"7"},"jeff martinez":{"PA":"10","Runs":"2","RBI":"0"},"jeff friedman":{"PA":"20","Runs":"5","RBI":"8"},"rick schindelheim":{"PA":"20","Runs":"2","RBI":"3"},"emile rythmel":{"PA":"20","Runs":"1","RBI":"4"},"josh walker":{"PA":"19","Runs":"1","RBI":"5"},"joe demaio":{"PA":"19","Runs":"4","RBI":"0"},"brian walker":{"PA":"14","Runs":"2","RBI":"2"},"paul kamras":{"PA":"16","Runs":"1","RBI":"1"},"martin blackburn":{"PA":"20","Runs":"11","RBI":"4"},"zack derosa":{"PA":"16","Runs":"5","RBI":"10"},"ronnie carlin":{"PA":"19","Runs":"1","RBI":"5"},"brad goldstein":{"PA":"16","Runs":"9","RBI":"5"},"eric rosenstock":{"PA":"15","Runs":"3","RBI":"9"},"brett easton":{"PA":"22","Runs":"7","RBI":"2"},"marc carlin":{"PA":"22","Runs":"4","RBI":"1"},"bob bilodeau":{"PA":"16","Runs":"1","RBI":"3"},"mike rosenstock":{"PA":"18","Runs":"1","RBI":"2"},"steven oran":{"PA":"18","Runs":"2","RBI":"2"},"shawn adelsberg":{"PA":"13","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"17","Runs":"4","RBI":"1"},"logan fauci":{"PA":"13","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.18146903132550063,"std":0.41841602219968627},"runProd":{"mean":0.4538458447306979,"std":0.23329732767275396},"runsPerGame":{"mean":11.15625,"std":6.843607304448437},"runsAgainstPerGame":{"mean":11.09375,"std":6.666658528640866},"teamOverall":{"mean":0.07555555555555554,"std":0.4376099509103998},"winPct":{"mean":0.5,"std":0.46770717334674267},"sos":{"mean":0.5,"std":0.4050462936504913},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":10,"avgTotalRuns":22.9,"avgRunsPerTeam":11.45,"avgRunsAgainstPerGame":11.45},"awayBaseProfile":{"teamId":"8","teamName":"JERSEY ALLSTARS","offenseRating":0.4046808510638298,"runProd2026":0.4782608695652174,"defenseZ":0,"winPct":1,"sosOppWinPct":0.5,"teamOverall":0.64,"rosterPlayerRating":0.4046808510638298,"scheduleGames":1,"runsPerGame":11,"runsAgainstPerGame":4,"runDiffPerGame":7},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.126,"runProd2026":0.43529411764705883,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5,"teamOverall":0.05,"rosterPlayerRating":0.126,"scheduleGames":2,"runsPerGame":9.5,"runsAgainstPerGame":14,"runDiffPerGame":-4.5},"awayPlayers":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":5,"homeScore":18,"total":23,"winnerSide":"home","winnerLabel":"ACE ALUMINUM","awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM","bets":{"overUnder":{"line":"20","pick":"push","actualTotal":23,"actualSide":"over","status":null},"runLine":{"side":"away","line":"1","status":"miss"},"moneyline":{"favoriteSide":"away","status":"miss"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":51.5,"home":48.5},"winPctFromRuns":{"away":56.5,"home":43.5},"projectedRuns":{"away":"10.5","home":"9.5","total":"20","marginHome":"-1"},"scheduleRates":{"away":{"runsPerGame":1.7,"runsAgainstPerGame":4},"home":{"runsPerGame":10.7,"runsAgainstPerGame":14}},"lines":{"overUnder":"20","finalScore":{"winnerSide":"away","score":"10.5 – 9.5"},"runLine":{"side":"away","value":"1"},"impliedScore":"10.5 – 9.5","moneylineAway":"-120","moneylineHome":"+100"},"strength":{"away":-0.78,"home":0.11},"runBaselineGames":10,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":0.12206981725630763,"defenseMultiplier":0.12206981725630763,"runsAgainstMultiplier":1,"offenseRating":-0.5470485404954625,"presentCount":10,"missingCount":3,"shortHandedSlots":0},"home":{"teamMultiplier":1.146108362628115,"defenseMultiplier":1.146108362628115,"runsAgainstMultiplier":1,"offenseRating":0.1444096536911425,"presentCount":11,"missingCount":2,"shortHandedSlots":0}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM"}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"eric bomenblit":1.48,"michael bernstein":2.94,"joe tracey":0.6,"richie bomenblit":1.45,"steve ushkowitz":0.84,"jeff martinez":0.62,"jeff friedman":0.23,"rick schindelheim":0.42,"emile rythmel":-0.15,"josh walker":-0.19,"joe demaio":-1.01,"brian walker":-1.02,"paul kamras":-1.66,"martin blackburn":2.65,"zack derosa":-0.07,"ronnie carlin":0.16,"brad goldstein":2.43,"eric rosenstock":0.74,"brett easton":-0.09,"marc carlin":0.24,"bob bilodeau":0.93,"mike rosenstock":-0.37,"steven oran":-1.97,"shawn adelsberg":-0.68,"lenny sarcona":-0.79,"logan fauci":-2.35},"stats2026ByPlayer":{"eric bomenblit":{"PA":"4","Runs":"2","RBI":"0"},"michael bernstein":{"PA":"4","Runs":"3","RBI":"2"},"joe tracey":{"PA":"4","Runs":"2","RBI":"0"},"richie bomenblit":{"PA":"4","Runs":"1","RBI":"5"},"steve ushkowitz":{"PA":"4","Runs":"2","RBI":"0"},"jeff friedman":{"PA":"4","Runs":"1","RBI":"2"},"rick schindelheim":{"PA":"4","Runs":"0","RBI":"0"},"emile rythmel":{"PA":"4","Runs":"0","RBI":"1"},"josh walker":{"PA":"4","Runs":"0","RBI":"1"},"joe demaio":{"PA":"4","Runs":"0","RBI":"0"},"brian walker":{"PA":"3","Runs":"0","RBI":"0"},"paul kamras":{"PA":"3","Runs":"0","RBI":"0"},"martin blackburn":{"PA":"7","Runs":"4","RBI":"1"},"zack derosa":{"PA":"7","Runs":"2","RBI":"3"},"ronnie carlin":{"PA":"7","Runs":"0","RBI":"4"},"brad goldstein":{"PA":"7","Runs":"6","RBI":"1"},"eric rosenstock":{"PA":"7","Runs":"2","RBI":"4"},"brett easton":{"PA":"8","Runs":"2","RBI":"0"},"marc carlin":{"PA":"6","Runs":"1","RBI":"0"},"bob bilodeau":{"PA":"6","Runs":"1","RBI":"2"},"mike rosenstock":{"PA":"6","Runs":"1","RBI":"1"},"steven oran":{"PA":"6","Runs":"0","RBI":"1"},"shawn adelsberg":{"PA":"6","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"6","Runs":"0","RBI":"1"},"logan fauci":{"PA":"6","Runs":"0","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -966,7 +1234,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);

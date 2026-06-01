@@ -1571,6 +1571,13 @@ ${slice[1]}`;
             iso,
             opponentCode: safeText(row[col("Opponent ID")]),
             gameId: safeText(row[col("Game ID")]),
+            player,
+            missedGame: (() => {
+              const mgCol = col("MG");
+              if (mgCol < 0) return false;
+              const n = Number(String(row[mgCol] ?? "").trim());
+              return Number.isFinite(n) && n === 1;
+            })(),
             pa: toNumber(row[col("PA")]),
             ab: toNumber(row[col("AB")]),
             hits: toNumber(row[col("Hits")]),

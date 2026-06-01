@@ -90,6 +90,16 @@
     >
       <input type="hidden" name="awayMissing" id="awayMissing" value="" />
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+
+      
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
+        </span>
+      </div>
+      
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -291,14 +301,16 @@
     
 
     
-    <section class="matchup-prediction">
+    <section class="matchup-prediction matchup-predictor-panel">
       <h2>Model prediction</h2>
       <p class="matchup-prediction-note">
         <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
-        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
-        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+        plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
+        batting twice) adjust team strength. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input.
       </p>
 
+      
       
       
       
@@ -358,7 +370,7 @@
           </tr>
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>LHRGC LAW</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>LHRGC LAW <span class="matchup-bet-model-pick">Model pick</span></td>
             <td class="matchup-lines-value"><strong>-160</strong></td>
           </tr>
           <tr>
@@ -795,12 +807,194 @@
     
 
     </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">55 graded games · 7 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>4–7</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>9–5</td>
+                <td>0</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W1/matchup/7-8">FRADKIN LAW @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>52.5%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>4–11</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>51.5%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W3/matchup/3-5">PRINCETON BRAIN @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>52.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.5%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/12-10">LHRGC LAW @ GAME CHANGER</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>52.6%</td>
+                <td>LHRGC LAW</td>
+                <td>19–9</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
     </main>
     
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
     
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.4281218274111674,"runProd2026":0.6040609137055838,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.4682539682539682,"teamOverall":0.49,"rosterPlayerRating":0.4281218274111674,"scheduleGames":6,"runsPerGame":13.666666666666666,"runsAgainstPerGame":10.166666666666666,"runDiffPerGame":3.5},"homeBaseProfile":{"teamId":"14","teamName":"NEW HORIZON","offenseRating":0.3426046511627907,"runProd2026":0.4,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.5972222222222222,"teamOverall":-0.02,"rosterPlayerRating":0.3426046511627907,"scheduleGames":6,"runsPerGame":9.333333333333334,"runsAgainstPerGame":13.666666666666666,"runDiffPerGame":-4.333333333333333},"awayPlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayers":["Ryan Amato","Shawn Leonardi","Bryan Frank","Dom Defalco","Espartaco Gonzalez","Piero Vescio","Dave Meyer","Jeff Mendelson","Craig Tepper","Daniel Navatta","Anthony Galiano","Mike Amato","Brian Frueh"],"awayPlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayersOriginal":["Ryan Amato","Shawn Leonardi","Bryan Frank","Dom Defalco","Espartaco Gonzalez","Piero Vescio","Dave Meyer","Jeff Mendelson","Craig Tepper","Daniel Navatta","Anthony Galiano","Mike Amato","Brian Frueh"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-06-14","isFinishedGame":false,"gameResult":null,"awayLabel":"LHRGC LAW","homeLabel":"NEW HORIZON","offenseRatingByNorm":{"anthony dimarco":3.62,"darren saler":2.36,"rich acerra":1.17,"connor schmidt":0.62,"evan rosenthal":1.43,"andrew bianchi":0.01,"zach schmidt":0.6,"frank larocca":-0.04,"aaron williams":-0.76,"zachary kane":-0.71,"mike cornacchia":-0.68,"mark karp":-1.24,"stephen epstein":-1.53,"ryan amato":4.64,"shawn leonardi":1.32,"bryan frank":1.74,"dom defalco":-1.4,"espartaco gonzalez":0.48,"piero vescio":-0.57,"dave meyer":0.11,"jeff mendelson":0.3,"craig tepper":-0.39,"daniel navatta":-0.36,"anthony galiano":-0.22,"mike amato":-1.38,"brian frueh":-1.44},"stats2026ByPlayer":{"anthony dimarco":{"PA":"18","Runs":"10","RBI":"8"},"darren saler":{"PA":"18","Runs":"11","RBI":"17"},"rich acerra":{"PA":"17","Runs":"9","RBI":"1"},"connor schmidt":{"PA":"5","Runs":"3","RBI":"1"},"evan rosenthal":{"PA":"13","Runs":"4","RBI":"5"},"andrew bianchi":{"PA":"16","Runs":"6","RBI":"3"},"zach schmidt":{"PA":"17","Runs":"6","RBI":"6"},"frank larocca":{"PA":"16","Runs":"1","RBI":"7"},"aaron williams":{"PA":"18","Runs":"5","RBI":"5"},"zachary kane":{"PA":"16","Runs":"1","RBI":"3"},"mike cornacchia":{"PA":"15","Runs":"3","RBI":"1"},"mark karp":{"PA":"12","Runs":"2","RBI":"0"},"stephen epstein":{"PA":"16","Runs":"0","RBI":"1"},"ryan amato":{"PA":"20","Runs":"9","RBI":"15"},"shawn leonardi":{"PA":"20","Runs":"3","RBI":"5"},"bryan frank":{"PA":"16","Runs":"7","RBI":"5"},"dom defalco":{"PA":"16","Runs":"3","RBI":"1"},"espartaco gonzalez":{"PA":"20","Runs":"3","RBI":"2"},"piero vescio":{"PA":"19","Runs":"5","RBI":"2"},"dave meyer":{"PA":"23","Runs":"6","RBI":"1"},"jeff mendelson":{"PA":"7","Runs":"2","RBI":"2"},"craig tepper":{"PA":"14","Runs":"2","RBI":"4"},"daniel navatta":{"PA":"18","Runs":"1","RBI":"1"},"anthony galiano":{"PA":"14","Runs":"1","RBI":"2"},"mike amato":{"PA":"16","Runs":"1","RBI":"2"},"brian frueh":{"PA":"12","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.4281218274111674,"runProd2026":0.6040609137055838,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.4682539682539682,"teamOverall":0.48,"rosterPlayerRating":0.4281218274111674,"scheduleGames":6,"runsPerGame":13.666666666666666,"runsAgainstPerGame":10.166666666666666,"runDiffPerGame":3.5},"homeBaseProfile":{"teamId":"14","teamName":"NEW HORIZON","offenseRating":0.34167441860465114,"runProd2026":0.4,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.5972222222222222,"teamOverall":-0.03,"rosterPlayerRating":0.34167441860465114,"scheduleGames":6,"runsPerGame":9.333333333333334,"runsAgainstPerGame":13.666666666666666,"runDiffPerGame":-4.333333333333333},"awayPlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayers":["Ryan Amato","Shawn Leonardi","Bryan Frank","Dom Defalco","Espartaco Gonzalez","Piero Vescio","Dave Meyer","Jeff Mendelson","Craig Tepper","Daniel Navatta","Anthony Galiano","Mike Amato","Brian Frueh"],"awayPlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayersOriginal":["Ryan Amato","Shawn Leonardi","Bryan Frank","Dom Defalco","Espartaco Gonzalez","Piero Vescio","Dave Meyer","Jeff Mendelson","Craig Tepper","Daniel Navatta","Anthony Galiano","Mike Amato","Brian Frueh"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-06-14","isFinishedGame":false,"gameResult":null,"awayLabel":"LHRGC LAW","homeLabel":"NEW HORIZON","offenseRatingByNorm":{"anthony dimarco":3.62,"darren saler":2.36,"rich acerra":1.17,"connor schmidt":0.62,"evan rosenthal":1.43,"andrew bianchi":0.01,"zach schmidt":0.6,"frank larocca":-0.04,"aaron williams":-0.76,"zachary kane":-0.71,"mike cornacchia":-0.68,"mark karp":-1.24,"stephen epstein":-1.53,"ryan amato":4.63,"shawn leonardi":1.32,"bryan frank":1.74,"dom defalco":-1.4,"espartaco gonzalez":0.48,"piero vescio":-0.57,"dave meyer":0.11,"jeff mendelson":0.3,"craig tepper":-0.39,"daniel navatta":-0.36,"anthony galiano":-0.22,"mike amato":-1.38,"brian frueh":-1.44},"stats2026ByPlayer":{"anthony dimarco":{"PA":"18","Runs":"10","RBI":"8"},"darren saler":{"PA":"18","Runs":"11","RBI":"17"},"rich acerra":{"PA":"17","Runs":"9","RBI":"1"},"connor schmidt":{"PA":"5","Runs":"3","RBI":"1"},"evan rosenthal":{"PA":"13","Runs":"4","RBI":"5"},"andrew bianchi":{"PA":"16","Runs":"6","RBI":"3"},"zach schmidt":{"PA":"17","Runs":"6","RBI":"6"},"frank larocca":{"PA":"16","Runs":"1","RBI":"7"},"aaron williams":{"PA":"18","Runs":"5","RBI":"5"},"zachary kane":{"PA":"16","Runs":"1","RBI":"3"},"mike cornacchia":{"PA":"15","Runs":"3","RBI":"1"},"mark karp":{"PA":"12","Runs":"2","RBI":"0"},"stephen epstein":{"PA":"16","Runs":"0","RBI":"1"},"ryan amato":{"PA":"20","Runs":"9","RBI":"15"},"shawn leonardi":{"PA":"20","Runs":"3","RBI":"5"},"bryan frank":{"PA":"16","Runs":"7","RBI":"5"},"dom defalco":{"PA":"16","Runs":"3","RBI":"1"},"espartaco gonzalez":{"PA":"20","Runs":"3","RBI":"2"},"piero vescio":{"PA":"19","Runs":"5","RBI":"2"},"dave meyer":{"PA":"23","Runs":"6","RBI":"1"},"jeff mendelson":{"PA":"7","Runs":"2","RBI":"2"},"craig tepper":{"PA":"14","Runs":"2","RBI":"4"},"daniel navatta":{"PA":"18","Runs":"1","RBI":"1"},"anthony galiano":{"PA":"14","Runs":"1","RBI":"2"},"mike amato":{"PA":"16","Runs":"1","RBI":"2"},"brian frueh":{"PA":"12","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -961,7 +1155,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);

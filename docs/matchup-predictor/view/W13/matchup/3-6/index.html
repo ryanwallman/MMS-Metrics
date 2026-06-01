@@ -86,10 +86,10 @@
       action="/matchup-predictor"
       class="matchup-predictor-form"
       id="matchupForm"
-      data-matchup-key="6|5"
+      data-matchup-key="3|6"
     >
-      <input type="hidden" name="awayMissing" id="awayMissing" value="tom carroll,aj ortiz" />
-      <input type="hidden" name="homeMissing" id="homeMissing" value="brad randell" />
+      <input type="hidden" name="awayMissing" id="awayMissing" value="" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
       <div class="matchup-predictor-record-block matchup-predictor-panel">
@@ -106,7 +106,7 @@
           <select id="view" name="view" class="schedule-view-select">
             
             
-            <option value="W1" selected>
+            <option value="W1" >
               Sun, 26-Apr • Week 1
             </option>
             
@@ -202,7 +202,7 @@
               Wed, 22-Jul
             </option>
             
-            <option value="W13" >
+            <option value="W13" selected>
               Sun, 26-Jul • Week 13
             </option>
             
@@ -247,36 +247,44 @@
           >
             <option value="" >— Select a game —</option>
             
-            <option value="2|1" >
-              FREEHOLD GMC @ ENGAGE PEO · 8:30 AM · 10-9 CONTI
+            <option value="15|1" >
+              TEC-TEL @ ENGAGE PEO · 8:30 AM
             </option>
             
-            <option value="6|5" selected>
-              PROCARE @ GODDARD HOME · 8:30 AM · 18-3 GODDARD F/8
+            <option value="17|12" >
+              EB CONSTRUCTION @ LHRGC LAW · 8:30 AM
             </option>
             
-            <option value="15|16" >
-              TEC-TEL @ TUSCANYROSE · 9:30 AM · 18-1 DRASHINSKY F/7
+            <option value="3|6" selected>
+              PRINCETON BRAIN @ PROCARE · 8:30 AM
             </option>
             
-            <option value="7|8" >
-              FRADKIN LAW @ JERSEY ALLSTARS · 10:30 AM · 11-4 BOMENBLIT
+            <option value="11|16" >
+              SHORE SMILE @ TUSCANYROSE · 8:30 AM
             </option>
             
-            <option value="3|4" >
-              PRINCETON BRAIN @ URWAY HEALTH · 10:30 AM · 19-5 WALLMAN
+            <option value="4|8" >
+              URWAY HEALTH @ JERSEY ALLSTARS · 9:00 AM
             </option>
             
-            <option value="10|9" >
-              GAME CHANGER @ ACE ALUMINUM · 11:30 AM · 10-5 ROSENSTOCK
+            <option value="5|9" >
+              GODDARD HOME @ ACE ALUMINUM · 9:30 AM
             </option>
             
-            <option value="12|11" >
-              LHRGC LAW @ SHORE SMILE · 5:45 PM · 24-5 LAROCCA F/7
+            <option value="10|18" >
+              GAME CHANGER @ CG TAX · 10:30 AM
             </option>
             
-            <option value="13|14" >
-              MONMOUTH GYM @ NEW HORIZON · 6:00 PM · 22-5 MARRONE
+            <option value="13|2" >
+              MONMOUTH GYM @ FREEHOLD GMC · 10:30 AM
+            </option>
+            
+            <option value="7|6" >
+              FRADKIN LAW @ PROCARE · 10:30 AM
+            </option>
+            
+            <option value="14|3" >
+              NEW HORIZON @ PRINCETON BRAIN · 11:30 AM
             </option>
             
           </select>
@@ -285,25 +293,33 @@
       <noscript><button type="submit">Go</button></noscript>
 
     
-    <p class="matchup-predictor-summary">Week 1 (Sun, 26-Apr games only)</p>
+    <p class="matchup-predictor-summary">Week 13 (Sun, 26-Jul games only)</p>
     
 
     
-    
-    <section class="matchup-prediction matchup-predictor-panel matchup-prediction--final">
-      <h2>Final result</h2>
+    <section class="matchup-prediction matchup-predictor-panel">
+      <h2>Model prediction</h2>
       <p class="matchup-prediction-note">
-        This game is complete. Scores are from the schedule sheet. Model lines use stats and records through the day before this game (frozen pre-game snapshot) and are graded against the actual outcome.
+        <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
+        plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
+        batting twice) adjust team strength. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input.
       </p>
 
-      <div class="matchup-pred-win-row matchup-pred-win-row--final">
+      
+      
+      
+      
+      <div class="matchup-pred-win-row">
         <div class="matchup-pred-team matchup-pred-away">
-          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>PROCARE REHAB</span>
-          <span class="matchup-pred-score">3</span>
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>PRINCETON BRAIN &amp; SPINE</span>
+          <span class="matchup-pred-pct">64.1%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:64.1%"></span></span>
         </div>
-        <div class="matchup-pred-team matchup-pred-home matchup-pred-team--winner">
-          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>GODDARD&#39;S HOME IMPROVEMENTS</span>
-          <span class="matchup-pred-score">18</span>
+        <div class="matchup-pred-team matchup-pred-home">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>PROCARE REHAB</span>
+          <span class="matchup-pred-pct">35.9%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:35.9%"></span></span>
         </div>
       </div>
 
@@ -312,74 +328,51 @@
         <thead>
           <tr>
             <th>Line</th>
-            <th>Team / pick</th>
+            <th>Team</th>
             <th>Value</th>
-            <th>Result</th>
           </tr>
         </thead>
         <tbody>
+          
+          
+          
           <tr class="matchup-lines-row--final-score">
-            <td>Final score</td>
+            <td>Predicted final score</td>
             
-            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>GODDARD&#39;S HOME IMPROVEMENTS</td>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>PRINCETON BRAIN &amp; SPINE</td>
             
             <td class="matchup-lines-value matchup-lines-score">
-              <span class="matchup-score-runs matchup-score-runs--loser">3</span>
+              <span class="matchup-score-runs matchup-score-runs--winner">12.5</span>
               <span class="matchup-score-sep">–</span>
-              <span class="matchup-score-runs matchup-score-runs--winner">18</span>
+              <span class="matchup-score-runs matchup-score-runs--loser">7.5</span>
             </td>
-            <td class="matchup-bet-result">Actual</td>
           </tr>
-          
           <tr>
             <td>Over / under (total runs)</td>
-            <td class="matchup-lines-team matchup-lines-team--both">—</td>
-            <td class="matchup-lines-value"><strong>O/U 21.5</strong></td>
-            <td class="matchup-bet-result">
-              <span class="matchup-bet-actual">21 runs</span>
-
-<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--under">Under</span>
-
-
-            </td>
+            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
+            <td class="matchup-lines-value"><strong>O/U 20</strong></td>
           </tr>
+          
+          
           
           
           
           <tr class="matchup-lines-row--runline">
             <td>Run line</td>
             
-            <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span>GODDARD&#39;S HOME IMPROVEMENTS</td>
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>PRINCETON BRAIN &amp; SPINE</td>
             
-            <td class="matchup-lines-value"><strong>2.5</strong></td>
-            <td class="matchup-bet-result">
-
-<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
-
-</td>
-          </tr>
-          
-          
-          
-          <tr>
-            <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>PROCARE REHAB</td>
-            <td class="matchup-lines-value"><strong>+130</strong></td>
-            <td class="matchup-bet-result">
-
-<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
-
-</td>
+            <td class="matchup-lines-value"><strong>5</strong></td>
           </tr>
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>GODDARD&#39;S HOME IMPROVEMENTS <span class="matchup-bet-model-pick">Model pick</span></td>
-            <td class="matchup-lines-value"><strong>-155</strong></td>
-            <td class="matchup-bet-result">
-
-<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
-
-</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>PRINCETON BRAIN &amp; SPINE <span class="matchup-bet-model-pick">Model pick</span></td>
+            <td class="matchup-lines-value"><strong>-200</strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>PROCARE REHAB</td>
+            <td class="matchup-lines-value"><strong>+165</strong></td>
           </tr>
         </tbody>
       </table>
@@ -397,54 +390,254 @@
     
     <section class="matchup-predictor-rosters">
       
-      <p class="matchup-roster-hint">Rosters for this completed game. Players marked <strong>MG</strong> (missed game) in the game logs are shown on the bench.</p>
+      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
       
       <h2 class="matchup-predictor-headline">
-        <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>PROCARE REHAB</span>
+        <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>PRINCETON BRAIN &amp; SPINE</span>
         <span class="matchup-predictor-at">@</span>
-        <span class="matchup-headline-team matchup-headline-team--home"><span class="matchup-side-tag">Home</span>GODDARD&#39;S HOME IMPROVEMENTS</span>
+        <span class="matchup-headline-team matchup-headline-team--home"><span class="matchup-side-tag">Home</span>PROCARE REHAB</span>
       </h2>
       <div class="schedule-roster-pair matchup-predictor-pair">
         <article
   class="schedule-roster-col schedule-roster-col--away"
-  style="border-color:#1F7A3A;box-shadow:inset 0 0 0 1px #1F7A3A33"
+  style="border-color:#1E56A0;box-shadow:inset 0 0 0 1px #1E56A033"
 >
   <p class="schedule-roster-role"><span class="matchup-side-tag">Away</span></p>
-  <h3 class="schedule-roster-team-name">PROCARE REHAB</h3>
+  <h3 class="schedule-roster-team-name">PRINCETON BRAIN &amp; SPINE</h3>
   
-  <p class="schedule-roster-captain">Captain: CARROLL</p>
+  <p class="schedule-roster-captain">Captain: WALLMAN</p>
   
-  <p class="matchup-roster-active-count">11 of 13 active</p>
+  <p class="matchup-roster-active-count">13 of 13 active</p>
 
   
   <ol class="matchup-roster-list">
     
-    <li class="matchup-roster-item matchup-roster-item--benched">
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R1</span>
+      <span class="matchup-roster-name">David Vignapiano</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="david vignapiano"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R2</span>
+      <span class="matchup-roster-name">Fred Lugos</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="fred lugos"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R3</span>
+      <span class="matchup-roster-name">Mark Magariello</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mark magariello"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R4</span>
+      <span class="matchup-roster-name">Mike Brullo</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mike brullo"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R5</span>
+      <span class="matchup-roster-name">Matt Granese</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="matt granese"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R6</span>
+      <span class="matchup-roster-name">Billy Loschiavo</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="billy loschiavo"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R7</span>
+      <span class="matchup-roster-name">Dave Wagreich</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dave wagreich"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R8</span>
+      <span class="matchup-roster-name">Todd Wallman</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="todd wallman"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R9</span>
+      <span class="matchup-roster-name">Ryan Wallman</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="ryan wallman"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R10</span>
+      <span class="matchup-roster-name">Mike Steinberg</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mike steinberg"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R11</span>
+      <span class="matchup-roster-name">Dhimant Balar</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dhimant balar"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R12</span>
+      <span class="matchup-roster-name">Sudipta Ray</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="sudipta ray"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R13</span>
+      <span class="matchup-roster-name">Paul Steinberg</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="paul steinberg"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+  </ol>
+  
+</article>
+
+        <article
+  class="schedule-roster-col schedule-roster-col--home"
+  style="border-color:#1F7A3A;box-shadow:inset 0 0 0 1px #1F7A3A33"
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag">Home</span></p>
+  <h3 class="schedule-roster-team-name">PROCARE REHAB</h3>
+  
+  <p class="schedule-roster-captain">Captain: CARROLL</p>
+  
+  <p class="matchup-roster-active-count">13 of 13 active</p>
+
+  
+  <ol class="matchup-roster-list">
+    
+    <li class="matchup-roster-item">
       <span class="matchup-roster-pick">R1</span>
       <span class="matchup-roster-name">Tom Carroll</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--missing"
+        class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="tom carroll"
-        aria-pressed="true"
-      >Bench</button>
+        aria-pressed="false"
+      >Active</button>
     </li>
     
-    <li class="matchup-roster-item matchup-roster-item--benched">
+    <li class="matchup-roster-item">
       <span class="matchup-roster-pick">R2</span>
       <span class="matchup-roster-name">Aj Ortiz</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--missing"
+        class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="aj ortiz"
-        aria-pressed="true"
-      >Bench</button>
+        aria-pressed="false"
+      >Active</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -455,7 +648,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="tony roegiers"
         aria-pressed="false"
       >Active</button>
@@ -469,7 +662,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="justin colarocco"
         aria-pressed="false"
       >Active</button>
@@ -483,7 +676,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="jake woloshyn"
         aria-pressed="false"
       >Active</button>
@@ -497,7 +690,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="ian mcdermott"
         aria-pressed="false"
       >Active</button>
@@ -511,7 +704,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="kevin murch"
         aria-pressed="false"
       >Active</button>
@@ -525,7 +718,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="nick lapetina"
         aria-pressed="false"
       >Active</button>
@@ -539,7 +732,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="chris karulski"
         aria-pressed="false"
       >Active</button>
@@ -553,7 +746,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="jake kroese"
         aria-pressed="false"
       >Active</button>
@@ -567,7 +760,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="doug cohen"
         aria-pressed="false"
       >Active</button>
@@ -581,7 +774,7 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="mike iorio"
         aria-pressed="false"
       >Active</button>
@@ -595,210 +788,10 @@
         type="button"
         class="matchup-status-btn matchup-status-btn--active"
         data-lineup-toggle
-        data-side="away"
+        data-side="home"
         data-norm="jerry tilker"
         aria-pressed="false"
       >Active</button>
-    </li>
-    
-  </ol>
-  
-</article>
-
-        <article
-  class="schedule-roster-col schedule-roster-col--home"
-  style="border-color:#C8102E;box-shadow:inset 0 0 0 1px #C8102E33"
->
-  <p class="schedule-roster-role"><span class="matchup-side-tag">Home</span></p>
-  <h3 class="schedule-roster-team-name">GODDARD&#39;S HOME IMPROVEMENTS</h3>
-  
-  <p class="schedule-roster-captain">Captain: GODDARD</p>
-  
-  <p class="matchup-roster-active-count">12 of 13 active</p>
-
-  
-  <ol class="matchup-roster-list">
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R1</span>
-      <span class="matchup-roster-name">Vince Caputo</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="vince caputo"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R2</span>
-      <span class="matchup-roster-name">Peter Kwiecinski</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="peter kwiecinski"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R3</span>
-      <span class="matchup-roster-name">Joe Peragine</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="joe peragine"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R4</span>
-      <span class="matchup-roster-name">Joe Caputo</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="joe caputo"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R5</span>
-      <span class="matchup-roster-name">Evan Abramson</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="evan abramson"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R6</span>
-      <span class="matchup-roster-name">Jeff Goddard</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="jeff goddard"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R7</span>
-      <span class="matchup-roster-name">Mark Goddard</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="mark goddard"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R8</span>
-      <span class="matchup-roster-name">Lawrence Rubin</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="lawrence rubin"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R9</span>
-      <span class="matchup-roster-name">Michael Weitsen</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="michael weitsen"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R10</span>
-      <span class="matchup-roster-name">Michael Cruz</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="michael cruz"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R11</span>
-      <span class="matchup-roster-name">Justin Randell</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="justin randell"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item">
-      <span class="matchup-roster-pick">R12</span>
-      <span class="matchup-roster-name">Bruce Cotter</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--active"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="bruce cotter"
-        aria-pressed="false"
-      >Active</button>
-    </li>
-    
-    <li class="matchup-roster-item matchup-roster-item--benched">
-      <span class="matchup-roster-pick">R13</span>
-      <span class="matchup-roster-name">Brad Randell</span>
-      
-      <button
-        type="button"
-        class="matchup-status-btn matchup-status-btn--missing"
-        data-lineup-toggle
-        data-side="home"
-        data-norm="brad randell"
-        aria-pressed="true"
-      >Bench</button>
     </li>
     
   </ol>
@@ -997,7 +990,7 @@
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
     
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":0,"std":1},"runsAgainstPerGame":{"mean":0,"std":1},"teamOverall":{"mean":0.23000000000000004,"std":0.22482091638556329},"winPct":{"mean":0,"std":1},"sos":{"mean":0,"std":1},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":0,"avgTotalRuns":23,"avgRunsPerTeam":11.5,"avgRunsAgainstPerGame":11.5},"awayBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.19202898550724637,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":-0.19,"rosterPlayerRating":-0.19202898550724637,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"homeBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.18112554112554113,"runProd2026":0.47186147186147187,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":0.18,"rosterPlayerRating":0.18112554112554113,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"awayPlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"awayPlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-04-26","isFinishedGame":true,"gameResult":{"awayScore":3,"homeScore":18,"total":21,"winnerSide":"home","winnerLabel":"GODDARD'S HOME IMPROVEMENTS","awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS","bets":{"overUnder":{"line":"21.5","pick":"push","actualTotal":21,"actualSide":"under","status":null},"runLine":{"side":"home","line":"2.5","status":"hit"},"moneyline":{"favoriteSide":"home","status":"hit"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":41.6,"home":58.4},"winPctFromRuns":{"away":34.3,"home":65.7},"projectedRuns":{"away":"9.5","home":"12","total":"21.5","marginHome":"+2.5"},"scheduleRates":{"away":{"runsPerGame":null,"runsAgainstPerGame":null},"home":{"runsPerGame":null,"runsAgainstPerGame":null}},"lines":{"overUnder":"21.5","finalScore":{"winnerSide":"home","score":"9.5 – 12"},"runLine":{"side":"home","value":"2.5"},"impliedScore":"9.5 – 12","moneylineAway":"+130","moneylineHome":"-155"},"strength":{"away":-1.21,"home":0.37},"runBaselineGames":0,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":0.20582367862182596,"defenseMultiplier":0.20582367862182596,"runsAgainstMultiplier":1,"offenseRating":-0.03952411219911875,"presentCount":11,"missingCount":2,"shortHandedSlots":0},"home":{"teamMultiplier":1.2801460971162013,"defenseMultiplier":1.2801460971162013,"runsAgainstMultiplier":1,"offenseRating":0.2318671545599215,"presentCount":12,"missingCount":1,"shortHandedSlots":0}},"awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS"}},"awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS","offenseRatingByNorm":{"tom carroll":3.39,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.19,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.26,"vince caputo":1.63,"peter kwiecinski":0.84,"joe peragine":1.19,"joe caputo":1.14,"evan abramson":-0.01,"jeff goddard":-0.19,"mark goddard":0.08,"lawrence rubin":0.18,"michael weitsen":-0.29,"michael cruz":-0.63,"justin randell":-0.86,"bruce cotter":-0.75,"brad randell":-0.74},"stats2026ByPlayer":{"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"},"vince caputo":{"PA":"21","Runs":"6","RBI":"6"},"peter kwiecinski":{"PA":"19","Runs":"9","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"19","Runs":"8","RBI":"11"},"evan abramson":{"PA":"19","Runs":"3","RBI":"4"},"jeff goddard":{"PA":"19","Runs":"3","RBI":"4"},"mark goddard":{"PA":"18","Runs":"3","RBI":"6"},"lawrence rubin":{"PA":"19","Runs":"6","RBI":"4"},"michael weitsen":{"PA":"18","Runs":"4","RBI":"2"},"michael cruz":{"PA":"18","Runs":"3","RBI":"5"},"justin randell":{"PA":"17","Runs":"1","RBI":"1"},"bruce cotter":{"PA":"14","Runs":"4","RBI":"2"},"brad randell":{"PA":"13","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"3","teamName":"PRINCETON BRAIN & SPINE","offenseRating":0.4112863070539418,"runProd2026":0.5892116182572614,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.5484126984126984,"teamOverall":0.63,"rosterPlayerRating":0.4112863070539418,"scheduleGames":6,"runsPerGame":13.833333333333334,"runsAgainstPerGame":8.166666666666666,"runDiffPerGame":5.666666666666667},"homeBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.19202898550724637,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5027777777777778,"teamOverall":-0.07,"rosterPlayerRating":-0.19202898550724637,"scheduleGames":6,"runsPerGame":7,"runsAgainstPerGame":10.833333333333334,"runDiffPerGame":-3.8333333333333335},"awayPlayers":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"awayPlayersOriginal":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-26","isFinishedGame":false,"gameResult":null,"awayLabel":"PRINCETON BRAIN & SPINE","homeLabel":"PROCARE REHAB","offenseRatingByNorm":{"david vignapiano":2.37,"fred lugos":1.21,"mark magariello":1.29,"mike brullo":0.63,"matt granese":1.16,"billy loschiavo":0.26,"dave wagreich":0.31,"todd wallman":-0.39,"ryan wallman":0.13,"mike steinberg":0.03,"dhimant balar":-0.8,"sudipta ray":-0.2,"paul steinberg":-1.29,"tom carroll":3.39,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.19,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.26},"stats2026ByPlayer":{"david vignapiano":{"PA":"22","Runs":"8","RBI":"9"},"fred lugos":{"PA":"21","Runs":"8","RBI":"5"},"mark magariello":{"PA":"21","Runs":"6","RBI":"9"},"mike brullo":{"PA":"21","Runs":"6","RBI":"8"},"matt granese":{"PA":"10","Runs":"5","RBI":"4"},"billy loschiavo":{"PA":"20","Runs":"3","RBI":"7"},"dave wagreich":{"PA":"21","Runs":"5","RBI":"5"},"todd wallman":{"PA":"19","Runs":"6","RBI":"3"},"ryan wallman":{"PA":"18","Runs":"7","RBI":"5"},"mike steinberg":{"PA":"18","Runs":"6","RBI":"2"},"dhimant balar":{"PA":"15","Runs":"2","RBI":"3"},"sudipta ray":{"PA":"18","Runs":"4","RBI":"6"},"paul steinberg":{"PA":"17","Runs":"7","RBI":"3"},"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     

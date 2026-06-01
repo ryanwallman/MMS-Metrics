@@ -88,8 +88,18 @@
       id="matchupForm"
       data-matchup-key="7|12"
     >
-      <input type="hidden" name="awayMissing" id="awayMissing" value="" />
-      <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+      <input type="hidden" name="awayMissing" id="awayMissing" value="patrick brock,gary szemcsak,justin jacoby" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="connor schmidt,mark karp" />
+
+      
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
+        </span>
+      </div>
+      
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -284,10 +294,10 @@
 
     
     
-    <section class="matchup-prediction matchup-prediction--final">
+    <section class="matchup-prediction matchup-predictor-panel matchup-prediction--final">
       <h2>Final result</h2>
       <p class="matchup-prediction-note">
-        This game is complete. Scores are from the schedule sheet. Model lines below are graded against the actual outcome.
+        This game is complete. Scores are from the schedule sheet. Model lines use stats and records through the day before this game (frozen pre-game snapshot) and are graded against the actual outcome.
       </p>
 
       <div class="matchup-pred-win-row matchup-pred-win-row--final">
@@ -328,10 +338,14 @@
           <tr>
             <td>Over / under (total runs)</td>
             <td class="matchup-lines-team matchup-lines-team--both">—</td>
-            <td class="matchup-lines-value"><strong>O/U 22</strong> <span class="matchup-bet-actual">(23 runs)</span></td>
+            <td class="matchup-lines-value"><strong>O/U 24</strong></td>
             <td class="matchup-bet-result">
+              <span class="matchup-bet-actual">23 runs</span>
 
-</td>
+<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--under">Under</span>
+
+
+            </td>
           </tr>
           
           
@@ -341,7 +355,7 @@
             
             <td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span>LHRGC LAW</td>
             
-            <td class="matchup-lines-value"><strong>2</strong></td>
+            <td class="matchup-lines-value"><strong>4</strong></td>
             <td class="matchup-bet-result">
 
 <span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
@@ -354,7 +368,7 @@
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>FRADKIN LAW</td>
-            <td class="matchup-lines-value"><strong>+120</strong></td>
+            <td class="matchup-lines-value"><strong>+155</strong></td>
             <td class="matchup-bet-result">
 
 <span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>
@@ -364,7 +378,7 @@
           <tr>
             <td>Moneyline</td>
             <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>LHRGC LAW <span class="matchup-bet-model-pick">Model pick</span></td>
-            <td class="matchup-lines-value"><strong>-140</strong></td>
+            <td class="matchup-lines-value"><strong>-185</strong></td>
             <td class="matchup-bet-result">
 
 <span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>
@@ -379,6 +393,76 @@
 
     <div id="matchup-lineup-rules-host">
     
+    
+    
+    
+    <section class="matchup-lineup-alerts matchup-bats-twice-section" aria-label="Bats twice in the lineup">
+      <h2 class="matchup-lineup-alerts-title">Bats twice in the lineup</h2>
+      
+      
+      <div class="matchup-lineup-alert matchup-lineup-alert--rule matchup-lineup-alert--double-batter">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag">Away</span> FRADKIN LAW</p>
+        <p class="matchup-lineup-alert-heading"><strong>11th spot — bats twice</strong></p>
+        <p class="matchup-lineup-alert-msg">Cameron Gille (round 8) takes the extra turn in the batting order.</p>
+        <div class="matchup-double-batter-card">
+          <p class="matchup-double-batter-who">
+            <span class="matchup-double-batter-badge">2× in lineup</span>
+            <strong>Cameron Gille</strong>
+            <span class="matchup-double-batter-meta">(Round 8 pick)</span>
+          </p>
+          <p class="matchup-double-batter-reason">Ten players are active with three missing (rounds 3, 7, 11). Average draft round 7.00 rounds up to slot 7; Cameron Gille (round 8) bats a second time for the full game.</p>
+          
+          
+          <p class="matchup-double-batter-missing"><strong>Out of lineup:</strong> Patrick Brock, Gary Szemcsak, Justin Jacoby</p>
+          
+          <dl class="matchup-double-batter-stats">
+            <div class="matchup-double-batter-stat">
+              <dt>Offensive +/-</dt>
+              <dd>-0.92</dd>
+            </div>
+            <div class="matchup-double-batter-stat">
+              <dt>2026 run production</dt>
+              <dd>0.125 R+RBI per PA</dd>
+            </div>
+            
+            <div class="matchup-double-batter-stat">
+              <dt>Lineup weight</dt>
+              <dd>10.3% → <strong>10.5%</strong> of team offense</dd>
+            </div>
+            
+          </dl>
+          <p class="matchup-double-batter-effect">
+            <strong>Prediction impact:</strong>
+            Missing players still hurt — the extra turn only partly fills the gap.
+            
+            Average offensive +/- of who's out: <strong>+0.43</strong>.
+            Cameron Gille is <strong>-0.92</strong> (gap <strong>-1.35</strong> vs missing).
+            
+            The model credits <strong>2%</strong> of a full extra lineup turn (not automatic 2×).
+            
+            <strong>Cameron Gille is not as strong as who's missing</strong> — batting twice does not make this lineup stronger overall.
+            
+            
+          </p>
+          
+        </div>
+      </div>
+      
+    </section>
+    
+    
+    <section class="matchup-roster-notes" aria-label="Roster notes">
+      <h2 class="matchup-roster-notes-title">Roster notes (MMS bylaws)</h2>
+      
+      <div class="matchup-lineup-alert matchup-lineup-alert--rule">
+        <p class="matchup-lineup-alert-team"><span class="matchup-side-tag">Away</span> FRADKIN LAW</p>
+        <p class="matchup-lineup-alert-heading"><strong>11 batting spots required</strong></p>
+        <p class="matchup-lineup-alert-msg">MMS bylaws (2026): with 10 players present, the lineup must bat 11 spots (C-player rule or mean missing draft round).</p>
+      </div>
+      
+    </section>
+    
+    
     </div>
 
     
@@ -387,7 +471,7 @@
     
     <section class="matchup-predictor-rosters">
       
-      <p class="matchup-roster-hint">Rosters shown as they were tracked for this completed game.</p>
+      <p class="matchup-roster-hint">Rosters for this completed game. Players marked <strong>MG</strong> (missed game) in the game logs are shown on the bench.</p>
       
       <h2 class="matchup-predictor-headline">
         <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>FRADKIN LAW</span>
@@ -404,7 +488,7 @@
   
   <p class="schedule-roster-captain">Captain: PINGARO</p>
   
-  <p class="matchup-roster-active-count">13 of 13 active</p>
+  <p class="matchup-roster-active-count">10 of 13 active</p>
 
   
   <ol class="matchup-roster-list">
@@ -437,18 +521,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R3</span>
       <span class="matchup-roster-name">Patrick Brock</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="patrick brock"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -493,23 +577,25 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R7</span>
       <span class="matchup-roster-name">Gary Szemcsak</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="gary szemcsak"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--hits-twice">
       <span class="matchup-roster-pick">R8</span>
       <span class="matchup-roster-name">Cameron Gille</span>
+      
+      <span class="matchup-roster-double-badge" title="Bats twice for the 11th lineup spot">2× lineup</span>
       
       <button
         type="button"
@@ -549,18 +635,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R11</span>
       <span class="matchup-roster-name">Justin Jacoby</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="away"
         data-norm="justin jacoby"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -604,7 +690,7 @@
   
   <p class="schedule-roster-captain">Captain: LAROCCA</p>
   
-  <p class="matchup-roster-active-count">13 of 13 active</p>
+  <p class="matchup-roster-active-count">11 of 13 active</p>
 
   
   <ol class="matchup-roster-list">
@@ -651,18 +737,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R4</span>
       <span class="matchup-roster-name">Connor Schmidt</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="home"
         data-norm="connor schmidt"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -763,18 +849,18 @@
       >Active</button>
     </li>
     
-    <li class="matchup-roster-item">
+    <li class="matchup-roster-item matchup-roster-item--benched">
       <span class="matchup-roster-pick">R12</span>
       <span class="matchup-roster-name">Mark Karp</span>
       
       <button
         type="button"
-        class="matchup-status-btn matchup-status-btn--active"
+        class="matchup-status-btn matchup-status-btn--missing"
         data-lineup-toggle
         data-side="home"
         data-norm="mark karp"
-        aria-pressed="false"
-      >Active</button>
+        aria-pressed="true"
+      >Bench</button>
     </li>
     
     <li class="matchup-roster-item">
@@ -800,12 +886,194 @@
     
 
     </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">55 graded games · 7 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>4–7</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>9–5</td>
+                <td>0</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W1/matchup/7-8">FRADKIN LAW @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>52.5%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>4–11</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>51.5%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W3/matchup/3-5">PRINCETON BRAIN @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>52.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.5%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/12-10">LHRGC LAW @ GAME CHANGER</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>52.6%</td>
+                <td>LHRGC LAW</td>
+                <td>19–9</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
     </main>
     
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
     
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.34576763485477185,"runProd2026":0.5103734439834025,"defenseZ":0,"winPct":0.5714285714285714,"sosOppWinPct":0.4183673469387755,"teamOverall":0.14,"rosterPlayerRating":0.34576763485477185,"scheduleGames":7,"runsPerGame":10,"runsAgainstPerGame":7.571428571428571,"runDiffPerGame":2.4285714285714284},"homeBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.4281218274111674,"runProd2026":0.6040609137055838,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.4682539682539682,"teamOverall":0.49,"rosterPlayerRating":0.4281218274111674,"scheduleGames":6,"runsPerGame":13.666666666666666,"runsAgainstPerGame":10.166666666666666,"runDiffPerGame":3.5},"awayPlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"awayPlayersOriginal":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":16,"homeScore":7,"total":23,"winnerSide":"away","winnerLabel":"FRADKIN LAW","awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW","bets":{"overUnder":{"line":"22","pick":"push","actualTotal":23,"status":null},"runLine":{"side":"home","line":"2","status":"miss"},"moneyline":{"favoriteSide":"home","status":"miss"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":43.8,"home":56.2},"winPctFromRuns":{"away":37.3,"home":62.7},"projectedRuns":{"away":"10","home":"12","total":"22","marginHome":"+2"},"scheduleRates":{"away":{"runsPerGame":10,"runsAgainstPerGame":7.6},"home":{"runsPerGame":13.7,"runsAgainstPerGame":10.2}},"lines":{"overUnder":"22","finalScore":{"winnerSide":"home","score":"10 – 12"},"runLine":{"side":"home","value":"2"},"impliedScore":"10 – 12","moneylineAway":"+120","moneylineHome":"-140"},"strength":{"away":0.32,"home":1.07},"runBaselineGames":54,"leagueAvgRunsPerTeam":10.3,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.34576763485477185,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.4281218274111674,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW"}},"awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW","offenseRatingByNorm":{"phil corde":2.19,"ed fradkin":2.52,"patrick brock":2.52,"joe picarello":0.25,"rob corde":2.47,"nolan ruthberg":0.09,"gary szemcsak":0.11,"cameron gille":-0.91,"dylan jacoby":-2.55,"pat pingaro":-0.6,"justin jacoby":-1.1,"marc persily":-0.27,"jonathan okun":-1.68,"anthony dimarco":3.62,"darren saler":2.36,"rich acerra":1.17,"connor schmidt":0.62,"evan rosenthal":1.43,"andrew bianchi":0.01,"zach schmidt":0.6,"frank larocca":-0.04,"aaron williams":-0.76,"zachary kane":-0.71,"mike cornacchia":-0.68,"mark karp":-1.24,"stephen epstein":-1.53},"stats2026ByPlayer":{"phil corde":{"PA":"22","Runs":"9","RBI":"11"},"ed fradkin":{"PA":"22","Runs":"7","RBI":"10"},"patrick brock":{"PA":"17","Runs":"11","RBI":"3"},"joe picarello":{"PA":"21","Runs":"5","RBI":"4"},"rob corde":{"PA":"21","Runs":"10","RBI":"12"},"nolan ruthberg":{"PA":"21","Runs":"8","RBI":"4"},"gary szemcsak":{"PA":"11","Runs":"3","RBI":"3"},"cameron gille":{"PA":"24","Runs":"3","RBI":"1"},"dylan jacoby":{"PA":"17","Runs":"1","RBI":"1"},"pat pingaro":{"PA":"20","Runs":"2","RBI":"6"},"justin jacoby":{"PA":"7","Runs":"0","RBI":"0"},"marc persily":{"PA":"18","Runs":"5","RBI":"2"},"jonathan okun":{"PA":"20","Runs":"1","RBI":"1"},"anthony dimarco":{"PA":"18","Runs":"10","RBI":"8"},"darren saler":{"PA":"18","Runs":"11","RBI":"17"},"rich acerra":{"PA":"17","Runs":"9","RBI":"1"},"connor schmidt":{"PA":"5","Runs":"3","RBI":"1"},"evan rosenthal":{"PA":"13","Runs":"4","RBI":"5"},"andrew bianchi":{"PA":"16","Runs":"6","RBI":"3"},"zach schmidt":{"PA":"17","Runs":"6","RBI":"6"},"frank larocca":{"PA":"16","Runs":"1","RBI":"7"},"aaron williams":{"PA":"18","Runs":"5","RBI":"5"},"zachary kane":{"PA":"16","Runs":"1","RBI":"3"},"mike cornacchia":{"PA":"15","Runs":"3","RBI":"1"},"mark karp":{"PA":"12","Runs":"2","RBI":"0"},"stephen epstein":{"PA":"16","Runs":"0","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.18146903132550063,"std":0.41841602219968627},"runProd":{"mean":0.4538458447306979,"std":0.23329732767275396},"runsPerGame":{"mean":11.15625,"std":6.843607304448437},"runsAgainstPerGame":{"mean":11.09375,"std":6.666658528640866},"teamOverall":{"mean":0.07555555555555554,"std":0.4376099509103998},"winPct":{"mean":0.5,"std":0.46770717334674267},"sos":{"mean":0.5,"std":0.4050462936504913},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":10,"avgTotalRuns":22.9,"avgRunsPerTeam":11.45,"avgRunsAgainstPerGame":11.45},"awayBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.30065934065934075,"runProd2026":0.4444444444444444,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5,"teamOverall":0.12,"rosterPlayerRating":0.30065934065934075,"scheduleGames":2,"runsPerGame":10,"runsAgainstPerGame":11.5,"runDiffPerGame":-1.5},"homeBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.6773584905660376,"runProd2026":0.9038461538461539,"defenseZ":0,"winPct":1,"sosOppWinPct":0,"teamOverall":0.57,"rosterPlayerRating":0.6773584905660376,"scheduleGames":1,"runsPerGame":24,"runsAgainstPerGame":5,"runDiffPerGame":19},"awayPlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"awayPlayersOriginal":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"homePlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":16,"homeScore":7,"total":23,"winnerSide":"away","winnerLabel":"FRADKIN LAW","awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW","bets":{"overUnder":{"line":"24","pick":"push","actualTotal":23,"actualSide":"under","status":null},"runLine":{"side":"home","line":"4","status":"miss"},"moneyline":{"favoriteSide":"home","status":"miss"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":37.6,"home":62.4},"winPctFromRuns":{"away":26.1,"home":73.9},"projectedRuns":{"away":"10","home":"14","total":"24","marginHome":"+4"},"scheduleRates":{"away":{"runsPerGame":11.8,"runsAgainstPerGame":11.5},"home":{"runsPerGame":32.5,"runsAgainstPerGame":5}},"lines":{"overUnder":"24","finalScore":{"winnerSide":"home","score":"10 – 14"},"runLine":{"side":"home","value":"4"},"impliedScore":"10 – 14","moneylineAway":"+155","moneylineHome":"-185"},"strength":{"away":-0.25,"home":2},"runBaselineGames":10,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":1.2009478718503062,"defenseMultiplier":1.2009478718503062,"runsAgainstMultiplier":1,"offenseRating":-0.21648752565401852,"presentCount":10,"missingCount":3,"shortHandedSlots":0},"home":{"teamMultiplier":1.3989489647767746,"defenseMultiplier":1.3989489647767746,"runsAgainstMultiplier":1,"offenseRating":0.9475899591601169,"presentCount":11,"missingCount":2,"shortHandedSlots":0}},"awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW"}},"awayLabel":"FRADKIN LAW","homeLabel":"LHRGC LAW","offenseRatingByNorm":{"phil corde":2.06,"ed fradkin":2.41,"patrick brock":1.6,"joe picarello":0.09,"rob corde":2.98,"nolan ruthberg":-0.09,"gary szemcsak":-0.95,"cameron gille":-0.92,"dylan jacoby":-2.88,"pat pingaro":-0.71,"justin jacoby":-0.65,"marc persily":-0.53,"jonathan okun":-1.63,"anthony dimarco":5.11,"darren saler":3.06,"rich acerra":-1.3,"connor schmidt":0.18,"evan rosenthal":2.18,"andrew bianchi":1.28,"zach schmidt":0.6,"frank larocca":0.35,"aaron williams":-1.51,"zachary kane":0.03,"mike cornacchia":-0.08,"mark karp":-1.54,"stephen epstein":-1.46},"stats2026ByPlayer":{"phil corde":{"PA":"9","Runs":"3","RBI":"5"},"ed fradkin":{"PA":"9","Runs":"3","RBI":"4"},"patrick brock":{"PA":"9","Runs":"4","RBI":"0"},"joe picarello":{"PA":"8","Runs":"2","RBI":"2"},"rob corde":{"PA":"8","Runs":"5","RBI":"4"},"nolan ruthberg":{"PA":"8","Runs":"1","RBI":"2"},"gary szemcsak":{"PA":"3","Runs":"0","RBI":"0"},"cameron gille":{"PA":"8","Runs":"1","RBI":"0"},"dylan jacoby":{"PA":"7","Runs":"0","RBI":"1"},"pat pingaro":{"PA":"7","Runs":"0","RBI":"2"},"marc persily":{"PA":"7","Runs":"1","RBI":"0"},"jonathan okun":{"PA":"7","Runs":"0","RBI":"0"},"anthony dimarco":{"PA":"5","Runs":"5","RBI":"4"},"darren saler":{"PA":"5","Runs":"4","RBI":"5"},"rich acerra":{"PA":"4","Runs":"2","RBI":"1"},"evan rosenthal":{"PA":"5","Runs":"2","RBI":"3"},"andrew bianchi":{"PA":"4","Runs":"2","RBI":"1"},"zach schmidt":{"PA":"4","Runs":"3","RBI":"3"},"frank larocca":{"PA":"4","Runs":"1","RBI":"3"},"aaron williams":{"PA":"5","Runs":"2","RBI":"0"},"zachary kane":{"PA":"4","Runs":"1","RBI":"2"},"mike cornacchia":{"PA":"4","Runs":"2","RBI":"1"},"mark karp":{"PA":"4","Runs":"0","RBI":"0"},"stephen epstein":{"PA":"4","Runs":"0","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -966,7 +1234,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);

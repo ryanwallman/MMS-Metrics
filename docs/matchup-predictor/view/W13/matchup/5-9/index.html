@@ -90,6 +90,16 @@
     >
       <input type="hidden" name="awayMissing" id="awayMissing" value="" />
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+
+      
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
+        </span>
+      </div>
+      
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -245,6 +255,10 @@
               EB CONSTRUCTION @ LHRGC LAW · 8:30 AM
             </option>
             
+            <option value="3|6" >
+              PRINCETON BRAIN @ PROCARE · 8:30 AM
+            </option>
+            
             <option value="11|16" >
               SHORE SMILE @ TUSCANYROSE · 8:30 AM
             </option>
@@ -283,27 +297,29 @@
     
 
     
-    <section class="matchup-prediction">
+    <section class="matchup-prediction matchup-predictor-panel">
       <h2>Model prediction</h2>
       <p class="matchup-prediction-note">
         <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
-        plus how many runs the opponent typically allows. <strong>Win %</strong> is driven mainly by the projected run margin
-        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input. No artificial cap on win %.
+        plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
+        batting twice) adjust team strength. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input.
       </p>
 
+      
       
       
       
       <div class="matchup-pred-win-row">
         <div class="matchup-pred-team matchup-pred-away">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>GODDARD&#39;S HOME IMPROVEMENTS</span>
-          <span class="matchup-pred-pct">53.9%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:53.9%"></span></span>
+          <span class="matchup-pred-pct">54%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:54%"></span></span>
         </div>
         <div class="matchup-pred-team matchup-pred-home">
           <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>ACE ALUMINUM</span>
-          <span class="matchup-pred-pct">46.1%</span>
-          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:46.1%"></span></span>
+          <span class="matchup-pred-pct">46%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:46%"></span></span>
         </div>
       </div>
 
@@ -350,7 +366,7 @@
           </tr>
           <tr>
             <td>Moneyline</td>
-            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>GODDARD&#39;S HOME IMPROVEMENTS</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>GODDARD&#39;S HOME IMPROVEMENTS <span class="matchup-bet-model-pick">Model pick</span></td>
             <td class="matchup-lines-value"><strong>-130</strong></td>
           </tr>
           <tr>
@@ -787,12 +803,194 @@
     
 
     </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">55 graded games · 7 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>4–7</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>9–5</td>
+                <td>0</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W1/matchup/7-8">FRADKIN LAW @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>52.5%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>4–11</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>51.5%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W3/matchup/3-5">PRINCETON BRAIN @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>52.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.5%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/12-10">LHRGC LAW @ GAME CHANGER</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>52.6%</td>
+                <td>LHRGC LAW</td>
+                <td>19–9</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
     </main>
     
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
     
     
-    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22934902207727662,"std":0.2250483287289309},"runProd":{"mean":0.4587567171840179,"std":0.08799229625844651},"runsPerGame":{"mean":10.195370370370371,"std":2.412641821629315},"runsAgainstPerGame":{"mean":10.316534391534395,"std":2.672230174301676},"teamOverall":{"mean":0.09277777777777778,"std":0.4249811179538262},"winPct":{"mean":0.49537037037037035,"std":0.20246414757818665},"sos":{"mean":0.4996346686822877,"std":0.07104849202648152},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":54,"avgTotalRuns":20.62962962962963,"avgRunsPerTeam":10.314814814814815,"avgRunsAgainstPerGame":10.314814814814815},"awayBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.15863387978142074,"runProd2026":0.43169398907103823,"defenseZ":0,"winPct":0.5714285714285714,"sosOppWinPct":0.5884353741496599,"teamOverall":0.42,"rosterPlayerRating":0.15863387978142074,"scheduleGames":7,"runsPerGame":10.714285714285714,"runsAgainstPerGame":8.857142857142858,"runDiffPerGame":1.8571428571428572},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.4892888888888888,"runProd2026":0.41333333333333333,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.496031746031746,"teamOverall":-0.17,"rosterPlayerRating":0.4892888888888888,"scheduleGames":6,"runsPerGame":8.333333333333334,"runsAgainstPerGame":11,"runDiffPerGame":-2.6666666666666665},"awayPlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-26","isFinishedGame":false,"gameResult":null,"awayLabel":"GODDARD'S HOME IMPROVEMENTS","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"vince caputo":1.42,"peter kwiecinski":0.79,"joe peragine":1.19,"joe caputo":0.82,"evan abramson":-0.08,"jeff goddard":-0.25,"mark goddard":0.03,"lawrence rubin":0.24,"michael weitsen":-0.34,"michael cruz":-0.48,"justin randell":-0.87,"bruce cotter":-0.83,"brad randell":-0.83,"martin blackburn":2.2,"zack derosa":1.91,"ronnie carlin":0.03,"brad goldstein":2.42,"eric rosenstock":1.09,"brett easton":0.29,"marc carlin":0.4,"bob bilodeau":0.68,"mike rosenstock":-0.27,"steven oran":0.36,"shawn adelsberg":-1.11,"lenny sarcona":-0.28,"logan fauci":-2.2},"stats2026ByPlayer":{"vince caputo":{"PA":"17","Runs":"4","RBI":"4"},"peter kwiecinski":{"PA":"15","Runs":"6","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"15","Runs":"5","RBI":"8"},"evan abramson":{"PA":"15","Runs":"2","RBI":"3"},"jeff goddard":{"PA":"15","Runs":"2","RBI":"3"},"mark goddard":{"PA":"14","Runs":"3","RBI":"4"},"lawrence rubin":{"PA":"15","Runs":"4","RBI":"2"},"michael weitsen":{"PA":"14","Runs":"4","RBI":"0"},"michael cruz":{"PA":"14","Runs":"3","RBI":"4"},"justin randell":{"PA":"13","Runs":"0","RBI":"1"},"bruce cotter":{"PA":"10","Runs":"3","RBI":"2"},"brad randell":{"PA":"9","Runs":"1","RBI":"0"},"martin blackburn":{"PA":"20","Runs":"11","RBI":"4"},"zack derosa":{"PA":"16","Runs":"5","RBI":"10"},"ronnie carlin":{"PA":"19","Runs":"1","RBI":"5"},"brad goldstein":{"PA":"16","Runs":"9","RBI":"5"},"eric rosenstock":{"PA":"15","Runs":"3","RBI":"9"},"brett easton":{"PA":"22","Runs":"7","RBI":"2"},"marc carlin":{"PA":"22","Runs":"4","RBI":"1"},"bob bilodeau":{"PA":"16","Runs":"1","RBI":"3"},"mike rosenstock":{"PA":"18","Runs":"1","RBI":"2"},"steven oran":{"PA":"18","Runs":"2","RBI":"2"},"shawn adelsberg":{"PA":"13","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"17","Runs":"4","RBI":"1"},"logan fauci":{"PA":"13","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.18112554112554113,"runProd2026":0.47186147186147187,"defenseZ":0,"winPct":0.5714285714285714,"sosOppWinPct":0.6027210884353742,"teamOverall":0.44,"rosterPlayerRating":0.18112554112554113,"scheduleGames":7,"runsPerGame":10.714285714285714,"runsAgainstPerGame":9,"runDiffPerGame":1.7142857142857142},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.4892888888888888,"runProd2026":0.41333333333333333,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.496031746031746,"teamOverall":-0.18,"rosterPlayerRating":0.4892888888888888,"scheduleGames":6,"runsPerGame":8.333333333333334,"runsAgainstPerGame":11,"runDiffPerGame":-2.6666666666666665},"awayPlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-26","isFinishedGame":false,"gameResult":null,"awayLabel":"GODDARD'S HOME IMPROVEMENTS","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"vince caputo":1.63,"peter kwiecinski":0.84,"joe peragine":1.19,"joe caputo":1.14,"evan abramson":-0.01,"jeff goddard":-0.19,"mark goddard":0.08,"lawrence rubin":0.18,"michael weitsen":-0.29,"michael cruz":-0.63,"justin randell":-0.86,"bruce cotter":-0.75,"brad randell":-0.74,"martin blackburn":2.2,"zack derosa":1.91,"ronnie carlin":0.03,"brad goldstein":2.42,"eric rosenstock":1.09,"brett easton":0.29,"marc carlin":0.4,"bob bilodeau":0.68,"mike rosenstock":-0.27,"steven oran":0.36,"shawn adelsberg":-1.11,"lenny sarcona":-0.28,"logan fauci":-2.2},"stats2026ByPlayer":{"vince caputo":{"PA":"21","Runs":"6","RBI":"6"},"peter kwiecinski":{"PA":"19","Runs":"9","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"19","Runs":"8","RBI":"11"},"evan abramson":{"PA":"19","Runs":"3","RBI":"4"},"jeff goddard":{"PA":"19","Runs":"3","RBI":"4"},"mark goddard":{"PA":"18","Runs":"3","RBI":"6"},"lawrence rubin":{"PA":"19","Runs":"6","RBI":"4"},"michael weitsen":{"PA":"18","Runs":"4","RBI":"2"},"michael cruz":{"PA":"18","Runs":"3","RBI":"5"},"justin randell":{"PA":"17","Runs":"1","RBI":"1"},"bruce cotter":{"PA":"14","Runs":"4","RBI":"2"},"brad randell":{"PA":"13","Runs":"2","RBI":"1"},"martin blackburn":{"PA":"20","Runs":"11","RBI":"4"},"zack derosa":{"PA":"16","Runs":"5","RBI":"10"},"ronnie carlin":{"PA":"19","Runs":"1","RBI":"5"},"brad goldstein":{"PA":"16","Runs":"9","RBI":"5"},"eric rosenstock":{"PA":"15","Runs":"3","RBI":"9"},"brett easton":{"PA":"22","Runs":"7","RBI":"2"},"marc carlin":{"PA":"22","Runs":"4","RBI":"1"},"bob bilodeau":{"PA":"16","Runs":"1","RBI":"3"},"mike rosenstock":{"PA":"18","Runs":"1","RBI":"2"},"steven oran":{"PA":"18","Runs":"2","RBI":"2"},"shawn adelsberg":{"PA":"13","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"17","Runs":"4","RBI":"1"},"logan fauci":{"PA":"13","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
     <script src="/js/matchup-predictor-ui.js?v=1"></script>
     <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
     
@@ -953,7 +1151,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);

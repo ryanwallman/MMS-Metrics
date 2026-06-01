@@ -90,6 +90,16 @@
     >
       <input type="hidden" name="awayMissing" id="awayMissing" value="" />
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+
+      
+      <div class="matchup-predictor-record-block matchup-predictor-panel">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
+        </span>
+      </div>
+      
+
       <div class="matchup-predictor-controls">
         <label for="view">
           <strong>Date</strong>
@@ -301,6 +311,188 @@
     
 
     </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">55 graded games · 7 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>4–7</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>9–5</td>
+                <td>0</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W1/matchup/7-8">FRADKIN LAW @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>52.5%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>4–11</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>51.5%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W3/matchup/3-5">PRINCETON BRAIN @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>52.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.5%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/view/W4/matchup/12-10">LHRGC LAW @ GAME CHANGER</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>52.6%</td>
+                <td>LHRGC LAW</td>
+                <td>19–9</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
     </main>
     
     <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
@@ -463,7 +655,7 @@
           const storedAway = benchSortedKey(stored.awayBench);
           const storedHome = benchSortedKey(stored.homeBench);
 
-          if (isStaticSite || hasStored) {
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
             if (storedAway !== serverAway || storedHome !== serverHome) {
               awaySet = new Set(stored.awayBench);
               homeSet = new Set(stored.homeBench);

@@ -128,9 +128,10 @@ function renderProjectionTable(rows, regularSeasonGames) {
     )
     .join("");
   return `<section class="power-rankings-section">
-      <h2>Projected final standings (${regularSeasonGames}-game season)</h2>
+      <h2 class="power-rankings-projection-title">Projected final standings (${regularSeasonGames}-game season)</h2>
       <p class="power-rankings-note">
         Sorted by projected wins. “Proj. W-L” rounds expected totals; “Proj. win %” uses fractional wins.
+        Remaining games use the same stats-based matchup model as the predictor page.
       </p>
       <div class="rankings-table-wrap">
         <table class="rankings-master-table page-table power-rankings-table">
@@ -171,9 +172,9 @@ function renderExplainer(data) {
       </p>
       <p>
         <strong>Season projections</strong> start from each team’s current W-L, then add
-        <em>expected</em> wins and losses on every remaining game. That uses the same underlying matchup model as the
-        <a href="${esc(sitePath("/matchup-predictor"))}">matchup predictor</a>, but with a <strong>sharper</strong> win curve (less pulled
-        toward 50/50) so strong teams can project toward records like 18–4 and weak teams toward heavier losses.
+        <em>expected</em> wins and losses on every remaining game using the
+        <a href="${esc(sitePath("/matchup-predictor"))}">matchup predictor</a> model
+        (roster offense, schedule runs for/against, active vs benched players).
         Projected win % keeps fractional expected wins; the W-L column rounds to whole numbers. Regular season length:
         <strong>${data.regularSeasonGames} games</strong>.
       </p>

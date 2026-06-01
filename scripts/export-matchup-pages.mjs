@@ -139,10 +139,17 @@ async function main() {
   await runNpm("build:matchup-predictor-nav");
 
   const { loadWeeklySchedule } = require("../lib/dfsLeaderboardScoringContext.js");
+  const { pickMatchupPredictorDefaultView, referenceIsoForScheduleYear } = require("../lib/dfs.js");
+  const { SCHEDULE_CALENDAR_YEAR } = require("../lib/sheetUrls.js");
   const schedulePayload = await loadWeeklySchedule();
   const viewValues = (schedulePayload.scheduleOptions || [])
     .map((o) => String(o.value || "").trim().toUpperCase())
     .filter((v) => /^(W\d+|D\d{8})$/.test(v));
+  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+  const defaultView =
+    pickMatchupPredictorDefaultView(schedulePayload, refIso) ||
+    viewValues[viewValues.length - 1] ||
+    "W1";
 
   const serverEnv = {
     ...process.env,
@@ -165,9 +172,11 @@ async function main() {
     await waitForHealth();
     // Warm schedule + replacement caches before exporting HTML.
     await fetchHtml("/healthz");
-    await fetchHtml("/matchup-predictor/view/W5");
+    const defaultRoute = matchupPath(defaultView);
+    console.log(`[matchup-export] Default slate: ${defaultView} (${defaultRoute})`);
+    await fetchHtml(defaultRoute);
 
-    const rootHtml = await fetchHtml("/matchup-predictor/view/W5");
+    const rootHtml = await fetchHtml(defaultRoute);
     await writeRoute(rootHtml, "/matchup-predictor");
 
     console.log(`[matchup-export] Exporting ${viewValues.length} schedule views…`);

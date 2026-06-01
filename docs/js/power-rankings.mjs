@@ -1577,6 +1577,13 @@ ${slice[1]}`;
             iso,
             opponentCode: safeText(row[col("Opponent ID")]),
             gameId: safeText(row[col("Game ID")]),
+            player,
+            missedGame: (() => {
+              const mgCol = col("MG");
+              if (mgCol < 0) return false;
+              const n = Number(String(row[mgCol] ?? "").trim());
+              return Number.isFinite(n) && n === 1;
+            })(),
             pa: toNumber(row[col("PA")]),
             ab: toNumber(row[col("AB")]),
             hits: toNumber(row[col("Hits")]),
@@ -2288,17 +2295,38 @@ var require_powerRankingsCaptains = __commonJS({
     function parseCaptainMappingRows(rows) {
       const byTeamId = /* @__PURE__ */ new Map();
       const byLabel = /* @__PURE__ */ new Map();
-      for (let i = 1; i < rows.length; i += 1) {
+      const teamCodeById = /* @__PURE__ */ new Map();
+      if (!rows?.length) return { byTeamId, byLabel, teamCodeById };
+      const header = (rows[0] || []).map((x) => safeText(x));
+      const hasNamedHeader = header.some((h) => /team name/i.test(h) || /team id/i.test(h));
+      let startRow = hasNamedHeader ? 1 : 0;
+      let colTeamLabel = 0;
+      let colCaptain = 1;
+      let colTeamCode = -1;
+      if (hasNamedHeader) {
+        colTeamLabel = header.findIndex((h) => /team name/i.test(h));
+        colCaptain = header.findIndex((h) => /^captain$/i.test(h));
+        colTeamCode = header.findIndex((h) => /team id/i.test(h));
+        if (colTeamLabel < 0) colTeamLabel = 0;
+        if (colCaptain < 0) colCaptain = 1;
+      }
+      for (let i = startRow; i < rows.length; i += 1) {
         const row = rows[i];
         if (!row || !row.length) continue;
-        const teamLabel = safeText(row[0]);
-        const captain = safeText(row[1]);
+        const teamLabel = safeText(row[colTeamLabel]);
+        const captain = safeText(row[colCaptain]);
         if (!teamLabel || !captain) continue;
         const teamId = extractTeamIdFromLabel(teamLabel);
         if (teamId) byTeamId.set(teamId, captain);
         byLabel.set(normalizeCaptainLookupLabel(teamLabel), captain);
+        const teamCode = colTeamCode >= 0 ? safeText(row[colTeamCode]).toUpperCase() : "";
+        if (teamId && teamCode) teamCodeById.set(teamId, teamCode);
       }
-      return { byTeamId, byLabel };
+      return { byTeamId, byLabel, teamCodeById };
+    }
+    async function loadCaptainTeamCodeById() {
+      const map = await loadPowerRankingsCaptainMap();
+      return map?.teamCodeById || /* @__PURE__ */ new Map();
     }
     async function loadPowerRankingsCaptainMap() {
       return captainMapCache.get("map", async () => {
@@ -2322,6 +2350,7 @@ var require_powerRankingsCaptains = __commonJS({
     }
     module.exports = {
       loadPowerRankingsCaptainMap,
+      loadCaptainTeamCodeById,
       lookupPowerRankingsCaptain,
       parseCaptainMappingRows,
       extractTeamIdFromLabel
