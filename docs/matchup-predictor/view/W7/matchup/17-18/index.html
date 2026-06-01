@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -991,15 +992,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"17","teamName":"EB CONSTRUCTION","offenseRating":0.24959839357429725,"runProd2026":0.5582329317269076,"defenseZ":0,"winPct":0.8571428571428571,"sosOppWinPct":0.4387755102040816,"teamOverall":0.77,"rosterPlayerRating":0.24959839357429725,"scheduleGames":7,"runsPerGame":15,"runsAgainstPerGame":7.571428571428571,"runDiffPerGame":7.428571428571429},"homeBaseProfile":{"teamId":"18","teamName":"CG TAX, AUDIT AND ADVISORY","offenseRating":0.34083333333333343,"runProd2026":0.4930555555555556,"defenseZ":0,"winPct":0.75,"sosOppWinPct":0.35119047619047616,"teamOverall":0.39,"rosterPlayerRating":0.34083333333333343,"scheduleGames":4,"runsPerGame":10.25,"runsAgainstPerGame":5.5,"runDiffPerGame":4.75},"awayPlayers":["Cole Fluta","Eric Becker","Joe Mamone","Jeff Beja","Matt Whelen","Alex Goldfarb","James Pezzulo","Chris Curti","Jesse Panassidi","Rich Hartly","Bill Chiusano","Reid Goldfarb","Joe Olivencia"],"homePlayers":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"awayPlayersOriginal":["Cole Fluta","Eric Becker","Joe Mamone","Jeff Beja","Matt Whelen","Alex Goldfarb","James Pezzulo","Chris Curti","Jesse Panassidi","Rich Hartly","Bill Chiusano","Reid Goldfarb","Joe Olivencia"],"homePlayersOriginal":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-06-14","isFinishedGame":false,"gameResult":null,"awayLabel":"EB CONSTRUCTION","homeLabel":"CG TAX, AUDIT AND ADVISORY","offenseRatingByNorm":{"cole fluta":2.03,"eric becker":1.3,"joe mamone":0.68,"jeff beja":0.69,"matt whelen":0.42,"alex goldfarb":-0.39,"james pezzulo":0.07,"chris curti":0.36,"jesse panassidi":-0.68,"rich hartly":-0.82,"bill chiusano":-0.62,"reid goldfarb":-0.41,"joe olivencia":-0.53,"nick turano":3.95,"eddie fausak":0.83,"andrew rodriguez":-0.13,"anthony turano":-0.06,"joe joraskie":1.07,"mike heitzner":-0.16,"joseph lewicki":0.51,"jorge rivera":-0.66,"jake heitzner":-0.27,"vinny spitaletto":0.68,"frank ermel":-0.21,"justin bickoff":-0.85,"pat ciaglia":-0.69},"stats2026ByPlayer":{"cole fluta":{"PA":"22","Runs":"10","RBI":"9"},"eric becker":{"PA":"22","Runs":"8","RBI":"8"},"joe mamone":{"PA":"22","Runs":"10","RBI":"3"},"jeff beja":{"PA":"22","Runs":"4","RBI":"12"},"matt whelen":{"PA":"22","Runs":"10","RBI":"6"},"alex goldfarb":{"PA":"19","Runs":"3","RBI":"3"},"james pezzulo":{"PA":"20","Runs":"3","RBI":"10"},"chris curti":{"PA":"18","Runs":"4","RBI":"6"},"jesse panassidi":{"PA":"18","Runs":"5","RBI":"0"},"rich hartly":{"PA":"18","Runs":"4","RBI":"1"},"bill chiusano":{"PA":"14","Runs":"4","RBI":"2"},"reid goldfarb":{"PA":"14","Runs":"2","RBI":"3"},"joe olivencia":{"PA":"18","Runs":"5","RBI":"4"},"nick turano":{"PA":"12","Runs":"6","RBI":"8"},"eddie fausak":{"PA":"12","Runs":"5","RBI":"1"},"andrew rodriguez":{"PA":"12","Runs":"3","RBI":"3"},"anthony turano":{"PA":"11","Runs":"4","RBI":"2"},"joe joraskie":{"PA":"11","Runs":"4","RBI":"3"},"mike heitzner":{"PA":"9","Runs":"2","RBI":"2"},"joseph lewicki":{"PA":"11","Runs":"1","RBI":"2"},"jorge rivera":{"PA":"11","Runs":"2","RBI":"3"},"jake heitzner":{"PA":"11","Runs":"2","RBI":"0"},"vinny spitaletto":{"PA":"11","Runs":"4","RBI":"3"},"frank ermel":{"PA":"11","Runs":"2","RBI":"2"},"justin bickoff":{"PA":"11","Runs":"0","RBI":"2"},"pat ciaglia":{"PA":"11","Runs":"2","RBI":"3"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1279,7 +1306,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

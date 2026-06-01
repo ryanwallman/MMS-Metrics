@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -1010,15 +1011,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23047817913476404,"std":0.22461632209232554},"runProd":{"mean":0.4609882440057087,"std":0.08778676948595654},"runsPerGame":{"mean":10.960185185185187,"std":2.6346172379299815},"runsAgainstPerGame":{"mean":10.912037037037036,"std":2.899211288849726},"teamOverall":{"mean":0.09333333333333332,"std":0.4042414020249671},"winPct":{"mean":0.5083333333333333,"std":0.23819343213260757},"sos":{"mean":0.49425925925925934,"std":0.11458893551587421},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":43,"avgTotalRuns":21.976744186046513,"avgRunsPerTeam":10.988372093023257,"avgRunsAgainstPerGame":10.988372093023257},"awayBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.4281218274111674,"runProd2026":0.6040609137055838,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.48999999999999994,"teamOverall":0.34,"rosterPlayerRating":0.4281218274111674,"scheduleGames":5,"runsPerGame":13.2,"runsAgainstPerGame":10.4,"runDiffPerGame":2.8},"homeBaseProfile":{"teamId":"15","teamName":"TEC-TEL","offenseRating":0.1966808510638298,"runProd2026":0.5148936170212766,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.44000000000000006,"teamOverall":0.18,"rosterPlayerRating":0.1966808510638298,"scheduleGames":5,"runsPerGame":12.4,"runsAgainstPerGame":8.6,"runDiffPerGame":3.8},"awayPlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayers":["Steve Santigate","Kyle Dunleavy","Seth Drashinsky","Jared Koshefsky","Max Allegretti","Dan Drashinsky","Jordan Brent","Justin Krauss","Kurt Schmidt","Russ Krauss","Matthew Leiggi","David Drashinsky","John Tesoriero"],"awayPlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayersOriginal":["Steve Santigate","Kyle Dunleavy","Seth Drashinsky","Jared Koshefsky","Max Allegretti","Dan Drashinsky","Jordan Brent","Justin Krauss","Kurt Schmidt","Russ Krauss","Matthew Leiggi","David Drashinsky","John Tesoriero"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-05-31","isFinishedGame":true,"gameResult":{"awayScore":16,"homeScore":9,"total":25,"winnerSide":"away","winnerLabel":"LHRGC LAW","awayLabel":"LHRGC LAW","homeLabel":"TEC-TEL","bets":{"overUnder":{"line":"24.5","pick":"push","actualTotal":25,"actualSide":"over","status":null},"runLine":{"side":"away","line":"0.5","status":"hit"},"moneyline":{"favoriteSide":"away","status":"hit"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":50.5,"home":49.5},"winPctFromRuns":{"away":53.2,"home":46.8},"projectedRuns":{"away":"12.5","home":"12","total":"24.5","marginHome":"-0.5"},"scheduleRates":{"away":{"runsPerGame":13.2,"runsAgainstPerGame":10.4},"home":{"runsPerGame":12.4,"runsAgainstPerGame":8.6}},"lines":{"overUnder":"24.5","finalScore":{"winnerSide":"away","score":"12.5 – 12"},"runLine":{"side":"away","value":"0.5"},"impliedScore":"12.5 – 12","moneylineAway":"+100","moneylineHome":"-110"},"strength":{"away":0.77,"home":0.36},"runBaselineGames":43,"leagueAvgRunsPerTeam":11,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.4281218274111674,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.1966808510638298,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"LHRGC LAW","homeLabel":"TEC-TEL"}},"awayLabel":"LHRGC LAW","homeLabel":"TEC-TEL","offenseRatingByNorm":{"anthony dimarco":3.62,"darren saler":2.36,"rich acerra":1.17,"connor schmidt":0.62,"evan rosenthal":1.43,"andrew bianchi":0.01,"zach schmidt":0.6,"frank larocca":-0.04,"aaron williams":-0.76,"zachary kane":-0.71,"mike cornacchia":-0.68,"mark karp":-1.24,"stephen epstein":-1.53,"steve santigate":2.55,"kyle dunleavy":1.16,"seth drashinsky":1.23,"jared koshefsky":0.24,"max allegretti":1.31,"dan drashinsky":0.17,"jordan brent":-0.24,"justin krauss":-0.45,"kurt schmidt":-0.86,"russ krauss":0.37,"matthew leiggi":-1.17,"david drashinsky":-1.15,"john tesoriero":-1.82},"stats2026ByPlayer":{"anthony dimarco":{"PA":"18","Runs":"10","RBI":"8"},"darren saler":{"PA":"18","Runs":"11","RBI":"17"},"rich acerra":{"PA":"17","Runs":"9","RBI":"1"},"connor schmidt":{"PA":"5","Runs":"3","RBI":"1"},"evan rosenthal":{"PA":"13","Runs":"4","RBI":"5"},"andrew bianchi":{"PA":"16","Runs":"6","RBI":"3"},"zach schmidt":{"PA":"17","Runs":"6","RBI":"6"},"frank larocca":{"PA":"16","Runs":"1","RBI":"7"},"aaron williams":{"PA":"18","Runs":"5","RBI":"5"},"zachary kane":{"PA":"16","Runs":"1","RBI":"3"},"mike cornacchia":{"PA":"15","Runs":"3","RBI":"1"},"mark karp":{"PA":"12","Runs":"2","RBI":"0"},"stephen epstein":{"PA":"16","Runs":"0","RBI":"1"},"steve santigate":{"PA":"20","Runs":"10","RBI":"4"},"kyle dunleavy":{"PA":"20","Runs":"8","RBI":"5"},"seth drashinsky":{"PA":"20","Runs":"11","RBI":"10"},"jared koshefsky":{"PA":"20","Runs":"9","RBI":"2"},"max allegretti":{"PA":"20","Runs":"7","RBI":"10"},"dan drashinsky":{"PA":"20","Runs":"3","RBI":"14"},"jordan brent":{"PA":"20","Runs":"1","RBI":"4"},"justin krauss":{"PA":"20","Runs":"7","RBI":"2"},"kurt schmidt":{"PA":"15","Runs":"1","RBI":"2"},"russ krauss":{"PA":"13","Runs":"0","RBI":"3"},"matthew leiggi":{"PA":"16","Runs":"1","RBI":"2"},"david drashinsky":{"PA":"15","Runs":"1","RBI":"0"},"john tesoriero":{"PA":"16","Runs":"3","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1298,7 +1325,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

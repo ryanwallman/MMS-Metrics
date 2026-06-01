@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="dennis oconnor" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.18146903132550063,"std":0.41841602219968627},"runProd":{"mean":0.4538458447306979,"std":0.23329732767275396},"runsPerGame":{"mean":11.15625,"std":6.843607304448437},"runsAgainstPerGame":{"mean":11.09375,"std":6.666658528640866},"teamOverall":{"mean":0.07555555555555554,"std":0.4376099509103998},"winPct":{"mean":0.5,"std":0.46770717334674267},"sos":{"mean":0.5,"std":0.4050462936504913},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":10,"avgTotalRuns":22.9,"avgRunsPerTeam":11.45,"avgRunsAgainstPerGame":11.45},"awayBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.26039215686274503,"runProd2026":0.66,"defenseZ":0,"winPct":1,"sosOppWinPct":0,"teamOverall":0.4,"rosterPlayerRating":0.26039215686274503,"scheduleGames":1,"runsPerGame":18,"runsAgainstPerGame":3,"runDiffPerGame":15},"homeBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":-0.23976744186046514,"runProd2026":0.23809523809523808,"defenseZ":0,"winPct":0,"sosOppWinPct":1,"teamOverall":-0.4,"rosterPlayerRating":-0.23976744186046514,"scheduleGames":1,"runsPerGame":5,"runsAgainstPerGame":19,"runDiffPerGame":-14},"awayPlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"awayPlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"homePlayersOriginal":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":9,"homeScore":6,"total":15,"winnerSide":"away","winnerLabel":"GODDARD'S HOME IMPROVEMENTS","awayLabel":"GODDARD'S HOME IMPROVEMENTS","homeLabel":"URWAY HEALTH","bets":{"overUnder":{"line":"22.5","pick":"push","actualTotal":15,"actualSide":"under","status":null},"runLine":{"side":"away","line":"8.5","status":"miss"},"moneyline":{"favoriteSide":"away","status":"hit"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":68.2,"home":31.8},"winPctFromRuns":{"away":90.1,"home":9.9},"projectedRuns":{"away":"15.5","home":"7","total":"22.5","marginHome":"-8.5"},"scheduleRates":{"away":{"runsPerGame":21.5,"runsAgainstPerGame":3},"home":{"runsPerGame":2.4,"runsAgainstPerGame":19}},"lines":{"overUnder":"22.5","finalScore":{"winnerSide":"away","score":"15.5 – 7"},"runLine":{"side":"away","value":"8.5"},"impliedScore":"15.5 – 7","moneylineAway":"-250","moneylineHome":"+200"},"strength":{"away":0.77,"home":-0.63},"runBaselineGames":10,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":1.2198043654458848,"defenseMultiplier":1.2198043654458848,"runsAgainstMultiplier":1,"offenseRating":0.31762748966904597,"presentCount":12,"missingCount":1,"shortHandedSlots":0},"home":{"teamMultiplier":0.45002493002202226,"defenseMultiplier":0.45002493002202226,"runsAgainstMultiplier":1,"offenseRating":-0.10790132624481512,"presentCount":12,"missingCount":1,"shortHandedSlots":0}},"awayLabel":"GODDARD'S HOME IMPROVEMENTS","homeLabel":"URWAY HEALTH"}},"awayLabel":"GODDARD'S HOME IMPROVEMENTS","homeLabel":"URWAY HEALTH","offenseRatingByNorm":{"vince caputo":0.74,"peter kwiecinski":0.85,"joe peragine":1.68,"joe caputo":1.02,"evan abramson":-0.04,"jeff goddard":0.34,"mark goddard":0.72,"lawrence rubin":0.32,"michael weitsen":-0.42,"michael cruz":-0.63,"justin randell":-1.28,"bruce cotter":-0.51,"brad randell":-0.3,"dennis oconnor":3.57,"chris baldino":0.51,"justin bykofsky":-0.38,"nick dinapoli":0.48,"jason feingold":-1.44,"robbie juergens":-0.17,"chip costa":0.1,"seamus coyle":0.46,"john maguire":-1.51,"carlo tanzola":-2.93,"ken feingold":-0.47,"john fisher":-2.93,"darren wald":0.21},"stats2026ByPlayer":{"vince caputo":{"PA":"5","Runs":"1","RBI":"0"},"peter kwiecinski":{"PA":"4","Runs":"2","RBI":"0"},"joe peragine":{"PA":"5","Runs":"2","RBI":"3"},"joe caputo":{"PA":"4","Runs":"1","RBI":"3"},"evan abramson":{"PA":"4","Runs":"1","RBI":"1"},"jeff goddard":{"PA":"4","Runs":"2","RBI":"1"},"mark goddard":{"PA":"4","Runs":"2","RBI":"3"},"lawrence rubin":{"PA":"4","Runs":"2","RBI":"0"},"michael weitsen":{"PA":"4","Runs":"2","RBI":"0"},"michael cruz":{"PA":"4","Runs":"1","RBI":"3"},"justin randell":{"PA":"4","Runs":"0","RBI":"0"},"bruce cotter":{"PA":"4","Runs":"2","RBI":"1"},"dennis oconnor":{"PA":"4","Runs":"1","RBI":"2"},"chris baldino":{"PA":"4","Runs":"2","RBI":"0"},"justin bykofsky":{"PA":"4","Runs":"0","RBI":"0"},"nick dinapoli":{"PA":"4","Runs":"1","RBI":"0"},"jason feingold":{"PA":"3","Runs":"0","RBI":"1"},"robbie juergens":{"PA":"4","Runs":"0","RBI":"1"},"chip costa":{"PA":"4","Runs":"0","RBI":"0"},"john maguire":{"PA":"3","Runs":"0","RBI":"0"},"carlo tanzola":{"PA":"3","Runs":"0","RBI":"0"},"ken feingold":{"PA":"3","Runs":"0","RBI":"1"},"john fisher":{"PA":"3","Runs":"0","RBI":"0"},"darren wald":{"PA":"3","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

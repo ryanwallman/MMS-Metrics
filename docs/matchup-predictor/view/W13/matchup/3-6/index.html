@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -987,15 +988,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"3","teamName":"PRINCETON BRAIN & SPINE","offenseRating":0.4112863070539418,"runProd2026":0.5892116182572614,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.5484126984126984,"teamOverall":0.63,"rosterPlayerRating":0.4112863070539418,"scheduleGames":6,"runsPerGame":13.833333333333334,"runsAgainstPerGame":8.166666666666666,"runDiffPerGame":5.666666666666667},"homeBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.19202898550724637,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5027777777777778,"teamOverall":-0.07,"rosterPlayerRating":-0.19202898550724637,"scheduleGames":6,"runsPerGame":7,"runsAgainstPerGame":10.833333333333334,"runDiffPerGame":-3.8333333333333335},"awayPlayers":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"awayPlayersOriginal":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-26","isFinishedGame":false,"gameResult":null,"awayLabel":"PRINCETON BRAIN & SPINE","homeLabel":"PROCARE REHAB","offenseRatingByNorm":{"david vignapiano":2.37,"fred lugos":1.21,"mark magariello":1.29,"mike brullo":0.63,"matt granese":1.16,"billy loschiavo":0.26,"dave wagreich":0.31,"todd wallman":-0.39,"ryan wallman":0.13,"mike steinberg":0.03,"dhimant balar":-0.8,"sudipta ray":-0.2,"paul steinberg":-1.29,"tom carroll":3.39,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.19,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.26},"stats2026ByPlayer":{"david vignapiano":{"PA":"22","Runs":"8","RBI":"9"},"fred lugos":{"PA":"21","Runs":"8","RBI":"5"},"mark magariello":{"PA":"21","Runs":"6","RBI":"9"},"mike brullo":{"PA":"21","Runs":"6","RBI":"8"},"matt granese":{"PA":"10","Runs":"5","RBI":"4"},"billy loschiavo":{"PA":"20","Runs":"3","RBI":"7"},"dave wagreich":{"PA":"21","Runs":"5","RBI":"5"},"todd wallman":{"PA":"19","Runs":"6","RBI":"3"},"ryan wallman":{"PA":"18","Runs":"7","RBI":"5"},"mike steinberg":{"PA":"18","Runs":"6","RBI":"2"},"dhimant balar":{"PA":"15","Runs":"2","RBI":"3"},"sudipta ray":{"PA":"18","Runs":"4","RBI":"6"},"paul steinberg":{"PA":"17","Runs":"7","RBI":"3"},"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1275,7 +1302,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

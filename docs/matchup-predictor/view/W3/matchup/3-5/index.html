@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.26849715640159705,"std":0.31444070702430404},"runProd":{"mean":0.48257675676339445,"std":0.13020568694452042},"runsPerGame":{"mean":11.842592592592592,"std":3.9610262661250792},"runsAgainstPerGame":{"mean":11.51851851851852,"std":4.491380252288234},"teamOverall":{"mean":0.10555555555555556,"std":0.481908500100523},"winPct":{"mean":0.5092592592592592,"std":0.32618361025571363},"sos":{"mean":0.4922839506172839,"std":0.21231898518694078},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":21,"avgTotalRuns":23.761904761904763,"avgRunsPerTeam":11.880952380952381,"avgRunsAgainstPerGame":11.880952380952381},"awayBaseProfile":{"teamId":"3","teamName":"PRINCETON BRAIN & SPINE","offenseRating":0.5601973684210527,"runProd2026":0.6644736842105263,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.5555555555555555,"teamOverall":0.49,"rosterPlayerRating":0.5601973684210527,"scheduleGames":3,"runsPerGame":17.333333333333332,"runsAgainstPerGame":10.333333333333334,"runDiffPerGame":7},"homeBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.25270833333333326,"runProd2026":0.53125,"defenseZ":0,"winPct":1,"sosOppWinPct":0,"teamOverall":0.43,"rosterPlayerRating":0.25270833333333326,"scheduleGames":2,"runsPerGame":13.5,"runsAgainstPerGame":4.5,"runDiffPerGame":9},"awayPlayers":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"awayPlayersOriginal":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"homePlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-10","isFinishedGame":true,"gameResult":{"awayScore":12,"homeScore":5,"total":17,"winnerSide":"away","winnerLabel":"PRINCETON BRAIN & SPINE","awayLabel":"PRINCETON BRAIN & SPINE","homeLabel":"GODDARD'S HOME IMPROVEMENTS","bets":{"overUnder":{"line":"24","pick":"push","actualTotal":17,"actualSide":"under","status":null},"runLine":{"side":"home","line":"1","status":"miss"},"moneyline":{"favoriteSide":"home","status":"miss"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":47.3,"home":52.7},"winPctFromRuns":{"away":43.5,"home":56.5},"projectedRuns":{"away":"11.5","home":"12.5","total":"24","marginHome":"+1"},"scheduleRates":{"away":{"runsPerGame":14.1,"runsAgainstPerGame":10.3},"home":{"runsPerGame":13.5,"runsAgainstPerGame":4.5}},"lines":{"overUnder":"24","finalScore":{"winnerSide":"home","score":"11.5 – 12.5"},"runLine":{"side":"home","value":"1"},"impliedScore":"11.5 – 12.5","moneylineAway":"+100","moneylineHome":"-125"},"strength":{"away":0.5,"home":0.51},"runBaselineGames":21,"leagueAvgRunsPerTeam":11.9,"missingImpact":{"away":{"teamMultiplier":0.7941680851325713,"defenseMultiplier":0.7941680851325713,"runsAgainstMultiplier":1,"offenseRating":0.444890871375253,"presentCount":12,"missingCount":1,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.25270833333333326,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"PRINCETON BRAIN & SPINE","homeLabel":"GODDARD'S HOME IMPROVEMENTS"}},"awayLabel":"PRINCETON BRAIN & SPINE","homeLabel":"GODDARD'S HOME IMPROVEMENTS","offenseRatingByNorm":{"david vignapiano":2.47,"fred lugos":1.64,"mark magariello":1.99,"mike brullo":0.12,"matt granese":1.17,"billy loschiavo":0.42,"dave wagreich":0.13,"todd wallman":-0.47,"ryan wallman":0.04,"mike steinberg":0.48,"dhimant balar":-0.78,"sudipta ray":0.26,"paul steinberg":-1.21,"vince caputo":1.17,"peter kwiecinski":0.68,"joe peragine":1.28,"joe caputo":1.27,"evan abramson":-0.11,"jeff goddard":0.29,"mark goddard":0.04,"lawrence rubin":0.69,"michael weitsen":-0.51,"michael cruz":-0.5,"justin randell":-1.04,"bruce cotter":-0.51,"brad randell":-1.09},"stats2026ByPlayer":{"david vignapiano":{"PA":"14","Runs":"7","RBI":"7"},"fred lugos":{"PA":"13","Runs":"6","RBI":"5"},"mark magariello":{"PA":"13","Runs":"4","RBI":"9"},"mike brullo":{"PA":"13","Runs":"3","RBI":"4"},"matt granese":{"PA":"10","Runs":"5","RBI":"4"},"billy loschiavo":{"PA":"12","Runs":"2","RBI":"3"},"dave wagreich":{"PA":"13","Runs":"4","RBI":"2"},"todd wallman":{"PA":"12","Runs":"3","RBI":"3"},"ryan wallman":{"PA":"11","Runs":"4","RBI":"3"},"mike steinberg":{"PA":"11","Runs":"4","RBI":"1"},"dhimant balar":{"PA":"8","Runs":"2","RBI":"2"},"sudipta ray":{"PA":"11","Runs":"3","RBI":"5"},"paul steinberg":{"PA":"11","Runs":"5","RBI":"1"},"vince caputo":{"PA":"9","Runs":"2","RBI":"1"},"peter kwiecinski":{"PA":"8","Runs":"4","RBI":"2"},"joe peragine":{"PA":"9","Runs":"3","RBI":"3"},"joe caputo":{"PA":"8","Runs":"4","RBI":"5"},"evan abramson":{"PA":"8","Runs":"1","RBI":"2"},"jeff goddard":{"PA":"8","Runs":"2","RBI":"2"},"mark goddard":{"PA":"8","Runs":"2","RBI":"3"},"lawrence rubin":{"PA":"8","Runs":"3","RBI":"1"},"michael weitsen":{"PA":"8","Runs":"2","RBI":"0"},"michael cruz":{"PA":"8","Runs":"2","RBI":"4"},"justin randell":{"PA":"7","Runs":"0","RBI":"0"},"bruce cotter":{"PA":"4","Runs":"2","RBI":"1"},"brad randell":{"PA":"3","Runs":"0","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

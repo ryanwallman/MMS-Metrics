@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="brad randell" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -994,15 +995,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":0,"std":1},"runsAgainstPerGame":{"mean":0,"std":1},"teamOverall":{"mean":0.23000000000000004,"std":0.22482091638556329},"winPct":{"mean":0,"std":1},"sos":{"mean":0,"std":1},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":0,"avgTotalRuns":23,"avgRunsPerTeam":11.5,"avgRunsAgainstPerGame":11.5},"awayBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.19202898550724637,"runProd2026":0.34782608695652173,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":-0.19,"rosterPlayerRating":-0.19202898550724637,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"homeBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.18112554112554113,"runProd2026":0.47186147186147187,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":0.18,"rosterPlayerRating":0.18112554112554113,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"awayPlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"awayPlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-04-26","isFinishedGame":true,"gameResult":{"awayScore":3,"homeScore":18,"total":21,"winnerSide":"home","winnerLabel":"GODDARD'S HOME IMPROVEMENTS","awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS","bets":{"overUnder":{"line":"21.5","pick":"push","actualTotal":21,"actualSide":"under","status":null},"runLine":{"side":"home","line":"2.5","status":"hit"},"moneyline":{"favoriteSide":"home","status":"hit"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":41.6,"home":58.4},"winPctFromRuns":{"away":34.3,"home":65.7},"projectedRuns":{"away":"9.5","home":"12","total":"21.5","marginHome":"+2.5"},"scheduleRates":{"away":{"runsPerGame":null,"runsAgainstPerGame":null},"home":{"runsPerGame":null,"runsAgainstPerGame":null}},"lines":{"overUnder":"21.5","finalScore":{"winnerSide":"home","score":"9.5 – 12"},"runLine":{"side":"home","value":"2.5"},"impliedScore":"9.5 – 12","moneylineAway":"+130","moneylineHome":"-155"},"strength":{"away":-1.21,"home":0.37},"runBaselineGames":0,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":0.20582367862182596,"defenseMultiplier":0.20582367862182596,"runsAgainstMultiplier":1,"offenseRating":-0.03952411219911875,"presentCount":11,"missingCount":2,"shortHandedSlots":0},"home":{"teamMultiplier":1.2801460971162013,"defenseMultiplier":1.2801460971162013,"runsAgainstMultiplier":1,"offenseRating":0.2318671545599215,"presentCount":12,"missingCount":1,"shortHandedSlots":0}},"awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS"}},"awayLabel":"PROCARE REHAB","homeLabel":"GODDARD'S HOME IMPROVEMENTS","offenseRatingByNorm":{"tom carroll":3.39,"aj ortiz":1.39,"tony roegiers":0.61,"justin colarocco":-0.15,"jake woloshyn":-0.21,"ian mcdermott":0.57,"kevin murch":-0.53,"nick lapetina":-0.26,"chris karulski":-1.19,"jake kroese":-1.22,"doug cohen":-0.8,"mike iorio":-1.3,"jerry tilker":-1.26,"vince caputo":1.63,"peter kwiecinski":0.84,"joe peragine":1.19,"joe caputo":1.14,"evan abramson":-0.01,"jeff goddard":-0.19,"mark goddard":0.08,"lawrence rubin":0.18,"michael weitsen":-0.29,"michael cruz":-0.63,"justin randell":-0.86,"bruce cotter":-0.75,"brad randell":-0.74},"stats2026ByPlayer":{"tom carroll":{"PA":"7","Runs":"4","RBI":"4"},"aj ortiz":{"PA":"16","Runs":"5","RBI":"7"},"tony roegiers":{"PA":"19","Runs":"7","RBI":"3"},"justin colarocco":{"PA":"19","Runs":"6","RBI":"4"},"jake woloshyn":{"PA":"19","Runs":"1","RBI":"3"},"ian mcdermott":{"PA":"19","Runs":"2","RBI":"4"},"kevin murch":{"PA":"16","Runs":"1","RBI":"2"},"nick lapetina":{"PA":"16","Runs":"3","RBI":"2"},"chris karulski":{"PA":"16","Runs":"1","RBI":"1"},"jake kroese":{"PA":"16","Runs":"1","RBI":"1"},"doug cohen":{"PA":"13","Runs":"2","RBI":"2"},"mike iorio":{"PA":"16","Runs":"2","RBI":"1"},"jerry tilker":{"PA":"15","Runs":"2","RBI":"1"},"vince caputo":{"PA":"21","Runs":"6","RBI":"6"},"peter kwiecinski":{"PA":"19","Runs":"9","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"19","Runs":"8","RBI":"11"},"evan abramson":{"PA":"19","Runs":"3","RBI":"4"},"jeff goddard":{"PA":"19","Runs":"3","RBI":"4"},"mark goddard":{"PA":"18","Runs":"3","RBI":"6"},"lawrence rubin":{"PA":"19","Runs":"6","RBI":"4"},"michael weitsen":{"PA":"18","Runs":"4","RBI":"2"},"michael cruz":{"PA":"18","Runs":"3","RBI":"5"},"justin randell":{"PA":"17","Runs":"1","RBI":"1"},"bruce cotter":{"PA":"14","Runs":"4","RBI":"2"},"brad randell":{"PA":"13","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1282,7 +1309,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

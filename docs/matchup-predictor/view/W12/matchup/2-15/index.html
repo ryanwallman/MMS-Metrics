@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -983,15 +984,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"2","teamName":"FREEHOLD BUICK GMC","offenseRating":0.2376209677419356,"runProd2026":0.5040322580645161,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.47222222222222215,"teamOverall":0.04,"rosterPlayerRating":0.2376209677419356,"scheduleGames":6,"runsPerGame":10.833333333333334,"runsAgainstPerGame":13,"runDiffPerGame":-2.1666666666666665},"homeBaseProfile":{"teamId":"15","teamName":"TEC-TEL","offenseRating":0.1966808510638298,"runProd2026":0.5148936170212766,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.5158730158730159,"teamOverall":0.12,"rosterPlayerRating":0.1966808510638298,"scheduleGames":6,"runsPerGame":11.833333333333334,"runsAgainstPerGame":9.833333333333334,"runDiffPerGame":2},"awayPlayers":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"homePlayers":["Steve Santigate","Kyle Dunleavy","Seth Drashinsky","Jared Koshefsky","Max Allegretti","Dan Drashinsky","Jordan Brent","Justin Krauss","Kurt Schmidt","Russ Krauss","Matthew Leiggi","David Drashinsky","John Tesoriero"],"awayPlayersOriginal":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"homePlayersOriginal":["Steve Santigate","Kyle Dunleavy","Seth Drashinsky","Jared Koshefsky","Max Allegretti","Dan Drashinsky","Jordan Brent","Justin Krauss","Kurt Schmidt","Russ Krauss","Matthew Leiggi","David Drashinsky","John Tesoriero"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-19","isFinishedGame":false,"gameResult":null,"awayLabel":"FREEHOLD BUICK GMC","homeLabel":"TEC-TEL","offenseRatingByNorm":{"gregory deluise":0.84,"mike conti":1.87,"mat manochio":0.31,"lucas preiss":0.43,"nick deluise":1.09,"dan manochio jr":0.49,"patrick thomas":-0.25,"stephen milhaven":2.87,"dan manochio sr":-0.15,"michael podolla":-0.79,"ryan ramirez":-1.81,"tom bongiovani":-1.11,"raymond porzio":-1.54,"steve santigate":2.55,"kyle dunleavy":1.16,"seth drashinsky":1.23,"jared koshefsky":0.24,"max allegretti":1.31,"dan drashinsky":0.17,"jordan brent":-0.24,"justin krauss":-0.45,"kurt schmidt":-0.86,"russ krauss":0.37,"matthew leiggi":-1.17,"david drashinsky":-1.15,"john tesoriero":-1.82},"stats2026ByPlayer":{"gregory deluise":{"PA":"17","Runs":"5","RBI":"3"},"mike conti":{"PA":"21","Runs":"10","RBI":"9"},"mat manochio":{"PA":"23","Runs":"9","RBI":"2"},"lucas preiss":{"PA":"21","Runs":"8","RBI":"4"},"nick deluise":{"PA":"22","Runs":"10","RBI":"8"},"dan manochio jr":{"PA":"21","Runs":"5","RBI":"6"},"patrick thomas":{"PA":"21","Runs":"4","RBI":"5"},"stephen milhaven":{"PA":"21","Runs":"6","RBI":"16"},"dan manochio sr":{"PA":"4","Runs":"0","RBI":"0"},"michael podolla":{"PA":"21","Runs":"3","RBI":"2"},"ryan ramirez":{"PA":"21","Runs":"3","RBI":"2"},"tom bongiovani":{"PA":"21","Runs":"0","RBI":"3"},"raymond porzio":{"PA":"14","Runs":"1","RBI":"1"},"steve santigate":{"PA":"20","Runs":"10","RBI":"4"},"kyle dunleavy":{"PA":"20","Runs":"8","RBI":"5"},"seth drashinsky":{"PA":"20","Runs":"11","RBI":"10"},"jared koshefsky":{"PA":"20","Runs":"9","RBI":"2"},"max allegretti":{"PA":"20","Runs":"7","RBI":"10"},"dan drashinsky":{"PA":"20","Runs":"3","RBI":"14"},"jordan brent":{"PA":"20","Runs":"1","RBI":"4"},"justin krauss":{"PA":"20","Runs":"7","RBI":"2"},"kurt schmidt":{"PA":"15","Runs":"1","RBI":"2"},"russ krauss":{"PA":"13","Runs":"0","RBI":"3"},"matthew leiggi":{"PA":"16","Runs":"1","RBI":"2"},"david drashinsky":{"PA":"15","Runs":"1","RBI":"0"},"john tesoriero":{"PA":"16","Runs":"3","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1271,7 +1298,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

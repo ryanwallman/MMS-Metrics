@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -994,15 +995,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":0,"std":1},"runsAgainstPerGame":{"mean":0,"std":1},"teamOverall":{"mean":0.23000000000000004,"std":0.22482091638556329},"winPct":{"mean":0,"std":1},"sos":{"mean":0,"std":1},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":0,"avgTotalRuns":23,"avgRunsPerTeam":11.5,"avgRunsAgainstPerGame":11.5},"awayBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.07832579185520364,"runProd2026":0.4253393665158371,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":0.08,"rosterPlayerRating":0.07832579185520364,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.4892888888888888,"runProd2026":0.41333333333333333,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":0.49,"rosterPlayerRating":0.4892888888888888,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"awayPlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-04-26","isFinishedGame":true,"gameResult":{"awayScore":5,"homeScore":10,"total":15,"winnerSide":"home","winnerLabel":"ACE ALUMINUM","awayLabel":"GAME CHANGER","homeLabel":"ACE ALUMINUM","bets":{"overUnder":{"line":"23","pick":"push","actualTotal":15,"actualSide":"under","status":null},"runLine":{"side":"home","line":"2","status":"hit"},"moneyline":{"favoriteSide":"home","status":"hit"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":43.2,"home":56.8},"winPctFromRuns":{"away":37.3,"home":62.7},"projectedRuns":{"away":"10.5","home":"12.5","total":"23","marginHome":"+2"},"scheduleRates":{"away":{"runsPerGame":null,"runsAgainstPerGame":null},"home":{"runsPerGame":null,"runsAgainstPerGame":null}},"lines":{"overUnder":"23","finalScore":{"winnerSide":"home","score":"10.5 – 12.5"},"runLine":{"side":"home","value":"2"},"impliedScore":"10.5 – 12.5","moneylineAway":"+120","moneylineHome":"-145"},"strength":{"away":-0.46,"home":0.76},"runBaselineGames":0,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":0.9638170190426741,"defenseMultiplier":0.9638170190426741,"runsAgainstMultiplier":1,"offenseRating":0.07549173122003934,"presentCount":12,"missingCount":1,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.4892888888888888,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"GAME CHANGER","homeLabel":"ACE ALUMINUM"}},"awayLabel":"GAME CHANGER","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"pablo gonzales":1.09,"matt hill":2.28,"mark yutko":0.29,"jon hempstead":1.16,"aj greenspan":-0.12,"adam greenspan":0.97,"evan steinberg":0.32,"andy kessler":-0.97,"ben kessler":-0.51,"steve messina":-0.28,"marcus baquero":-1.28,"daniel kessler":-1.47,"david unterweiser":-1.33,"martin blackburn":2.2,"zack derosa":1.91,"ronnie carlin":0.03,"brad goldstein":2.42,"eric rosenstock":1.09,"brett easton":0.29,"marc carlin":0.4,"bob bilodeau":0.68,"mike rosenstock":-0.27,"steven oran":0.36,"shawn adelsberg":-1.11,"lenny sarcona":-0.28,"logan fauci":-2.2},"stats2026ByPlayer":{"pablo gonzales":{"PA":"21","Runs":"9","RBI":"4"},"matt hill":{"PA":"21","Runs":"8","RBI":"11"},"mark yutko":{"PA":"21","Runs":"5","RBI":"5"},"jon hempstead":{"PA":"18","Runs":"6","RBI":"8"},"aj greenspan":{"PA":"12","Runs":"2","RBI":"3"},"adam greenspan":{"PA":"15","Runs":"2","RBI":"4"},"evan steinberg":{"PA":"16","Runs":"5","RBI":"4"},"andy kessler":{"PA":"13","Runs":"2","RBI":"1"},"ben kessler":{"PA":"15","Runs":"1","RBI":"2"},"steve messina":{"PA":"14","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"21","Runs":"2","RBI":"1"},"daniel kessler":{"PA":"17","Runs":"2","RBI":"3"},"david unterweiser":{"PA":"17","Runs":"2","RBI":"0"},"martin blackburn":{"PA":"20","Runs":"11","RBI":"4"},"zack derosa":{"PA":"16","Runs":"5","RBI":"10"},"ronnie carlin":{"PA":"19","Runs":"1","RBI":"5"},"brad goldstein":{"PA":"16","Runs":"9","RBI":"5"},"eric rosenstock":{"PA":"15","Runs":"3","RBI":"9"},"brett easton":{"PA":"22","Runs":"7","RBI":"2"},"marc carlin":{"PA":"22","Runs":"4","RBI":"1"},"bob bilodeau":{"PA":"16","Runs":"1","RBI":"3"},"mike rosenstock":{"PA":"18","Runs":"1","RBI":"2"},"steven oran":{"PA":"18","Runs":"2","RBI":"2"},"shawn adelsberg":{"PA":"13","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"17","Runs":"4","RBI":"1"},"logan fauci":{"PA":"13","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1282,7 +1309,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

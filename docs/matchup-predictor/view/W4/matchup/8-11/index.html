@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="michael kleschinsky jr,jim lombardi" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.2228466877071581,"std":0.2490460431006609},"runProd":{"mean":0.4609451218686797,"std":0.08416690735484633},"runsPerGame":{"mean":11.171296296296298,"std":2.6723712452992627},"runsAgainstPerGame":{"mean":10.98611111111111,"std":3.03061156888861},"teamOverall":{"mean":0.08833333333333332,"std":0.4706408160984104},"winPct":{"mean":0.5138888888888888,"std":0.23282020297555847},"sos":{"mean":0.4996141975308641,"std":0.09257731998529228},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":32,"avgTotalRuns":22.21875,"avgRunsPerTeam":11.109375,"avgRunsAgainstPerGame":11.109375},"awayBaseProfile":{"teamId":"8","teamName":"JERSEY ALLSTARS","offenseRating":0.10153846153846148,"runProd2026":0.3626373626373626,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.6041666666666666,"teamOverall":0.18,"rosterPlayerRating":0.10153846153846148,"scheduleGames":4,"runsPerGame":8.25,"runsAgainstPerGame":9.5,"runDiffPerGame":-1.25},"homeBaseProfile":{"teamId":"11","teamName":"SHORE SMILE","offenseRating":0.3249600000000001,"runProd2026":0.44,"defenseZ":0,"winPct":0.3333333333333333,"sosOppWinPct":0.47222222222222215,"teamOverall":-0.27,"rosterPlayerRating":0.3249600000000001,"scheduleGames":3,"runsPerGame":9.333333333333334,"runsAgainstPerGame":16.666666666666668,"runDiffPerGame":-7.333333333333333},"awayPlayers":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayers":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"awayPlayersOriginal":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayersOriginal":["Michael Kleschinsky Jr","Nick Villani","Mike Klecko","Kevin Kleschinsky","Jeremy Levine","Pete Kokoszka","Mike Villani","Jim Lombardi","Michael Kleschinsky Sr","Will Perez","Anthony Fazzino","Paul Lombardi","Nick Kleschinsky"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-17","isFinishedGame":true,"gameResult":{"awayScore":16,"homeScore":1,"total":17,"winnerSide":"away","winnerLabel":"JERSEY ALLSTARS","awayLabel":"JERSEY ALLSTARS","homeLabel":"SHORE SMILE","bets":{"overUnder":{"line":"18.5","pick":"push","actualTotal":17,"actualSide":"under","status":null},"runLine":{"side":"away","line":"3.5","status":"hit"},"moneyline":{"favoriteSide":"away","status":"hit"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":59.6,"home":40.4},"winPctFromRuns":{"away":71.3,"home":28.7},"projectedRuns":{"away":"11","home":"7.5","total":"18.5","marginHome":"-3.5"},"scheduleRates":{"away":{"runsPerGame":9.8,"runsAgainstPerGame":9.5},"home":{"runsPerGame":5.6,"runsAgainstPerGame":16.7}},"lines":{"overUnder":"18.5","finalScore":{"winnerSide":"away","score":"11 – 7.5"},"runLine":{"side":"away","value":"3.5"},"impliedScore":"11 – 7.5","moneylineAway":"-165","moneylineHome":"+135"},"strength":{"away":-0.07,"home":-0.74},"runBaselineGames":32,"leagueAvgRunsPerTeam":11.1,"missingImpact":{"away":{"teamMultiplier":1.2119501622653144,"defenseMultiplier":1.2119501622653144,"runsAgainstMultiplier":1,"offenseRating":0.12305955493770877,"presentCount":11,"missingCount":2,"shortHandedSlots":0},"home":{"teamMultiplier":0.5613515991616214,"defenseMultiplier":0.5613515991616214,"runsAgainstMultiplier":1,"offenseRating":0.18241681566356052,"presentCount":11,"missingCount":2,"shortHandedSlots":0}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"SHORE SMILE"}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"SHORE SMILE","offenseRatingByNorm":{"eric bomenblit":1.41,"michael bernstein":-0.91,"joe tracey":1.28,"richie bomenblit":0.55,"steve ushkowitz":0.82,"jeff martinez":0.55,"jeff friedman":0.03,"rick schindelheim":0.41,"emile rythmel":-0.06,"josh walker":-0.2,"joe demaio":-0.74,"brian walker":-0.42,"paul kamras":-1.5,"michael kleschinsky jr":2.74,"nick villani":1.07,"mike klecko":0.79,"kevin kleschinsky":0.69,"jeremy levine":1.22,"pete kokoszka":0.09,"mike villani":0.35,"jim lombardi":-0.74,"michael kleschinsky sr":0.36,"will perez":-1.03,"anthony fazzino":-0.71,"paul lombardi":-0.89,"nick kleschinsky":-1.65},"stats2026ByPlayer":{"eric bomenblit":{"PA":"16","Runs":"4","RBI":"3"},"michael bernstein":{"PA":"12","Runs":"4","RBI":"3"},"joe tracey":{"PA":"8","Runs":"4","RBI":"1"},"richie bomenblit":{"PA":"12","Runs":"1","RBI":"6"},"steve ushkowitz":{"PA":"20","Runs":"6","RBI":"3"},"jeff martinez":{"PA":"10","Runs":"2","RBI":"0"},"jeff friedman":{"PA":"16","Runs":"3","RBI":"5"},"rick schindelheim":{"PA":"16","Runs":"1","RBI":"2"},"emile rythmel":{"PA":"16","Runs":"1","RBI":"2"},"josh walker":{"PA":"15","Runs":"1","RBI":"5"},"joe demaio":{"PA":"15","Runs":"3","RBI":"0"},"brian walker":{"PA":"14","Runs":"2","RBI":"2"},"paul kamras":{"PA":"12","Runs":"1","RBI":"1"},"michael kleschinsky jr":{"PA":"11","Runs":"5","RBI":"7"},"nick villani":{"PA":"11","Runs":"5","RBI":"3"},"mike klecko":{"PA":"11","Runs":"1","RBI":"4"},"kevin kleschinsky":{"PA":"7","Runs":"1","RBI":"1"},"jeremy levine":{"PA":"11","Runs":"6","RBI":"2"},"pete kokoszka":{"PA":"11","Runs":"2","RBI":"1"},"mike villani":{"PA":"10","Runs":"1","RBI":"2"},"jim lombardi":{"PA":"9","Runs":"3","RBI":"0"},"michael kleschinsky sr":{"PA":"14","Runs":"2","RBI":"4"},"will perez":{"PA":"5","Runs":"0","RBI":"1"},"anthony fazzino":{"PA":"9","Runs":"1","RBI":"0"},"paul lombardi":{"PA":"9","Runs":"0","RBI":"2"},"nick kleschinsky":{"PA":"7","Runs":"1","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

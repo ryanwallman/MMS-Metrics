@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -1032,15 +1033,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.23047817913476404,"std":0.22461632209232554},"runProd":{"mean":0.4609882440057087,"std":0.08778676948595654},"runsPerGame":{"mean":10.960185185185187,"std":2.6346172379299815},"runsAgainstPerGame":{"mean":10.912037037037036,"std":2.899211288849726},"teamOverall":{"mean":0.09333333333333332,"std":0.4042414020249671},"winPct":{"mean":0.5083333333333333,"std":0.23819343213260757},"sos":{"mean":0.49425925925925934,"std":0.11458893551587421},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":43,"avgTotalRuns":21.976744186046513,"avgRunsPerTeam":10.988372093023257,"avgRunsAgainstPerGame":10.988372093023257},"awayBaseProfile":{"teamId":"8","teamName":"JERSEY ALLSTARS","offenseRating":0.20137168141592923,"runProd2026":0.42920353982300885,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.53,"teamOverall":0.3,"rosterPlayerRating":0.20137168141592923,"scheduleGames":5,"runsPerGame":9.8,"runsAgainstPerGame":7.8,"runDiffPerGame":2},"homeBaseProfile":{"teamId":"2","teamName":"FREEHOLD BUICK GMC","offenseRating":0.2376209677419356,"runProd2026":0.5040322580645161,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.4,"teamOverall":0.15,"rosterPlayerRating":0.2376209677419356,"scheduleGames":5,"runsPerGame":12.8,"runsAgainstPerGame":14.6,"runDiffPerGame":-1.8},"awayPlayers":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayers":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"awayPlayersOriginal":["Eric Bomenblit","Michael Bernstein","Joe Tracey","Richie Bomenblit","Steve Ushkowitz","Jeff Martinez","Jeff Friedman","Rick Schindelheim","Emile Rythmel","Josh Walker","Joe Demaio","Brian Walker","Paul Kamras"],"homePlayersOriginal":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-05-31","isFinishedGame":true,"gameResult":{"awayScore":5,"homeScore":1,"total":6,"winnerSide":"away","winnerLabel":"JERSEY ALLSTARS","awayLabel":"JERSEY ALLSTARS","homeLabel":"FREEHOLD BUICK GMC","bets":{"overUnder":{"line":"18.5","pick":"push","actualTotal":6,"actualSide":"under","status":null},"runLine":{"side":"home","line":"5.5","status":"miss"},"moneyline":{"favoriteSide":"home","status":"miss"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":35.8,"home":64.2},"winPctFromRuns":{"away":19.3,"home":80.7},"projectedRuns":{"away":"6.5","home":"12","total":"18.5","marginHome":"+5.5"},"scheduleRates":{"away":{"runsPerGame":3.2,"runsAgainstPerGame":10.9},"home":{"runsPerGame":12.8,"runsAgainstPerGame":14.6}},"lines":{"overUnder":"18.5","finalScore":{"winnerSide":"home","score":"6.5 – 12"},"runLine":{"side":"home","value":"5.5"},"impliedScore":"6.5 – 12","moneylineAway":"+165","moneylineHome":"-200"},"strength":{"away":-0.99,"home":0.23},"runBaselineGames":43,"leagueAvgRunsPerTeam":11,"missingImpact":{"away":{"teamMultiplier":0.28961027088080116,"defenseMultiplier":0.23245728255686962,"runsAgainstMultiplier":1.4,"offenseRating":0.058319307202589654,"presentCount":9,"missingCount":4,"shortHandedSlots":1},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.2376209677419356,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"FREEHOLD BUICK GMC"}},"awayLabel":"JERSEY ALLSTARS","homeLabel":"FREEHOLD BUICK GMC","offenseRatingByNorm":{"eric bomenblit":1.51,"michael bernstein":-0.34,"joe tracey":1.17,"richie bomenblit":0.84,"steve ushkowitz":1.05,"jeff martinez":0.54,"jeff friedman":0.08,"rick schindelheim":0.51,"emile rythmel":0.01,"josh walker":-0.13,"joe demaio":-0.86,"brian walker":-0.42,"paul kamras":-1.54,"gregory deluise":0.84,"mike conti":1.87,"mat manochio":0.31,"lucas preiss":0.43,"nick deluise":1.09,"dan manochio jr":0.49,"patrick thomas":-0.25,"stephen milhaven":2.87,"dan manochio sr":-0.15,"michael podolla":-0.79,"ryan ramirez":-1.81,"tom bongiovani":-1.11,"raymond porzio":-1.54},"stats2026ByPlayer":{"eric bomenblit":{"PA":"20","Runs":"7","RBI":"4"},"michael bernstein":{"PA":"16","Runs":"6","RBI":"5"},"joe tracey":{"PA":"12","Runs":"6","RBI":"1"},"richie bomenblit":{"PA":"16","Runs":"2","RBI":"8"},"steve ushkowitz":{"PA":"24","Runs":"10","RBI":"7"},"jeff martinez":{"PA":"10","Runs":"2","RBI":"0"},"jeff friedman":{"PA":"20","Runs":"5","RBI":"8"},"rick schindelheim":{"PA":"20","Runs":"2","RBI":"3"},"emile rythmel":{"PA":"20","Runs":"1","RBI":"4"},"josh walker":{"PA":"19","Runs":"1","RBI":"5"},"joe demaio":{"PA":"19","Runs":"4","RBI":"0"},"brian walker":{"PA":"14","Runs":"2","RBI":"2"},"paul kamras":{"PA":"16","Runs":"1","RBI":"1"},"gregory deluise":{"PA":"17","Runs":"5","RBI":"3"},"mike conti":{"PA":"21","Runs":"10","RBI":"9"},"mat manochio":{"PA":"23","Runs":"9","RBI":"2"},"lucas preiss":{"PA":"21","Runs":"8","RBI":"4"},"nick deluise":{"PA":"22","Runs":"10","RBI":"8"},"dan manochio jr":{"PA":"21","Runs":"5","RBI":"6"},"patrick thomas":{"PA":"21","Runs":"4","RBI":"5"},"stephen milhaven":{"PA":"21","Runs":"6","RBI":"16"},"dan manochio sr":{"PA":"4","Runs":"0","RBI":"0"},"michael podolla":{"PA":"21","Runs":"3","RBI":"2"},"ryan ramirez":{"PA":"21","Runs":"3","RBI":"2"},"tom bongiovani":{"PA":"21","Runs":"0","RBI":"3"},"raymond porzio":{"PA":"14","Runs":"1","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1320,7 +1347,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

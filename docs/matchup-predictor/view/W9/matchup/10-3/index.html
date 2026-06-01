@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -983,15 +984,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.07832579185520364,"runProd2026":0.4253393665158371,"defenseZ":0,"winPct":0.16666666666666666,"sosOppWinPct":0.49603174603174605,"teamOverall":-0.71,"rosterPlayerRating":0.07832579185520364,"scheduleGames":6,"runsPerGame":8.5,"runsAgainstPerGame":13.833333333333334,"runDiffPerGame":-5.333333333333333},"homeBaseProfile":{"teamId":"3","teamName":"PRINCETON BRAIN & SPINE","offenseRating":0.4112863070539418,"runProd2026":0.5892116182572614,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.5484126984126984,"teamOverall":0.63,"rosterPlayerRating":0.4112863070539418,"scheduleGames":6,"runsPerGame":13.833333333333334,"runsAgainstPerGame":8.166666666666666,"runDiffPerGame":5.666666666666667},"awayPlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Chris Frometa","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayers":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"awayPlayersOriginal":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayersOriginal":["David Vignapiano","Fred Lugos","Mark Magariello","Mike Brullo","Matt Granese","Billy Loschiavo","Dave Wagreich","Todd Wallman","Ryan Wallman","Mike Steinberg","Dhimant Balar","Sudipta Ray","Paul Steinberg"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-06-28","isFinishedGame":false,"gameResult":null,"awayLabel":"GAME CHANGER","homeLabel":"PRINCETON BRAIN & SPINE","offenseRatingByNorm":{"pablo gonzales":1.09,"matt hill":2.28,"mark yutko":0.29,"jon hempstead":1.16,"aj greenspan":-0.12,"adam greenspan":0.97,"evan steinberg":0.32,"ben kessler":-0.51,"steve messina":-0.28,"marcus baquero":-1.28,"daniel kessler":-1.47,"david unterweiser":-1.33,"david vignapiano":2.37,"fred lugos":1.21,"mark magariello":1.29,"mike brullo":0.63,"matt granese":1.16,"billy loschiavo":0.26,"dave wagreich":0.31,"todd wallman":-0.39,"ryan wallman":0.13,"mike steinberg":0.03,"dhimant balar":-0.8,"sudipta ray":-0.2,"paul steinberg":-1.29},"stats2026ByPlayer":{"pablo gonzales":{"PA":"21","Runs":"9","RBI":"4"},"matt hill":{"PA":"21","Runs":"8","RBI":"11"},"mark yutko":{"PA":"21","Runs":"5","RBI":"5"},"jon hempstead":{"PA":"18","Runs":"6","RBI":"8"},"aj greenspan":{"PA":"12","Runs":"2","RBI":"3"},"adam greenspan":{"PA":"15","Runs":"2","RBI":"4"},"evan steinberg":{"PA":"16","Runs":"5","RBI":"4"},"chris frometa":{"PA":"0","Runs":"0","RBI":"0"},"ben kessler":{"PA":"15","Runs":"1","RBI":"2"},"steve messina":{"PA":"14","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"21","Runs":"2","RBI":"1"},"daniel kessler":{"PA":"17","Runs":"2","RBI":"3"},"david unterweiser":{"PA":"17","Runs":"2","RBI":"0"},"david vignapiano":{"PA":"22","Runs":"8","RBI":"9"},"fred lugos":{"PA":"21","Runs":"8","RBI":"5"},"mark magariello":{"PA":"21","Runs":"6","RBI":"9"},"mike brullo":{"PA":"21","Runs":"6","RBI":"8"},"matt granese":{"PA":"10","Runs":"5","RBI":"4"},"billy loschiavo":{"PA":"20","Runs":"3","RBI":"7"},"dave wagreich":{"PA":"21","Runs":"5","RBI":"5"},"todd wallman":{"PA":"19","Runs":"6","RBI":"3"},"ryan wallman":{"PA":"18","Runs":"7","RBI":"5"},"mike steinberg":{"PA":"18","Runs":"6","RBI":"2"},"dhimant balar":{"PA":"15","Runs":"2","RBI":"3"},"sudipta ray":{"PA":"18","Runs":"4","RBI":"6"},"paul steinberg":{"PA":"17","Runs":"7","RBI":"3"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1271,7 +1298,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

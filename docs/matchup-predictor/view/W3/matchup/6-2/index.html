@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="dan manochio sr" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.26849715640159705,"std":0.31444070702430404},"runProd":{"mean":0.48257675676339445,"std":0.13020568694452042},"runsPerGame":{"mean":11.842592592592592,"std":3.9610262661250792},"runsAgainstPerGame":{"mean":11.51851851851852,"std":4.491380252288234},"teamOverall":{"mean":0.10555555555555556,"std":0.481908500100523},"winPct":{"mean":0.5092592592592592,"std":0.32618361025571363},"sos":{"mean":0.4922839506172839,"std":0.21231898518694078},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":21,"avgTotalRuns":23.761904761904763,"avgRunsPerTeam":11.880952380952381,"avgRunsAgainstPerGame":11.880952380952381},"awayBaseProfile":{"teamId":"6","teamName":"PROCARE REHAB","offenseRating":-0.42119999999999996,"runProd2026":0.22972972972972974,"defenseZ":0,"winPct":0,"sosOppWinPct":0.75,"teamOverall":-0.71,"rosterPlayerRating":-0.42119999999999996,"scheduleGames":2,"runsPerGame":4.5,"runsAgainstPerGame":15,"runDiffPerGame":-10.5},"homeBaseProfile":{"teamId":"2","teamName":"FREEHOLD BUICK GMC","offenseRating":0.3582000000000001,"runProd2026":0.5436241610738255,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.38888888888888884,"teamOverall":0.29,"rosterPlayerRating":0.3582000000000001,"scheduleGames":3,"runsPerGame":14,"runsAgainstPerGame":15.333333333333334,"runDiffPerGame":-1.3333333333333333},"awayPlayers":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayers":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"awayPlayersOriginal":["Tom Carroll","Aj Ortiz","Tony Roegiers","Justin Colarocco","Jake Woloshyn","Ian Mcdermott","Kevin Murch","Nick Lapetina","Chris Karulski","Jake Kroese","Doug Cohen","Mike Iorio","Jerry Tilker"],"homePlayersOriginal":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-10","isFinishedGame":true,"gameResult":{"awayScore":17,"homeScore":9,"total":26,"winnerSide":"away","winnerLabel":"PROCARE REHAB","awayLabel":"PROCARE REHAB","homeLabel":"FREEHOLD BUICK GMC","bets":{"overUnder":{"line":"20.5","pick":"push","actualTotal":26,"actualSide":"over","status":null},"runLine":{"side":"home","line":"8.5","status":"miss"},"moneyline":{"favoriteSide":"home","status":"miss"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":31.2,"home":68.8},"winPctFromRuns":{"away":9.9,"home":90.1},"projectedRuns":{"away":"6","home":"14.5","total":"20.5","marginHome":"+8.5"},"scheduleRates":{"away":{"runsPerGame":2.4,"runsAgainstPerGame":15},"home":{"runsPerGame":14.4,"runsAgainstPerGame":15.3}},"lines":{"overUnder":"20.5","finalScore":{"winnerSide":"home","score":"6 – 14.5"},"runLine":{"side":"home","value":"8.5"},"impliedScore":"6 – 14.5","moneylineAway":"+210","moneylineHome":"-260"},"strength":{"away":-1.44,"home":0.45},"runBaselineGames":21,"leagueAvgRunsPerTeam":11.9,"missingImpact":{"away":{"teamMultiplier":0.49001654896228364,"defenseMultiplier":0.49001654896228364,"runsAgainstMultiplier":1,"offenseRating":-0.20639497042291385,"presentCount":12,"missingCount":1,"shortHandedSlots":0},"home":{"teamMultiplier":1.032417064356506,"defenseMultiplier":1.032417064356506,"runsAgainstMultiplier":1,"offenseRating":0.36981179245250057,"presentCount":12,"missingCount":1,"shortHandedSlots":0}},"awayLabel":"PROCARE REHAB","homeLabel":"FREEHOLD BUICK GMC"}},"awayLabel":"PROCARE REHAB","homeLabel":"FREEHOLD BUICK GMC","offenseRatingByNorm":{"tom carroll":3.1,"aj ortiz":0.26,"tony roegiers":0.85,"justin colarocco":-0.04,"jake woloshyn":-0.41,"ian mcdermott":0.26,"kevin murch":-1.39,"nick lapetina":-0.28,"chris karulski":-1.07,"jake kroese":-1,"doug cohen":-0.61,"mike iorio":-1.36,"jerry tilker":-0.94,"gregory deluise":1.26,"mike conti":2.26,"mat manochio":0.13,"lucas preiss":0.21,"nick deluise":0.64,"dan manochio jr":0.74,"patrick thomas":-0.31,"stephen milhaven":3.91,"dan manochio sr":0.33,"michael podolla":-0.57,"ryan ramirez":-2.01,"tom bongiovani":-1.01,"raymond porzio":-1.53},"stats2026ByPlayer":{"aj ortiz":{"PA":"4","Runs":"0","RBI":"0"},"tony roegiers":{"PA":"7","Runs":"1","RBI":"1"},"justin colarocco":{"PA":"7","Runs":"1","RBI":"2"},"jake woloshyn":{"PA":"7","Runs":"1","RBI":"1"},"ian mcdermott":{"PA":"7","Runs":"0","RBI":"1"},"kevin murch":{"PA":"7","Runs":"0","RBI":"0"},"nick lapetina":{"PA":"6","Runs":"1","RBI":"1"},"chris karulski":{"PA":"6","Runs":"1","RBI":"0"},"jake kroese":{"PA":"6","Runs":"1","RBI":"0"},"doug cohen":{"PA":"6","Runs":"1","RBI":"1"},"mike iorio":{"PA":"6","Runs":"1","RBI":"0"},"jerry tilker":{"PA":"5","Runs":"1","RBI":"1"},"gregory deluise":{"PA":"9","Runs":"4","RBI":"3"},"mike conti":{"PA":"13","Runs":"8","RBI":"6"},"mat manochio":{"PA":"15","Runs":"6","RBI":"0"},"lucas preiss":{"PA":"13","Runs":"6","RBI":"2"},"nick deluise":{"PA":"14","Runs":"5","RBI":"5"},"dan manochio jr":{"PA":"13","Runs":"3","RBI":"5"},"patrick thomas":{"PA":"13","Runs":"2","RBI":"1"},"stephen milhaven":{"PA":"13","Runs":"4","RBI":"12"},"michael podolla":{"PA":"13","Runs":"2","RBI":"2"},"ryan ramirez":{"PA":"13","Runs":"2","RBI":"1"},"tom bongiovani":{"PA":"13","Runs":"0","RBI":"1"},"raymond porzio":{"PA":"7","Runs":"0","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

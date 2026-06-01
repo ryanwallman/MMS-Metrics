@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -138,11 +139,11 @@
               Wed, 27-May
             </option>
             
-            <option value="W5" selected>
+            <option value="W5" >
               Sun, 31-May • Week 5
             </option>
             
-            <option value="D20260603" >
+            <option value="D20260603" selected>
               Wed, 3-Jun
             </option>
             
@@ -247,52 +248,12 @@
           >
             <option value="" selected>— Select a game —</option>
             
-            <option value="5|17" >
-              GODDARD HOME @ EB CONSTRUCTION · 8:30 AM · 14-2 GOLDFARB
+            <option value="8|13" >
+              JERSEY ALLSTARS @ MONMOUTH GYM · 8:15 PM
             </option>
             
-            <option value="10|13" >
-              GAME CHANGER @ MONMOUTH GYM · 8:30 AM · 15-3 MARRONE
-            </option>
-            
-            <option value="14|11" >
-              NEW HORIZON @ SHORE SMILE · 8:30 AM · 12-10 MEYER
-            </option>
-            
-            <option value="7|1" >
-              FRADKIN LAW @ ENGAGE PEO · 9:00 AM · 4-2 POLLOCK
-            </option>
-            
-            <option value="12|15" >
-              LHRGC LAW @ TEC-TEL · 9:00 AM · 16-9 LAROCCA
-            </option>
-            
-            <option value="8|2" >
-              JERSEY ALLSTARS @ FREEHOLD GMC · 10:30 AM · 5-1 BOMENBLIT
-            </option>
-            
-            <option value="17|13" >
-              EB CONSTRUCTION @ MONMOUTH GYM · 10:30 AM · 19-0 GOLDFARB F/7
-            </option>
-            
-            <option value="18|6" >
-              CG TAX @ PROCARE · 10:30 AM · 5-4 CARROLL F/11
-            </option>
-            
-            <option value="5|1" >
-              GODDARD HOME @ ENGAGE PEO · 10:45 AM · 16-10 GODDARD
-            </option>
-            
-            <option value="11|7" >
-              SHORE SMILE @ FRADKIN LAW · 10:45 AM · 8-3 LOMBARDI
-            </option>
-            
-            <option value="3|9" >
-              PRINCETON BRAIN @ ACE ALUMINUM · 11:00 AM · 10-1 WALLMAN
-            </option>
-            
-            <option value="16|4" >
-              TUSCANYROSE @ URWAY HEALTH · 6:00 PM · 11-2 BYKOFSKY
+            <option value="3|16" >
+              PRINCETON BRAIN @ TUSCANYROSE · 8:15 PM
             </option>
             
           </select>
@@ -301,7 +262,7 @@
       <noscript><button type="submit">Go</button></noscript>
 
     
-    <p class="matchup-predictor-summary">Week 5 (Sun, 31-May games only)</p>
+    <p class="matchup-predictor-summary">Wed, 3-Jun</p>
     
 
     
@@ -499,11 +460,38 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -783,7 +771,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

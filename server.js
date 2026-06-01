@@ -120,7 +120,7 @@ if (process.env.NODE_ENV === "production") {
 app.locals.assetVersion =
   process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
   process.env.ASSET_VERSION ||
-  "1";
+  "2";
 
 app.use(express.json({ limit: "512kb" }));
 
@@ -2140,6 +2140,76 @@ app.get("/dfs/leaderboard", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send(`DFS leaderboard failed: ${error.message}`);
+  }
+});
+
+async function loadMatchupPredictorSeasonRecord() {
+  const [
+    teams,
+    careerByPlayer,
+    hist2025ByPlayer,
+    stats2026ByPlayer,
+    scheduleRows,
+    defenseMap,
+    replacements,
+    gamelogs,
+    captainTeamCodeById,
+  ] = await Promise.all([
+    loadTeamRosters(),
+    loadCareerByPlayer(),
+    load2025HistoricalByPlayer(),
+    load2026StatsByPlayer(),
+    fetchCsvRows(SCHEDULE_URL),
+    loadDefensiveRatingsNormalizedMap(),
+    getCachedPlayerReplacements(),
+    load2026GamelogsByPlayer(),
+    loadCaptainTeamCodeById(),
+  ]);
+  const { byOriginalNorm } = replacements;
+  const teamCodeById = new Map([
+    ...buildTeamCodeById(teams, stats2026ByPlayer),
+    ...captainTeamCodeById,
+  ]);
+  const nameToTeamId = buildNameToTeamIdMap(teams);
+  const rosterByTeamId = buildRosterByTeamId(teams);
+  const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
+  const payload = await loadWeeklySchedule();
+  const audit = await getMatchupPredictorAudit({
+    parsedScheduleGames,
+    teams,
+    rosterByTeamId,
+    nameToTeamId,
+    careerByPlayer,
+    hist2025ByPlayer,
+    stats2026ByPlayer,
+    defenseMap,
+    gamelogs,
+    teamCodeById,
+    replacementByOriginalNorm: byOriginalNorm,
+    sundayIsosSorted: payload.sundayIsosSorted,
+  }).catch((err) => {
+    console.error("[MMS] Matchup predictor audit:", err.message || err);
+    return null;
+  });
+  if (!audit || audit.decided <= 0) return null;
+  return {
+    wins: audit.wins,
+    losses: audit.losses,
+    decided: audit.decided,
+    winPct: audit.winPct,
+  };
+}
+
+app.get("/matchup-predictor/season-record.json", async (_req, res) => {
+  try {
+    const record = await loadMatchupPredictorSeasonRecord();
+    if (!record) {
+      return res.status(404).json({ error: "Season record unavailable" });
+    }
+    res.setHeader("Cache-Control", "public, max-age=300");
+    return res.json(record);
+  } catch (error) {
+    return res.status(500).json({ error: error.message || "Failed to load season record" });
   }
 });
 

@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -970,15 +971,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.13822378844602598,"std":0.44583604531018856},"runProd":{"mean":0.4323562331174974,"std":0.24732092991046878},"runsPerGame":{"mean":10.5625,"std":7.123629254109172},"runsAgainstPerGame":{"mean":10.5625,"std":7.123629254109172},"teamOverall":{"mean":0.06111111111111113,"std":0.4348932038620885},"winPct":{"mean":0.5,"std":0.5},"sos":{"mean":0.5,"std":0.5},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":8,"avgTotalRuns":21.125,"avgRunsPerTeam":10.5625,"avgRunsAgainstPerGame":10.5625},"awayBaseProfile":{"teamId":"13","teamName":"MONMOUTH GYMNASTICS","offenseRating":1.172456140350877,"runProd2026":0.8,"defenseZ":0,"winPct":1,"sosOppWinPct":0,"teamOverall":0.79,"rosterPlayerRating":1.172456140350877,"scheduleGames":1,"runsPerGame":22,"runsAgainstPerGame":5,"runDiffPerGame":17},"homeBaseProfile":{"teamId":"9","teamName":"ACE ALUMINUM","offenseRating":0.034499999999999933,"runProd2026":0.475,"defenseZ":0,"winPct":1,"sosOppWinPct":0,"teamOverall":0.31,"rosterPlayerRating":0.034499999999999933,"scheduleGames":1,"runsPerGame":10,"runsAgainstPerGame":5,"runDiffPerGame":5},"awayPlayers":["Jeremy Paster","Anthony Foster","Ronnie Pacheco","Jordan Rosenthal","Brandon Tornetta","Juan Gallardo","Mike Ballo","Glen Marrone","Shawon Danser","Jordan Krant","Steven Wallenstein","David Kiste","Gary Klein"],"homePlayers":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"awayPlayersOriginal":["Jeremy Paster","Anthony Foster","Ronnie Pacheco","Jordan Rosenthal","Brandon Tornetta","Juan Gallardo","Mike Ballo","Glen Marrone","Shawon Danser","Jordan Krant","Steven Wallenstein","David Kiste","Gary Klein"],"homePlayersOriginal":["Martin Blackburn","Zack Derosa","Ronnie Carlin","Brad Goldstein","Eric Rosenstock","Brett Easton","Marc Carlin","Bob Bilodeau","Mike Rosenstock","Steven Oran","Shawn Adelsberg","Lenny Sarcona","Logan Fauci"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-04-29","isFinishedGame":true,"gameResult":{"awayScore":23,"homeScore":9,"total":32,"winnerSide":"away","winnerLabel":"MONMOUTH GYMNASTICS","awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"ACE ALUMINUM","bets":{"overUnder":{"line":"17","pick":"push","actualTotal":32,"actualSide":"over","status":null},"runLine":{"side":"away","line":"1","status":"hit"},"moneyline":{"favoriteSide":"away","status":"hit"},"moneylineAway":{"status":"hit"},"moneylineHome":{"status":"miss"}},"modelPrediction":{"winPct":{"away":54.3,"home":45.7},"winPctFromRuns":{"away":56.5,"home":43.5},"projectedRuns":{"away":"9","home":"8","total":"17","marginHome":"-1"},"scheduleRates":{"away":{"runsPerGame":22,"runsAgainstPerGame":5},"home":{"runsPerGame":10,"runsAgainstPerGame":5}},"lines":{"overUnder":"17","finalScore":{"winnerSide":"away","score":"9 – 8"},"runLine":{"side":"away","value":"1"},"impliedScore":"9 – 8","moneylineAway":"-130","moneylineHome":"+110"},"strength":{"away":1.61,"home":0.32},"runBaselineGames":8,"leagueAvgRunsPerTeam":10.6,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":1.172456140350877,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.034499999999999933,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"ACE ALUMINUM"}},"awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"ACE ALUMINUM","offenseRatingByNorm":{"jeremy paster":6.67,"anthony foster":1.15,"ronnie pacheco":2.24,"jordan rosenthal":2.9,"brandon tornetta":1.02,"juan gallardo":-0.12,"mike ballo":0.52,"glen marrone":0.34,"shawon danser":0.11,"jordan krant":-0.21,"steven wallenstein":-0.69,"david kiste":0,"gary klein":-0.51,"martin blackburn":3.71,"zack derosa":-2.81,"ronnie carlin":0.13,"brad goldstein":2.5,"eric rosenstock":1.57,"brett easton":-0.33,"marc carlin":-0.01,"bob bilodeau":1.22,"mike rosenstock":0.21,"steven oran":-1.01,"shawn adelsberg":-1.49,"lenny sarcona":-0.77,"logan fauci":-2.35},"stats2026ByPlayer":{"jeremy paster":{"PA":"5","Runs":"4","RBI":"8"},"anthony foster":{"PA":"5","Runs":"3","RBI":"3"},"ronnie pacheco":{"PA":"5","Runs":"2","RBI":"1"},"jordan rosenthal":{"PA":"5","Runs":"2","RBI":"3"},"brandon tornetta":{"PA":"5","Runs":"2","RBI":"2"},"juan gallardo":{"PA":"5","Runs":"1","RBI":"0"},"mike ballo":{"PA":"5","Runs":"1","RBI":"3"},"glen marrone":{"PA":"4","Runs":"2","RBI":"0"},"shawon danser":{"PA":"4","Runs":"2","RBI":"0"},"jordan krant":{"PA":"4","Runs":"2","RBI":"1"},"steven wallenstein":{"PA":"8","Runs":"1","RBI":"1"},"martin blackburn":{"PA":"3","Runs":"2","RBI":"1"},"zack derosa":{"PA":"3","Runs":"0","RBI":"1"},"ronnie carlin":{"PA":"3","Runs":"0","RBI":"2"},"brad goldstein":{"PA":"3","Runs":"3","RBI":"0"},"eric rosenstock":{"PA":"3","Runs":"1","RBI":"1"},"brett easton":{"PA":"4","Runs":"1","RBI":"0"},"marc carlin":{"PA":"3","Runs":"1","RBI":"0"},"bob bilodeau":{"PA":"3","Runs":"1","RBI":"1"},"mike rosenstock":{"PA":"3","Runs":"1","RBI":"1"},"steven oran":{"PA":"3","Runs":"0","RBI":"1"},"shawn adelsberg":{"PA":"3","Runs":"0","RBI":"0"},"lenny sarcona":{"PA":"3","Runs":"0","RBI":"1"},"logan fauci":{"PA":"3","Runs":"0","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1258,7 +1285,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

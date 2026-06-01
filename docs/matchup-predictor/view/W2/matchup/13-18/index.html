@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.18146903132550063,"std":0.41841602219968627},"runProd":{"mean":0.4538458447306979,"std":0.23329732767275396},"runsPerGame":{"mean":11.15625,"std":6.843607304448437},"runsAgainstPerGame":{"mean":11.09375,"std":6.666658528640866},"teamOverall":{"mean":0.07555555555555554,"std":0.4376099509103998},"winPct":{"mean":0.5,"std":0.46770717334674267},"sos":{"mean":0.5,"std":0.4050462936504913},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":10,"avgTotalRuns":22.9,"avgRunsPerTeam":11.45,"avgRunsAgainstPerGame":11.45},"awayBaseProfile":{"teamId":"13","teamName":"MONMOUTH GYMNASTICS","offenseRating":1.0489473684210526,"runProd2026":0.7894736842105263,"defenseZ":0,"winPct":1,"sosOppWinPct":0.25,"teamOverall":0.81,"rosterPlayerRating":1.0489473684210526,"scheduleGames":2,"runsPerGame":22.5,"runsAgainstPerGame":7,"runDiffPerGame":15.5},"homeBaseProfile":{"teamId":"18","teamName":"CG TAX, AUDIT AND ADVISORY","offenseRating":0.18999999999999995,"runProd2026":null,"defenseZ":0,"winPct":null,"sosOppWinPct":null,"teamOverall":0.19,"rosterPlayerRating":0.18999999999999995,"scheduleGames":0,"runsPerGame":null,"runsAgainstPerGame":null,"runDiffPerGame":null},"awayPlayers":["Jeremy Paster","Anthony Foster","Ronnie Pacheco","Jordan Rosenthal","Brandon Tornetta","Juan Gallardo","Mike Ballo","Glen Marrone","Shawon Danser","Jordan Krant","Steven Wallenstein","David Kiste","Gary Klein"],"homePlayers":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"awayPlayersOriginal":["Jeremy Paster","Anthony Foster","Ronnie Pacheco","Jordan Rosenthal","Brandon Tornetta","Juan Gallardo","Mike Ballo","Glen Marrone","Shawon Danser","Jordan Krant","Steven Wallenstein","David Kiste","Gary Klein"],"homePlayersOriginal":["Nick Turano","Eddie Fausak","Andrew Rodriguez","Anthony Turano","Joe Joraskie","Mike Heitzner","Joseph Lewicki","Jorge Rivera","Jake Heitzner","Vinny Spitaletto","Frank Ermel","Justin Bickoff","Pat Ciaglia"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-03","isFinishedGame":true,"gameResult":{"awayScore":7,"homeScore":16,"total":23,"winnerSide":"home","winnerLabel":"CG TAX, AUDIT AND ADVISORY","awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"CG TAX, AUDIT AND ADVISORY","bets":{"overUnder":{"line":"27.5","pick":"push","actualTotal":23,"actualSide":"under","status":null},"runLine":{"side":"away","line":"8.5","status":"miss"},"moneyline":{"favoriteSide":"away","status":"miss"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":68.4,"home":31.6},"winPctFromRuns":{"away":90.1,"home":9.9},"projectedRuns":{"away":"18","home":"9.5","total":"27.5","marginHome":"-8.5"},"scheduleRates":{"away":{"runsPerGame":22.5,"runsAgainstPerGame":7},"home":{"runsPerGame":null,"runsAgainstPerGame":null}},"lines":{"overUnder":"27.5","finalScore":{"winnerSide":"away","score":"18 – 9.5"},"runLine":{"side":"away","value":"8.5"},"impliedScore":"18 – 9.5","moneylineAway":"-250","moneylineHome":"+200"},"strength":{"away":1.54,"home":0},"runBaselineGames":10,"leagueAvgRunsPerTeam":11.5,"missingImpact":{"away":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":1.0489473684210526,"presentCount":13,"missingCount":0,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.18999999999999995,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"CG TAX, AUDIT AND ADVISORY"}},"awayLabel":"MONMOUTH GYMNASTICS","homeLabel":"CG TAX, AUDIT AND ADVISORY","offenseRatingByNorm":{"jeremy paster":5.88,"anthony foster":1.37,"ronnie pacheco":2.28,"jordan rosenthal":2.47,"brandon tornetta":1.17,"juan gallardo":0.37,"mike ballo":0.49,"glen marrone":0.26,"shawon danser":-0.25,"jordan krant":0.18,"steven wallenstein":-0.62,"david kiste":-2.93,"gary klein":-0.77,"nick turano":3.08,"eddie fausak":0.71,"andrew rodriguez":-0.22,"anthony turano":0.41,"joe joraskie":0.77,"mike heitzner":-0.07,"joseph lewicki":0,"jorge rivera":0,"jake heitzner":0,"vinny spitaletto":0.01,"frank ermel":-0.56,"justin bickoff":-0.82,"pat ciaglia":-0.84},"stats2026ByPlayer":{"jeremy paster":{"PA":"10","Runs":"7","RBI":"11"},"anthony foster":{"PA":"10","Runs":"7","RBI":"5"},"ronnie pacheco":{"PA":"10","Runs":"4","RBI":"4"},"jordan rosenthal":{"PA":"10","Runs":"4","RBI":"5"},"brandon tornetta":{"PA":"10","Runs":"4","RBI":"5"},"juan gallardo":{"PA":"10","Runs":"2","RBI":"3"},"mike ballo":{"PA":"10","Runs":"4","RBI":"5"},"glen marrone":{"PA":"8","Runs":"4","RBI":"1"},"shawon danser":{"PA":"8","Runs":"3","RBI":"1"},"jordan krant":{"PA":"8","Runs":"3","RBI":"2"},"steven wallenstein":{"PA":"12","Runs":"2","RBI":"2"},"david kiste":{"PA":"4","Runs":"0","RBI":"0"},"gary klein":{"PA":"4","Runs":"1","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

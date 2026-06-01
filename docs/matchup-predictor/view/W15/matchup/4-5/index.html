@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -983,15 +984,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":0.03572222222222217,"runProd2026":0.40555555555555556,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.4333333333333334,"teamOverall":0.11,"rosterPlayerRating":0.03572222222222217,"scheduleGames":5,"runsPerGame":9.8,"runsAgainstPerGame":7.8,"runDiffPerGame":2},"homeBaseProfile":{"teamId":"5","teamName":"GODDARD'S HOME IMPROVEMENTS","offenseRating":0.18112554112554113,"runProd2026":0.47186147186147187,"defenseZ":0,"winPct":0.5714285714285714,"sosOppWinPct":0.6027210884353742,"teamOverall":0.44,"rosterPlayerRating":0.18112554112554113,"scheduleGames":7,"runsPerGame":10.714285714285714,"runsAgainstPerGame":9,"runDiffPerGame":1.7142857142857142},"awayPlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"homePlayers":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"awayPlayersOriginal":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"homePlayersOriginal":["Vince Caputo","Peter Kwiecinski","Joe Peragine","Joe Caputo","Evan Abramson","Jeff Goddard","Mark Goddard","Lawrence Rubin","Michael Weitsen","Michael Cruz","Justin Randell","Bruce Cotter","Brad Randell"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-08-09","isFinishedGame":false,"gameResult":null,"awayLabel":"URWAY HEALTH","homeLabel":"GODDARD'S HOME IMPROVEMENTS","offenseRatingByNorm":{"dennis oconnor":4.05,"chris baldino":0.13,"justin bykofsky":0.59,"nick dinapoli":0.72,"jason feingold":-0.72,"robbie juergens":0.35,"chip costa":0.58,"seamus coyle":0.47,"john maguire":-0.75,"carlo tanzola":-1.59,"ken feingold":-0.54,"john fisher":-2.92,"darren wald":-0.74,"vince caputo":1.63,"peter kwiecinski":0.84,"joe peragine":1.19,"joe caputo":1.14,"evan abramson":-0.01,"jeff goddard":-0.19,"mark goddard":0.08,"lawrence rubin":0.18,"michael weitsen":-0.29,"michael cruz":-0.63,"justin randell":-0.86,"bruce cotter":-0.75,"brad randell":-0.74},"stats2026ByPlayer":{"dennis oconnor":{"PA":"12","Runs":"6","RBI":"6"},"chris baldino":{"PA":"16","Runs":"5","RBI":"2"},"justin bykofsky":{"PA":"17","Runs":"6","RBI":"1"},"nick dinapoli":{"PA":"17","Runs":"4","RBI":"2"},"jason feingold":{"PA":"15","Runs":"2","RBI":"3"},"robbie juergens":{"PA":"12","Runs":"3","RBI":"3"},"chip costa":{"PA":"16","Runs":"3","RBI":"8"},"seamus coyle":{"PA":"12","Runs":"2","RBI":"1"},"john maguire":{"PA":"15","Runs":"2","RBI":"2"},"carlo tanzola":{"PA":"13","Runs":"1","RBI":"1"},"ken feingold":{"PA":"13","Runs":"1","RBI":"4"},"john fisher":{"PA":"9","Runs":"0","RBI":"0"},"darren wald":{"PA":"13","Runs":"3","RBI":"2"},"vince caputo":{"PA":"21","Runs":"6","RBI":"6"},"peter kwiecinski":{"PA":"19","Runs":"9","RBI":"3"},"joe peragine":{"PA":"17","Runs":"5","RBI":"3"},"joe caputo":{"PA":"19","Runs":"8","RBI":"11"},"evan abramson":{"PA":"19","Runs":"3","RBI":"4"},"jeff goddard":{"PA":"19","Runs":"3","RBI":"4"},"mark goddard":{"PA":"18","Runs":"3","RBI":"6"},"lawrence rubin":{"PA":"19","Runs":"6","RBI":"4"},"michael weitsen":{"PA":"18","Runs":"4","RBI":"2"},"michael cruz":{"PA":"18","Runs":"3","RBI":"5"},"justin randell":{"PA":"17","Runs":"1","RBI":"1"},"bruce cotter":{"PA":"14","Runs":"4","RBI":"2"},"brad randell":{"PA":"13","Runs":"2","RBI":"1"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1271,7 +1298,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

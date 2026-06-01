@@ -25,7 +25,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="<%= typeof homeMissingSerialized !== 'undefined' ? homeMissingSerialized : '' %>" />
 
       <% if (typeof predictorRecord !== 'undefined' && predictorRecord && predictorRecord.decided > 0) { %>
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = <%- JSON.stringify(predictorRecord) %>;</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           <%= predictorRecord.wins %>–<%= predictorRecord.losses %><% if (predictorRecord.winPct != null) { %><span class="matchup-predictor-record-pct"> (<%= predictorRecord.winPct %>%)</span><% } %>
@@ -459,13 +460,39 @@
     <% if (typeof staticSite !== 'undefined' && staticSite) { %>
     <script type="module" src="<%= sitePath('/js/matchup-predictor-nav.mjs') %>?v=<%= assetVersion %>"></script>
     <% } %>
+    <script src="<%= sitePath('/js/matchup-predictor-ui.js') %>?v=<%= assetVersion %>"></script>
     <% if (typeof matchupClient !== 'undefined' && matchupClient) { %>
     <script>window.__MATCHUP_CLIENT__ = <%- JSON.stringify(matchupClient) %>;</script>
-    <script src="<%= sitePath('/js/matchup-predictor-ui.js') %>?v=<%= assetVersion %>"></script>
     <script type="module" src="<%= sitePath('/js/matchup-predictor-client.mjs') %>?v=<%= assetVersion %>"></script>
     <% } %>
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -745,7 +772,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

@@ -364,10 +364,38 @@
     host.innerHTML = html;
   }
 
+  function ensurePredictorRecordBlock(record) {
+    const data = record || window.__MATCHUP_PREDICTOR_RECORD__;
+    if (!data || !data.decided) return;
+    if (document.querySelector(".matchup-predictor-record-block")) return;
+    const form = document.getElementById("matchupForm");
+    const controls = form && form.querySelector(".matchup-predictor-controls");
+    if (!form || !controls) return;
+    const valueHtml =
+      `${data.wins}–${data.losses}` +
+      (data.winPct != null
+        ? `<span class="matchup-predictor-record-pct"> (${data.winPct}%)</span>`
+        : "");
+    const block = document.createElement("div");
+    block.className = "matchup-predictor-record-block matchup-predictor-panel";
+    block.innerHTML =
+      '<span class="matchup-predictor-record-label">Season pick record</span>' +
+      `<span class="matchup-predictor-record-value">${valueHtml}</span>`;
+    form.insertBefore(block, controls);
+  }
+
+  function ensurePredictionPanelStyles() {
+    document.querySelectorAll("section.matchup-prediction").forEach((el) => {
+      el.classList.add("matchup-predictor-panel");
+    });
+  }
+
   window.MmsMatchupPredictorUi = {
     updatePredictionUi,
     updateActiveCounts,
     updateLineupUi,
     applyReplacementDisplay,
+    ensurePredictorRecordBlock,
+    ensurePredictionPanelStyles,
   };
 })();

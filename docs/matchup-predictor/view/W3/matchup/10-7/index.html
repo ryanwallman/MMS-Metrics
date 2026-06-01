@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -998,15 +999,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.26849715640159705,"std":0.31444070702430404},"runProd":{"mean":0.48257675676339445,"std":0.13020568694452042},"runsPerGame":{"mean":11.842592592592592,"std":3.9610262661250792},"runsAgainstPerGame":{"mean":11.51851851851852,"std":4.491380252288234},"teamOverall":{"mean":0.10555555555555556,"std":0.481908500100523},"winPct":{"mean":0.5092592592592592,"std":0.32618361025571363},"sos":{"mean":0.4922839506172839,"std":0.21231898518694078},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":21,"avgTotalRuns":23.761904761904763,"avgRunsPerTeam":11.880952380952381,"avgRunsAgainstPerGame":11.880952380952381},"awayBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.2426041666666667,"runProd2026":0.5104166666666666,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.3333333333333333,"teamOverall":-0.03,"rosterPlayerRating":0.2426041666666667,"scheduleGames":2,"runsPerGame":12.5,"runsAgainstPerGame":11,"runDiffPerGame":1.5},"homeBaseProfile":{"teamId":"7","teamName":"FRADKIN LAW","offenseRating":0.23211267605633817,"runProd2026":0.49645390070921985,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.4444444444444444,"teamOverall":0.28,"rosterPlayerRating":0.23211267605633817,"scheduleGames":3,"runsPerGame":12,"runsAgainstPerGame":10,"runDiffPerGame":2},"awayPlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayers":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"awayPlayersOriginal":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"homePlayersOriginal":["Phil Corde","Ed Fradkin","Patrick Brock","Joe Picarello","Rob Corde","Nolan Ruthberg","Gary Szemcsak","Cameron Gille","Dylan Jacoby","Pat Pingaro","Justin Jacoby","Marc Persily","Jonathan Okun"],"replacementByOriginalNorm":{},"gameIsoDate":"2026-05-10","isFinishedGame":true,"gameResult":{"awayScore":5,"homeScore":17,"total":22,"winnerSide":"home","winnerLabel":"FRADKIN LAW","awayLabel":"GAME CHANGER","homeLabel":"FRADKIN LAW","bets":{"overUnder":{"line":"22","pick":"push","actualTotal":22,"actualSide":"push","status":"push"},"runLine":{"side":"home","line":"2","status":"hit"},"moneyline":{"favoriteSide":"home","status":"hit"},"moneylineAway":{"status":"miss"},"moneylineHome":{"status":"hit"}},"modelPrediction":{"winPct":{"away":44,"home":56},"winPctFromRuns":{"away":37.3,"home":62.7},"projectedRuns":{"away":"10","home":"12","total":"22","marginHome":"+2"},"scheduleRates":{"away":{"runsPerGame":9.7,"runsAgainstPerGame":11},"home":{"runsPerGame":12,"runsAgainstPerGame":10}},"lines":{"overUnder":"22","finalScore":{"winnerSide":"home","score":"10 – 12"},"runLine":{"side":"home","value":"2"},"impliedScore":"10 – 12","moneylineAway":"+115","moneylineHome":"-140"},"strength":{"away":-0.32,"home":0.28},"runBaselineGames":21,"leagueAvgRunsPerTeam":11.9,"missingImpact":{"away":{"teamMultiplier":0.7577401880813717,"defenseMultiplier":0.7577401880813717,"runsAgainstMultiplier":1,"offenseRating":0.18383092687932448,"presentCount":11,"missingCount":2,"shortHandedSlots":0},"home":{"teamMultiplier":1,"defenseMultiplier":1,"runsAgainstMultiplier":1,"offenseRating":0.23211267605633817,"presentCount":13,"missingCount":0,"shortHandedSlots":0}},"awayLabel":"GAME CHANGER","homeLabel":"FRADKIN LAW"}},"awayLabel":"GAME CHANGER","homeLabel":"FRADKIN LAW","offenseRatingByNorm":{"pablo gonzales":1.75,"matt hill":1.9,"mark yutko":0.16,"jon hempstead":1.3,"aj greenspan":-0.04,"adam greenspan":0.8,"evan steinberg":0.32,"andy kessler":-0.71,"ben kessler":-0.37,"steve messina":0.08,"marcus baquero":-0.57,"daniel kessler":-1.12,"david unterweiser":-1.37,"phil corde":1.92,"ed fradkin":2.44,"patrick brock":1.6,"joe picarello":0.34,"rob corde":2.57,"nolan ruthberg":0.14,"gary szemcsak":-0.96,"cameron gille":-1.39,"dylan jacoby":-2.34,"pat pingaro":-0.62,"justin jacoby":-0.65,"marc persily":-0.22,"jonathan okun":-1.73},"stats2026ByPlayer":{"pablo gonzales":{"PA":"9","Runs":"4","RBI":"3"},"matt hill":{"PA":"9","Runs":"3","RBI":"5"},"mark yutko":{"PA":"9","Runs":"2","RBI":"1"},"jon hempstead":{"PA":"7","Runs":"2","RBI":"3"},"aj greenspan":{"PA":"4","Runs":"0","RBI":"2"},"adam greenspan":{"PA":"7","Runs":"2","RBI":"2"},"evan steinberg":{"PA":"9","Runs":"3","RBI":"3"},"andy kessler":{"PA":"7","Runs":"2","RBI":"1"},"ben kessler":{"PA":"7","Runs":"1","RBI":"1"},"steve messina":{"PA":"7","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"7","Runs":"1","RBI":"0"},"daniel kessler":{"PA":"7","Runs":"1","RBI":"3"},"david unterweiser":{"PA":"7","Runs":"2","RBI":"0"},"phil corde":{"PA":"14","Runs":"4","RBI":"7"},"ed fradkin":{"PA":"14","Runs":"4","RBI":"7"},"patrick brock":{"PA":"9","Runs":"4","RBI":"0"},"joe picarello":{"PA":"13","Runs":"4","RBI":"2"},"rob corde":{"PA":"13","Runs":"6","RBI":"9"},"nolan ruthberg":{"PA":"13","Runs":"4","RBI":"3"},"gary szemcsak":{"PA":"3","Runs":"0","RBI":"0"},"cameron gille":{"PA":"16","Runs":"3","RBI":"1"},"dylan jacoby":{"PA":"11","Runs":"1","RBI":"1"},"pat pingaro":{"PA":"12","Runs":"2","RBI":"3"},"marc persily":{"PA":"11","Runs":"4","RBI":"1"},"jonathan okun":{"PA":"12","Runs":"0","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1286,7 +1313,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";

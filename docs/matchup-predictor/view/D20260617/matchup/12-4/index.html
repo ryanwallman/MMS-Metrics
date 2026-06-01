@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=1" as="style" />
-<link rel="stylesheet" href="/styles.css?v=1" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
   </head>
   
@@ -92,7 +92,8 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <div class="matchup-predictor-record-block matchup-predictor-panel">
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":32,"losses":23,"decided":55,"winPct":58.2};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
           32–23<span class="matchup-predictor-record-pct"> (58.2%)</span>
@@ -955,15 +956,41 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
     
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
     
     <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.22879727375695602,"std":0.2249408260331776},"runProd":{"mean":0.45979317555400306,"std":0.08835590471204516},"runsPerGame":{"mean":10.178703703703704,"std":2.4820330025583366},"runsAgainstPerGame":{"mean":10.193915343915345,"std":2.6346503999670907},"teamOverall":{"mean":0.09111111111111111,"std":0.427757575280528},"winPct":{"mean":0.5009259259259259,"std":0.20388198238639074},"sos":{"mean":0.49672461577223487,"std":0.07401432745671482},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":55,"avgTotalRuns":20.490909090909092,"avgRunsPerTeam":10.245454545454546,"avgRunsAgainstPerGame":10.245454545454546},"awayBaseProfile":{"teamId":"12","teamName":"LHRGC LAW","offenseRating":0.4281218274111674,"runProd2026":0.6040609137055838,"defenseZ":0,"winPct":0.6666666666666666,"sosOppWinPct":0.4682539682539682,"teamOverall":0.48,"rosterPlayerRating":0.4281218274111674,"scheduleGames":6,"runsPerGame":13.666666666666666,"runsAgainstPerGame":10.166666666666666,"runDiffPerGame":3.5},"homeBaseProfile":{"teamId":"4","teamName":"URWAY HEALTH","offenseRating":0.03572222222222217,"runProd2026":0.40555555555555556,"defenseZ":0,"winPct":0.6,"sosOppWinPct":0.4333333333333334,"teamOverall":0.11,"rosterPlayerRating":0.03572222222222217,"scheduleGames":5,"runsPerGame":9.8,"runsAgainstPerGame":7.8,"runDiffPerGame":2},"awayPlayers":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayers":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"awayPlayersOriginal":["Anthony Dimarco","Darren Saler","Rich Acerra","Connor Schmidt","Evan Rosenthal","Andrew Bianchi","Zach Schmidt","Frank LaRocca","Aaron Williams","Zachary Kane","Mike Cornacchia","Mark Karp","Stephen Epstein"],"homePlayersOriginal":["Dennis Oconnor","Chris Baldino","Justin Bykofsky","Nick Dinapoli","Jason Feingold","Robbie Juergens","Chip Costa","Seamus Coyle","John Maguire","Carlo Tanzola","Ken Feingold","John Fisher","Darren Wald"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-06-17","isFinishedGame":false,"gameResult":null,"awayLabel":"LHRGC LAW","homeLabel":"URWAY HEALTH","offenseRatingByNorm":{"anthony dimarco":3.62,"darren saler":2.36,"rich acerra":1.17,"connor schmidt":0.62,"evan rosenthal":1.43,"andrew bianchi":0.01,"zach schmidt":0.6,"frank larocca":-0.04,"aaron williams":-0.76,"zachary kane":-0.71,"mike cornacchia":-0.68,"mark karp":-1.24,"stephen epstein":-1.53,"dennis oconnor":4.05,"chris baldino":0.13,"justin bykofsky":0.59,"nick dinapoli":0.72,"jason feingold":-0.72,"robbie juergens":0.35,"chip costa":0.58,"seamus coyle":0.47,"john maguire":-0.75,"carlo tanzola":-1.59,"ken feingold":-0.54,"john fisher":-2.92,"darren wald":-0.74},"stats2026ByPlayer":{"anthony dimarco":{"PA":"18","Runs":"10","RBI":"8"},"darren saler":{"PA":"18","Runs":"11","RBI":"17"},"rich acerra":{"PA":"17","Runs":"9","RBI":"1"},"connor schmidt":{"PA":"5","Runs":"3","RBI":"1"},"evan rosenthal":{"PA":"13","Runs":"4","RBI":"5"},"andrew bianchi":{"PA":"16","Runs":"6","RBI":"3"},"zach schmidt":{"PA":"17","Runs":"6","RBI":"6"},"frank larocca":{"PA":"16","Runs":"1","RBI":"7"},"aaron williams":{"PA":"18","Runs":"5","RBI":"5"},"zachary kane":{"PA":"16","Runs":"1","RBI":"3"},"mike cornacchia":{"PA":"15","Runs":"3","RBI":"1"},"mark karp":{"PA":"12","Runs":"2","RBI":"0"},"stephen epstein":{"PA":"16","Runs":"0","RBI":"1"},"dennis oconnor":{"PA":"12","Runs":"6","RBI":"6"},"chris baldino":{"PA":"16","Runs":"5","RBI":"2"},"justin bykofsky":{"PA":"17","Runs":"6","RBI":"1"},"nick dinapoli":{"PA":"17","Runs":"4","RBI":"2"},"jason feingold":{"PA":"15","Runs":"2","RBI":"3"},"robbie juergens":{"PA":"12","Runs":"3","RBI":"3"},"chip costa":{"PA":"16","Runs":"3","RBI":"8"},"seamus coyle":{"PA":"12","Runs":"2","RBI":"1"},"john maguire":{"PA":"15","Runs":"2","RBI":"2"},"carlo tanzola":{"PA":"13","Runs":"1","RBI":"1"},"ken feingold":{"PA":"13","Runs":"1","RBI":"4"},"john fisher":{"PA":"9","Runs":"0","RBI":"0"},"darren wald":{"PA":"13","Runs":"3","RBI":"2"}},"defenseZByNorm":{},"positionByNorm":{}};</script>
-    <script src="/js/matchup-predictor-ui.js?v=1"></script>
-    <script type="module" src="/js/matchup-predictor-client.mjs?v=1"></script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
     
     <script>
       (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
         const form = document.getElementById("matchupForm");
         const awayInput = document.getElementById("awayMissing");
         const homeInput = document.getElementById("homeMissing");
@@ -1243,7 +1270,10 @@
           if (matchupCtx) recalcPrediction();
         }
 
-        initMatchupClient();
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
 
         viewSelect.addEventListener("change", () => {
           matchupSelect.value = "";
