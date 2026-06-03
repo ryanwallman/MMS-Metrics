@@ -98,9 +98,9 @@ function renderPoolRows(data) {
             ? '<span class="dfs-doubleheader-tag" title="Two games this slate">2G</span>'
             : ""
         }</td>
+        <td class="dfs-salary-cell">$${Number(p.salary).toLocaleString()}</td>
         <td>${esc(p.teamName)}</td>
         <td class="dfs-field-cell dfs-cell-preline" title="Diamond / short-field from schedule">${esc(field)}</td>
-        <td class="dfs-salary-cell">$${Number(p.salary).toLocaleString()}</td>
         ${
           showStats
             ? `<td class="dfs-points-cell"><strong>${esc(p.slatePoints)}</strong></td>
@@ -151,48 +151,49 @@ async function main() {
       }
     }
 
-    if (
-      !data.slate?.canEdit &&
-      data.activeSlateToken &&
-      data.activeSlateToken !== requestedToken
-    ) {
-      navigateToOpenDfsSlate(data.activeSlateToken);
-      return;
-    }
-
     if (typeof window.setDfsCanEdit === "function") {
       window.setDfsCanEdit(!!data.slate?.canEdit);
     } else {
       window.__DFS_CAN_EDIT__ = !!data.slate?.canEdit;
     }
 
-    const countdownWrap = document.getElementById("dfsLockCountdown");
-    if (countdownWrap && data.lockDeadlineMs != null) {
-      countdownWrap.setAttribute("data-deadline-ms", String(data.lockDeadlineMs));
-      const whenEl = document.getElementById("dfsLockCountdownWhen");
-      if (whenEl && data.lockDeadlineLabel) {
-        whenEl.textContent = data.lockDeadlineLabel;
-        whenEl.hidden = false;
-      }
-    }
+    const canEdit = !!data.slate?.canEdit;
 
-    setupLineupLockCountdown({
-      deadlineMs: data.lockDeadlineMs,
-      onLocked: async () => {
-        const fresh = await loadDfsLineupPool("", page.lineupNorms || []);
-        if (fresh.activeSlateToken) {
-          await navigateToOpenDfsSlate(fresh.activeSlateToken);
-          return;
+    if (canEdit) {
+      const countdownWrap = document.getElementById("dfsLockCountdown");
+      if (countdownWrap && data.lockDeadlineMs != null) {
+        countdownWrap.setAttribute("data-deadline-ms", String(data.lockDeadlineMs));
+        const whenEl = document.getElementById("dfsLockCountdownWhen");
+        if (whenEl && data.lockDeadlineLabel) {
+          whenEl.textContent = data.lockDeadlineLabel;
+          whenEl.hidden = false;
         }
-        window.location.replace(`${dfsLineupUrl(requestedToken)}?t=${Date.now()}`);
-      },
-    });
+      }
+
+      setupLineupLockCountdown({
+        deadlineMs: data.lockDeadlineMs,
+        onLocked: async () => {
+          const fresh = await loadDfsLineupPool("", page.lineupNorms || []);
+          if (fresh.activeSlateToken) {
+            await navigateToOpenDfsSlate(fresh.activeSlateToken);
+            return;
+          }
+          window.location.replace(`${dfsLineupUrl(requestedToken)}?t=${Date.now()}`);
+        },
+      });
+    } else {
+      const countdownWrap = document.getElementById("dfsLockCountdown");
+      const closed = document.getElementById("dfsLockCountdownClosed");
+      if (countdownWrap) countdownWrap.hidden = true;
+      if (closed) closed.hidden = false;
+    }
 
     renderPoolRows(data);
     updateSiteUpdated(data.fetchedAt);
     if (typeof window.initDfsLineupPage === "function") {
-      window.initDfsLineupPage();
+      await window.initDfsLineupPage();
     }
+    hideMmsLoadingScreen();
   } catch (err) {
     console.error(err);
     showPoolError(err.message || "Could not load player pool.");

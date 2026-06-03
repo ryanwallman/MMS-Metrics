@@ -1913,7 +1913,9 @@ app.get("/dfs", async (req, res) => {
     }
 
     const firebaseClientConfig = getFirebaseClientConfig();
-    const lockDeadline = resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs);
+    const lockDeadline = canEdit
+      ? resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs)
+      : { deadlineMs: null, deadlineLabel: "" };
 
     renderPage(res, "dfs-lineup", {
       navActive: "dfs",

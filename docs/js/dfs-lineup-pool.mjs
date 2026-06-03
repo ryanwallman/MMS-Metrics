@@ -3175,7 +3175,7 @@ var require_dfsLineupPageData = __commonJS({
         };
       }
       const fetchedAt = (/* @__PURE__ */ new Date()).toISOString();
-      const lockDeadline = resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs);
+      const lockDeadline = slate.canEdit ? resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs) : { deadlineMs: null, deadlineLabel: "" };
       return {
         fetchedAt,
         lockDeadlineMs: lockDeadline.deadlineMs,

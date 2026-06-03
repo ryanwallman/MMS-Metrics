@@ -381,9 +381,9 @@
                 <tr>
                   <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %><th></th><% } %>
                   <th>Player</th>
+                  <th>Salary</th>
                   <th>Team</th>
                   <th>Field</th>
-                  <th>Salary</th>
                   <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
                   <th>Pts</th>
                   <th>Gm</th>
@@ -419,9 +419,9 @@
                   <td class="dfs-player-name">
                     <%= p.name %><% if (p.doubleHeader) { %><span class="dfs-doubleheader-tag" title="Two games this slate">2G</span><% } %>
                   </td>
+                  <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
                   <td><%= p.teamName %></td>
                   <td class="dfs-field-cell dfs-cell-preline" title="Diamond / short-field from schedule (Field, Short Field)"><%= p.gameField || "—" %></td>
-                  <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
                   <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
                   <td class="dfs-points-cell"><strong><%= p.slatePoints %></strong></td>
                   <td class="dfs-games-cell"><%= p.slateGames %></td>
@@ -465,20 +465,35 @@
         setupLineupLockCountdown,
       } from "<%= sitePath('/js/dfs-lock-countdown.js') %>?v=<%= assetVersion %>";
 
+      const CAN_EDIT_SLATE = <%= slate && slate.canEdit ? 'true' : 'false' %>;
       const initialDeadline =
         <%= typeof dfsLockDeadlineMs !== 'undefined' && dfsLockDeadlineMs != null ? dfsLockDeadlineMs : 'null' %>;
 
-      setupLineupLockCountdown({
-        deadlineMs: initialDeadline,
-        onLocked: () => {
-          window.location.reload();
-        },
-      });
+      if (CAN_EDIT_SLATE) {
+        setupLineupLockCountdown({
+          deadlineMs: initialDeadline,
+          onLocked: () => {
+            const open = "<%= typeof activeSlateToken !== 'undefined' ? activeSlateToken : '' %>";
+            if (open) {
+              window.location.assign(
+                "<%= sitePath('/dfs') %>?slate=" + encodeURIComponent(open) + "&t=" + Date.now()
+              );
+              return;
+            }
+            window.location.reload();
+          },
+        });
+      } else {
+        const wrap = document.getElementById("dfsLockCountdown");
+        const closed = document.getElementById("dfsLockCountdownClosed");
+        if (wrap) wrap.hidden = true;
+        if (closed) closed.hidden = false;
+      }
     </script>
     <% } %>
 
     <script>
-      window.initDfsLineupPage = function () {
+      window.initDfsLineupPage = async function () {
         const LINEUP_SIZE = <%= lineupSize %>;
         const SALARY_CAP = <%= salaryCap %>;
         var CAN_EDIT = <%= slate && slate.canEdit ? 'true' : 'false' %>;
@@ -1265,30 +1280,31 @@
           syncUi();
         }
 
+        async function initLineupForPage() {
+          try {
+            if (window.DfsLineupStore) {
+              await setupLineupStore();
+            } else if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
+              syncUi();
+            }
+          } finally {
+            if (window.MmsLoadingScreen) window.MmsLoadingScreen.hide();
+          }
+        }
+
+        async function waitForLineupStore() {
+          if (window.DfsLineupStore) return;
+          if (!window.__FIREBASE_CONFIG__?.projectId) return;
+          await new Promise((resolve) => {
+            window.addEventListener("dfs-lineup-store-ready", () => resolve(), { once: true });
+          });
+        }
+
         initLineupFromStorage();
         setSortMode(SHOW_SLATE_STATS ? "points" : "salary");
 
-        async function initLineupForPage() {
-          if (window.DfsLineupStore) {
-            await setupLineupStore();
-          } else if (!CAN_EDIT && isCloudSlateKey(slateKey)) {
-            syncUi();
-          }
-          if (window.MmsLoadingScreen) window.MmsLoadingScreen.hide();
-        }
-
-        window.addEventListener(
-          "dfs-lineup-store-ready",
-          () => {
-            initLineupForPage();
-          },
-          { once: true }
-        );
-        if (window.DfsLineupStore) {
-          initLineupForPage();
-        } else if (!window.__FIREBASE_CONFIG__?.projectId) {
-          if (window.MmsLoadingScreen) window.MmsLoadingScreen.hide();
-        }
+        await waitForLineupStore();
+        await initLineupForPage();
 
         window.setTimeout(function () {
           if (window.MmsLoadingScreen && !document.body.classList.contains("mms-page-ready")) {
@@ -1297,7 +1313,7 @@
         }, 20000);
       };
       <% if (!(typeof clientSidePool !== 'undefined' && clientSidePool)) { %>
-      window.initDfsLineupPage();
+      window.initDfsLineupPage().catch((err) => console.error("DFS lineup init failed", err));
       <% } %>
     </script>
   </body>
