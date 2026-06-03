@@ -16,6 +16,7 @@ const fsPromises = require("fs/promises");
 
 setNodeCareerReader((filePath) => fsPromises.readFile(filePath, "utf8"));
 const { fetchCsvText } = require("./lib/fetchCsvText");
+const { publicErrorMessage } = require("./lib/publicErrorMessage");
 const { load2026StatsByPlayer } = require("./lib/stats2026Loader");
 const { buildLeagueLeaders } = require("./lib/leagueLeaders");
 const { createMemoryCache } = require("./lib/memoryCache");
@@ -1708,7 +1709,7 @@ app.get("/", async (req, res) => {
   try {
     await renderLeagueLeadersPage(res);
   } catch (error) {
-    res.status(500).send(`Failed to load league leaders: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "Failed to load league leaders. Please try again."));
   }
 });
 
@@ -1765,7 +1766,7 @@ app.get("/rankings/power", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).send(`Failed to build power rankings: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "Failed to build power rankings. Please try again."));
   }
 });
 
@@ -1947,7 +1948,7 @@ app.get("/dfs", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send(`DFS page failed: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "DFS page failed to load. Please try again."));
   }
 });
 
@@ -1994,7 +1995,7 @@ app.get("/api/dfs/leaderboard/data", async (req, res) => {
     res.json(body);
   } catch (error) {
     console.error("[MMS] GET /api/dfs/leaderboard/data:", error);
-    res.status(500).json({ error: error.message || "Leaderboard load failed." });
+    res.status(500).json({ error: publicErrorMessage(error, "Leaderboard load failed.") });
   }
 });
 
@@ -2012,7 +2013,7 @@ app.post("/api/dfs/leaderboard/score", async (req, res) => {
     res.json(body);
   } catch (error) {
     console.error("[MMS] POST /api/dfs/leaderboard/score:", error);
-    res.status(500).json({ error: error.message || "Leaderboard scoring failed." });
+    res.status(500).json({ error: publicErrorMessage(error, "Leaderboard scoring failed.") });
   }
 });
 
@@ -2073,7 +2074,7 @@ app.get(["/dfs/leaderboard/lineup", "/dfs/leaderboard/lineup/"], async (req, res
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send(`Lineup view failed: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "Lineup view failed to load. Please try again."));
   }
 });
 
@@ -2108,7 +2109,7 @@ app.get("/dfs/leaderboard", async (req, res) => {
         weeklyStandings = await loadWeeklyStandingsForSlate(selectedWeek);
       } catch (err) {
         console.error("[MMS] Leaderboard page standings:", err);
-        weeklyStandingsError = err.message || "Could not load standings.";
+        weeklyStandingsError = publicErrorMessage(err, "Could not load standings.");
       }
     }
 
@@ -2141,7 +2142,7 @@ app.get("/dfs/leaderboard", async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).send(`DFS leaderboard failed: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "DFS leaderboard failed to load. Please try again."));
   }
 });
 
@@ -2211,7 +2212,7 @@ app.get("/matchup-predictor/season-record.json", async (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=300");
     return res.json(record);
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load season record" });
+    return res.status(500).json({ error: publicErrorMessage(error, "Failed to load season record.") });
   }
 });
 
@@ -2236,7 +2237,7 @@ app.get("/matchup-predictor/default-view.json", async (_req, res) => {
     res.setHeader("Cache-Control", "public, max-age=120");
     return res.json(meta);
   } catch (error) {
-    return res.status(500).json({ error: error.message || "Failed to load default view" });
+    return res.status(500).json({ error: publicErrorMessage(error, "Failed to load default view.") });
   }
 });
 
@@ -2631,7 +2632,7 @@ async function renderMatchupPredictorPage(req, res) {
       predictorAudit,
     });
   } catch (error) {
-    res.status(500).send(`Failed to load matchup predictor: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "Failed to load matchup predictor. Please try again."));
   }
 }
 
@@ -2727,7 +2728,7 @@ app.get("/confirm-names", async (req, res) => {
       pageTitle: "Roster name confirmation",
     });
   } catch (error) {
-    res.status(500).send(`Failed to build confirmation page: ${error.message}`);
+    res.status(500).send(publicErrorMessage(error, "Failed to build confirmation page. Please try again."));
   }
 });
 

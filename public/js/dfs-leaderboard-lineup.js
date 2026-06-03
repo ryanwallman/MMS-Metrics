@@ -5,6 +5,7 @@ import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebase
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 import { loadLineupDetail } from "./dfs-leaderboard-lineup.mjs";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
+import { publicErrorMessage } from "./mms-public-error.js";
 
 const config = window.__FIREBASE_CONFIG__;
 
@@ -138,7 +139,7 @@ async function main() {
     renderDetail(detail, week);
   } catch (err) {
     console.error(err);
-    renderError(err.message || "Could not load lineup.");
+    renderError(publicErrorMessage(err, "Could not load lineup. Please try again."));
   }
 }
 

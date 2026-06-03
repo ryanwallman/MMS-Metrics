@@ -7,6 +7,7 @@ import {
   hideMmsLoadingScreen,
   setMmsLoadingMessage,
 } from "./mms-loading-screen.js";
+import { publicErrorMessage } from "./mms-public-error.js";
 import { initializeApp, getApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import {
   getFirestore,
@@ -363,7 +364,7 @@ async function loadLeaderboard() {
     hideLoadingScreen();
     const msg = (err.message || "").includes("permission")
       ? "Could not read lineups. Publish Firestore rules with public read on <code>lineups</code> (see <code>firebase/firestore.rules</code>)."
-      : esc(err.message || "Failed to load leaderboard.");
+      : esc(publicErrorMessage(err, "Failed to load leaderboard. Please try again."));
     setStatus(msg, true);
   }
 }

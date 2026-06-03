@@ -4,6 +4,7 @@
 import { fetchPowerRankingsData } from "./power-rankings.mjs";
 import { mountPowerRankingsViz, renderVizTabShell } from "./power-rankings-viz.mjs";
 import { hideMmsLoadingScreen, showMmsLoadingScreen } from "./mms-loading-screen.js";
+import { publicErrorMessage } from "./mms-public-error.js";
 
 function siteBasePath() {
   const b = typeof window !== "undefined" ? window.__SITE_BASE_PATH__ : "";
@@ -252,7 +253,7 @@ async function load() {
     updateSiteUpdated(data.fetchedAt);
   } catch (err) {
     console.error(err);
-    renderError(err.message || "Could not load power rankings.");
+    renderError(publicErrorMessage(err, "Could not load power rankings. Please try again."));
   }
 }
 

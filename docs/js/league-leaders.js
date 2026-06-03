@@ -3,6 +3,7 @@
  */
 import { fetchLeagueLeadersData } from "./league-leaders.mjs";
 import { hideMmsLoadingScreen, showMmsLoadingScreen } from "./mms-loading-screen.js";
+import { publicErrorMessage } from "./mms-public-error.js";
 
 function esc(text) {
   const el = document.createElement("span");
@@ -141,7 +142,7 @@ async function load() {
     updateSiteUpdated(data.fetchedAt);
   } catch (err) {
     console.error(err);
-    renderError(err.message || "Could not load league leaders.");
+    renderError(publicErrorMessage(err, "Could not load league leaders. Please try again."));
   }
 }
 

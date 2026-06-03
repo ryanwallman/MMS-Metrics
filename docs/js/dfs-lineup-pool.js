@@ -8,6 +8,7 @@ import {
   dfsLineupUrl,
 } from "./dfs-lock-countdown.js";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
+import { publicErrorMessage } from "./mms-public-error.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
@@ -196,7 +197,7 @@ async function main() {
     hideMmsLoadingScreen();
   } catch (err) {
     console.error(err);
-    showPoolError(err.message || "Could not load player pool.");
+    showPoolError(publicErrorMessage(err, "Could not load player pool. Please try again."));
   }
 }
 
