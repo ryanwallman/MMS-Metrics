@@ -20,6 +20,11 @@ function slateFromUrl() {
   return "";
 }
 
+/** True when the user picked a slate via ?slate= or /dfs/slate/ (not the bare DFS tab). */
+function slateChosenInUrl() {
+  return !!slateFromUrl();
+}
+
 if (page) {
   const urlSlate = slateFromUrl();
   if (urlSlate) page.slateToken = urlSlate;
@@ -157,7 +162,8 @@ async function main() {
       .toUpperCase();
     const data = await loadDfsLineupPool(page.slateToken || "", page.lineupNorms || []);
 
-    if (isBareDfsIndexPath() && data.activeSlateToken) {
+    // Bare /dfs tab only: follow live open slate (export may bake a stale token).
+    if (isBareDfsIndexPath() && !slateChosenInUrl() && data.activeSlateToken) {
       const active = String(data.activeSlateToken).trim().toUpperCase();
       if (active && active !== requestedToken) {
         navigateToOpenDfsSlate(active);

@@ -6,6 +6,7 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.0/firebase
 import { loadLineupDetail } from "./dfs-leaderboard-lineup.mjs";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
 import { publicErrorMessage } from "./mms-public-error.js";
+import { dfsLineupUrl } from "./dfs-lock-countdown.js";
 
 const config = window.__FIREBASE_CONFIG__;
 
@@ -85,7 +86,7 @@ function renderDetail(detail, week) {
       <h1 class="page-title">${name}</h1>
       <p class="dfs-page-head-actions">
         <a href="${siteUrl(`/dfs/leaderboard/week/${week}/`)}" class="dfs-btn">← Leaderboard</a>
-        <a href="${siteUrl(`/dfs/slate/${week}/`)}" class="dfs-btn">Lineup builder</a>
+        <a href="${dfsLineupUrl(week)}" class="dfs-btn">Lineup builder</a>
       </p>
     </div>
     <section class="dfs-slate-banner" aria-label="Slate">
