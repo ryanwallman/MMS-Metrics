@@ -3,13 +3,18 @@
 <% const serverRendered = typeof serverRenderedStandings !== 'undefined' && serverRenderedStandings; %>
 <% const lbSlateLocked = (typeof slateLocked !== 'undefined' && slateLocked) || (slate && slate.canEdit !== true); %>
 <% const tableColspan = lbSlateLocked ? 4 : 3; %>
-<% const showPageLoading = canLoadStandings && !serverRendered; %>
+<% const seasonColspan = 4; %>
+<% const yearLabel = (typeof scheduleYear !== 'undefined' && scheduleYear) ? scheduleYear : 2026; %>
+<% const seasonStandings = weeklyStandings && weeklyStandings.season; %>
+<% const pageLeaderboardView = (typeof leaderboardView !== 'undefined' && leaderboardView === 'season') ? 'season' : 'weekly'; %>
+<% const isSeasonView = pageLeaderboardView === 'season'; %>
+<% const showPageLoading = canLoadStandings; %>
 <html lang="en">
   <head>
     <%- include("partials/site-head") %>
-    <title>DFS Leaderboard — Marlboro Men's Softball</title>
+    <title><%= isSeasonView ? (yearLabel + ' Season Leaderboard') : 'Weekly DFS Leaderboard' %> — Marlboro Men's Softball</title>
   </head>
-  <body class="dfs-leaderboard-page<%= serverRendered ? ' mms-page-ready leaderboard-ready' : '' %>">
+  <body class="dfs-leaderboard-page<%= canLoadStandings ? '' : ' mms-page-ready leaderboard-ready' %>">
     <%- include("partials/site-header") %>
 
     <% if (showPageLoading) { %>
@@ -18,16 +23,20 @@
 
     <main class="page-main dfs-page dfs-leaderboard-page<%= showPageLoading ? ' dfs-leaderboard-page--loading mms-page-main--loading' : '' %>">
       <div class="dfs-page-head">
-        <h1 class="page-title">DFS Leaderboard</h1>
-        <p class="dfs-page-head-actions">
+        <h1 class="page-title"><%= isSeasonView ? (yearLabel + ' Season Leaderboard') : 'Weekly DFS Leaderboard' %></h1>
+        <div class="dfs-page-head-actions">
           <a href="<%= sitePath('/dfs') %>" class="dfs-btn">← Lineup builder</a>
-        </p>
+        </div>
       </div>
 
       <p class="page-note dfs-intro">
+        <% if (isSeasonView) { %>
+        Combined fantasy points across completed slates. Names follow each player’s most recent saved display name.
+        <% } else { %>
         Saved lineups for the selected slate are loaded from Firebase and ranked by total fantasy points.
         Scoring uses the same per-player slate points shown on the <a href="<%= sitePath('/dfs') %>">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
         <% if (!lbSlateLocked) { %> Salary stays hidden until the slate locks.<% } else { %> Tap a name to view that player’s saved lineup.<% } %>
+        <% } %>
       </p>
 
       <% if (!canLoadStandings) { %>
@@ -45,6 +54,32 @@
 
       <section class="dfs-leaderboard-alert" id="leaderboardStatus" role="status" aria-live="polite" hidden></section>
 
+      <% if (isSeasonView) { %>
+      <section class="dfs-leaderboard-board" aria-labelledby="seasonLeaderboardTitle">
+        <div class="dfs-slate-banner" aria-label="Season standings">
+          <h2 class="dfs-leaderboard-board-title" id="seasonLeaderboardTitle"><%= yearLabel %> season totals</h2>
+          <p class="dfs-slate-status dfs-slate-status--past" id="seasonEntryCount" hidden></p>
+        </div>
+
+        <div class="dfs-leaderboard-table-wrap">
+          <table class="dfs-leaderboard-table page-table dfs-leaderboard-table--season">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Player</th>
+                <th scope="col">Points</th>
+                <th scope="col">Slates</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardSeasonBody">
+              <tr>
+                <td colspan="<%= seasonColspan %>" class="dfs-leaderboard-empty">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <% } else if (slate) { %>
       <% if (typeof staticSite !== 'undefined' && staticSite) { %>
       <div class="dfs-slate-form dfs-leaderboard-week-form">
         <label for="week">
@@ -77,71 +112,42 @@
       </form>
       <% } %>
 
-      <% if (slate) { %>
-      <section class="dfs-slate-banner" aria-label="Selected slate">
-        <h2 class="dfs-slate-title"><%= slate.label %></h2>
-        <% if (!slate.isPast) { %>
-        <p class="dfs-slate-status" id="weeklySlateStatus"><%= slate.slateType === 'wednesday'
-          ? "This slate has not finished yet — points appear after Wednesday’s games."
-          : "This week has not finished yet — points appear after Sunday’s games." %></p>
-        <% } else if (!hasGamelogData) { %>
-        <p class="dfs-slate-status dfs-slate-status--past">Scoring data isn’t available yet.</p>
-        <% } else { %>
-        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyGamelogGap" <%= slateHasBoxScoresForWeek ? 'hidden' : '' %> role="status">
-          <% if (!slateHasBoxScoresForWeek) { %>Game results don’t cover this slate’s dates yet — scores stay at zero until those games are in the sheet.<% } %>
-        </p>
-        <% if (serverRendered && weeklyStandings && weeklyStandings.weekly) { %>
-        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyEntryCount">
-          <%= weeklyStandings.weekly.entryCount %> saved lineup<%= weeklyStandings.weekly.entryCount === 1 ? '' : 's' %>
-        </p>
-        <% } else { %>
-        <p class="dfs-slate-status dfs-slate-status--past" id="weeklyEntryCount" hidden></p>
-        <% } %>
-        <% } %>
+      <section class="dfs-leaderboard-board" aria-labelledby="weeklyLeaderboardTitle">
+        <div class="dfs-slate-banner" aria-label="Selected slate">
+          <h2 class="dfs-leaderboard-board-title" id="weeklyLeaderboardTitle"><%= slate.label %></h2>
+          <% if (!slate.isPast) { %>
+          <p class="dfs-slate-status" id="weeklySlateStatus"><%= slate.slateType === 'wednesday'
+            ? "This slate has not finished yet — points appear after Wednesday’s games."
+            : "This week has not finished yet — points appear after Sunday’s games." %></p>
+          <% } else if (!hasGamelogData) { %>
+          <p class="dfs-slate-status dfs-slate-status--past">Scoring data isn’t available yet.</p>
+          <% } else { %>
+          <p class="dfs-slate-status dfs-slate-status--past" id="weeklyGamelogGap" <%= slateHasBoxScoresForWeek ? 'hidden' : '' %> role="status">
+            <% if (!slateHasBoxScoresForWeek) { %>Game results don’t cover this slate’s dates yet — scores stay at zero until those games are in the sheet.<% } %>
+          </p>
+          <p class="dfs-slate-status dfs-slate-status--past" id="weeklyEntryCount" hidden></p>
+          <% } %>
+        </div>
+
+        <div class="dfs-leaderboard-table-wrap">
+          <table class="dfs-leaderboard-table page-table">
+            <thead>
+              <tr>
+                <th scope="col">Rank</th>
+                <th scope="col">Player</th>
+                <th scope="col">Points</th>
+                <% if (lbSlateLocked) { %><th scope="col">Salary at save</th><% } %>
+              </tr>
+            </thead>
+            <tbody id="leaderboardWeeklyBody">
+              <tr>
+                <td colspan="<%= tableColspan %>" class="dfs-leaderboard-empty">Loading...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
       <% } %>
-
-      <div class="dfs-leaderboard-table-wrap">
-        <table class="dfs-leaderboard-table page-table">
-          <thead>
-            <tr>
-              <th scope="col">Rank</th>
-              <th scope="col">Player</th>
-              <th scope="col">Points</th>
-              <% if (lbSlateLocked) { %><th scope="col">Salary at save</th><% } %>
-            </tr>
-          </thead>
-          <tbody id="leaderboardWeeklyBody">
-            <% if (serverRendered && weeklyStandings && weeklyStandings.weekly) {
-              const rows = weeklyStandings.weekly.rows || [];
-              if (!rows.length) { %>
-            <tr>
-              <td colspan="<%= tableColspan %>" class="dfs-leaderboard-empty">
-                <% if (slate && slate.isPast && hasGamelogData && !slateHasBoxScoresForWeek) { %>
-                Game results don’t cover this slate’s scheduled dates yet — fantasy scores stay at zero until those games are reflected.<br/><br/>
-                <% } %>
-                No saved lineups for this slate yet — when players save a lineup here, they’ll show up ranked by points.
-              </td>
-            </tr>
-            <% } else { rows.forEach((row) => { %>
-            <tr>
-              <td><%= row.rankDisplay != null ? row.rankDisplay : row.rank %></td>
-              <td>
-                <% if (lbSlateLocked && row.userId) { %>
-                <a href="<%= sitePath('/dfs/leaderboard/lineup/?week=' + encodeURIComponent(selectedWeek) + '&user=' + encodeURIComponent(row.userId)) %>" class="dfs-leaderboard-player-link"><%= row.displayName %></a>
-                <% } else { %><%= row.displayName %><% } %>
-              </td>
-              <td class="dfs-leaderboard-pts"><% if (row.points == null) { %>—<% } else { %><strong><%= row.points %></strong><% } %></td>
-              <% if (lbSlateLocked) { %><td>$<%= (row.salaryUsed || 0).toLocaleString() %></td><% } %>
-            </tr>
-            <% }); } } else { %>
-            <tr>
-              <td colspan="<%= tableColspan %>" class="dfs-leaderboard-empty">Loading...</td>
-            </tr>
-            <% } %>
-          </tbody>
-        </table>
-      </div>
 
       <section class="dfs-scoring-rules">
         <h2 class="section-heading">Scoring</h2>
@@ -157,16 +163,18 @@
       </section>
     </main>
 
-    <% if (canLoadStandings && !serverRendered) { %>
+    <% if (canLoadStandings) { %>
     <script>
       window.__FIREBASE_CONFIG__ = <%- JSON.stringify(firebaseClientConfig || null) %>;
       window.__MMS_CAREER_CSV_URL__ = "<%= sitePath('/data/csv/career.csv') %>";
       window.__LEADERBOARD_PAGE__ = <%- JSON.stringify({
         selectedWeek: selectedWeek,
+        leaderboardView: pageLeaderboardView,
         leaderboardServerRead: typeof leaderboardServerRead !== 'undefined' ? leaderboardServerRead : false,
         serverRendered: false,
         useClientScoring: typeof useClientScoring !== 'undefined' ? useClientScoring : true,
         slateLocked: lbSlateLocked,
+        scheduleYear: scheduleYear,
         slate: slate ? { label: slate.label, isPast: slate.isPast, viewToken: slate.viewToken, slateType: slate.slateType, canEdit: slate.canEdit === true, isLocked: slate.canEdit !== true } : null
       }) %>;
     </script>

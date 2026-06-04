@@ -3706,11 +3706,51 @@ body > main.page-main {
   color: #6b7280;
 }
 
+.dfs-leaderboard-boards {
+  margin: 0 0 24px;
+}
+
+.dfs-leaderboard-panel[hidden] {
+  display: none;
+}
+
+.dfs-leaderboard-board {
+  min-width: 0;
+}
+
+.dfs-leaderboard-board-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dfs-leaderboard-table--season th:nth-child(3),
+.dfs-leaderboard-table--season td:nth-child(3),
+.dfs-leaderboard-table--season th:nth-child(4),
+.dfs-leaderboard-table--season td:nth-child(4) {
+  text-align: right;
+}
+
+.dfs-leaderboard-head-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.dfs-leaderboard-head-actions .dfs-leaderboard-tabs {
+  margin: 0;
+}
+
 .dfs-leaderboard-tabs {
   display: flex;
   gap: 8px;
   margin: 0 0 20px;
   flex-wrap: wrap;
+}
+
+button.dfs-leaderboard-tab {
+  cursor: pointer;
+  font: inherit;
 }
 
 .dfs-leaderboard-tab {
@@ -3814,6 +3854,18 @@ body > main.page-main {
 body.mms-page-ready .mms-page-main--loading,
 body.leaderboard-ready .dfs-leaderboard-page--loading {
   filter: none;
+}
+
+body.mms-page-ready .mms-page-main--loading .dfs-leaderboard-panel,
+body.leaderboard-ready .dfs-leaderboard-page--loading .dfs-leaderboard-panel {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mms-page-main--loading .dfs-leaderboard-panel,
+.dfs-leaderboard-page--loading .dfs-leaderboard-panel {
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 body.mms-page-ready .mms-page-main--loading .dfs-leaderboard-table-wrap,

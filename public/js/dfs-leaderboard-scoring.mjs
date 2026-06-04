@@ -1894,6 +1894,25 @@ var require_dfsLeaderboard = __commonJS({
     function safeText(value) {
       return (value || "").toString().trim();
     }
+    function lineupUpdatedMs(updatedAt) {
+      if (!updatedAt) return 0;
+      if (typeof updatedAt === "number" && Number.isFinite(updatedAt)) return updatedAt;
+      if (typeof updatedAt.toMillis === "function") return updatedAt.toMillis();
+      if (updatedAt.seconds != null) {
+        return Number(updatedAt.seconds) * 1e3 + (Number(updatedAt.nanoseconds) || 0) / 1e6;
+      }
+      const d = new Date(updatedAt);
+      return Number.isNaN(d.getTime()) ? 0 : d.getTime();
+    }
+    function applyLatestDisplayName(user, lineup) {
+      const name = safeText(lineup.displayName);
+      if (!name || name === "Player") return;
+      const ts = lineupUpdatedMs(lineup.updatedAt);
+      if (ts >= (user.displayNameAt || 0)) {
+        user.displayName = lineup.displayName;
+        user.displayNameAt = ts;
+      }
+    }
     function leaderboardDisplayName(raw) {
       const s = safeText(raw);
       if (!s) return "Player";
@@ -2110,22 +2129,20 @@ var require_dfsLeaderboard = __commonJS({
           byUser.set(lineup.userId, {
             userId: lineup.userId,
             displayName: lineup.displayName,
+            displayNameAt: 0,
             weeksPlayed: 0,
             weekScores: [],
             totalPoints: 0
           });
         }
-        const user = byUser.get(lineup.userId);
-        if (lineup.displayName && lineup.displayName !== "Player") {
-          user.displayName = lineup.displayName;
-        }
+        applyLatestDisplayName(byUser.get(lineup.userId), lineup);
       }
       const scoringContextBySlate = /* @__PURE__ */ new Map();
       function scoringContextForSlate(slate) {
         const key = slate?.viewToken || "";
-        if (!key) return buildScoringContext({ ...scoringDeps, slate });
+        if (!key) return buildSlatePointsContext(scoringDeps, slate);
         if (!scoringContextBySlate.has(key)) {
-          scoringContextBySlate.set(key, buildScoringContext({ ...scoringDeps, slate }));
+          scoringContextBySlate.set(key, buildSlatePointsContext(scoringDeps, slate));
         }
         return scoringContextBySlate.get(key);
       }
@@ -2257,6 +2274,7 @@ var require_dfsLeaderboard = __commonJS({
       normalizeLineupRecord,
       normalizeLineupDoc,
       fetchLineupsForSlate,
+      fetchAllWeekLineups,
       fetchLineupByUserAndSlate,
       fetchLineupsForLeaderboard,
       assignLeaderboardRanks,
@@ -3504,6 +3522,7 @@ var require_dfsLeaderboardResponse = __commonJS({
   "lib/dfsLeaderboardResponse.js"(exports, module) {
     var {
       buildWeeklyLeaderboardFromLineups,
+      buildCumulativeLeaderboardFromLineups,
       slateSummaryForClient
     } = require_dfsLeaderboard();
     var {
@@ -3511,27 +3530,43 @@ var require_dfsLeaderboardResponse = __commonJS({
       defaultLeaderboardWeek,
       listLeaderboardSlateOptions,
       referenceIsoForScheduleYear: referenceIsoForScheduleYear2,
+      resolveActiveDfsSlateToken: resolveActiveDfsSlateToken2,
       slateHasGamelogDates
     } = require_dfs();
     var { getCachedDfsLeaderboardScoringContext } = require_dfsLeaderboardScoringContext();
     var { SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2 } = require_sheetUrls();
-    async function buildWeeklyLeaderboardResponse2(selectedWeek, lineups) {
+    async function buildLeaderboardPageResponse2(selectedWeek, lineupsForWeek, allLineups = null) {
       const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
       const refIso = referenceIsoForScheduleYear2(SCHEDULE_CALENDAR_YEAR2);
       const nowMs = Date.now();
       const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
       const week = selectedWeek && weekOptions.some((w) => w.value === selectedWeek) ? selectedWeek : defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs);
       const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
-      const weekly = slate && Array.isArray(lineups) ? await buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps) : { rows: [], entryCount: 0 };
+      const weekly = slate && Array.isArray(lineupsForWeek) ? await buildWeeklyLeaderboardFromLineups(lineupsForWeek, slate, scoringDeps) : { rows: [], entryCount: 0 };
+      const seasonLineups = Array.isArray(allLineups) ? allLineups : lineupsForWeek || [];
+      const activeSlateToken = resolveActiveDfsSlateToken2(schedulePayload, refIso, nowMs);
+      const season = buildCumulativeLeaderboardFromLineups(
+        seasonLineups,
+        weekOptions,
+        scoringDeps,
+        schedulePayload,
+        refIso,
+        activeSlateToken
+      );
       return {
         selectedWeek: week,
         weekly,
+        season,
+        scheduleYear: SCHEDULE_CALENDAR_YEAR2,
         hasGamelogData: gamelogs.byNorm.size > 0,
         slateHasBoxScoresForWeek: slate ? slateHasGamelogDates(slate, gamelogs) : false,
         slate: slateSummaryForClient(slate)
       };
     }
-    module.exports = { buildWeeklyLeaderboardResponse: buildWeeklyLeaderboardResponse2 };
+    async function buildWeeklyLeaderboardResponse(selectedWeek, lineups) {
+      return buildLeaderboardPageResponse2(selectedWeek, lineups, lineups);
+    }
+    module.exports = { buildLeaderboardPageResponse: buildLeaderboardPageResponse2, buildWeeklyLeaderboardResponse };
   }
 });
 
@@ -3543,8 +3578,8 @@ var import_dfs = __toESM(require_dfs(), 1);
 var import_sheetUrls2 = __toESM(require_sheetUrls(), 1);
 var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
 (0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
-async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
-  return (0, import_dfsLeaderboardResponse.buildWeeklyLeaderboardResponse)(selectedWeek, lineups);
+async function scoreWeeklyLeaderboard(selectedWeek, lineups, allLineups = null) {
+  return (0, import_dfsLeaderboardResponse.buildLeaderboardPageResponse)(selectedWeek, lineups, allLineups ?? lineups);
 }
 async function fetchLiveSlateDefaults() {
   const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();

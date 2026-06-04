@@ -32,6 +32,18 @@ function siteUrl(path) {
   return `${base}${p}`;
 }
 
+function viewFromUrl() {
+  if (page?.leaderboardView === "season") return "season";
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("view") === "season") return "season";
+  if (/\/dfs\/leaderboard\/season\/?$/i.test(window.location.pathname)) return "season";
+  return "weekly";
+}
+
+function isSeasonView() {
+  return viewFromUrl() === "season";
+}
+
 function weekFromUrl() {
   const q = new URLSearchParams(window.location.search).get("week");
   if (q) return String(q).trim().toUpperCase();
@@ -40,9 +52,11 @@ function weekFromUrl() {
   return "";
 }
 
-if (page && !page.serverRendered) {
+if (page) {
   const urlWeek = weekFromUrl();
   if (urlWeek) page.selectedWeek = urlWeek;
+  showMmsLoadingScreen();
+  loadLeaderboard();
 }
 
 function esc(text) {
@@ -105,7 +119,13 @@ function lineupFromDoc(doc) {
       ? data.playerSalaries.map((n) => Number(n) || 0)
       : null,
     salaryUsed: Number(data.salaryUsed) || 0,
+    updatedAt: data.updatedAt || null,
   };
+}
+
+function isLeaderboardSlateId(slateId) {
+  const s = slateId || "";
+  return /^W\d+$/.test(s) || /^D\d{8}$/.test(s);
 }
 
 async function fetchLineupsForSlate(db, slateId) {
@@ -115,11 +135,18 @@ async function fetchLineupsForSlate(db, slateId) {
   return snap.docs.map(lineupFromDoc);
 }
 
+async function fetchAllWeekLineups(db) {
+  const snap = await getDocs(collection(db, "lineups"));
+  return snap.docs.map(lineupFromDoc).filter((row) => isLeaderboardSlateId(row.slateId));
+}
+
 function buildEmptyLeaderboardResponse(pageCtx) {
   const slate = pageCtx?.slate;
   return {
     selectedWeek: pageCtx.selectedWeek,
     weekly: { rows: [], entryCount: 0 },
+    season: { rows: [], entryCount: 0, pastWeekCount: 0 },
+    scheduleYear: pageCtx?.scheduleYear || new Date().getFullYear(),
     hasGamelogData: true,
     slateHasBoxScoresForWeek: true,
     slate: slate
@@ -144,6 +171,37 @@ function renderPlayerCell(row, week, locked) {
     return `<a href="${href}" class="dfs-leaderboard-player-link">${name}</a>`;
   }
   return name;
+}
+
+function renderSeasonTable(rows, data) {
+  const tbody = document.getElementById("leaderboardSeasonBody");
+  if (!tbody) return;
+
+  const cols = 4;
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="${cols}" class="dfs-leaderboard-empty">No completed slates yet — season totals will appear after the first slate locks and scores.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map(
+      (row) => `<tr>
+          <td>${esc(row.rankDisplay != null ? row.rankDisplay : row.rank)}</td>
+          <td>${esc(row.displayName)}</td>
+          <td class="dfs-leaderboard-pts"><strong>${row.points}</strong></td>
+          <td>${esc(row.weeksPlayed)}</td>
+        </tr>`
+    )
+    .join("");
+}
+
+function updateSeasonBanner(data) {
+  const countEl = document.getElementById("seasonEntryCount");
+  if (!countEl || !data.season) return;
+  const n = data.season.entryCount || 0;
+  const past = data.season.pastWeekCount || 0;
+  countEl.textContent = `${n} player${n === 1 ? "" : "s"} · ${past} completed slate${past === 1 ? "" : "s"}`;
+  countEl.hidden = false;
 }
 
 function renderWeeklyTable(rows, data) {
@@ -247,16 +305,21 @@ function updateWeeklyBanner(data, pageCtx) {
 function renderLeaderboardData(data) {
   hideLoadingScreen();
   setStatus("", false);
-  renderWeeklyTable(data.weekly?.rows || [], data);
-  updateWeeklyBanner(data, page);
+  if (isSeasonView()) {
+    renderSeasonTable(data.season?.rows || [], data);
+    updateSeasonBanner(data);
+  } else {
+    renderWeeklyTable(data.weekly?.rows || [], data);
+    updateWeeklyBanner(data, page);
+  }
 }
 
 async function loadFromServerApi() {
   const week = page.selectedWeek;
-  if (!week) {
+  if (!week && !isSeasonView()) {
     throw new Error("No slate selected.");
   }
-  const qs = new URLSearchParams({ week });
+  const qs = new URLSearchParams({ week: week || "W1" });
   const { res, data } = await fetchJsonWithTimeout(siteUrl(`/api/dfs/leaderboard/data?${qs}`));
   if (res.status === 503 && data.needClientLineups) {
     return null;
@@ -275,16 +338,27 @@ async function loadViaBrowserFirestore() {
   }
   const app = getApps().length ? getApp() : initializeApp(config);
   const db = getFirestore(app);
+  const season = isSeasonView();
 
   setLoadingMessage();
-  const lineups = await fetchLineupsForSlate(db, page.selectedWeek);
+  const allLineups = await fetchAllWeekLineups(db);
+  const lineups = season
+    ? []
+    : await fetchLineupsForSlate(db, page.selectedWeek);
 
   if (page.useClientScoring) {
-    if (!lineups.length) {
+    if (!season && !lineups.length && !allLineups.length) {
+      return buildEmptyLeaderboardResponse(page);
+    }
+    if (season && !allLineups.length) {
       return buildEmptyLeaderboardResponse(page);
     }
     setLoadingMessage();
-    return scoreWeeklyLeaderboard(page.selectedWeek, lineups);
+    return scoreWeeklyLeaderboard(
+      season ? page.selectedWeek || "W1" : page.selectedWeek,
+      lineups,
+      allLineups
+    );
   }
 
   const { res, data } = await fetchJsonWithTimeout(siteUrl("/api/dfs/leaderboard/score"), {
@@ -293,6 +367,7 @@ async function loadViaBrowserFirestore() {
     body: JSON.stringify({
       selectedWeek: page.selectedWeek,
       lineups,
+      allLineups,
     }),
   });
 
@@ -303,7 +378,7 @@ async function loadViaBrowserFirestore() {
 }
 
 async function ensureLeaderboardDefaultWeek() {
-  if (!page || page.serverRendered) return false;
+  if (!page || page.serverRendered || isSeasonView()) return false;
 
   let defaults;
   try {
@@ -331,13 +406,14 @@ async function ensureLeaderboardDefaultWeek() {
 }
 
 async function loadLeaderboard() {
-  if (!page || page.serverRendered) {
+  if (!page) {
     return;
   }
-  if (await ensureLeaderboardDefaultWeek()) {
+  const season = isSeasonView();
+  if (!season && (await ensureLeaderboardDefaultWeek())) {
     return;
   }
-  if (!page.selectedWeek) {
+  if (!season && !page.selectedWeek) {
     hideLoadingScreen();
     setStatus("No slate selected.", true);
     return;
@@ -355,6 +431,8 @@ async function loadLeaderboard() {
     if (!data) {
       if (page.leaderboardServerRead && config?.projectId) {
         setStatus("Server read unavailable — loading lineups in your browser…", false);
+        showLoadingScreen();
+        setLoadingMessage();
       }
       data = await loadViaBrowserFirestore();
     }
@@ -368,5 +446,3 @@ async function loadLeaderboard() {
     setStatus(msg, true);
   }
 }
-
-loadLeaderboard();

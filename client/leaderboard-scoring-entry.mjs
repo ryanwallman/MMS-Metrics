@@ -2,7 +2,7 @@
  * Browser bundle entry: score DFS leaderboard lineups using runtime sheet CSVs.
  */
 import { configureCareerCsvForBrowser } from "../lib/sheetUrls.js";
-import { buildWeeklyLeaderboardResponse } from "../lib/dfsLeaderboardResponse.js";
+import { buildLeaderboardPageResponse } from "../lib/dfsLeaderboardResponse.js";
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import {
   referenceIsoForScheduleYear,
@@ -16,8 +16,8 @@ const careerCsvUrl =
   "/data/csv/career.csv";
 configureCareerCsvForBrowser(careerCsvUrl);
 
-export async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
-  return buildWeeklyLeaderboardResponse(selectedWeek, lineups);
+export async function scoreWeeklyLeaderboard(selectedWeek, lineups, allLineups = null) {
+  return buildLeaderboardPageResponse(selectedWeek, lineups, allLineups ?? lineups);
 }
 
 export async function fetchLiveSlateDefaults() {

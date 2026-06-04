@@ -347,6 +347,8 @@ async function main() {
     });
 
     const lbHtml = await fetchHtml(port, "/dfs/leaderboard");
+    const seasonLbHtml = await fetchHtml(port, "/dfs/leaderboard?view=season");
+    await writeRoute(seasonLbHtml, "/dfs/leaderboard/season");
     const weekTokens = [
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\/week\/([A-Za-z0-9%]+)/g),
       ...extractAllMatches(lbHtml, /\/dfs\/leaderboard\?week=([A-Za-z0-9%]+)/g),

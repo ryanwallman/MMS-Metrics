@@ -156,6 +156,9 @@ async function main() {
     const lbHtml = await fetchHtml("/dfs/leaderboard");
     await writeRoute(lbHtml, "/dfs/leaderboard");
 
+    const seasonLbHtml = await fetchHtml("/dfs/leaderboard?view=season");
+    await writeRoute(seasonLbHtml, "/dfs/leaderboard/season");
+
     const powerHtml = await fetchHtml("/rankings/power");
     await writeRoute(powerHtml, "/rankings/power");
 
