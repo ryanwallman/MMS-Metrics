@@ -6,12 +6,25 @@ export function siteBasePath() {
   return b == null ? "" : String(b);
 }
 
+/** GitHub Pages serves a single /dfs/index.html — use ?slate= so new slates do not 404. */
+export function isStaticDfsSite() {
+  return (
+    typeof window !== "undefined" &&
+    (window.__STATIC_SITE__ === true ||
+      window.__STATIC_SITE__ === "1" ||
+      window.__STATIC_SITE__ === 1)
+  );
+}
+
 export function dfsLineupUrl(slateToken) {
   const base = siteBasePath();
   const t = String(slateToken || "")
     .trim()
     .toUpperCase();
   if (!t) return `${base}/dfs`;
+  if (isStaticDfsSite()) {
+    return `${base}/dfs?slate=${encodeURIComponent(t)}`;
+  }
   return `${base}/dfs/slate/${encodeURIComponent(t)}`;
 }
 

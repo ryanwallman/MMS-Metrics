@@ -12,6 +12,19 @@ import { publicErrorMessage } from "./mms-public-error.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
+function slateFromUrl() {
+  const q = new URLSearchParams(window.location.search).get("slate");
+  if (q) return String(q).trim().toUpperCase();
+  const m = window.location.pathname.match(/\/dfs\/slate\/([^/]+)\/?$/i);
+  if (m) return m[1].toUpperCase();
+  return "";
+}
+
+if (page) {
+  const urlSlate = slateFromUrl();
+  if (urlSlate) page.slateToken = urlSlate;
+}
+
 function esc(text) {
   const el = document.createElement("span");
   el.textContent = text == null ? "" : String(text);
