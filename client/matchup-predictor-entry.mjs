@@ -17,7 +17,14 @@ import {
   serializeReplacementsForClient,
   filterReplacementsForDate,
 } from "../lib/playerReplacements.js";
-import { getCachedDfsLeaderboardScoringContext } from "../lib/dfsLeaderboardScoringContext.js";
+import { getCachedDfsLeaderboardScoringContext, loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
+import {
+  findParsedGameForMatchup,
+  isParsedGameFinished,
+  gradeMatchupModelBets,
+} from "../lib/matchupGameResult.js";
+import { SCHEDULE_URL } from "../lib/sheetUrls.js";
+import { csvTextCache } from "../lib/fetchCsvText.js";
 
 function mapFromObject(obj) {
   return new Map(Object.entries(obj || {}));
@@ -156,12 +163,128 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   return prediction;
 }
 
+const DEFAULT_SCORE_POLL_MS = Number(process.env.MATCHUP_SCORE_POLL_MS) || 90_000;
+
+function selectedGameFromCtx(ctx) {
+  if (!ctx) return null;
+  return {
+    awayTeamId: ctx.awayBaseProfile?.teamId,
+    homeTeamId: ctx.homeBaseProfile?.teamId,
+    isoDate: ctx.gameIsoDate,
+    gameId: ctx.gameId || "",
+  };
+}
+
+/**
+ * Poll the live schedule sheet and swap to final-result UI when scores appear.
+ */
+function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAULT_SCORE_POLL_MS }) {
+  if (!ctx || ctx.isFinishedGame) return () => {};
+
+  let stopped = false;
+  let timer = null;
+
+  async function check() {
+    if (stopped || ctx.isFinishedGame) return;
+    try {
+      csvTextCache.invalidate(SCHEDULE_URL);
+      const schedule = await loadWeeklySchedule();
+      const parsedGame = findParsedGameForMatchup(
+        schedule.parsedGames,
+        selectedGameFromCtx(ctx),
+        ctx.gameIsoDate
+      );
+      if (!isParsedGameFinished(parsedGame)) return;
+
+      const prediction =
+        typeof getPrediction === "function" ? getPrediction() : ctx.gameResult?.modelPrediction;
+      if (!prediction) return;
+
+      const gameResult = gradeMatchupModelBets(
+        parsedGame,
+        prediction,
+        ctx.awayLabel,
+        ctx.homeLabel
+      );
+      if (!gameResult) return;
+
+      ctx.isFinishedGame = true;
+      ctx.gameResult = gameResult;
+      stopped = true;
+      if (timer) clearInterval(timer);
+      if (typeof onFinished === "function") onFinished(gameResult);
+    } catch (err) {
+      console.error("Matchup score poll failed", err);
+    }
+  }
+
+  void check();
+  timer = window.setInterval(() => {
+    void check();
+  }, Math.max(30_000, Number(pollMs) || DEFAULT_SCORE_POLL_MS));
+
+  return () => {
+    stopped = true;
+    if (timer) clearInterval(timer);
+  };
+}
+
+let scoreWatchStop = null;
+
+function benchNormsFromForm() {
+  function parseList(value) {
+    return String(value || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  const awayInput = document.getElementById("awayMissing");
+  const homeInput = document.getElementById("homeMissing");
+  return {
+    away: parseList(awayInput?.value),
+    home: parseList(homeInput?.value),
+  };
+}
+
+function autoStartScoreWatcher() {
+  if (scoreWatchStop) return;
+  const ctx = typeof window !== "undefined" ? window.__MATCHUP_CLIENT__ : null;
+  if (!ctx || ctx.isFinishedGame) return;
+  if (!document.querySelector(".matchup-prediction:not(.matchup-prediction--final)")) return;
+
+  scoreWatchStop = watchMatchupLiveScores({
+    ctx,
+    getPrediction: () => {
+      const { away, home } = benchNormsFromForm();
+      return predictFromPayload(ctx, away, home);
+    },
+    onFinished: (gameResult) => {
+      window.MmsMatchupPredictorUi?.renderGameResultUi?.(gameResult);
+    },
+  });
+}
+
 if (typeof window !== "undefined") {
   window.MmsMatchupPredictor = {
     predictFromPayload,
     buildLineupEnrichment: buildMatchupLineupEnrichment,
     hydrateMatchupReplacements,
+    watchMatchupLiveScores,
   };
+
+  const kickScoreWatch = () => {
+    window.setTimeout(autoStartScoreWatcher, 1500);
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", kickScoreWatch);
+  } else {
+    kickScoreWatch();
+  }
 }
 
-export { predictFromPayload, buildMatchupLineupEnrichment, hydrateMatchupReplacements };
+export {
+  predictFromPayload,
+  buildMatchupLineupEnrichment,
+  hydrateMatchupReplacements,
+  watchMatchupLiveScores,
+};

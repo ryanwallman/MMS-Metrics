@@ -642,7 +642,7 @@ var require_pitcherStats2026 = __commonJS({
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
     var INDEX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
-    var SCHEDULE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
+    var SCHEDULE_URL2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
     var ROSTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTFhhdnzm2I_PVTkR4FDL-pbBhf_K53gMj6Pk5u8vtfYTXN9569QbdTRG9pZBuIFpQuWIpT9tJMbLY1/pub?gid=1722495492&single=true&output=csv";
     var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
     var SHEET_2026_GAMELOGS_ID = "1QGoXil2fphTqS-SlapUNgAOIDoI8uaQNXooW9h_oH2w";
@@ -700,7 +700,7 @@ var require_sheetUrls = __commonJS({
     }
     module.exports = {
       INDEX_URL,
-      SCHEDULE_URL,
+      SCHEDULE_URL: SCHEDULE_URL2,
       ROSTER_URL,
       HIST_2025_STATS_URL,
       CAREER_CSV_PUBLIC_URL,
@@ -742,6 +742,9 @@ var require_memoryCache = __commonJS({
         clear() {
           store.clear();
         },
+        invalidate(key) {
+          store.delete(String(key));
+        },
         stats() {
           return { label, entries: store.size, ttlMs: ttl };
         }
@@ -755,8 +758,8 @@ var require_memoryCache = __commonJS({
 var require_fetchCsvText = __commonJS({
   "lib/fetchCsvText.js"(exports, module) {
     var { createMemoryCache } = require_memoryCache();
-    var csvTextCache = createMemoryCache(
-      Number(process.env.CSV_CACHE_TTL_MS) || 10 * 60 * 1e3,
+    var csvTextCache2 = createMemoryCache(
+      Number("600000") || 10 * 60 * 1e3,
       "csv-text"
     );
     var fetchCsvTextOverride = null;
@@ -764,9 +767,9 @@ var require_fetchCsvText = __commonJS({
       fetchCsvTextOverride = typeof fn === "function" ? fn : null;
     }
     function csvFetchTimeoutMs() {
-      const fromEnv = Number(process.env.CSV_FETCH_TIMEOUT_MS);
+      const fromEnv = Number("90000");
       if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (process.env.STATIC_EXPORT === "1") return 9e4;
+      if (true) return 9e4;
       return 0;
     }
     function logCsvFetchFailure(kind, url, detail) {
@@ -822,9 +825,9 @@ var require_fetchCsvText = __commonJS({
       if (fetchCsvTextOverride) {
         return fetchCsvTextOverride(safeUrl);
       }
-      return csvTextCache.get(safeUrl, () => fetchUrlText(safeUrl));
+      return csvTextCache2.get(safeUrl, () => fetchUrlText(safeUrl));
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    module.exports = { fetchCsvText, csvTextCache: csvTextCache2, setFetchCsvTextOverride };
   }
 });
 
@@ -4022,7 +4025,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       DFS_OFFENSE_RATING_WEIGHT_2026
     } = require_dfs();
     var {
-      SCHEDULE_URL,
+      SCHEDULE_URL: SCHEDULE_URL2,
       HIST_2025_STATS_URL,
       SCHEDULE_CALENDAR_YEAR,
       resolveCareerCsvSource
@@ -4249,8 +4252,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       for (const b of bytes) binary += String.fromCharCode(b);
       return btoa(binary);
     }
-    async function loadWeeklySchedule() {
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL), loadTeamRosters()]);
+    async function loadWeeklySchedule2() {
+      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL2), loadTeamRosters()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
         (a, b) => a.localeCompare(b)
@@ -4581,7 +4584,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
         load2026StatsByPlayer(),
-        loadWeeklySchedule(),
+        loadWeeklySchedule2(),
         load2026GamelogsByPlayer(),
         getCachedPlayerReplacements2()
       ]);
@@ -4624,12 +4627,138 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     module.exports = {
       loadDfsLeaderboardScoringContext,
       getCachedDfsLeaderboardScoringContext: getCachedDfsLeaderboardScoringContext2,
-      loadWeeklySchedule,
+      loadWeeklySchedule: loadWeeklySchedule2,
       setNodeCareerReader,
       loadCareerByPlayer,
       load2025HistoricalByPlayer,
       buildParsedScheduleGames,
       fetchCsvRows
+    };
+  }
+});
+
+// lib/matchupGameResult.js
+var require_matchupGameResult = __commonJS({
+  "lib/matchupGameResult.js"(exports, module) {
+    "use strict";
+    var { normalizeScheduleTeamId } = require_teamRosters();
+    var { enrichMatchupPredictionLines: enrichMatchupPredictionLines2 } = require_matchupPredict();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function parseLineNumber(value) {
+      const n = Number(String(value ?? "").replace(/[^\d.-]/g, ""));
+      return Number.isFinite(n) ? n : null;
+    }
+    function isParsedGameFinished2(game) {
+      return game != null && Number.isFinite(game.awayScore) && Number.isFinite(game.homeScore);
+    }
+    function findParsedGameForMatchup2(parsedGames, selectedGame, viewIso = null) {
+      if (!selectedGame || !parsedGames?.length) return null;
+      const awayId = normalizeScheduleTeamId(selectedGame.awayTeamId);
+      const homeId = normalizeScheduleTeamId(selectedGame.homeTeamId);
+      const gameId = safeText(selectedGame.gameId);
+      const iso = safeText(selectedGame.isoDate || viewIso);
+      const matchesTeams = (g) => normalizeScheduleTeamId(g.awayId) === awayId && normalizeScheduleTeamId(g.homeId) === homeId;
+      if (gameId) {
+        const byId = parsedGames.find((g) => safeText(g.gameId) === gameId && matchesTeams(g));
+        if (byId) return byId;
+      }
+      if (iso) {
+        const byIso = parsedGames.find((g) => matchesTeams(g) && g.isoDate === iso);
+        if (byIso) return byIso;
+      }
+      const sameTeams = parsedGames.filter(matchesTeams);
+      if (sameTeams.length === 1) return sameTeams[0];
+      return null;
+    }
+    function betStatusFromCompare(actual, line, pickHigher) {
+      if (actual == null || line == null) return null;
+      if (Math.abs(actual - line) < 1e-9) return "push";
+      if (pickHigher) return actual > line ? "hit" : "miss";
+      return actual < line ? "hit" : "miss";
+    }
+    function gradeRunLine(actualMarginForFavorite, spread) {
+      if (actualMarginForFavorite == null || spread == null) return null;
+      if (Math.abs(actualMarginForFavorite - spread) < 1e-9) return "push";
+      return actualMarginForFavorite > spread ? "hit" : "miss";
+    }
+    function gradeMatchupModelBets2(parsedGame, prediction, awayLabel, homeLabel) {
+      if (!isParsedGameFinished2(parsedGame) || !prediction) return null;
+      enrichMatchupPredictionLines2(prediction);
+      const awayScore = parsedGame.awayScore;
+      const homeScore = parsedGame.homeScore;
+      const actualTotal = awayScore + homeScore;
+      const marginHome = homeScore - awayScore;
+      const marginAway = awayScore - homeScore;
+      let winnerSide = null;
+      if (awayScore > homeScore) winnerSide = "away";
+      else if (homeScore > awayScore) winnerSide = "home";
+      else winnerSide = "tie";
+      const awayWinPct = Number(prediction.winPct?.away);
+      const homeWinPct = Number(prediction.winPct?.home);
+      const mlFavoriteSide = prediction.favoriteSide || (awayWinPct > homeWinPct ? "away" : homeWinPct > awayWinPct ? "home" : null);
+      const ouLine = parseLineNumber(prediction.lines?.overUnder);
+      const projectedTotal = parseLineNumber(prediction.projectedRuns?.total);
+      const ouPick = ouLine != null && projectedTotal != null ? projectedTotal > ouLine ? "over" : projectedTotal < ouLine ? "under" : "push" : null;
+      let ouStatus = null;
+      if (ouLine != null && ouPick && ouPick !== "push") {
+        ouStatus = ouPick === "over" ? betStatusFromCompare(actualTotal, ouLine, true) : betStatusFromCompare(actualTotal, ouLine, false);
+      } else if (ouLine != null && actualTotal === ouLine) {
+        ouStatus = "push";
+      }
+      let ouActualSide = null;
+      if (ouLine != null && Number.isFinite(actualTotal)) {
+        if (actualTotal > ouLine) ouActualSide = "over";
+        else if (actualTotal < ouLine) ouActualSide = "under";
+        else ouActualSide = "push";
+      }
+      const runLine = prediction.lines?.runLine || {};
+      const runLineSide = runLine.side;
+      const runLineSpread = parseLineNumber(runLine.value);
+      let runLineStatus = null;
+      if (runLineSide && runLineSpread != null) {
+        const favMargin = runLineSide === "home" ? marginHome : marginAway;
+        runLineStatus = gradeRunLine(favMargin, runLineSpread);
+      }
+      const moneylineAwayStatus = winnerSide === "tie" ? "push" : winnerSide === "away" ? "hit" : winnerSide ? "miss" : null;
+      const moneylineHomeStatus = winnerSide === "tie" ? "push" : winnerSide === "home" ? "hit" : winnerSide ? "miss" : null;
+      const modelMoneylineStatus = mlFavoriteSide === "away" ? moneylineAwayStatus : mlFavoriteSide === "home" ? moneylineHomeStatus : null;
+      return {
+        awayScore,
+        homeScore,
+        total: actualTotal,
+        winnerSide,
+        winnerLabel: winnerSide === "away" ? awayLabel : winnerSide === "home" ? homeLabel : "Tie",
+        awayLabel,
+        homeLabel,
+        bets: {
+          overUnder: {
+            line: prediction.lines?.overUnder ?? "\u2014",
+            pick: ouPick,
+            actualTotal,
+            actualSide: ouActualSide,
+            status: ouStatus
+          },
+          runLine: {
+            side: runLineSide,
+            line: runLine.value ?? "\u2014",
+            status: runLineStatus
+          },
+          moneyline: {
+            favoriteSide: mlFavoriteSide,
+            status: modelMoneylineStatus
+          },
+          moneylineAway: { status: moneylineAwayStatus },
+          moneylineHome: { status: moneylineHomeStatus }
+        },
+        modelPrediction: prediction
+      };
+    }
+    module.exports = {
+      isParsedGameFinished: isParsedGameFinished2,
+      findParsedGameForMatchup: findParsedGameForMatchup2,
+      gradeMatchupModelBets: gradeMatchupModelBets2
     };
   }
 });
@@ -4641,6 +4770,9 @@ var import_matchupLineupClient = __toESM(require_matchupLineupClient(), 1);
 var import_matchupPredict = __toESM(require_matchupPredict(), 1);
 var import_playerReplacements = __toESM(require_playerReplacements(), 1);
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
+var import_matchupGameResult = __toESM(require_matchupGameResult(), 1);
+var import_sheetUrls = __toESM(require_sheetUrls(), 1);
+var import_fetchCsvText = __toESM(require_fetchCsvText(), 1);
 function mapFromObject(obj) {
   return new Map(Object.entries(obj || {}));
 }
@@ -4756,18 +4888,109 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   prediction.homeLabel = ctx.homeLabel;
   return prediction;
 }
+var DEFAULT_SCORE_POLL_MS = Number("90000") || 9e4;
+function selectedGameFromCtx(ctx) {
+  if (!ctx) return null;
+  return {
+    awayTeamId: ctx.awayBaseProfile?.teamId,
+    homeTeamId: ctx.homeBaseProfile?.teamId,
+    isoDate: ctx.gameIsoDate,
+    gameId: ctx.gameId || ""
+  };
+}
+function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAULT_SCORE_POLL_MS }) {
+  if (!ctx || ctx.isFinishedGame) return () => {
+  };
+  let stopped = false;
+  let timer = null;
+  async function check() {
+    if (stopped || ctx.isFinishedGame) return;
+    try {
+      import_fetchCsvText.csvTextCache.invalidate(import_sheetUrls.SCHEDULE_URL);
+      const schedule = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
+      const parsedGame = (0, import_matchupGameResult.findParsedGameForMatchup)(
+        schedule.parsedGames,
+        selectedGameFromCtx(ctx),
+        ctx.gameIsoDate
+      );
+      if (!(0, import_matchupGameResult.isParsedGameFinished)(parsedGame)) return;
+      const prediction = typeof getPrediction === "function" ? getPrediction() : ctx.gameResult?.modelPrediction;
+      if (!prediction) return;
+      const gameResult = (0, import_matchupGameResult.gradeMatchupModelBets)(
+        parsedGame,
+        prediction,
+        ctx.awayLabel,
+        ctx.homeLabel
+      );
+      if (!gameResult) return;
+      ctx.isFinishedGame = true;
+      ctx.gameResult = gameResult;
+      stopped = true;
+      if (timer) clearInterval(timer);
+      if (typeof onFinished === "function") onFinished(gameResult);
+    } catch (err) {
+      console.error("Matchup score poll failed", err);
+    }
+  }
+  void check();
+  timer = window.setInterval(() => {
+    void check();
+  }, Math.max(3e4, Number(pollMs) || DEFAULT_SCORE_POLL_MS));
+  return () => {
+    stopped = true;
+    if (timer) clearInterval(timer);
+  };
+}
+var scoreWatchStop = null;
+function benchNormsFromForm() {
+  function parseList(value) {
+    return String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  const awayInput = document.getElementById("awayMissing");
+  const homeInput = document.getElementById("homeMissing");
+  return {
+    away: parseList(awayInput?.value),
+    home: parseList(homeInput?.value)
+  };
+}
+function autoStartScoreWatcher() {
+  if (scoreWatchStop) return;
+  const ctx = typeof window !== "undefined" ? window.__MATCHUP_CLIENT__ : null;
+  if (!ctx || ctx.isFinishedGame) return;
+  if (!document.querySelector(".matchup-prediction:not(.matchup-prediction--final)")) return;
+  scoreWatchStop = watchMatchupLiveScores({
+    ctx,
+    getPrediction: () => {
+      const { away, home } = benchNormsFromForm();
+      return predictFromPayload(ctx, away, home);
+    },
+    onFinished: (gameResult) => {
+      window.MmsMatchupPredictorUi?.renderGameResultUi?.(gameResult);
+    }
+  });
+}
 if (typeof window !== "undefined") {
   window.MmsMatchupPredictor = {
     predictFromPayload,
     buildLineupEnrichment: import_matchupLineupClient.buildMatchupLineupEnrichment,
-    hydrateMatchupReplacements
+    hydrateMatchupReplacements,
+    watchMatchupLiveScores
   };
+  const kickScoreWatch = () => {
+    window.setTimeout(autoStartScoreWatcher, 1500);
+  };
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", kickScoreWatch);
+  } else {
+    kickScoreWatch();
+  }
 }
 var export_buildMatchupLineupEnrichment = import_matchupLineupClient.buildMatchupLineupEnrichment;
 export {
   export_buildMatchupLineupEnrichment as buildMatchupLineupEnrichment,
   hydrateMatchupReplacements,
-  predictFromPayload
+  predictFromPayload,
+  watchMatchupLiveScores
 };
 /*! Bundled license information:
 

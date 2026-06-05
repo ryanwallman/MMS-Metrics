@@ -19,6 +19,12 @@ await esbuild.build({
   outfile: path.join(root, "public/js/matchup-predictor-client.mjs"),
   logLevel: "info",
   banner: { js: "var process={env:{}};" },
+  define: {
+    "process.env.CSV_CACHE_TTL_MS": '"600000"',
+    "process.env.STATIC_EXPORT": '"1"',
+    "process.env.CSV_FETCH_TIMEOUT_MS": '"90000"',
+    "process.env.MATCHUP_SCORE_POLL_MS": '"90000"',
+  },
 });
 
 console.log("Wrote public/js/matchup-predictor-client.mjs");

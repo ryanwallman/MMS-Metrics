@@ -390,6 +390,174 @@
     });
   }
 
+  function renderBetStatus(status) {
+    if (status === "hit") {
+      return '<span class="matchup-bet-tag matchup-bet-tag--hit">Hit</span>';
+    }
+    if (status === "miss") {
+      return '<span class="matchup-bet-tag matchup-bet-tag--miss">Miss</span>';
+    }
+    if (status === "push") {
+      return '<span class="matchup-bet-tag matchup-bet-tag--push">Push</span>';
+    }
+    return "";
+  }
+
+  function renderOuActualSide(actualSide) {
+    if (actualSide === "over") {
+      return '<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--over">Over</span>';
+    }
+    if (actualSide === "under") {
+      return '<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--under">Under</span>';
+    }
+    if (actualSide === "push") {
+      return '<span class="matchup-bet-tag matchup-ou-side matchup-ou-side--push">Push</span>';
+    }
+    return "";
+  }
+
+  function renderGameResultUi(gameResult) {
+    if (!gameResult) return;
+    const section = document.querySelector(".matchup-prediction");
+    if (!section) return;
+
+    const gr = gameResult;
+    const mp = gr.modelPrediction || {};
+    const bets = gr.bets || {};
+    const ou = bets.overUnder || {};
+    const rl = bets.runLine || {};
+    const ml = bets.moneyline || {};
+    const mlAway = bets.moneylineAway || {};
+    const mlHome = bets.moneylineHome || {};
+    const rlSide = rl.side;
+    const winnerSide = gr.winnerSide;
+
+    const awayWinnerClass =
+      winnerSide === "away" ? " matchup-pred-team--winner" : "";
+    const homeWinnerClass =
+      winnerSide === "home" ? " matchup-pred-team--winner" : "";
+
+    let winnerTeamCell = "";
+    if (winnerSide === "away") {
+      winnerTeamCell =
+        '<td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>' +
+        escapeHtml(gr.awayLabel) +
+        "</td>";
+    } else if (winnerSide === "home") {
+      winnerTeamCell =
+        '<td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>' +
+        escapeHtml(gr.homeLabel) +
+        "</td>";
+    } else {
+      winnerTeamCell = '<td class="matchup-lines-team matchup-lines-team--both">Tie</td>';
+    }
+
+    let runLineTeamCell = "";
+    if (rlSide === "away") {
+      runLineTeamCell =
+        '<td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>' +
+        escapeHtml(gr.awayLabel) +
+        "</td>";
+    } else if (rlSide === "home") {
+      runLineTeamCell =
+        '<td class="matchup-lines-team matchup-lines-team--home matchup-lines-team--favorite"><span class="matchup-side-tag">Home</span>' +
+        escapeHtml(gr.homeLabel) +
+        "</td>";
+    } else {
+      runLineTeamCell = '<td class="matchup-lines-team">—</td>';
+    }
+
+    const ouPickLabel =
+      ou.pick === "over" ? "Over" : ou.pick === "under" ? "Under" : "—";
+    const mlAwayLine = mp.lines?.moneylineAway || "—";
+    const mlHomeLine = mp.lines?.moneylineHome || "—";
+
+    section.className = "matchup-prediction matchup-predictor-panel matchup-prediction--final";
+    section.innerHTML =
+      "<h2>Final result</h2>" +
+      '<p class="matchup-prediction-note">This game is complete. Scores are from the schedule sheet. Model lines use stats and records through the day before this game (frozen pre-game snapshot) and are graded against the actual outcome.</p>' +
+      '<div class="matchup-pred-win-row matchup-pred-win-row--final">' +
+      '<div class="matchup-pred-team matchup-pred-away' +
+      awayWinnerClass +
+      '"><span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>' +
+      escapeHtml(gr.awayLabel) +
+      '</span><span class="matchup-pred-score">' +
+      escapeHtml(gr.awayScore) +
+      "</span></div>" +
+      '<div class="matchup-pred-team matchup-pred-home' +
+      homeWinnerClass +
+      '"><span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>' +
+      escapeHtml(gr.homeLabel) +
+      '</span><span class="matchup-pred-score">' +
+      escapeHtml(gr.homeScore) +
+      "</span></div></div>" +
+      '<div class="page-table-wrap"><table class="matchup-pred-lines page-table"><thead><tr><th>Line</th><th>Team / pick</th><th>Value</th><th>Result</th></tr></thead><tbody>' +
+      '<tr class="matchup-lines-row--final-score"><td>Final score</td>' +
+      winnerTeamCell +
+      '<td class="matchup-lines-value matchup-lines-score"><span class="matchup-score-runs ' +
+      (winnerSide === "away" ? "matchup-score-runs--winner" : "matchup-score-runs--loser") +
+      '">' +
+      escapeHtml(gr.awayScore) +
+      '</span><span class="matchup-score-sep">–</span><span class="matchup-score-runs ' +
+      (winnerSide === "home" ? "matchup-score-runs--winner" : "matchup-score-runs--loser") +
+      '">' +
+      escapeHtml(gr.homeScore) +
+      '</span></td><td class="matchup-bet-result">Actual</td></tr>' +
+      "<tr><td>Over / under (total runs)</td>" +
+      '<td class="matchup-lines-team matchup-lines-team--both">' +
+      escapeHtml(ouPickLabel) +
+      "</td>" +
+      '<td class="matchup-lines-value"><strong>O/U ' +
+      escapeHtml(ou.line) +
+      "</strong></td>" +
+      '<td class="matchup-bet-result"><span class="matchup-bet-actual">' +
+      escapeHtml(gr.total) +
+      " runs</span>" +
+      renderOuActualSide(ou.actualSide) +
+      "</td></tr>" +
+      '<tr class="matchup-lines-row--runline"><td>Run line</td>' +
+      runLineTeamCell +
+      '<td class="matchup-lines-value"><strong>' +
+      escapeHtml(rl.line) +
+      "</strong></td>" +
+      '<td class="matchup-bet-result">' +
+      renderBetStatus(rl.status) +
+      "</td></tr>" +
+      "<tr><td>Moneyline</td>" +
+      '<td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>' +
+      escapeHtml(gr.awayLabel) +
+      (ml.favoriteSide === "away" ? ' <span class="matchup-bet-model-pick">Model pick</span>' : "") +
+      "</td>" +
+      '<td class="matchup-lines-value"><strong>' +
+      escapeHtml(mlAwayLine) +
+      "</strong></td>" +
+      '<td class="matchup-bet-result">' +
+      renderBetStatus(mlAway.status) +
+      "</td></tr>" +
+      "<tr><td>Moneyline</td>" +
+      '<td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>' +
+      escapeHtml(gr.homeLabel) +
+      (ml.favoriteSide === "home" ? ' <span class="matchup-bet-model-pick">Model pick</span>' : "") +
+      "</td>" +
+      '<td class="matchup-lines-value"><strong>' +
+      escapeHtml(mlHomeLine) +
+      "</strong></td>" +
+      '<td class="matchup-bet-result">' +
+      renderBetStatus(mlHome.status) +
+      "</td></tr></tbody></table></div>";
+
+    const hint = document.querySelector(".matchup-roster-hint");
+    if (hint) {
+      hint.textContent =
+        "Rosters for this completed game. Players marked MG (missed game) in the game logs are shown on the bench.";
+    }
+
+    document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+      btn.disabled = true;
+      btn.setAttribute("aria-disabled", "true");
+    });
+  }
+
   window.MmsMatchupPredictorUi = {
     updatePredictionUi,
     updateActiveCounts,
@@ -397,5 +565,6 @@
     applyReplacementDisplay,
     ensurePredictorRecordBlock,
     ensurePredictionPanelStyles,
+    renderGameResultUi,
   };
 })();
