@@ -364,6 +364,15 @@
     host.innerHTML = html;
   }
 
+  function formatPredictorRecordValue(data) {
+    return (
+      `${data.wins}–${data.losses}` +
+      (data.winPct != null
+        ? `<span class="matchup-predictor-record-pct"> (${data.winPct}%)</span>`
+        : "")
+    );
+  }
+
   function ensurePredictorRecordBlock(record) {
     const data = record || window.__MATCHUP_PREDICTOR_RECORD__;
     if (!data || !data.decided) return;
@@ -371,17 +380,31 @@
     const form = document.getElementById("matchupForm");
     const controls = form && form.querySelector(".matchup-predictor-controls");
     if (!form || !controls) return;
-    const valueHtml =
-      `${data.wins}–${data.losses}` +
-      (data.winPct != null
-        ? `<span class="matchup-predictor-record-pct"> (${data.winPct}%)</span>`
-        : "");
     const block = document.createElement("div");
     block.className = "matchup-predictor-record-block matchup-predictor-panel";
+    block.id = "matchupPredictorRecord";
     block.innerHTML =
       '<span class="matchup-predictor-record-label">Season pick record</span>' +
-      `<span class="matchup-predictor-record-value">${valueHtml}</span>`;
+      `<span class="matchup-predictor-record-value">${formatPredictorRecordValue(data)}</span>`;
     form.insertBefore(block, controls);
+  }
+
+  function updatePredictorRecordUi(record) {
+    if (!record || !record.decided) return;
+    window.__MATCHUP_PREDICTOR_RECORD__ = record;
+    let block = document.getElementById("matchupPredictorRecord");
+    if (!block) block = document.querySelector(".matchup-predictor-record-block");
+    if (block) {
+      let valueEl = block.querySelector(".matchup-predictor-record-value");
+      if (!valueEl) {
+        valueEl = document.createElement("span");
+        valueEl.className = "matchup-predictor-record-value";
+        block.appendChild(valueEl);
+      }
+      valueEl.innerHTML = formatPredictorRecordValue(record);
+      return;
+    }
+    ensurePredictorRecordBlock(record);
   }
 
   function ensurePredictionPanelStyles() {
@@ -564,6 +587,7 @@
     updateLineupUi,
     applyReplacementDisplay,
     ensurePredictorRecordBlock,
+    updatePredictorRecordUi,
     ensurePredictionPanelStyles,
     renderGameResultUi,
   };

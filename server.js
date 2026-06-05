@@ -74,6 +74,7 @@ const {
 } = require("./lib/matchupHistoricalSnapshot");
 const { buildMatchupLeagueContext } = require("./lib/matchupLeagueContext");
 const { getMatchupPredictorAudit } = require("./lib/matchupPredictorAudit");
+const { loadLiveMatchupSeasonRecord } = require("./lib/matchupLiveSeasonRecord");
 const {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -2147,60 +2148,12 @@ app.get("/dfs/leaderboard", async (req, res) => {
 });
 
 async function loadMatchupPredictorSeasonRecord() {
-  const [
-    teams,
-    careerByPlayer,
-    hist2025ByPlayer,
-    stats2026ByPlayer,
-    scheduleRows,
-    defenseMap,
-    replacements,
-    gamelogs,
-    captainTeamCodeById,
-  ] = await Promise.all([
-    loadTeamRosters(),
-    loadCareerByPlayer(),
-    load2025HistoricalByPlayer(),
-    load2026StatsByPlayer(),
-    fetchCsvRows(SCHEDULE_URL),
-    loadDefensiveRatingsNormalizedMap(),
-    getCachedPlayerReplacements(),
-    load2026GamelogsByPlayer(),
-    loadCaptainTeamCodeById(),
-  ]);
-  const { byOriginalNorm } = replacements;
-  const teamCodeById = new Map([
-    ...buildTeamCodeById(teams, stats2026ByPlayer),
-    ...captainTeamCodeById,
-  ]);
-  const nameToTeamId = buildNameToTeamIdMap(teams);
-  const rosterByTeamId = buildRosterByTeamId(teams);
-  const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-  const payload = await loadWeeklySchedule();
-  const audit = await getMatchupPredictorAudit({
-    parsedScheduleGames,
-    teams,
-    rosterByTeamId,
-    nameToTeamId,
-    careerByPlayer,
-    hist2025ByPlayer,
-    stats2026ByPlayer,
-    defenseMap,
-    gamelogs,
-    teamCodeById,
-    replacementByOriginalNorm: byOriginalNorm,
-    sundayIsosSorted: payload.sundayIsosSorted,
-  }).catch((err) => {
-    console.error("[MMS] Matchup predictor audit:", err.message || err);
+  try {
+    return await loadLiveMatchupSeasonRecord();
+  } catch (err) {
+    console.error("[MMS] Matchup predictor season record:", err.message || err);
     return null;
-  });
-  if (!audit || audit.decided <= 0) return null;
-  return {
-    wins: audit.wins,
-    losses: audit.losses,
-    decided: audit.decided,
-    winPct: audit.winPct,
-  };
+  }
 }
 
 app.get("/matchup-predictor/season-record.json", async (_req, res) => {

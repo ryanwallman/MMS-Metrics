@@ -25,6 +25,10 @@ import {
 } from "../lib/matchupGameResult.js";
 import { SCHEDULE_URL } from "../lib/sheetUrls.js";
 import { csvTextCache } from "../lib/fetchCsvText.js";
+import {
+  loadLiveMatchupSeasonRecord,
+  countFinishedScheduleGames,
+} from "../lib/matchupLiveSeasonRecord.js";
 
 function mapFromObject(obj) {
   return new Map(Object.entries(obj || {}));
@@ -230,6 +234,41 @@ function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAU
 }
 
 let scoreWatchStop = null;
+let seasonRecordWatchTimer = null;
+let lastFinishedGameCount = null;
+let lastRecordKey = null;
+
+function recordSignature(record) {
+  if (!record) return "";
+  return `${record.wins}|${record.losses}|${record.decided}`;
+}
+
+async function refreshSeasonRecord({ force = false } = {}) {
+  try {
+    if (!force) {
+      csvTextCache.invalidate(SCHEDULE_URL);
+      const schedule = await loadWeeklySchedule();
+      const finishedCount = countFinishedScheduleGames(schedule.parsedGames);
+      if (
+        lastFinishedGameCount != null &&
+        finishedCount === lastFinishedGameCount &&
+        lastRecordKey
+      ) {
+        return;
+      }
+      lastFinishedGameCount = finishedCount;
+    }
+
+    const record = await loadLiveMatchupSeasonRecord({ refreshSchedule: force });
+    if (!record) return;
+    const key = recordSignature(record);
+    if (key === lastRecordKey) return;
+    lastRecordKey = key;
+    window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
+  } catch (err) {
+    console.error("Matchup season record refresh failed", err);
+  }
+}
 
 function benchNormsFromForm() {
   function parseList(value) {
@@ -260,8 +299,19 @@ function autoStartScoreWatcher() {
     },
     onFinished: (gameResult) => {
       window.MmsMatchupPredictorUi?.renderGameResultUi?.(gameResult);
+      void refreshSeasonRecord({ force: true });
     },
   });
+}
+
+function autoStartSeasonRecordWatcher() {
+  if (seasonRecordWatchTimer) return;
+  if (!document.getElementById("matchupForm")) return;
+
+  void refreshSeasonRecord({ force: true });
+  seasonRecordWatchTimer = window.setInterval(() => {
+    void refreshSeasonRecord();
+  }, Math.max(30_000, DEFAULT_SCORE_POLL_MS));
 }
 
 if (typeof window !== "undefined") {
@@ -270,15 +320,17 @@ if (typeof window !== "undefined") {
     buildLineupEnrichment: buildMatchupLineupEnrichment,
     hydrateMatchupReplacements,
     watchMatchupLiveScores,
+    refreshSeasonRecord,
   };
 
-  const kickScoreWatch = () => {
+  const kickLiveUpdates = () => {
     window.setTimeout(autoStartScoreWatcher, 1500);
+    window.setTimeout(autoStartSeasonRecordWatcher, 2000);
   };
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", kickScoreWatch);
+    document.addEventListener("DOMContentLoaded", kickLiveUpdates);
   } else {
-    kickScoreWatch();
+    kickLiveUpdates();
   }
 }
 
@@ -287,4 +339,5 @@ export {
   buildMatchupLineupEnrichment,
   hydrateMatchupReplacements,
   watchMatchupLiveScores,
+  refreshSeasonRecord,
 };
