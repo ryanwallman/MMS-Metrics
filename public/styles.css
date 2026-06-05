@@ -1717,6 +1717,113 @@ body > main.page-main {
   max-width: 720px;
 }
 
+/* --- Playoff bracket (power rankings) --- */
+.playoff-bracket-section {
+  margin-top: 40px;
+}
+
+.playoff-bracket-block {
+  margin-top: 20px;
+}
+
+.playoff-bracket-subhead {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.playoff-bracket-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.playoff-bracket-grid--pig {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  max-width: 720px;
+}
+
+.playoff-bracket-grid--main {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.playoff-bracket-matchup {
+  border: 1px solid var(--mms-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #fff;
+}
+
+.playoff-bracket-matchup--pig {
+  border-color: #f9a8d4;
+  background: linear-gradient(180deg, #fff 0%, #fdf2f8 100%);
+}
+
+.playoff-bracket-matchup-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mms-muted, #64748b);
+}
+
+.playoff-bracket-pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.playoff-bracket-vs {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mms-muted, #64748b);
+  text-transform: uppercase;
+}
+
+.playoff-bracket-team {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.playoff-bracket-team--tbd {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px dashed #f9a8d4;
+  background: #fff7fb;
+}
+
+.playoff-bracket-seed {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mms-brand, #2563eb);
+  letter-spacing: 0.03em;
+}
+
+.playoff-bracket-name {
+  font-weight: 600;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.playoff-bracket-captain,
+.playoff-bracket-record {
+  font-size: 12px;
+  color: var(--mms-muted, #64748b);
+}
+
+@media (max-width: 640px) {
+  .playoff-bracket-pair {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .playoff-bracket-vs {
+    text-align: center;
+  }
+}
+
 .power-rankings-table tbody tr:nth-child(1) td {
   font-weight: normal;
 }

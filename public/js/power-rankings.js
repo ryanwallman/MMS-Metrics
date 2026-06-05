@@ -111,6 +111,79 @@ function renderCurrentTable(rows) {
     </section>`;
 }
 
+function renderBracketTeam(team, seed) {
+  if (!team) {
+    return `<span class="playoff-bracket-team playoff-bracket-team--empty">—</span>`;
+  }
+  const seedLabel = seed != null ? `<span class="playoff-bracket-seed">#${seed}</span>` : "";
+  const captain = team.captain ? `<span class="playoff-bracket-captain">${esc(team.captain)}</span>` : "";
+  const record = team.projectedRecord
+    ? `<span class="playoff-bracket-record">${esc(team.projectedRecord)}</span>`
+    : "";
+  return `<div class="playoff-bracket-team">
+    ${seedLabel}
+    <span class="playoff-bracket-name">${esc(team.teamName)}</span>
+    ${captain}
+    ${record}
+  </div>`;
+}
+
+function renderPlayoffBracket(bracket) {
+  if (!bracket?.ok) {
+    return "";
+  }
+
+  const pigHtml = (bracket.pigGames || [])
+    .map(
+      (g) => `<div class="playoff-bracket-matchup playoff-bracket-matchup--pig">
+      <p class="playoff-bracket-matchup-label">🐷 PIG · #${g.highSeed} vs #${g.lowSeed}</p>
+      <div class="playoff-bracket-pair">
+        ${renderBracketTeam(g.high, g.highSeed)}
+        <span class="playoff-bracket-vs">vs</span>
+        ${renderBracketTeam(g.away, g.lowSeed)}
+      </div>
+    </div>`
+    )
+    .join("");
+
+  const mainHtml = (bracket.mainMatchups || [])
+    .map((m) => {
+      const lowSide = m.lowTbd
+        ? `<div class="playoff-bracket-team playoff-bracket-team--tbd">
+            <span class="playoff-bracket-seed">#${m.lowSeed}</span>
+            <span class="playoff-bracket-name">${esc(m.pigNote || "TBD")}</span>
+          </div>`
+        : renderBracketTeam(m.low, m.lowSeed);
+      return `<div class="playoff-bracket-matchup">
+        <p class="playoff-bracket-matchup-label">#${m.highSeed} vs #${m.lowSeed}</p>
+        <div class="playoff-bracket-pair">
+          ${renderBracketTeam(m.high, m.highSeed)}
+          <span class="playoff-bracket-vs">vs</span>
+          ${lowSide}
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  return `<section class="power-rankings-section playoff-bracket-section">
+      <h2>Projected playoff bracket (round 1)</h2>
+      <p class="power-rankings-note">
+        Based on projected final standings. Seeds <strong>1–${bracket.directPlayoffSeeds}</strong> qualify directly.
+        Seeds <strong>15–18</strong> play in the <strong>play-in game (PIG 🐷)</strong>; the two winners join the top
+        ${bracket.directPlayoffSeeds} for a 16-team bracket (<strong>1 vs 16, 2 vs 15, … 8 vs 9</strong>).
+        Later rounds reseed, so only first-round matchups are shown.
+      </p>
+      <div class="playoff-bracket-block">
+        <h3 class="playoff-bracket-subhead">Play-in games</h3>
+        <div class="playoff-bracket-grid playoff-bracket-grid--pig">${pigHtml}</div>
+      </div>
+      <div class="playoff-bracket-block">
+        <h3 class="playoff-bracket-subhead">First round</h3>
+        <div class="playoff-bracket-grid playoff-bracket-grid--main">${mainHtml}</div>
+      </div>
+    </section>`;
+}
+
 function renderProjectionTable(rows, regularSeasonGames) {
   const body = (rows || [])
     .map(
@@ -186,7 +259,8 @@ function renderExplainer(data) {
 function renderRankingsPanel(data) {
   return `${renderExplainer(data)}
     ${renderCurrentTable(data.currentRankings)}
-    ${renderProjectionTable(data.projectionRows, data.regularSeasonGames)}`;
+    ${renderProjectionTable(data.projectionRows, data.regularSeasonGames)}
+    ${renderPlayoffBracket(data.playoffBracket)}`;
 }
 
 function wireTabs(root) {
