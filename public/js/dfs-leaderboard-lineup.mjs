@@ -545,6 +545,9 @@ var require_memoryCache = __commonJS({
         clear() {
           store.clear();
         },
+        invalidate(key) {
+          store.delete(String(key));
+        },
         stats() {
           return { label, entries: store.size, ttlMs: ttl };
         }

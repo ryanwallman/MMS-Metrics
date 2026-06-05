@@ -9,6 +9,10 @@ import {
 } from "./dfs-lock-countdown.js";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
 import { publicErrorMessage } from "./mms-public-error.js";
+import {
+  applyLockedSlateResultsUi,
+  hideLockedResultsChrome,
+} from "./dfs-lineup-locked-ui.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
@@ -208,10 +212,32 @@ async function main() {
       if (closed) closed.hidden = false;
     }
 
+    if (page) {
+      page.slateToken = data.selectedSlate || requestedToken;
+      page.showSlateStats = !!data.showSlateStats;
+    }
+
+    if (data.showSlateStats) {
+      applyLockedSlateResultsUi(data);
+    } else {
+      hideLockedResultsChrome();
+    }
+
     renderPoolRows(data);
     updateSiteUpdated(data.fetchedAt);
     if (typeof window.initDfsLineupPage === "function") {
       await window.initDfsLineupPage();
+    }
+    if (data.showSlateStats && typeof window.refreshDfsLineupScores === "function") {
+      const byNorm = {};
+      for (const p of data.playerPool || []) {
+        byNorm[p.norm] = {
+          name: p.name,
+          points: p.slatePoints ?? 0,
+          games: p.slateGames ?? 0,
+        };
+      }
+      window.refreshDfsLineupScores(byNorm);
     }
     hideMmsLoadingScreen();
   } catch (err) {

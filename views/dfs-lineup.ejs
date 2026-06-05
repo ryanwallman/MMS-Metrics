@@ -11,7 +11,9 @@
     <%- include("partials/mms-loading-screen", { showMmsLoadingScreen: true }) %>
     <% } %>
 
-    <main class="page-main dfs-page<%= slate && !slate.canEdit ? ' dfs-page--readonly' : '' %><%= (typeof clientSidePool !== 'undefined' && clientSidePool) ? ' mms-page-main--loading' : '' %>">
+    <% const staticClientPool = typeof clientSidePool !== 'undefined' && clientSidePool; %>
+    <% const resultsLayout = staticClientPool || (typeof showSlateStats !== 'undefined' && showSlateStats); %>
+    <main class="page-main dfs-page<%= slate && !slate.canEdit ? ' dfs-page--readonly' : '' %><%= staticClientPool ? ' mms-page-main--loading' : '' %>">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Lineup Builder</h1>
         <div class="dfs-page-head-actions">
@@ -161,8 +163,8 @@
 
           <section class="dfs-lineup-card dfs-top-panel">
             <h2 class="section-heading dfs-lineup-heading">
-              <span class="dfs-lineup-heading-title">Your lineup</span><% if (slate && !slate.canEdit) { %>
-              <span class="dfs-lineup-heading-points" id="lineupHeadingScore">Points: <strong data-points-value><% if (typeof showSlateStats !== 'undefined' && showSlateStats && scored && lineupNorms.length) { %><%= scored.total %><% } else { %>—<% } %></strong></span><% } %>
+              <span class="dfs-lineup-heading-title">Your lineup</span><% if ((slate && !slate.canEdit) || staticClientPool) { %>
+              <span class="dfs-lineup-heading-points" id="lineupHeadingScore"<%= staticClientPool && slate && slate.canEdit ? ' hidden' : '' %>>Points: <strong data-points-value><% if (typeof showSlateStats !== 'undefined' && showSlateStats && scored && lineupNorms.length) { %><%= scored.total %><% } else { %>—<% } %></strong></span><% } %>
             </h2>
             <p class="dfs-budget">
               <span id="salaryUsedLabel">$<%= salaryUsed.toLocaleString() %></span>
@@ -308,8 +310,8 @@
           <script type="application/json" id="lastWeekPointsData"><%- JSON.stringify(lastWeekPreview.byNorm) %></script>
           <% } %>
 
-          <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
-          <section class="dfs-score-card" id="slateScoreCard">
+          <% if (resultsLayout) { %>
+          <section class="dfs-score-card" id="slateScoreCard"<%= staticClientPool && slate && slate.canEdit ? ' hidden' : '' %>>
             <h2 class="section-heading">Your lineup score</h2>
             <% if (!slateStats || !slateStats.hasStats) { %>
             <% if (typeof slateHasBoxScores !== 'undefined' && !slateHasBoxScores) { %>
@@ -341,7 +343,11 @@
         </div>
 
         <% if (!canEdit) { %>
-        <p class="dfs-pool-hidden-notice" role="status">
+        <p class="dfs-pool-hidden-notice" id="dfsPoolHiddenNotice" role="status">
+          The player pool is hidden after the lineup deadline. Your saved lineup and locked salaries are shown above; the leaderboard uses those same prices.
+        </p>
+        <% } else if (staticClientPool) { %>
+        <p class="dfs-pool-hidden-notice" id="dfsPoolHiddenNotice" role="status" hidden>
           The player pool is hidden after the lineup deadline. Your saved lineup and locked salaries are shown above; the leaderboard uses those same prices.
         </p>
         <% } %>
@@ -355,10 +361,10 @@
             <div class="dfs-pool-toolbar-actions">
               <div class="dfs-sort-group" role="group" aria-label="Sort player pool">
                 <span class="dfs-sort-label">Sort</span>
-                <button type="button" class="dfs-sort-btn<%= (typeof showSlateStats !== 'undefined' && showSlateStats) ? '' : ' is-active' %>" data-sort="salary">Salary</button>
+                <button type="button" class="dfs-sort-btn<%= resultsLayout ? '' : ' is-active' %>" data-sort="salary">Salary</button>
                 <button type="button" class="dfs-sort-btn" data-sort="team">Team</button>
-                <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
-                <button type="button" class="dfs-sort-btn is-active" data-sort="points">Points</button>
+                <% if (resultsLayout) { %>
+                <button type="button" class="dfs-sort-btn<%= staticClientPool ? '' : ' is-active' %>" data-sort="points" id="dfsPointsSortBtn"<%= staticClientPool ? ' hidden' : '' %>>Points</button>
                 <% } %>
               </div>
               <label class="dfs-team-filter" id="teamFilterWrap" hidden>
@@ -377,14 +383,14 @@
             <table class="dfs-player-table page-table" id="playerPoolTable">
               <thead>
                 <tr>
-                  <% if (!(typeof showSlateStats !== 'undefined' && showSlateStats)) { %><th></th><% } %>
+                  <% if (!resultsLayout) { %><th></th><% } %>
                   <th>Player</th>
                   <th>Salary</th>
                   <th>Team</th>
                   <th>Field</th>
-                  <% if (typeof showSlateStats !== 'undefined' && showSlateStats) { %>
-                  <th>Pts</th>
-                  <th>Gm</th>
+                  <% if (resultsLayout) { %>
+                  <th class="dfs-pool-stat-col"<%= staticClientPool ? ' hidden' : '' %>>Pts</th>
+                  <th class="dfs-pool-stat-col"<%= staticClientPool ? ' hidden' : '' %>>Gm</th>
                   <% } %>
                   <th>vs</th>
                   <th>Opposing Pitcher</th>
@@ -507,9 +513,16 @@
           const clearBtn = document.getElementById("clearLineupBtn");
           if (clearBtn) clearBtn.disabled = !CAN_EDIT;
         };
-        const SHOW_SLATE_STATS = <%= typeof showSlateStats !== 'undefined' && showSlateStats ? 'true' : 'false' %>;
+        let SHOW_SLATE_STATS =
+          window.__DFS_SHOW_SLATE_STATS__ === true ||
+          <%= typeof showSlateStats !== 'undefined' && showSlateStats ? 'true' : 'false' %>;
         const STORAGE_PREFIX = "mms-dfs-lineup:";
-        const slateKey = "<%= selectedSlate %>";
+        const slateKey = String(
+          (window.__DFS_LINEUP_PAGE__ && window.__DFS_LINEUP_PAGE__.slateToken) ||
+            "<%= selectedSlate %>"
+        )
+          .trim()
+          .toUpperCase();
         const form = document.getElementById("dfsSlateForm");
         const lineupInput = document.getElementById("lineupInput");
         const pool = new Map();
@@ -706,6 +719,22 @@
         } catch {
           slatePointsByNorm = null;
         }
+
+        window.refreshDfsLineupScores = function (byNorm) {
+          SHOW_SLATE_STATS = true;
+          if (byNorm) slatePointsByNorm = byNorm;
+          const heading = document.getElementById("lineupHeadingScore");
+          if (heading) heading.hidden = false;
+          const scoreCard = document.getElementById("slateScoreCard");
+          if (scoreCard) scoreCard.hidden = false;
+          const ptsBtn = document.getElementById("dfsPointsSortBtn");
+          if (ptsBtn) ptsBtn.hidden = false;
+          document.querySelectorAll(".dfs-pool-stat-col").forEach((th) => {
+            th.hidden = false;
+          });
+          updateSlateScoreCard();
+          syncUi();
+        };
 
         function computeLineupPointsTotal() {
           if (!slatePointsByNorm || !lineup.length) return null;
@@ -1300,7 +1329,9 @@
         }
 
         initLineupFromStorage();
-        setSortMode(SHOW_SLATE_STATS ? "points" : "salary");
+        setSortMode(
+          SHOW_SLATE_STATS || window.__DFS_SHOW_SLATE_STATS__ === true ? "points" : "salary"
+        );
 
         await waitForLineupStore();
         await initLineupForPage();

@@ -3121,6 +3121,7 @@ var require_dfsLineupPageData = __commonJS({
       scoreLineupFromPointsMap,
       resolvePreviousDfsSlate,
       referenceIsoForScheduleYear,
+      slateHasGamelogDates,
       DFS_LINEUP_SIZE,
       DFS_SALARY_CAP
     } = require_dfs();
@@ -3208,6 +3209,7 @@ var require_dfsLineupPageData = __commonJS({
       }
       const fetchedAt = (/* @__PURE__ */ new Date()).toISOString();
       const lockDeadline = slate.canEdit ? resolveNextLineupLockDeadline(fullSlateOptions, slate, nowMs) : { deadlineMs: null, deadlineLabel: "" };
+      const scored = showSlateStats && norms.length ? scoreLineupFromPointsMap(norms, poolByNorm, slateStats.byNorm) : null;
       return {
         fetchedAt,
         lockDeadlineMs: lockDeadline.deadlineMs,
@@ -3219,12 +3221,15 @@ var require_dfsLineupPageData = __commonJS({
         selectedSlate: slate.viewToken || token,
         playerPool: playerPoolWithStats,
         showSlateStats,
+        slateStats,
+        scored,
         lineupNorms: norms,
         salaryUsed,
         salaryCap: DFS_SALARY_CAP,
         salaryRemaining: DFS_SALARY_CAP - salaryUsed,
         lastWeekPreview,
-        hasGamelogData: gamelogs.byNorm.size > 0
+        hasGamelogData: gamelogs.byNorm.size > 0,
+        slateHasBoxScores: slateHasGamelogDates(slate, gamelogs)
       };
     }
     module.exports = { buildDfsLineupPageData: buildDfsLineupPageData2, normalizePlayerName };

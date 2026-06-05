@@ -33,8 +33,9 @@ function siteUrl(path) {
 }
 
 function weekFromUrl() {
-  const q = new URLSearchParams(window.location.search).get("week");
-  if (q) return String(q).trim().toUpperCase();
+  const q = new URLSearchParams(window.location.search);
+  const week = q.get("week") || q.get("slate");
+  if (week) return String(week).trim().toUpperCase();
   const m = window.location.pathname.match(/\/dfs\/leaderboard\/week\/([^/]+)\/?$/i);
   if (m) return m[1].toUpperCase();
   return "";
@@ -146,11 +147,29 @@ function renderPlayerCell(row, week, locked) {
   return name;
 }
 
+function updateWeeklyTableHeaders(locked) {
+  const thead = document.querySelector(".dfs-leaderboard-table thead tr");
+  if (!thead) return;
+  const hasSalary = [...thead.children].some(
+    (th) => th.textContent.trim() === "Salary at save"
+  );
+  if (locked && !hasSalary) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = "Salary at save";
+    thead.appendChild(th);
+  } else if (!locked && hasSalary) {
+    const last = thead.lastElementChild;
+    if (last && last.textContent.trim() === "Salary at save") last.remove();
+  }
+}
+
 function renderWeeklyTable(rows, data) {
   const tbody = document.getElementById("leaderboardWeeklyBody");
   if (!tbody) return;
 
   const locked = slateLocked(data, page);
+  updateWeeklyTableHeaders(locked);
   const week = data.selectedWeek || page?.selectedWeek || "";
   const cols = tableColspan(locked);
 
