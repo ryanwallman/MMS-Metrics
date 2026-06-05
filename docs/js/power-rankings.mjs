@@ -748,6 +748,9 @@ var require_memoryCache = __commonJS({
         clear() {
           store.clear();
         },
+        invalidate(key) {
+          store.delete(String(key));
+        },
         stats() {
           return { label, entries: store.size, ttlMs: ttl };
         }
@@ -4411,6 +4414,33 @@ var require_matchupPredict = __commonJS({
         score: proj.impliedScore
       };
     }
+    function alignProjectedRunsToWinFavorite(prediction) {
+      if (!prediction?.projectedRuns || !prediction?.winPct) return prediction;
+      const awayR = Number(prediction.projectedRuns.away);
+      const homeR = Number(prediction.projectedRuns.home);
+      if (!Number.isFinite(awayR) || !Number.isFinite(homeR)) return prediction;
+      const homeFavoriteByWin = prediction.winPct.home >= prediction.winPct.away;
+      const runsAligned = homeFavoriteByWin && homeR > awayR || !homeFavoriteByWin && awayR > homeR;
+      if (runsAligned) return prediction;
+      let newAway = awayR;
+      let newHome = homeR;
+      if (homeFavoriteByWin) newHome = awayR + 0.5;
+      else newAway = homeR + 0.5;
+      const runs = finalizeRunProjection(newAway, newHome);
+      if (!runs) return prediction;
+      prediction.projectedRuns = {
+        away: runs.awayDisplay,
+        home: runs.homeDisplay,
+        total: runs.totalDisplay,
+        marginHome: runs.marginDisplay
+      };
+      prediction.lines = prediction.lines || {};
+      prediction.lines.overUnder = runs.overUnder;
+      prediction.lines.impliedScore = runs.impliedScore;
+      prediction.lines.finalScore = null;
+      prediction.lines.runLine = null;
+      return enrichMatchupPredictionLines(prediction);
+    }
     function enrichMatchupPredictionLines(prediction) {
       if (!prediction?.projectedRuns || !prediction?.winPct) return prediction;
       const awayR = Number(prediction.projectedRuns.away);
@@ -4659,6 +4689,7 @@ var require_matchupPredict = __commonJS({
       predictMatchupGame,
       predictSeasonGameWinProbs,
       enrichMatchupPredictionLines,
+      alignProjectedRunsToWinFavorite,
       americanMoneylinePair,
       roundMatchupN,
       finishedScheduleGameDedupeKey
@@ -4679,9 +4710,9 @@ var require_offenseRankingsPage = __commonJS({
     }
     var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
     var OFFENSE_RATING_WEIGHT_2026 = 0.3;
-    var TEAM_OVERALL_WEIGHT_PLAYER = 0.4;
-    var TEAM_OVERALL_WEIGHT_RECORD = 0.45;
-    var TEAM_OVERALL_WEIGHT_SOS = 0.15;
+    var TEAM_OVERALL_WEIGHT_PLAYER = 0.5;
+    var TEAM_OVERALL_WEIGHT_RECORD = 0.4;
+    var TEAM_OVERALL_WEIGHT_SOS = 0.1;
     var OFFENSE_METRIC_WEIGHTS = Object.freeze({
       ops: 0.52,
       iso: 0.16,

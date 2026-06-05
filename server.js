@@ -1050,9 +1050,9 @@ async function loadCareerByPlayer() {
 const OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
 const OFFENSE_RATING_WEIGHT_2026 = 0.3;
 /** Team overall +/- when schedule exists: player roster rating + record + SOS (sum = 1). */
-const TEAM_OVERALL_WEIGHT_PLAYER = 0.4;
-const TEAM_OVERALL_WEIGHT_RECORD = 0.45;
-const TEAM_OVERALL_WEIGHT_SOS = 0.15;
+const TEAM_OVERALL_WEIGHT_PLAYER = 0.5;
+const TEAM_OVERALL_WEIGHT_RECORD = 0.4;
+const TEAM_OVERALL_WEIGHT_SOS = 0.1;
 const REGULAR_SEASON_GAMES = 22;
 /** Weights on standardized metrics within each era composite (sum = 1). */
 const OFFENSE_METRIC_WEIGHTS = Object.freeze({
