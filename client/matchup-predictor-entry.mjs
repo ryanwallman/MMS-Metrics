@@ -9,6 +9,7 @@ import {
   enrichMatchupPredictionLines,
   americanMoneylinePair,
 } from "../lib/matchupPredict.js";
+import { applyWinProbCalibration } from "../lib/matchupWinProbCalibration.js";
 import {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -147,6 +148,14 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   );
 
   let prediction = predictMatchupGame(awayProfile, homeProfile, ctx.leagueNorms, ctx.runBase);
+  if (!ctx.isFinishedGame && ctx.calibrationWeights?.length) {
+    prediction = applyWinProbCalibration(
+      awayProfile,
+      homeProfile,
+      prediction,
+      ctx.calibrationWeights
+    );
+  }
   enrichMatchupPredictionLines(prediction);
   const moneylines = americanMoneylinePair(prediction.winPct.away / 100, prediction.winPct.home / 100);
   prediction.lines.moneylineAway = moneylines.away;

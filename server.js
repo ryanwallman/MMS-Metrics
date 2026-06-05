@@ -73,7 +73,11 @@ const {
   buildStats2026ByPlayerFromGamelogsBefore,
 } = require("./lib/matchupHistoricalSnapshot");
 const { buildMatchupLeagueContext } = require("./lib/matchupLeagueContext");
-const { getMatchupPredictorAudit } = require("./lib/matchupPredictorAudit");
+const {
+  getMatchupPredictorAudit,
+  getMatchupCalibrationForProjections,
+} = require("./lib/matchupPredictorAudit");
+const { applyWinProbCalibration } = require("./lib/matchupWinProbCalibration");
 const {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -2195,11 +2199,13 @@ async function loadMatchupPredictorSeasonRecord() {
     return null;
   });
   if (!audit || audit.decided <= 0) return null;
+  const record =
+    audit.calibratedRecord?.decided > 0 ? audit.calibratedRecord : audit;
   return {
-    wins: audit.wins,
-    losses: audit.losses,
-    decided: audit.decided,
-    winPct: audit.winPct,
+    wins: record.wins,
+    losses: record.losses,
+    decided: record.decided,
+    winPct: record.winPct,
   };
 }
 
@@ -2322,7 +2328,7 @@ async function renderMatchupPredictorPage(req, res) {
     const rosterByTeamId = buildRosterByTeamId(teams);
 
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-    const predictorAuditPromise = getMatchupPredictorAudit({
+    const auditInput = {
       parsedScheduleGames,
       teams,
       rosterByTeamId,
@@ -2335,8 +2341,13 @@ async function renderMatchupPredictorPage(req, res) {
       teamCodeById,
       replacementByOriginalNorm: byOriginalNorm,
       sundayIsosSorted: payload.sundayIsosSorted,
-    }).catch((err) => {
+    };
+    const predictorAuditPromise = getMatchupPredictorAudit(auditInput).catch((err) => {
       console.error("[MMS] Matchup predictor audit:", err.message || err);
+      return null;
+    });
+    const calibrationPromise = getMatchupCalibrationForProjections(auditInput).catch((err) => {
+      console.error("[MMS] Matchup predictor calibration:", err.message || err);
       return null;
     });
     let {
@@ -2366,6 +2377,7 @@ async function renderMatchupPredictorPage(req, res) {
     let gameResult = null;
     let lineupRuleAlerts = [];
     let matchupClient = null;
+    let matchupCalibration = null;
 
     const viewIso =
       /^D\d{8}$/i.test(selectedView)
@@ -2529,6 +2541,17 @@ async function renderMatchupPredictorPage(req, res) {
           // Fixed league norms (full-roster baseline) — do not rebuild from adjusted profiles or
           // missing-player penalties get normalized away in z-scores.
           prediction = predictMatchupGame(awayProfile, homeProfile, leagueNorms, runBase);
+          if (!isFinishedGame) {
+            matchupCalibration = await calibrationPromise;
+            if (matchupCalibration?.weights?.length) {
+              prediction = applyWinProbCalibration(
+                awayProfile,
+                homeProfile,
+                prediction,
+                matchupCalibration.weights
+              );
+            }
+          }
           prediction.missingImpact = {
             away: {
               teamMultiplier: awayProfile.teamMultiplier ?? 1,
@@ -2592,6 +2615,7 @@ async function renderMatchupPredictorPage(req, res) {
               stats2026ByPlayer: activeStats2026,
               defenseZByNorm,
               positionByNorm: matchupPositionByNorm,
+              calibrationWeights: matchupCalibration?.weights || null,
             });
           }
         }
@@ -2601,12 +2625,18 @@ async function renderMatchupPredictorPage(req, res) {
     const awayMissingSerialized = serializeMissingNorms(awayMissingSet);
     const homeMissingSerialized = serializeMissingNorms(homeMissingSet);
     const predictorAudit = await predictorAuditPromise;
-    const predictorRecord = predictorAudit
+    if (!matchupCalibration) {
+      matchupCalibration = await calibrationPromise;
+    }
+    const headlineRecord = predictorAudit?.calibratedRecord?.decided
+      ? predictorAudit.calibratedRecord
+      : predictorAudit;
+    const predictorRecord = headlineRecord
       ? {
-          wins: predictorAudit.wins,
-          losses: predictorAudit.losses,
-          decided: predictorAudit.decided,
-          winPct: predictorAudit.winPct,
+          wins: headlineRecord.wins,
+          losses: headlineRecord.losses,
+          decided: headlineRecord.decided,
+          winPct: headlineRecord.winPct,
         }
       : null;
 
