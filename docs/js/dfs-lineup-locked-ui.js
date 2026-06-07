@@ -208,7 +208,6 @@ export function applyLockedSlateResultsUi(data) {
   ptsEl.textContent = JSON.stringify(byNorm);
 
   document.querySelector(".dfs-page")?.classList.add("dfs-page--readonly");
-  updateSlateBanner(data);
   ensureViewOnlyNotice(data);
   ensureLineupHeadingScore();
   ensureScoreCard(data, byNorm);

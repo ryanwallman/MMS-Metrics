@@ -13,6 +13,7 @@ import {
   applyLockedSlateResultsUi,
   hideLockedResultsChrome,
 } from "./dfs-lineup-locked-ui.js";
+import { syncSlateChrome } from "./dfs-slate-ui.js";
 
 const page = window.__DFS_LINEUP_PAGE__;
 
@@ -216,6 +217,8 @@ async function main() {
       page.slateToken = data.selectedSlate || requestedToken;
       page.showSlateStats = !!data.showSlateStats;
     }
+
+    syncSlateChrome(data);
 
     if (data.showSlateStats) {
       applyLockedSlateResultsUi(data);
