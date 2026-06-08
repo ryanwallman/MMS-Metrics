@@ -69,9 +69,15 @@ function effectiveNormsFromCtx(ctx) {
   return norms;
 }
 
-async function hydrateMatchupReplacements(ctx) {
-  if (!ctx) return ctx;
+function replacementMapFromCtx(ctx) {
+  const map = new Map();
+  for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+    if (entry?.replacementNorm) map.set(norm, entry);
+  }
+  return map;
+}
 
+async function hydrateMatchupReplacementsWork(ctx) {
   const [replacements, scoring] = await Promise.all([
     getCachedPlayerReplacements(),
     getCachedDfsLeaderboardScoringContext(),
@@ -115,6 +121,46 @@ async function hydrateMatchupReplacements(ctx) {
   ctx.positionByNorm = mapToObject(positionByNorm);
 
   return ctx;
+}
+
+function applyHydratedMatchupUi(ctx) {
+  const liveReplMap = replacementMapFromCtx(ctx);
+  if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.awayPlayersOriginal,
+      "away",
+      liveReplMap
+    );
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.homePlayersOriginal,
+      "home",
+      liveReplMap
+    );
+  }
+  if (!ctx.isFinishedGame) {
+    const { away, home } = benchNormsFromForm();
+    window.MmsMatchupPredictorUi?.updatePredictionUi?.(predictFromPayload(ctx, away, home));
+  }
+}
+
+async function hydrateMatchupReplacements(ctx) {
+  if (!ctx) return ctx;
+
+  const isStaticBaked =
+    typeof window !== "undefined" &&
+    window.__MATCHUP_CLIENT__ &&
+    window.__MATCHUP_CLIENT__ === ctx;
+
+  if (isStaticBaked) {
+    void hydrateMatchupReplacementsWork(ctx)
+      .then(() => applyHydratedMatchupUi(ctx))
+      .catch((err) => {
+        console.error("Matchup replacement hydrate failed", err);
+      });
+    return ctx;
+  }
+
+  return hydrateMatchupReplacementsWork(ctx);
 }
 
 function predictFromPayload(ctx, awayMissingList, homeMissingList) {

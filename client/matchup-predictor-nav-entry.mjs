@@ -73,8 +73,20 @@ export async function ensureMatchupPredictorActiveView() {
   const currentView = viewTokenFromPath(pathname);
   const isRoot = !currentView;
   const hasMatchup = /\/matchup\//.test(pathname);
+  const userPickedView = (() => {
+    try {
+      return sessionStorage.getItem(USER_PICKED_VIEW_KEY) === "1";
+    } catch {
+      return false;
+    }
+  })();
 
   if (hasMatchup) {
+    hideLoadingOverlay();
+    return;
+  }
+
+  if (!isRoot && userPickedView) {
     hideLoadingOverlay();
     return;
   }
@@ -95,13 +107,6 @@ export async function ensureMatchupPredictorActiveView() {
     }
 
     const target = sitePath(`/matchup-predictor/view/${encodeURIComponent(active)}`);
-    const userPickedView = (() => {
-      try {
-        return sessionStorage.getItem(USER_PICKED_VIEW_KEY) === "1";
-      } catch {
-        return false;
-      }
-    })();
 
     if (isRoot) {
       if (!pathname.includes(`/view/${encodeURIComponent(active)}`)) {

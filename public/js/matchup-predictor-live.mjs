@@ -6093,6 +6093,7 @@ var import_powerRankingsCaptains = __toESM(require_powerRankingsCaptains(), 1);
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_fetchCsvText = __toESM(require_fetchCsvText(), 1);
 var DEFAULT_POLL_MS = Number("90000") || 9e4;
+var SEASON_RECORD_CACHE_KEY = "mms-matchup-season-record-v1";
 var liveWatchStarted = false;
 var seasonRecordWatchTimer = null;
 var liveChromeTimer = null;
@@ -6103,6 +6104,29 @@ var lastGamelogMissingSig = null;
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
+}
+function readCachedSeasonRecord() {
+  try {
+    const raw = sessionStorage.getItem(SEASON_RECORD_CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data?.decided) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+function writeCachedSeasonRecord(record) {
+  try {
+    sessionStorage.setItem(SEASON_RECORD_CACHE_KEY, JSON.stringify(record));
+  } catch {
+  }
+}
+function applyCachedSeasonRecordOnBoot() {
+  const cached = readCachedSeasonRecord();
+  if (!cached) return;
+  lastRecordKey = recordSignature(cached);
+  window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(cached);
 }
 async function refreshMatchupScheduleChrome() {
   const viewSelect = document.getElementById("view");
@@ -6224,6 +6248,7 @@ async function refreshSeasonRecord({ force = false } = {}) {
     const key = recordSignature(record);
     if (key === lastRecordKey) return;
     lastRecordKey = key;
+    writeCachedSeasonRecord(record);
     window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
   } catch (err) {
     console.error("Matchup season record refresh failed", err);
@@ -6243,8 +6268,7 @@ function startLiveWatchers() {
   if (!document.getElementById("matchupForm")) return;
   liveWatchStarted = true;
   const pollMs = Math.max(3e4, DEFAULT_POLL_MS);
-  void refreshSeasonRecord({ force: true });
-  void refreshLiveMatchupChrome();
+  void refreshSeasonRecord();
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
   }, pollMs);
@@ -6261,6 +6285,7 @@ function bootMatchupLiveWatchers() {
   }
 }
 if (typeof window !== "undefined") {
+  applyCachedSeasonRecordOnBoot();
   window.MmsMatchupPredictorLive = {
     refreshMatchupScheduleChrome,
     refreshSeasonRecord,
