@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=2" as="style" />
-<link rel="stylesheet" href="/styles.css?v=2" />
+<link rel="preload" href="/styles.css?v=3" as="style" />
+<link rel="stylesheet" href="/styles.css?v=3" />
 
     <script>
     (function () {
@@ -134,11 +134,11 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":39,"losses":29,"decided":68,"winPct":57.4};</script>
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":40,"losses":28,"decided":68,"winPct":58.8};</script>
       <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
-          39–29<span class="matchup-predictor-record-pct"> (57.4%)</span>
+          40–28<span class="matchup-predictor-record-pct"> (58.8%)</span>
         </span>
       </div>
       
@@ -527,10 +527,10 @@
     
     </main>
     
-    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
-    <script type="module" src="/js/matchup-predictor-live.mjs?v=2"></script>
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=3"></script>
+    <script type="module" src="/js/matchup-predictor-live.mjs?v=3"></script>
     
-    <script src="/js/matchup-predictor-ui.js?v=2"></script>
+    <script src="/js/matchup-predictor-ui.js?v=3"></script>
     
     <script>
       (function () {
@@ -547,8 +547,8 @@
           return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
-              if (data && data.decided > 0 && !window.__MATCHUP_PREDICTOR_RECORD__) {
-                window.__MATCHUP_PREDICTOR_RECORD__ = data;
+              if (data && data.decided > 0) {
+                window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(data);
               }
             })
             .catch(() => {});

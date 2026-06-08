@@ -523,8 +523,8 @@
           return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
-              if (data && data.decided > 0 && !window.__MATCHUP_PREDICTOR_RECORD__) {
-                window.__MATCHUP_PREDICTOR_RECORD__ = data;
+              if (data && data.decided > 0) {
+                window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(data);
               }
             })
             .catch(() => {});

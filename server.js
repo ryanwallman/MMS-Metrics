@@ -86,6 +86,7 @@ const { buildMatchupLeagueContext } = require("./lib/matchupLeagueContext");
 const {
   getMatchupPredictorAudit,
   getMatchupCalibrationForProjections,
+  matchupPredictorHeadlineRecord,
 } = require("./lib/matchupPredictorAudit");
 const { applyWinProbCalibration } = require("./lib/matchupWinProbCalibration");
 const {
@@ -2204,14 +2205,7 @@ async function loadMatchupPredictorSeasonRecord() {
     return null;
   });
   if (!audit || audit.decided <= 0) return null;
-  const record =
-    audit.calibratedRecord?.decided > 0 ? audit.calibratedRecord : audit;
-  return {
-    wins: record.wins,
-    losses: record.losses,
-    decided: record.decided,
-    winPct: record.winPct,
-  };
+  return matchupPredictorHeadlineRecord(audit);
 }
 
 app.get("/matchup-predictor/season-record.json", async (_req, res) => {
@@ -2665,17 +2659,7 @@ async function renderMatchupPredictorPage(req, res) {
     if (!matchupCalibration) {
       matchupCalibration = await calibrationPromise;
     }
-    const headlineRecord = predictorAudit?.calibratedRecord?.decided
-      ? predictorAudit.calibratedRecord
-      : predictorAudit;
-    const predictorRecord = headlineRecord
-      ? {
-          wins: headlineRecord.wins,
-          losses: headlineRecord.losses,
-          decided: headlineRecord.decided,
-          winPct: headlineRecord.winPct,
-        }
-      : null;
+    const predictorRecord = matchupPredictorHeadlineRecord(predictorAudit);
 
     renderPage(res, "matchup-predictor", {
       navActive: "matchup",

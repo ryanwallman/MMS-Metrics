@@ -184,6 +184,11 @@ export async function refreshSeasonRecord({ force = false } = {}) {
     if (!record) return;
     const key = recordSignature(record);
     if (key === lastRecordKey) return;
+    const initial = window.__MATCHUP_PREDICTOR_RECORD__;
+    if (initial && recordSignature(initial) === key) {
+      lastRecordKey = key;
+      return;
+    }
     lastRecordKey = key;
     window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
   } catch (err) {
@@ -208,7 +213,6 @@ function startLiveWatchers() {
 
   const pollMs = Math.max(30_000, DEFAULT_POLL_MS);
 
-  void refreshSeasonRecord({ force: true });
   void refreshLiveMatchupChrome();
 
   seasonRecordWatchTimer = window.setInterval(() => {

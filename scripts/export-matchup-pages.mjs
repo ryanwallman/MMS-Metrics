@@ -139,6 +139,7 @@ async function main() {
   await killPort(port);
   await runNpm("build:matchup-predictor");
   await runNpm("build:matchup-predictor-nav");
+  await runNpm("build:matchup-predictor-live");
 
   const { loadWeeklySchedule } = require("../lib/dfsLeaderboardScoringContext.js");
   const {
@@ -161,6 +162,7 @@ async function main() {
     ...process.env,
     STATIC_EXPORT: "1",
     SITE_BASE_PATH: process.env.SITE_BASE_PATH ?? "",
+    ASSET_VERSION: process.env.ASSET_VERSION ?? "3",
     PORT: String(port),
     HOST: "127.0.0.1",
     NODE_ENV: "production",

@@ -1424,6 +1424,28 @@ ${slice[1]}`;
       const opts = schedulePayload?.scheduleOptions || [];
       return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
     }
+    function buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs = Date.now()) {
+      const past = /* @__PURE__ */ new Set();
+      const future = /* @__PURE__ */ new Set();
+      for (const o of buildDfsSlateOptions(schedulePayload, refIso, nowMs)) {
+        if (o.lineupDeadlinePassed) past.add(o.value);
+        else future.add(o.value);
+      }
+      return { past, future };
+    }
+    function filterScheduleOptionsForMatchupPredictorMode(scheduleOptions, schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      const { past, future } = buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs);
+      const allowed = normalized === "past" ? past : future;
+      return (scheduleOptions || []).filter((o) => allowed.has(safeText(o.value).toUpperCase()));
+    }
+    function pickMatchupPredictorDefaultViewForMode(schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      if (normalized === "past") {
+        return resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs) || "";
+      }
+      return pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs);
+    }
     function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
       return scheduleOptions || [];
     }
@@ -1866,6 +1888,9 @@ ${slice[1]}`;
       resolveMostRecentlyLockedSlateToken,
       resolveNextUpcomingScheduleViewToken,
       pickMatchupPredictorDefaultView,
+      buildMatchupPredictorSlateSets,
+      filterScheduleOptionsForMatchupPredictorMode,
+      pickMatchupPredictorDefaultViewForMode,
       filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
@@ -6065,7 +6090,7 @@ var require_matchupLiveSeasonRecord = __commonJS({
       }
       const deps = await gatherMatchupSeasonRecordDeps();
       const record = computeMatchupPredictorRecord(deps);
-      if (!record.decided) return null;
+      if (!record?.decided) return null;
       return record;
     }
     module.exports = {
@@ -6223,6 +6248,11 @@ async function refreshSeasonRecord({ force = false } = {}) {
     if (!record) return;
     const key = recordSignature(record);
     if (key === lastRecordKey) return;
+    const initial = window.__MATCHUP_PREDICTOR_RECORD__;
+    if (initial && recordSignature(initial) === key) {
+      lastRecordKey = key;
+      return;
+    }
     lastRecordKey = key;
     window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
   } catch (err) {
@@ -6243,7 +6273,6 @@ function startLiveWatchers() {
   if (!document.getElementById("matchupForm")) return;
   liveWatchStarted = true;
   const pollMs = Math.max(3e4, DEFAULT_POLL_MS);
-  void refreshSeasonRecord({ force: true });
   void refreshLiveMatchupChrome();
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
