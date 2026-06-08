@@ -9,7 +9,6 @@ import {
   predictMatchupGame,
   enrichMatchupPredictionLines,
 } from "../lib/matchupPredict.js";
-import { applyWinProbCalibration } from "../lib/matchupWinProbCalibration.js";
 import {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -151,15 +150,7 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     positionByNorm
   );
 
-  let prediction = predictMatchupGame(awayProfile, homeProfile, ctx.leagueNorms, ctx.runBase);
-  if (!ctx.isFinishedGame && ctx.calibrationWeights?.length) {
-    prediction = applyWinProbCalibration(
-      awayProfile,
-      homeProfile,
-      prediction,
-      ctx.calibrationWeights
-    );
-  }
+  const prediction = predictMatchupGame(awayProfile, homeProfile, ctx.leagueNorms, ctx.runBase);
   enrichMatchupPredictionLines(prediction);
   prediction.awayLabel = ctx.awayLabel;
   prediction.homeLabel = ctx.homeLabel;

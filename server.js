@@ -88,7 +88,6 @@ const {
   getMatchupCalibrationForProjections,
   matchupPredictorHeadlineRecord,
 } = require("./lib/matchupPredictorAudit");
-const { applyWinProbCalibration } = require("./lib/matchupWinProbCalibration");
 const {
   getCachedPlayerReplacements,
   applyReplacementsToPlayerNames,
@@ -2579,14 +2578,6 @@ async function renderMatchupPredictorPage(req, res) {
           prediction = predictMatchupGame(awayProfile, homeProfile, leagueNorms, runBase);
           if (!isFinishedGame) {
             matchupCalibration = await calibrationPromise;
-            if (matchupCalibration?.weights?.length) {
-              prediction = applyWinProbCalibration(
-                awayProfile,
-                homeProfile,
-                prediction,
-                matchupCalibration.weights
-              );
-            }
           }
           prediction.missingImpact = {
             away: {
