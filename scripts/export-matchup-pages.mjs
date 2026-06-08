@@ -162,7 +162,7 @@ async function main() {
     ...process.env,
     STATIC_EXPORT: "1",
     SITE_BASE_PATH: process.env.SITE_BASE_PATH ?? "",
-    ASSET_VERSION: process.env.ASSET_VERSION ?? "5",
+    ASSET_VERSION: process.env.ASSET_VERSION ?? "6",
     PORT: String(port),
     HOST: "127.0.0.1",
     NODE_ENV: "production",

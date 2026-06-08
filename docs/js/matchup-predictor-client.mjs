@@ -2661,9 +2661,23 @@ var require_matchupMissingPlayers = __commonJS({
       }
       return n > 0 ? sum / n : 0;
     }
-    function missingRatingFactorVsTeamAvg(missingRating, teamAvg) {
-      const gap = teamAvg - missingRating;
-      return 1 + gap * 0.17;
+    var BENCH_VS_AVG_SENSITIVITY = 1.22;
+    function compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg) {
+      let mult = 1;
+      let starsBenched = 0;
+      for (const m of missing) {
+        const raw = offenseRatingByNorm.get(m.norm);
+        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+        const gap = rating - teamAvg;
+        if (gap > 0) {
+          starsBenched += 1;
+          const starEscalation = 1 + 0.45 * (starsBenched - 1);
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * starEscalation);
+        } else if (gap < 0) {
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * 0.9);
+        }
+      }
+      return mult;
     }
     function playerTalentScore(m, offenseRatingByNorm) {
       const rating = offenseRatingByNorm.get(m.norm);
@@ -2691,13 +2705,7 @@ var require_matchupMissingPlayers = __commonJS({
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
       if (fieldingPresent >= FIELDING_SPOTS) {
-        let mult = 1;
-        for (const m of missing) {
-          const raw = offenseRatingByNorm.get(m.norm);
-          const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-          mult *= missingRatingFactorVsTeamAvg(rating, teamAvg);
-        }
-        mult = Math.max(0.55, Math.min(1.45, mult));
+        const mult = Math.max(0.14, Math.min(1.85, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg)));
         return {
           offense: mult,
           run: mult,
@@ -2711,18 +2719,10 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const slotsShort = FIELDING_SPOTS - fieldingPresent;
       const fielderBase = Math.pow(0.52, slotsShort);
-      let qualityMod = 1;
-      for (const m of missing) {
-        const raw = offenseRatingByNorm.get(m.norm);
-        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-        const gap = teamAvg - rating;
-        if (gap > 0) {
-          qualityMod *= 1 + Math.min(0.12, gap * 0.07);
-        } else if (gap < 0) {
-          qualityMod *= 1 + Math.max(-0.18, gap * 0.09);
-        }
-      }
-      qualityMod = Math.max(0.82, Math.min(1.08, qualityMod));
+      const qualityMod = Math.max(
+        0.58,
+        Math.min(1.55, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg))
+      );
       let offenseMult = fielderBase * qualityMod;
       offenseMult = Math.max(0.08, Math.min(0.88, offenseMult));
       const defenseMult = Math.max(
@@ -2776,16 +2776,20 @@ var require_matchupMissingPlayers = __commonJS({
       const anchorOff = baseProfile.offenseRating != null && Number.isFinite(baseProfile.offenseRating) ? baseProfile.offenseRating : offenseRating ?? 0;
       const anchorRun = baseProfile.runProd2026 != null && Number.isFinite(baseProfile.runProd2026) ? baseProfile.runProd2026 : runProd2026 ?? 0;
       const anchorDef = baseProfile.defenseZ != null && Number.isFinite(baseProfile.defenseZ) ? baseProfile.defenseZ : defenseZ ?? 0;
+      const rosterOff = offenseRating ?? anchorOff;
+      const rosterRun = runProd2026 ?? anchorRun;
+      const rosterDef = defenseZ ?? anchorDef;
       let lineupHoleDrag = 0;
       if (doubleBatter && missing.length > 0 && secondTurn.weight < 0.45) {
         lineupHoleDrag = (0.45 - secondTurn.weight) * 0.45 * Math.min(missing.length, 5);
       }
       const runScale = Math.pow(teamMult.offense, 0.9);
-      const adjustedOffense = anchorOff * teamMult.offense - lineupHoleDrag;
-      const adjustedRunProd = anchorRun * teamMult.run;
-      const adjustedDefense = anchorDef * teamMult.defense;
+      const adjustedOffense = Math.max(-0.35, rosterOff * teamMult.offense - lineupHoleDrag);
+      const adjustedRunProd = rosterRun * teamMult.run;
+      const adjustedDefense = rosterDef * teamMult.defense;
       const baseTeam = baseProfile.teamOverall;
-      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) ? baseTeam * teamMult.offense : baseTeam;
+      const rosterTeam = baseTeam != null && Number.isFinite(baseTeam) && anchorOff > 0 ? baseTeam * (rosterOff / anchorOff) : baseTeam;
+      const adjustedTeamOverall = rosterTeam != null && Number.isFinite(rosterTeam) ? rosterTeam * teamMult.offense : rosterTeam;
       const runsPerGame = baseProfile.runsPerGame != null && Number.isFinite(baseProfile.runsPerGame) ? baseProfile.runsPerGame * runScale : baseProfile.runsPerGame;
       const runsAgainstMult = teamMult.runsAgainst ?? 1;
       const runsAgainstPerGame = baseProfile.runsAgainstPerGame != null && Number.isFinite(baseProfile.runsAgainstPerGame) ? baseProfile.runsAgainstPerGame * runsAgainstMult : baseProfile.runsAgainstPerGame;
@@ -2808,7 +2812,7 @@ var require_matchupMissingPlayers = __commonJS({
         fieldingPresentCount: fieldingPresent,
         missingCount: missing.length,
         lineupAlerts,
-        teamMultiplier: teamMult.offense,
+        teamMultiplier: anchorOff > 0 ? Math.max(0.01, adjustedOffense / anchorOff) : teamMult.offense,
         defenseMultiplier: teamMult.defense,
         runsAgainstMultiplier: runsAgainstMult,
         shortHandedSlots: teamMult.slotsShort ?? 0

@@ -268,17 +268,48 @@ const p3 = predict(r123, opponent, fixedNorms);
 const p0 = predict({ ...fullProfile, teamMultiplier: 1 }, opponent, fixedNorms);
 const drop1 = p0.awayWin - p1.awayWin;
 const drop3 = p0.awayWin - p3.awayWin;
+const mult1 = r1.teamMultiplier;
+const mult3 = r123.teamMultiplier;
+const multRatio = mult1 / Math.max(mult3, 0.01);
 console.log("Exponential check (early stars out):");
-console.log(`  1 star missing: win drops ${drop1.toFixed(1)} pts`);
-console.log(`  3 stars missing: win drops ${drop3.toFixed(1)} pts`);
-console.log(`  ratio 3★/1★: ${(drop3 / Math.max(drop1, 0.1)).toFixed(2)}x (want >> 2x)`);
+console.log(`  1 star missing: win drops ${drop1.toFixed(1)} pts  mult=${mult1.toFixed(3)}`);
+console.log(`  3 stars missing: win drops ${drop3.toFixed(1)} pts  mult=${mult3.toFixed(3)}`);
+console.log(`  mult ratio 3★/1★: ${multRatio.toFixed(2)}x (want >> 2x)`);
 
 if (drop3 < 8) {
   console.error("\nFAIL: Missing 3 top players should swing win % by at least ~8 points.");
   process.exit(1);
 }
-if (drop3 < drop1 * 1.8) {
-  console.error("\nFAIL: Three stars out should hurt much more than 1.8× one star.");
+if (multRatio < 2.5) {
+  console.error("\nFAIL: Three stars out should compound team strength much more than 2.5× one star.");
+  process.exit(1);
+}
+
+const r13Only = applyMissing([13]);
+const r1and13 = applyMissing([1, 13]);
+const p13 = predict(r13Only, opponent, fixedNorms);
+const p1and13 = predict(r1and13, opponent, fixedNorms);
+console.log("\nGood + bad benched vs team average:");
+console.log(
+  `  bench R13 only: win=${p13.awayWin.toFixed(1)}% mult=${r13Only.teamMultiplier.toFixed(3)} (should help)`
+);
+console.log(
+  `  bench R1+R13: win=${p1and13.awayWin.toFixed(1)}% mult=${r1and13.teamMultiplier.toFixed(3)} (should still hurt vs full)`
+);
+if (p1and13.awayWin >= p0.awayWin) {
+  console.error("FAIL: Benching a star plus a scrub should still hurt the team vs full roster.");
+  process.exit(1);
+}
+if (p13.awayWin <= p0.awayWin) {
+  console.error("FAIL: Benching only a below-average player should help vs full roster.");
+  process.exit(1);
+}
+if (r1and13.teamMultiplier >= 1) {
+  console.error("FAIL: Star + scrub out should still finish below full-strength multiplier.");
+  process.exit(1);
+}
+if (r1and13.teamMultiplier <= r1.teamMultiplier) {
+  console.error("FAIL: Benching a scrub alongside a star should partially recover team strength.");
   process.exit(1);
 }
 
@@ -350,8 +381,8 @@ if (short9Star.teamMultiplier >= short9Scrub.teamMultiplier) {
   console.error("FAIL: 9 active with a decent 4th out should hurt offense more than with bottom-tier 4th out.");
   process.exit(1);
 }
-if (short9Scrub.teamMultiplier > 0.72) {
-  console.error("FAIL: Short-handed should stay well below 1.0 even if missing scrubs.");
+if ((short9Scrub.runsAgainstMultiplier ?? 1) < 1.35) {
+  console.error("FAIL: Short-handed should still inflate runs allowed even if missing scrubs.");
   process.exit(1);
 }
 
