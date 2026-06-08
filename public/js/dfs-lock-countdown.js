@@ -28,6 +28,18 @@ export function dfsLineupUrl(slateToken) {
   return `${base}/dfs/slate/${encodeURIComponent(t)}`;
 }
 
+/** True when the user explicitly opened a locked slate to review results. */
+export function isViewOnlySlateRequest() {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("view") === "1";
+}
+
+export function dfsLineupViewUrl(slateToken) {
+  const base = dfsLineupUrl(slateToken);
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}view=1`;
+}
+
 async function resolveOpenSlateToken(activeSlateToken) {
   let token = String(activeSlateToken || "")
     .trim()

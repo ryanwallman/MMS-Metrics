@@ -1,7 +1,7 @@
 /**
  * GitHub Pages: refresh slate picker + banner from live schedule (static HTML is stale after lock).
  */
-import { dfsLineupUrl } from "./dfs-lock-countdown.js";
+import { dfsLineupUrl, dfsLineupViewUrl } from "./dfs-lock-countdown.js";
 
 function esc(text) {
   const el = document.createElement("span");
@@ -39,7 +39,7 @@ export function updateSlatePicker(data) {
         .filter(Boolean)
         .join(" ");
       const suffix = opt.canEdit ? " · open" : " · locked";
-      const href = dfsLineupUrl(value);
+      const href = opt.canEdit ? dfsLineupUrl(value) : dfsLineupViewUrl(value);
       return `<a href="${href}" class="${classes}" data-slate="${esc(value)}"${
         isSelected ? ' aria-current="page"' : ""
       }>${esc(opt.label)}${suffix}</a>`;
@@ -108,6 +108,9 @@ export function syncSlateChrome(data) {
   const page = document.querySelector(".dfs-page");
   if (canEdit) {
     page?.classList.remove("dfs-page--readonly");
+    document.querySelectorAll(".dfs-slate-lock-notice--view").forEach((el) => {
+      el.hidden = true;
+    });
     const viewNotice = document.getElementById("dfsSlateViewOnlyNotice");
     if (viewNotice) viewNotice.hidden = true;
     const pool = document.getElementById("dfsPoolSection");

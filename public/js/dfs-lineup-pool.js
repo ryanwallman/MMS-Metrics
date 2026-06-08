@@ -6,6 +6,7 @@ import {
   setupLineupLockCountdown,
   navigateToOpenDfsSlate,
   dfsLineupUrl,
+  isViewOnlySlateRequest,
 } from "./dfs-lock-countdown.js";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
 import { publicErrorMessage } from "./mms-public-error.js";
@@ -175,16 +176,28 @@ async function main() {
   try {
     const data = await loadDfsLineupPool(requestedToken, page.lineupNorms || []);
 
-    // Bare /dfs tab only: follow live open slate (export may bake a stale token).
-    if (bareLanding && data.activeSlateToken) {
-      const active = String(data.activeSlateToken).trim().toUpperCase();
-      const loaded = String(data.selectedSlate || requestedToken || "")
-        .trim()
-        .toUpperCase();
-      if (active && active !== loaded) {
-        navigateToOpenDfsSlate(active);
-        return;
-      }
+    const active = String(data.activeSlateToken || "")
+      .trim()
+      .toUpperCase();
+    const loaded = String(data.selectedSlate || requestedToken || "")
+      .trim()
+      .toUpperCase();
+
+    // Stale locked ?slate= from export/bookmarks → open week (unless view=1 for past results).
+    if (
+      !isViewOnlySlateRequest() &&
+      active &&
+      !data.slate?.canEdit &&
+      loaded !== active
+    ) {
+      await navigateToOpenDfsSlate(active);
+      return;
+    }
+
+    // Bare /dfs: canonicalize URL to the open slate so export-time HTML cannot stick.
+    if (bareLanding && active && !slateFromUrl()) {
+      await navigateToOpenDfsSlate(active);
+      return;
     }
 
     if (typeof window.setDfsCanEdit === "function") {

@@ -1811,6 +1811,22 @@ app.get("/dfs", async (req, res) => {
     const allSlatesLocked = !activeSlateToken;
 
     const slateParam = safeText(req.query.slate).toUpperCase();
+    const viewOnlySlate = safeText(req.query.view) === "1";
+    if (
+      !viewOnlySlate &&
+      slateParam &&
+      activeSlateToken &&
+      slateParam !== activeSlateToken
+    ) {
+      const requested = fullSlateOptions.find((o) => o.value === slateParam);
+      if (requested && !requested.canEdit) {
+        return res.redirect(
+          302,
+          sitePath(`/dfs?slate=${encodeURIComponent(activeSlateToken)}`)
+        );
+      }
+    }
+
     let selectedToken = activeSlateToken;
     if (slateParam && slateOptions.some((o) => o.value === slateParam)) {
       selectedToken = slateParam;

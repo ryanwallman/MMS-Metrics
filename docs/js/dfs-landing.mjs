@@ -1333,7 +1333,7 @@ ${slice[1]}`;
         )
       };
     }
-    function buildDfsSlateOptions(schedulePayload, refIso, nowMs = Date.now()) {
+    function buildDfsSlateOptions2(schedulePayload, refIso, nowMs = Date.now()) {
       const raw = (schedulePayload.scheduleOptions || []).filter(
         (o) => /^(W\d+|D\d{8})$/i.test(o.value)
       );
@@ -1382,10 +1382,10 @@ ${slice[1]}`;
       return (options || []).filter((o) => o.isVisibleInPicker);
     }
     function resolveActiveDfsSlateToken2(schedulePayload, refIso, nowMs = Date.now()) {
-      return buildDfsSlateOptions(schedulePayload, refIso, nowMs).find((o) => o.canEdit)?.value || null;
+      return buildDfsSlateOptions2(schedulePayload, refIso, nowMs).find((o) => o.canEdit)?.value || null;
     }
     function resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs = Date.now()) {
-      const options = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
+      const options = buildDfsSlateOptions2(schedulePayload, refIso, nowMs);
       const activeIdx = options.findIndex((o) => o.canEdit);
       if (activeIdx > 0) return options[activeIdx - 1].value;
       if (activeIdx === 0) return options[0].value;
@@ -1412,7 +1412,7 @@ ${slice[1]}`;
       const locked = resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs);
       if (locked) return locked;
       const visible = filterVisibleDfsSlateOptions(
-        buildDfsSlateOptions(schedulePayload, refIso, nowMs)
+        buildDfsSlateOptions2(schedulePayload, refIso, nowMs)
       );
       if (visible.length) return visible[visible.length - 1].value;
       const opts = schedulePayload?.scheduleOptions || [];
@@ -1423,7 +1423,7 @@ ${slice[1]}`;
     }
     function filterScheduleOptionsToDfsVisibility(scheduleOptions, schedulePayload, refIso, nowMs = Date.now()) {
       const visible = new Set(
-        filterVisibleDfsSlateOptions(buildDfsSlateOptions(schedulePayload, refIso, nowMs)).map(
+        filterVisibleDfsSlateOptions(buildDfsSlateOptions2(schedulePayload, refIso, nowMs)).map(
           (o) => safeText(o.value).toUpperCase()
         )
       );
@@ -1806,7 +1806,7 @@ ${slice[1]}`;
     function buildLeaderboardSlateFromToken(viewToken, schedulePayload, refIso, nowMs = Date.now()) {
       const v = safeText(viewToken).toUpperCase();
       if (!/^(W\d+|D\d{8})$/i.test(v)) return null;
-      const slateOptions = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
+      const slateOptions = buildDfsSlateOptions2(schedulePayload, refIso, nowMs);
       return buildSlateFromToken(v, schedulePayload, refIso, slateOptions, nowMs);
     }
     function listLeaderboardSlateOptions(schedulePayload, refIso, nowMs = Date.now()) {
@@ -1854,7 +1854,7 @@ ${slice[1]}`;
       buildWeekSlateFromToken,
       buildLeaderboardSlateFromToken,
       slateFirstIso,
-      buildDfsSlateOptions,
+      buildDfsSlateOptions: buildDfsSlateOptions2,
       filterVisibleDfsSlateOptions,
       resolveActiveDfsSlateToken: resolveActiveDfsSlateToken2,
       resolveMostRecentlyLockedSlateToken,
@@ -3142,10 +3142,23 @@ function slateFromLegacyPath() {
   const m = window.location.pathname.match(/\/dfs\/slate\/([^/]+)\/?$/i);
   return m ? decodeURIComponent(m[1]).trim().toUpperCase() : "";
 }
-async function resolveOpenSlateToken() {
+function isViewOnlySlateRequest() {
+  return new URLSearchParams(window.location.search).get("view") === "1";
+}
+async function resolveScheduleContext() {
   const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
   const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
-  return String((0, import_dfs.resolveActiveDfsSlateToken)(payload, refIso) || "").trim().toUpperCase();
+  const nowMs = Date.now();
+  const options = (0, import_dfs.buildDfsSlateOptions)(payload, refIso, nowMs);
+  const active = String((0, import_dfs.resolveActiveDfsSlateToken)(payload, refIso, nowMs) || "").trim().toUpperCase();
+  return { options, active };
+}
+function shouldRedirectToOpenSlate(current, active, options) {
+  if (!active) return false;
+  if (!current) return true;
+  if (current === active) return false;
+  const opt = options.find((o) => String(o.value || "").trim().toUpperCase() === current);
+  return !opt?.canEdit;
 }
 async function ensureDfsOpenSlateLanding() {
   if (!isStaticDfsSite()) {
@@ -3158,21 +3171,27 @@ async function ensureDfsOpenSlateLanding() {
     window.location.replace(`${dfsLineupUrl(pathSlate)}?t=${Date.now()}`);
     return;
   }
-  if (querySlate || pathSlate) {
+  if (isViewOnlySlateRequest()) {
     hideLoadingOverlay();
     return;
   }
-  if (!isBareDfsLandingPath()) {
+  const onDfsLineup = isBareDfsLandingPath() || !!querySlate || !!pathSlate;
+  if (!onDfsLineup) {
     hideLoadingOverlay();
     return;
   }
   try {
-    const active = await resolveOpenSlateToken();
+    const { options, active } = await resolveScheduleContext();
     if (!active) {
       hideLoadingOverlay();
       return;
     }
-    window.location.replace(`${dfsLineupUrl(active)}?t=${Date.now()}`);
+    const current = querySlate || pathSlate;
+    if (shouldRedirectToOpenSlate(current, active, options)) {
+      window.location.replace(`${dfsLineupUrl(active)}?t=${Date.now()}`);
+      return;
+    }
+    hideLoadingOverlay();
   } catch (err) {
     console.error("DFS open slate redirect failed", err);
     hideLoadingOverlay();

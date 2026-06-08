@@ -1,8 +1,12 @@
 /**
- * GitHub Pages: redirect bare /dfs to the live open (editable) slate.
+ * GitHub Pages: redirect bare /dfs (and stale locked ?slate= URLs) to the live open slate.
  */
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
-import { referenceIsoForScheduleYear, resolveActiveDfsSlateToken } from "../lib/dfs.js";
+import {
+  buildDfsSlateOptions,
+  referenceIsoForScheduleYear,
+  resolveActiveDfsSlateToken,
+} from "../lib/dfs.js";
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
 
 function hideLoadingOverlay() {
@@ -51,12 +55,27 @@ function slateFromLegacyPath() {
   return m ? decodeURIComponent(m[1]).trim().toUpperCase() : "";
 }
 
-async function resolveOpenSlateToken() {
+function isViewOnlySlateRequest() {
+  return new URLSearchParams(window.location.search).get("view") === "1";
+}
+
+async function resolveScheduleContext() {
   const payload = await loadWeeklySchedule();
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-  return String(resolveActiveDfsSlateToken(payload, refIso) || "")
+  const nowMs = Date.now();
+  const options = buildDfsSlateOptions(payload, refIso, nowMs);
+  const active = String(resolveActiveDfsSlateToken(payload, refIso, nowMs) || "")
     .trim()
     .toUpperCase();
+  return { options, active };
+}
+
+function shouldRedirectToOpenSlate(current, active, options) {
+  if (!active) return false;
+  if (!current) return true;
+  if (current === active) return false;
+  const opt = options.find((o) => String(o.value || "").trim().toUpperCase() === current);
+  return !opt?.canEdit;
 }
 
 export async function ensureDfsOpenSlateLanding() {
@@ -73,23 +92,32 @@ export async function ensureDfsOpenSlateLanding() {
     return;
   }
 
-  if (querySlate || pathSlate) {
+  if (isViewOnlySlateRequest()) {
     hideLoadingOverlay();
     return;
   }
 
-  if (!isBareDfsLandingPath()) {
+  const onDfsLineup =
+    isBareDfsLandingPath() || !!querySlate || !!pathSlate;
+  if (!onDfsLineup) {
     hideLoadingOverlay();
     return;
   }
 
   try {
-    const active = await resolveOpenSlateToken();
+    const { options, active } = await resolveScheduleContext();
     if (!active) {
       hideLoadingOverlay();
       return;
     }
-    window.location.replace(`${dfsLineupUrl(active)}?t=${Date.now()}`);
+
+    const current = querySlate || pathSlate;
+    if (shouldRedirectToOpenSlate(current, active, options)) {
+      window.location.replace(`${dfsLineupUrl(active)}?t=${Date.now()}`);
+      return;
+    }
+
+    hideLoadingOverlay();
   } catch (err) {
     console.error("DFS open slate redirect failed", err);
     hideLoadingOverlay();
