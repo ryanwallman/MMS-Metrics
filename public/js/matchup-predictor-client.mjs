@@ -2661,7 +2661,16 @@ var require_matchupMissingPlayers = __commonJS({
       }
       return n > 0 ? sum / n : 0;
     }
-    var BENCH_VS_AVG_SENSITIVITY = 1.22;
+    var BENCH_VS_AVG_SENSITIVITY = 0.68;
+    function benchIdentityWeight(missingCount) {
+      if (missingCount <= 0) return 0;
+      if (missingCount === 1) return 0.42;
+      return Math.min(0.92, 0.42 + 0.22 * (missingCount - 1));
+    }
+    function blendBenchIdentity(benchFactor, missingCount) {
+      const w = benchIdentityWeight(missingCount);
+      return 1 + (benchFactor - 1) * w;
+    }
     function compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg) {
       let mult = 1;
       let starsBenched = 0;
@@ -2671,11 +2680,14 @@ var require_matchupMissingPlayers = __commonJS({
         const gap = rating - teamAvg;
         if (gap > 0) {
           starsBenched += 1;
-          const starEscalation = 1 + 0.45 * (starsBenched - 1);
+          const starEscalation = 1 + 0.58 * (starsBenched - 1);
           mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * starEscalation);
         } else if (gap < 0) {
-          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * 0.9);
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * 0.72);
         }
+      }
+      if (starsBenched >= 2) {
+        mult *= Math.pow(0.87, starsBenched - 1);
       }
       return mult;
     }
@@ -2705,7 +2717,7 @@ var require_matchupMissingPlayers = __commonJS({
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
       if (fieldingPresent >= FIELDING_SPOTS) {
-        const mult = Math.max(0.14, Math.min(1.85, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg)));
+        const mult = Math.max(0.38, Math.min(1.48, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg)));
         return {
           offense: mult,
           run: mult,
@@ -2783,13 +2795,25 @@ var require_matchupMissingPlayers = __commonJS({
       if (doubleBatter && missing.length > 0 && secondTurn.weight < 0.45) {
         lineupHoleDrag = (0.45 - secondTurn.weight) * 0.45 * Math.min(missing.length, 5);
       }
-      const runScale = Math.pow(teamMult.offense, 0.9);
-      const adjustedOffense = Math.max(-0.35, rosterOff * teamMult.offense - lineupHoleDrag);
-      const adjustedRunProd = rosterRun * teamMult.run;
-      const adjustedDefense = rosterDef * teamMult.defense;
+      const rosterOffFactor = anchorOff > 0 ? rosterOff / anchorOff : 1;
+      const rosterRunFactor = anchorRun > 0 ? rosterRun / anchorRun : 1;
+      const rosterDefFactor = anchorDef !== 0 ? rosterDef / anchorDef : 1;
+      let offenseMult = teamMult.offense;
+      let runMult = teamMult.run;
+      if (teamMult.regime === "lineup-adjust") {
+        const identityMult = blendBenchIdentity(teamMult.offense, missing.length);
+        offenseMult = identityMult;
+        runMult = identityMult;
+      }
+      const runScale = Math.pow(offenseMult, 0.9);
+      const adjustedOffense = Math.max(
+        -0.2,
+        anchorOff * rosterOffFactor * offenseMult - lineupHoleDrag
+      );
+      const adjustedRunProd = anchorRun * rosterRunFactor * runMult;
+      const adjustedDefense = teamMult.regime === "lineup-adjust" ? anchorDef * rosterDefFactor : rosterDef * teamMult.defense;
       const baseTeam = baseProfile.teamOverall;
-      const rosterTeam = baseTeam != null && Number.isFinite(baseTeam) && anchorOff > 0 ? baseTeam * (rosterOff / anchorOff) : baseTeam;
-      const adjustedTeamOverall = rosterTeam != null && Number.isFinite(rosterTeam) ? rosterTeam * teamMult.offense : rosterTeam;
+      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) && anchorOff > 0 ? baseTeam * rosterOffFactor * offenseMult : baseTeam;
       const runsPerGame = baseProfile.runsPerGame != null && Number.isFinite(baseProfile.runsPerGame) ? baseProfile.runsPerGame * runScale : baseProfile.runsPerGame;
       const runsAgainstMult = teamMult.runsAgainst ?? 1;
       const runsAgainstPerGame = baseProfile.runsAgainstPerGame != null && Number.isFinite(baseProfile.runsAgainstPerGame) ? baseProfile.runsAgainstPerGame * runsAgainstMult : baseProfile.runsAgainstPerGame;

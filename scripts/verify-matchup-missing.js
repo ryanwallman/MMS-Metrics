@@ -276,8 +276,16 @@ console.log(`  1 star missing: win drops ${drop1.toFixed(1)} pts  mult=${mult1.t
 console.log(`  3 stars missing: win drops ${drop3.toFixed(1)} pts  mult=${mult3.toFixed(3)}`);
 console.log(`  mult ratio 3★/1★: ${multRatio.toFixed(2)}x (want >> 2x)`);
 
+if (drop1 > 10) {
+  console.error("\nFAIL: One star out should not swing win % by more than ~10 points.");
+  process.exit(1);
+}
 if (drop3 < 8) {
   console.error("\nFAIL: Missing 3 top players should swing win % by at least ~8 points.");
+  process.exit(1);
+}
+if (drop3 < drop1 * 2.2) {
+  console.error("\nFAIL: Three stars out should hurt at least ~2.2× one star in win %.");
   process.exit(1);
 }
 if (multRatio < 2.5) {
