@@ -19,16 +19,18 @@ const MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.1;
 const MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.22;
 const MATCHUP_LOGIT_SCALE = 0.6;
 const MATCHUP_RUN_MARGIN_LOGIT = 0.26;
-const MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.7;
-const MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.2;
-const MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.1;
+const MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.5;
+const MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.25;
+const MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.15;
+const MATCHUP_WIN_WEIGHT_FROM_POWER = 0.1;
 const MATCHUP_RECORD_PRIOR_GAMES = 6;
 const MATCHUP_RECORD_LOGIT_SCALE = 2.5;
+const MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
 const MATCHUP_WIN_PROB_SHRINK = 0.5;
 const MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
-const MATCHUP_RUN_OFF_Z_PCT = 0.08;
-const MATCHUP_RUN_DEF_Z_PCT = 0.06;
-const MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
+const MATCHUP_RUN_OFF_Z_PCT = 0.1;
+const MATCHUP_RUN_DEF_Z_PCT = 0.12;
+const MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.72;
 const MATCHUP_SHORT_HANDED_RA_SCALE_MAX = 1.05;
 const MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX = 0.16;
 const MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR = 0.08;
@@ -129,7 +131,7 @@ function recordConfidence(profile) {
   return decided / (decided + MATCHUP_RECORD_PRIOR_GAMES);
 }
 
-function winPct(homeRuns, awayRuns, homePow, awayPow, homeProfile, awayProfile) {
+function winPct(homeRuns, awayRuns, homePow, awayPow, homeProfile, awayProfile, norms) {
   const margin = homeRuns - awayRuns;
   const pRuns = 1 / (1 + Math.exp(-MATCHUP_RUN_MARGIN_LOGIT * margin));
   const pTalent = 1 / (1 + Math.exp(-(homePow - awayPow) * MATCHUP_LOGIT_SCALE));
@@ -137,10 +139,14 @@ function winPct(homeRuns, awayRuns, homePow, awayPow, homeProfile, awayProfile) 
   const pRecRaw = 1 / (1 + Math.exp(-MATCHUP_RECORD_LOGIT_SCALE * diff));
   const conf = Math.min(recordConfidence(homeProfile), recordConfidence(awayProfile));
   const pRec = 0.5 + conf * (pRecRaw - 0.5);
+  const zHome = zFrom(homeProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+  const zAway = zFrom(awayProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+  const pPower = 1 / (1 + Math.exp(-(zHome - zAway) * MATCHUP_POWER_RANK_LOGIT_SCALE));
   const raw =
     MATCHUP_WIN_WEIGHT_FROM_RUNS * pRuns +
     MATCHUP_WIN_WEIGHT_FROM_TALENT * pTalent +
-    MATCHUP_WIN_WEIGHT_FROM_RECORD * pRec;
+    MATCHUP_WIN_WEIGHT_FROM_RECORD * pRec +
+    MATCHUP_WIN_WEIGHT_FROM_POWER * pPower;
   return 0.5 + MATCHUP_WIN_PROB_SHRINK * (raw - 0.5);
 }
 
@@ -151,6 +157,9 @@ function buildNorms(profiles) {
     runProd: meanAndStd(list.map((p) => p.runProd2026)),
     runsPerGame: meanAndStd(list.map((p) => p.runsPerGame)),
     teamOverall: meanAndStd(list.map((p) => p.teamOverall)),
+    runsAgainstPerGame: meanAndStd(list.map((p) => p.runsAgainstPerGame)),
+    runDiffPerGame: meanAndStd(list.map((p) => p.runDiffPerGame)),
+    defenseZ: meanAndStd(list.map((p) => p.defenseZ ?? 0)),
   };
 }
 
@@ -159,7 +168,7 @@ function predict(away, home, norms) {
   const homePow = teamPower(home, norms);
   const awayRuns = projectRuns(away, home, norms);
   const homeRuns = projectRuns(home, away, norms);
-  let pHome = winPct(homeRuns, awayRuns, homePow, awayPow, home, away);
+  let pHome = winPct(homeRuns, awayRuns, homePow, awayPow, home, away, norms);
   let pAway = 1 - pHome;
   ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(away, home, pAway, pHome));
   return {

@@ -209,9 +209,9 @@
       <p class="matchup-prediction-note">
         <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
         plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
-        batting twice) adjust team strength. <strong>Win %</strong> blends projected run margin (~70%),
-        composite roster/schedule talent (~20%), and season record (~10%, regressed toward .500 for teams with
-        fewer games played).
+        batting twice) adjust team strength using each player&apos;s +/-. <strong>Win %</strong> blends
+        defense-aware run projection (~50%), composite talent (~25%), season record (~15%), and power rankings (~10%).
+        Run projection weighs how many runs teams score and how many they hold opponents to.
       </p>
 
       <% const awayWinPct = prediction.winPct.away; const homeWinPct = prediction.winPct.home; %>

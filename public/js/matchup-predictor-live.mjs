@@ -4015,11 +4015,13 @@ var require_matchupPredict = __commonJS({
     }
     var MATCHUP_LOGIT_SCALE = 0.6;
     var MATCHUP_HOME_FIELD_LOGIT = 0.1;
-    var MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.7;
-    var MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.2;
-    var MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.1;
+    var MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.5;
+    var MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.25;
+    var MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.15;
+    var MATCHUP_WIN_WEIGHT_FROM_POWER = 0.1;
     var MATCHUP_RECORD_PRIOR_GAMES = 6;
     var MATCHUP_RECORD_LOGIT_SCALE = 2.5;
+    var MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
     var MATCHUP_RUN_MARGIN_LOGIT = 0.26;
     var MATCHUP_WIN_PROB_SHRINK = 0.5;
     var SEASON_PROJ_RUN_MARGIN_LOGIT = 0.34;
@@ -4027,16 +4029,18 @@ var require_matchupPredict = __commonJS({
     var SEASON_PROJ_WIN_WEIGHT_FROM_RUNS = 0.8;
     var SEASON_PROJ_WIN_WEIGHT_FROM_TALENT = 0.2;
     var SEASON_PROJ_WIN_PROB_SHRINK = 0.82;
-    var MATCHUP_POWER_WEIGHT_OFFENSE = 0.38;
-    var MATCHUP_POWER_WEIGHT_RUN_PROD = 0.13;
-    var MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.11;
-    var MATCHUP_POWER_WEIGHT_RUNS_AGAINST = 0.09;
-    var MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.24;
+    var MATCHUP_POWER_WEIGHT_OFFENSE = 0.26;
+    var MATCHUP_POWER_WEIGHT_RUN_PROD = 0.08;
+    var MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.15;
+    var MATCHUP_POWER_WEIGHT_RUNS_AGAINST = 0.15;
+    var MATCHUP_POWER_WEIGHT_DEFENSE_Z = 0.08;
+    var MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.28;
     var MATCHUP_POWER_WEIGHT_SOS = 0.05;
-    var MATCHUP_RUN_OFF_Z_PCT = 0.08;
-    var MATCHUP_RUN_DEF_Z_PCT = 0.06;
-    var MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
-    var MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
+    var MATCHUP_RUN_OFF_Z_PCT = 0.1;
+    var MATCHUP_RUN_DEF_Z_PCT = 0.12;
+    var MATCHUP_SCHEDULE_RUNS_BLEND = 0.5;
+    var MATCHUP_SCHEDULE_DEFENSE_BLEND = 0.45;
+    var MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.72;
     var MATCHUP_SHORT_HANDED_RA_SCALE_MAX = 1.05;
     var MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX = 0.16;
     var MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR = 0.08;
@@ -4226,7 +4230,8 @@ var require_matchupPredict = __commonJS({
         teamOverall: meanAndStd(list.map((p) => p.teamOverall)),
         winPct: meanAndStd(list.map((p) => p.winPct)),
         sos: meanAndStd(list.map((p) => p.sosOppWinPct)),
-        defenseZ: meanAndStd(list.map((p) => p.defenseZ))
+        defenseZ: meanAndStd(list.map((p) => p.defenseZ)),
+        runDiffPerGame: meanAndStd(list.map((p) => p.runDiffPerGame))
       };
     }
     function teamCompositePower(profile, norms, isHome) {
@@ -4238,13 +4243,14 @@ var require_matchupPredict = __commonJS({
         -norms.runsAgainstPerGame.mean,
         norms.runsAgainstPerGame.std
       );
+      const zDef = zFrom(profile.defenseZ, norms.defenseZ.mean, norms.defenseZ.std);
       const zTeam = zFrom(profile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
       const zSos = zFrom(profile.sosOppWinPct, norms.sos.mean, norms.sos.std);
-      let power = MATCHUP_POWER_WEIGHT_OFFENSE * zOff + MATCHUP_POWER_WEIGHT_RUN_PROD * zRun + MATCHUP_POWER_WEIGHT_RUNS_FOR * zRf + MATCHUP_POWER_WEIGHT_RUNS_AGAINST * zRa + MATCHUP_POWER_WEIGHT_TEAM_OVERALL * zTeam + MATCHUP_POWER_WEIGHT_SOS * zSos;
+      let power = MATCHUP_POWER_WEIGHT_OFFENSE * zOff + MATCHUP_POWER_WEIGHT_RUN_PROD * zRun + MATCHUP_POWER_WEIGHT_RUNS_FOR * zRf + MATCHUP_POWER_WEIGHT_RUNS_AGAINST * zRa + MATCHUP_POWER_WEIGHT_DEFENSE_Z * zDef + MATCHUP_POWER_WEIGHT_TEAM_OVERALL * zTeam + MATCHUP_POWER_WEIGHT_SOS * zSos;
       if (isHome) power += MATCHUP_HOME_FIELD_LOGIT / MATCHUP_LOGIT_SCALE;
       return {
         power,
-        components: { zOff, zRun, zRf, zRa, zTeam, zSos }
+        components: { zOff, zRun, zRf, zRa, zDef, zTeam, zSos }
       };
     }
     function regressedTeamWinPct(profile, priorGames = MATCHUP_RECORD_PRIOR_GAMES) {
@@ -4279,6 +4285,13 @@ var require_matchupPredict = __commonJS({
         awayRegressedWinPct: awayRec,
         confidence
       };
+    }
+    function winProbFromPowerRanking(homeProfile, awayProfile, norms, logitScale = MATCHUP_POWER_RANK_LOGIT_SCALE) {
+      const zHome = zFrom(homeProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+      const zAway = zFrom(awayProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+      const diff = (zHome - zAway) * logitScale;
+      const pHome = 1 / (1 + Math.exp(-diff));
+      return { home: pHome, away: 1 - pHome };
     }
     function shrinkWinProbTowardEven(p, shrink = MATCHUP_WIN_PROB_SHRINK) {
       if (!Number.isFinite(p)) return 0.5;
@@ -4324,23 +4337,43 @@ var require_matchupPredict = __commonJS({
       const zOff = zFrom(profile.offenseRating, norms.offense.mean, norms.offense.std);
       const zRun = zFrom(profile.runProd2026, norms.runProd.mean, norms.runProd.std);
       const zRf = zFrom(profile.runsPerGame, norms.runsPerGame.mean, norms.runsPerGame.std);
-      const offBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
+      const attackBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
       const defOpp = opponentProfile.defenseZ ?? 0;
       const oppRa = opponentProfile.runsAgainstPerGame;
+      const oppRd = opponentProfile.runDiffPerGame;
       const leagueRa = runBase.avgRunsAgainstPerGame || runBase.avgRunsPerTeam;
       const { runsAgainstScale, defenseZScale } = matchupOpponentDefenseScales(opponentProfile);
-      let mult = (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - defenseZScale * defOpp) * venueFactor;
+      const zRaOpp = zFrom(
+        oppRa != null ? -oppRa : null,
+        -norms.runsAgainstPerGame.mean,
+        norms.runsAgainstPerGame.std
+      );
+      const zRdOpp = zFrom(oppRd, norms.runDiffPerGame.mean, norms.runDiffPerGame.std);
+      const defBlend = 0.5 * zRaOpp + 0.3 * defOpp + 0.2 * zRdOpp;
+      let mult = (1 + MATCHUP_RUN_OFF_Z_PCT * attackBlend) * (1 - defenseZScale * defBlend) * venueFactor;
       if (oppRa != null && leagueRa > 0) {
         const oppAllowFactor = oppRa / leagueRa;
         mult *= 1 + runsAgainstScale * (oppAllowFactor - 1);
       }
       return Math.max(2, runBase.avgRunsPerTeam * mult);
     }
+    function scheduleMatchupRunsEstimate(profile, opponentProfile, runBase) {
+      const leagueAvg = runBase.avgRunsPerTeam;
+      const attack = profile.runsPerGame;
+      const oppAllowed = opponentProfile.runsAgainstPerGame;
+      if (attack == null && oppAllowed == null) return null;
+      const attackEst = attack ?? leagueAvg;
+      if (oppAllowed == null || oppAllowed <= 0 || leagueAvg <= 0) return attackEst;
+      const defenseEst = leagueAvg * leagueAvg / oppAllowed;
+      return (1 - MATCHUP_SCHEDULE_DEFENSE_BLEND) * attackEst + MATCHUP_SCHEDULE_DEFENSE_BLEND * defenseEst;
+    }
     function projectTeamRuns(profile, opponentProfile, norms, runBase, venueFactor) {
       const rosterProj = projectRosterExpectedRuns(profile, opponentProfile, norms, runBase, venueFactor);
-      if (profile.runsPerGame != null && profile.scheduleGames >= 2) {
+      const scheduleProj = scheduleMatchupRunsEstimate(profile, opponentProfile, runBase);
+      const hasSched = scheduleProj != null && (profile.runsPerGame != null && profile.scheduleGames >= 2 || opponentProfile.runsAgainstPerGame != null && opponentProfile.scheduleGames >= 2);
+      if (hasSched) {
         const w = matchupScheduleBlendWeight(profile, opponentProfile);
-        return Math.max(2, w * profile.runsPerGame + (1 - w) * rosterProj);
+        return Math.max(2, w * scheduleProj + (1 - w) * rosterProj);
       }
       return rosterProj;
     }
@@ -4517,8 +4550,9 @@ var require_matchupPredict = __commonJS({
       }
       const winFromTalent = logisticWinProb(homePow.power, awayPow.power);
       const winFromRecord = winProbFromRecord(homeProfile, awayProfile);
+      const winFromPower = winProbFromPowerRanking(homeProfile, awayProfile, norms);
       let winFromRuns = winProbFromRunMargin(runs.home, runs.away);
-      const pHomeRaw = MATCHUP_WIN_WEIGHT_FROM_RUNS * winFromRuns.home + MATCHUP_WIN_WEIGHT_FROM_TALENT * winFromTalent.home + MATCHUP_WIN_WEIGHT_FROM_RECORD * winFromRecord.home;
+      const pHomeRaw = MATCHUP_WIN_WEIGHT_FROM_RUNS * winFromRuns.home + MATCHUP_WIN_WEIGHT_FROM_TALENT * winFromTalent.home + MATCHUP_WIN_WEIGHT_FROM_RECORD * winFromRecord.home + MATCHUP_WIN_WEIGHT_FROM_POWER * winFromPower.home;
       let pHome = shrinkWinProbTowardEven(pHomeRaw);
       let pAway = 1 - pHome;
       ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(
