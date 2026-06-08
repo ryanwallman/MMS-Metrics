@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Matchup Predictor · MMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+  rel="stylesheet"
+/>
+<script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
+
+    <script>
+    (function () {
+      var base = typeof window.__SITE_BASE_PATH__ !== "undefined" ? String(window.__SITE_BASE_PATH__ || "") : "";
+      function sitePath(p) { return base + (p.charAt(0) === "/" ? p : "/" + p); }
+      var path = location.pathname || "";
+      if (path.indexOf("/view/") >= 0) return;
+      var q = new URLSearchParams(location.search);
+      if (q.get("view") || q.get("week") || /^\d{8}$/.test((q.get("wed") || "").replace(/^D/i, ""))) return;
+      var mode = /\/matchup-predictor\/past(?:\/|$)/i.test(path) ? "past" : "future";
+      if (/\/matchup-predictor\/view\//i.test(path) && !/\/matchup-predictor\/(?:past|future)\//i.test(path)) {
+        location.replace(path.replace("/matchup-predictor/view/", "/matchup-predictor/future/view/"));
+        return;
+      }
+      if (path.replace(/\/$/, "") === sitePath("/matchup-predictor")) {
+        location.replace(sitePath("/matchup-predictor/future"));
+        return;
+      }
+      fetch(sitePath("/matchup-predictor/" + mode + "/default-view.json"), { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.view) return;
+          var target = sitePath("/matchup-predictor/" + mode + "/view/" + encodeURIComponent(d.view));
+          if (path.indexOf("/view/") < 0) location.replace(target);
+        })
+        .catch(function () {});
+    })();
+    </script>
+  </head>
+  
+  <body class=&#34;mms-page-ready&#34;>
+    <header class="site-header">
+  <div class="site-header-inner">
+    <div class="site-brand-block">
+      <a href="/" class="site-brand">Marlboro Men's Softball</a>
+      <span class="site-brand-tagline">League stats · DFS · all the numbers</span>
+    </div>
+    <nav class="site-nav" aria-label="Main">
+      
+      <a
+        href="/"
+        class="site-nav-link"
+        
+      >
+        League Leaders
+      </a>
+      
+      <a
+        href="/matchup-predictor/future"
+        class="site-nav-link is-active"
+        aria-current=&#34;page&#34;
+      >
+        Matchup Predictor
+      </a>
+      
+      <a
+        href="/dfs"
+        class="site-nav-link"
+        
+      >
+        DFS Lineup
+      </a>
+      
+      <a
+        href="/rankings/power"
+        class="site-nav-link"
+        
+      >
+        Power Rankings
+      </a>
+      
+    </nav>
+    <div class="site-header-meta">
+      
+      
+      <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
+      
+    </div>
+  </div>
+</header>
+
+
+    
+
+    <main class="page-main">
+    
+    
+    <h1 class="page-title">Matchup Predictor</h1>
+
+    <nav class="matchup-mode-tabs" aria-label="Matchup predictor mode">
+      <a
+        href="/matchup-predictor/future"
+        class="matchup-mode-tab is-active"
+        aria-current=&#34;page&#34;
+      >Future</a>
+      <a
+        href="/matchup-predictor/past"
+        class="matchup-mode-tab"
+        
+      >Past</a>
+    </nav>
+
+    <form
+      method="GET"
+      action="/matchup-predictor/future"
+      class="matchup-predictor-form"
+      id="matchupForm"
+      data-matchup-key="2|10"
+    >
+      <input type="hidden" name="awayMissing" id="awayMissing" value="" />
+      <input type="hidden" name="homeMissing" id="homeMissing" value="" />
+
+      
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":39,"losses":29,"decided":68,"winPct":57.4};</script>
+      <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
+        <span class="matchup-predictor-record-label">Season pick record</span>
+        <span class="matchup-predictor-record-value">
+          39–29<span class="matchup-predictor-record-pct"> (57.4%)</span>
+        </span>
+      </div>
+      
+
+      <div class="matchup-predictor-controls">
+        <label for="view">
+          <strong>Date</strong>
+          <select id="view" name="view" class="schedule-view-select">
+            
+            
+            <option value="D20260610" >
+              Wed, 10-Jun
+            </option>
+            
+            <option value="W7" >
+              Sun, 14-Jun • Week 7
+            </option>
+            
+            <option value="D20260617" >
+              Wed, 17-Jun
+            </option>
+            
+            <option value="W8" >
+              Sun, 21-Jun • Week 8
+            </option>
+            
+            <option value="D20260624" >
+              Wed, 24-Jun
+            </option>
+            
+            <option value="W9" >
+              Sun, 28-Jun • Week 9
+            </option>
+            
+            <option value="D20260701" >
+              Wed, 1-Jul
+            </option>
+            
+            <option value="W10" selected>
+              Sun, 5-Jul • Week 10
+            </option>
+            
+            <option value="D20260708" >
+              Wed, 8-Jul
+            </option>
+            
+            <option value="W11" >
+              Sun, 12-Jul • Week 11
+            </option>
+            
+            <option value="D20260715" >
+              Wed, 15-Jul
+            </option>
+            
+            <option value="W12" >
+              Sun, 19-Jul • Week 12
+            </option>
+            
+            <option value="D20260722" >
+              Wed, 22-Jul
+            </option>
+            
+            <option value="W13" >
+              Sun, 26-Jul • Week 13
+            </option>
+            
+            <option value="D20260729" >
+              Wed, 29-Jul
+            </option>
+            
+            <option value="W14" >
+              Sun, 2-Aug • Week 14
+            </option>
+            
+            <option value="D20260805" >
+              Wed, 5-Aug
+            </option>
+            
+            <option value="W15" >
+              Sun, 9-Aug • Week 15
+            </option>
+            
+            <option value="W16" >
+              Sun, 16-Aug • Week 16
+            </option>
+            
+            <option value="W17" >
+              Sun, 23-Aug • Week 17
+            </option>
+            
+            <option value="W18" >
+              Sun, 30-Aug • Week 18
+            </option>
+            
+          </select>
+        </label>
+
+        <label for="matchup">
+          <strong>Matchup</strong>
+          <select
+            id="matchup"
+            name="matchup"
+            class="schedule-view-select"
+            
+          >
+            <option value="" >— Select a game —</option>
+            
+            <option value="12|1" >
+              LHRGC LAW @ ENGAGE PEO · 8:30 AM
+            </option>
+            
+            <option value="2|10" selected>
+              FREEHOLD GMC @ GAME CHANGER · 8:30 AM
+            </option>
+            
+            <option value="9|17" >
+              ACE ALUMINUM @ EB CONSTRUCTION · 9:00 AM
+            </option>
+            
+            <option value="5|15" >
+              GODDARD HOME @ TEC-TEL · 9:00 AM
+            </option>
+            
+            <option value="14|4" >
+              NEW HORIZON @ URWAY HEALTH · 9:30 AM
+            </option>
+            
+            <option value="7|18" >
+              FRADKIN LAW @ CG TAX · 10:30 AM
+            </option>
+            
+            <option value="16|8" >
+              TUSCANYROSE @ JERSEY ALLSTARS · 10:30 AM
+            </option>
+            
+            <option value="13|6" >
+              MONMOUTH GYM @ PROCARE · 11:30 AM
+            </option>
+            
+            <option value="3|11" >
+              PRINCETON BRAIN @ SHORE SMILE · 6:00 PM
+            </option>
+            
+          </select>
+        </label>
+      </div>
+      <noscript><button type="submit">Go</button></noscript>
+
+    
+    <p class="matchup-predictor-summary">Week 10 (Sun, 5-Jul games only)</p>
+    
+
+    
+    <section class="matchup-prediction matchup-predictor-panel">
+      <h2>Model prediction</h2>
+      <p class="matchup-prediction-note">
+        <strong>Expected runs</strong> use roster offense, 2026 production, schedule runs per game and runs against,
+        plus how many runs the opponent typically allows. Active vs benched players and lineup rules (including a player
+        batting twice) adjust team strength. <strong>Win %</strong> is driven mainly by the projected run margin
+        (a 2-run edge is a modest favorite, not a blowout); roster/record talent is a smaller secondary input.
+      </p>
+
+      
+      
+      
+      
+      <div class="matchup-pred-win-row">
+        <div class="matchup-pred-team matchup-pred-away">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Away</span>FREEHOLD BUICK GMC</span>
+          <span class="matchup-pred-pct">55.4%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--leader" style="width:55.4%"></span></span>
+        </div>
+        <div class="matchup-pred-team matchup-pred-home">
+          <span class="matchup-pred-team-name"><span class="matchup-side-tag">Home</span>GAME CHANGER</span>
+          <span class="matchup-pred-pct">44.6%</span>
+          <span class="matchup-pred-bar-wrap"><span class="matchup-pred-bar matchup-pred-bar--trailer" style="width:44.6%"></span></span>
+        </div>
+      </div>
+
+      <div class="page-table-wrap">
+      <table class="matchup-pred-lines page-table">
+        <thead>
+          <tr>
+            <th>Line</th>
+            <th>Team</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          
+          <tr class="matchup-lines-row--final-score">
+            <td>Predicted final score</td>
+            
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--winner"><span class="matchup-side-tag matchup-side-tag--winner">Winner</span>FREEHOLD BUICK GMC</td>
+            
+            <td class="matchup-lines-value matchup-lines-score">
+              <span class="matchup-score-runs matchup-score-runs--winner">11</span>
+              <span class="matchup-score-sep">–</span>
+              <span class="matchup-score-runs matchup-score-runs--loser">10</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Over / under (total runs)</td>
+            <td class="matchup-lines-team matchup-lines-team--both">Both teams</td>
+            <td class="matchup-lines-value"><strong>O/U 21</strong></td>
+          </tr>
+          
+          
+          
+          
+          
+          <tr class="matchup-lines-row--runline">
+            <td>Run line</td>
+            
+            <td class="matchup-lines-team matchup-lines-team--away matchup-lines-team--favorite"><span class="matchup-side-tag">Away</span>FREEHOLD BUICK GMC</td>
+            
+            <td class="matchup-lines-value"><strong>1</strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--away"><span class="matchup-side-tag">Away</span>FREEHOLD BUICK GMC <span class="matchup-bet-model-pick">Model pick</span></td>
+            <td class="matchup-lines-value"><strong>-125</strong></td>
+          </tr>
+          <tr>
+            <td>Moneyline</td>
+            <td class="matchup-lines-team matchup-lines-team--home"><span class="matchup-side-tag">Home</span>GAME CHANGER</td>
+            <td class="matchup-lines-value"><strong>+110</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+    
+
+    <div id="matchup-lineup-rules-host">
+    
+    </div>
+
+    
+    
+    
+    
+    <section class="matchup-predictor-rosters">
+      
+      <p class="matchup-roster-hint">Toggle <strong>Active</strong> / <strong>Bench</strong> for each player. Bench choices are saved in your browser for this matchup (local storage). Win % and lineup rules follow MMS bylaws for missing players, C-players, and the 2026 11-batter rule.</p>
+      
+      <h2 class="matchup-predictor-headline">
+        <span class="matchup-headline-team matchup-headline-team--away"><span class="matchup-side-tag">Away</span>FREEHOLD BUICK GMC</span>
+        <span class="matchup-predictor-at">@</span>
+        <span class="matchup-headline-team matchup-headline-team--home"><span class="matchup-side-tag">Home</span>GAME CHANGER</span>
+      </h2>
+      <div class="schedule-roster-pair matchup-predictor-pair">
+        <article
+  class="schedule-roster-col schedule-roster-col--away"
+  style="border-color:#0B0B0B;box-shadow:inset 0 0 0 1px #0B0B0B33"
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag">Away</span></p>
+  <h3 class="schedule-roster-team-name">FREEHOLD BUICK GMC</h3>
+  
+  <p class="schedule-roster-captain">Captain: CONTI</p>
+  
+  <p class="matchup-roster-active-count">13 of 13 active</p>
+
+  
+  <ol class="matchup-roster-list">
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R1</span>
+      <span class="matchup-roster-name">Gregory Deluise</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="gregory deluise"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R2</span>
+      <span class="matchup-roster-name">Mike Conti</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mike conti"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R3</span>
+      <span class="matchup-roster-name">Mat Manochio</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="mat manochio"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R4</span>
+      <span class="matchup-roster-name">Lucas Preiss</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="lucas preiss"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R5</span>
+      <span class="matchup-roster-name">Nick Deluise</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="nick deluise"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R6</span>
+      <span class="matchup-roster-name">Dan Manochio Jr</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dan manochio jr"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R7</span>
+      <span class="matchup-roster-name">Patrick Thomas</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="patrick thomas"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R8</span>
+      <span class="matchup-roster-name">Stephen Milhaven</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="stephen milhaven"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R9</span>
+      <span class="matchup-roster-name">Dan Manochio Sr</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="dan manochio sr"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R10</span>
+      <span class="matchup-roster-name">Michael Podolla</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="michael podolla"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R11</span>
+      <span class="matchup-roster-name">Ryan Ramirez</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="ryan ramirez"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R12</span>
+      <span class="matchup-roster-name">Tom Bongiovani</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="tom bongiovani"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R13</span>
+      <span class="matchup-roster-name">Raymond Porzio</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="away"
+        data-norm="raymond porzio"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+  </ol>
+  
+</article>
+
+        <article
+  class="schedule-roster-col schedule-roster-col--home"
+  style="border-color:#0E3A5B;box-shadow:inset 0 0 0 1px #0E3A5B33"
+>
+  <p class="schedule-roster-role"><span class="matchup-side-tag">Home</span></p>
+  <h3 class="schedule-roster-team-name">GAME CHANGER</h3>
+  
+  <p class="schedule-roster-captain">Captain: KESSLER</p>
+  
+  <p class="matchup-roster-active-count">13 of 13 active</p>
+
+  
+  <ol class="matchup-roster-list">
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R1</span>
+      <span class="matchup-roster-name">Pablo Gonzales</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="pablo gonzales"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R2</span>
+      <span class="matchup-roster-name">Matt Hill</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="matt hill"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R3</span>
+      <span class="matchup-roster-name">Mark Yutko</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="mark yutko"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R4</span>
+      <span class="matchup-roster-name">Jon Hempstead</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="jon hempstead"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R5</span>
+      <span class="matchup-roster-name">Aj Greenspan</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="aj greenspan"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R6</span>
+      <span class="matchup-roster-name">Adam Greenspan</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="adam greenspan"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R7</span>
+      <span class="matchup-roster-name">Evan Steinberg</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="evan steinberg"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R8</span>
+      <span class="matchup-roster-name"><span class="matchup-roster-replaced-name">Andy Kessler</span> Chris Frometa<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span></span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="chris frometa"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R9</span>
+      <span class="matchup-roster-name">Ben Kessler</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="ben kessler"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R10</span>
+      <span class="matchup-roster-name">Steve Messina</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="steve messina"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R11</span>
+      <span class="matchup-roster-name">Marcus Baquero</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="marcus baquero"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R12</span>
+      <span class="matchup-roster-name">Daniel Kessler</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="daniel kessler"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+    <li class="matchup-roster-item">
+      <span class="matchup-roster-pick">R13</span>
+      <span class="matchup-roster-name">David Unterweiser</span>
+      
+      <button
+        type="button"
+        class="matchup-status-btn matchup-status-btn--active"
+        data-lineup-toggle
+        data-side="home"
+        data-norm="david unterweiser"
+        aria-pressed="false"
+      >Active</button>
+    </li>
+    
+  </ol>
+  
+</article>
+
+      </div>
+    </section>
+    
+
+    </form>
+
+    
+    
+    <section class="matchup-predictor-audit">
+      <details class="matchup-audit-details">
+        <summary class="matchup-audit-summary">
+          <span class="matchup-audit-summary-title">Model accuracy report</span>
+          <span class="matchup-audit-summary-meta">68 graded games · 9 close misses</span>
+        </summary>
+
+        <p class="matchup-audit-note">
+          Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under 55% (coin-flip territory).
+        </p>
+
+        
+        <h3 class="matchup-audit-heading">Week by week</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Games</th>
+                <th>W–L</th>
+                <th>Close misses</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>8</td>
+                <td>7–1</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>11</td>
+                <td>7–4</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W3</td>
+                <td>11</td>
+                <td>6–5</td>
+                <td>0</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>3</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>14</td>
+                <td>8–6</td>
+                <td>2</td>
+              </tr>
+              
+              <tr>
+                <td>W6</td>
+                <td>13</td>
+                <td>7–6</td>
+                <td>2</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+
+        
+        <h3 class="matchup-audit-heading">Close misses</h3>
+        <div class="matchup-audit-table-wrap">
+          <table class="matchup-audit-table matchup-audit-table--misses">
+            <thead>
+              <tr>
+                <th>Week</th>
+                <th>Matchup</th>
+                <th>Model pick</th>
+                <th>Win %</th>
+                <th>Actual</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              
+              <tr>
+                <td>W1</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W1/matchup/2-1">FREEHOLD GMC @ ENGAGE PEO</a>
+                  
+                </td>
+                <td>ENGAGE PEO</td>
+                <td>51.1%</td>
+                <td>FREEHOLD GMC</td>
+                <td>10–9</td>
+              </tr>
+              
+              <tr>
+                <td>W2</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W2/matchup/8-9">JERSEY ALLSTARS @ ACE ALUMINUM</a>
+                  
+                </td>
+                <td>JERSEY ALLSTARS</td>
+                <td>54.7%</td>
+                <td>ACE ALUMINUM</td>
+                <td>5–18</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/D20260513/matchup/10-6">GAME CHANGER @ PROCARE</a>
+                  
+                </td>
+                <td>GAME CHANGER</td>
+                <td>53.4%</td>
+                <td>PROCARE</td>
+                <td>9–10</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W4/matchup/6-4">PROCARE @ URWAY HEALTH</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>50.1%</td>
+                <td>URWAY HEALTH</td>
+                <td>1–13</td>
+              </tr>
+              
+              <tr>
+                <td>W4</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W4/matchup/2-5">FREEHOLD GMC @ GODDARD HOME</a>
+                  
+                </td>
+                <td>GODDARD HOME</td>
+                <td>53%</td>
+                <td>FREEHOLD GMC</td>
+                <td>13–10</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W5/matchup/7-1">FRADKIN LAW @ ENGAGE PEO</a>
+                  
+                </td>
+                <td>FRADKIN LAW</td>
+                <td>53.6%</td>
+                <td>ENGAGE PEO</td>
+                <td>2–4</td>
+              </tr>
+              
+              <tr>
+                <td>W5</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W5/matchup/5-1">GODDARD HOME @ ENGAGE PEO</a>
+                  
+                </td>
+                <td>ENGAGE PEO</td>
+                <td>52.8%</td>
+                <td>GODDARD HOME</td>
+                <td>16–10</td>
+              </tr>
+              
+              <tr>
+                <td>W6</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W6/matchup/4-18">URWAY HEALTH @ CG TAX</a>
+                  
+                </td>
+                <td>URWAY HEALTH</td>
+                <td>54.1%</td>
+                <td>CG TAX</td>
+                <td>12–15</td>
+              </tr>
+              
+              <tr>
+                <td>W6</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W6/matchup/13-12">MONMOUTH GYM @ LHRGC LAW</a>
+                  
+                </td>
+                <td>MONMOUTH GYM</td>
+                <td>50.6%</td>
+                <td>LHRGC LAW</td>
+                <td>8–16</td>
+              </tr>
+              
+            </tbody>
+          </table>
+        </div>
+        
+      </details>
+    </section>
+    
+    </main>
+    
+    <script type="module" src="/js/matchup-predictor-nav.mjs?v=2"></script>
+    <script type="module" src="/js/matchup-predictor-live.mjs?v=2"></script>
+    
+    <script src="/js/matchup-predictor-ui.js?v=2"></script>
+    
+    <script>window.__MATCHUP_CLIENT__ = {"leagueNorms":{"offense":{"mean":0.21101333114548246,"std":0.20641743480517102},"runProd":{"mean":0.439289929410513,"std":0.0884723516617224},"runsPerGame":{"mean":10.382363315696649,"std":2.494745146454821},"runsAgainstPerGame":{"mean":10.386485890652558,"std":2.3852704651480954},"teamOverall":{"mean":0.10611111111111111,"std":0.3935047492144421},"winPct":{"mean":0.5028880070546737,"std":0.1880635994251562},"sos":{"mean":0.4985071806500378,"std":0.054989131598278305},"defenseZ":{"mean":0,"std":0.00001}},"runBase":{"gamesSampled":68,"avgTotalRuns":20.86764705882353,"avgRunsPerTeam":10.433823529411764,"avgRunsAgainstPerGame":10.433823529411764},"awayBaseProfile":{"teamId":"2","teamName":"FREEHOLD BUICK GMC","offenseRating":0.16838709677419347,"runProd2026":0.4543010752688172,"defenseZ":0,"winPct":0.5,"sosOppWinPct":0.4709821428571428,"teamOverall":0.03,"rosterPlayerRating":0.16838709677419347,"scheduleGames":8,"runsPerGame":10.625,"runsAgainstPerGame":13.25,"runDiffPerGame":-2.625},"homeBaseProfile":{"teamId":"10","teamName":"GAME CHANGER","offenseRating":0.05644518272425264,"runProd2026":0.39867109634551495,"defenseZ":0,"winPct":0.2857142857142857,"sosOppWinPct":0.45691609977324255,"teamOverall":-0.51,"rosterPlayerRating":0.05644518272425264,"scheduleGames":7,"runsPerGame":8.857142857142858,"runsAgainstPerGame":12.714285714285714,"runDiffPerGame":-3.857142857142857},"awayPlayers":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"homePlayers":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Chris Frometa","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"awayPlayersOriginal":["Gregory Deluise","Mike Conti","Mat Manochio","Lucas Preiss","Nick Deluise","Dan Manochio Jr","Patrick Thomas","Stephen Milhaven","Dan Manochio Sr","Michael Podolla","Ryan Ramirez","Tom Bongiovani","Raymond Porzio"],"homePlayersOriginal":["Pablo Gonzales","Matt Hill","Mark Yutko","Jon Hempstead","Aj Greenspan","Adam Greenspan","Evan Steinberg","Andy Kessler","Ben Kessler","Steve Messina","Marcus Baquero","Daniel Kessler","David Unterweiser"],"replacementByOriginalNorm":{"andy kessler":{"original":"Andy Kessler","replacement":"Chris Frometa","originalNorm":"andy kessler","replacementNorm":"chris frometa","replacementDateIso":"2026-05-30"}},"gameIsoDate":"2026-07-05","gameId":"46208210","isFinishedGame":false,"gameResult":null,"awayLabel":"FREEHOLD BUICK GMC","homeLabel":"GAME CHANGER","offenseRatingByNorm":{"gregory deluise":1.02,"mike conti":1.95,"mat manochio":0.28,"lucas preiss":0.2,"nick deluise":1.36,"dan manochio jr":0.15,"patrick thomas":-0.29,"stephen milhaven":1.85,"dan manochio sr":0.06,"michael podolla":-0.88,"ryan ramirez":-1.58,"tom bongiovani":-1.05,"raymond porzio":-1.52,"pablo gonzales":0.98,"matt hill":2.39,"mark yutko":0.41,"jon hempstead":1.02,"aj greenspan":-0.66,"adam greenspan":0.95,"evan steinberg":0.23,"ben kessler":-0.51,"steve messina":-0.02,"marcus baquero":-1.49,"daniel kessler":-1.63,"david unterweiser":-1.27},"stats2026ByPlayer":{"gregory deluise":{"PA":"27","Runs":"8","RBI":"6"},"mike conti":{"PA":"31","Runs":"13","RBI":"14"},"mat manochio":{"PA":"33","Runs":"12","RBI":"5"},"lucas preiss":{"PA":"31","Runs":"9","RBI":"4"},"nick deluise":{"PA":"32","Runs":"14","RBI":"13"},"dan manochio jr":{"PA":"31","Runs":"5","RBI":"7"},"patrick thomas":{"PA":"31","Runs":"4","RBI":"5"},"stephen milhaven":{"PA":"31","Runs":"6","RBI":"17"},"dan manochio sr":{"PA":"13","Runs":"2","RBI":"0"},"michael podolla":{"PA":"31","Runs":"5","RBI":"2"},"ryan ramirez":{"PA":"30","Runs":"4","RBI":"3"},"tom bongiovani":{"PA":"30","Runs":"1","RBI":"5"},"raymond porzio":{"PA":"21","Runs":"3","RBI":"2"},"pablo gonzales":{"PA":"29","Runs":"11","RBI":"4"},"matt hill":{"PA":"29","Runs":"12","RBI":"13"},"mark yutko":{"PA":"28","Runs":"7","RBI":"6"},"jon hempstead":{"PA":"26","Runs":"7","RBI":"12"},"aj greenspan":{"PA":"20","Runs":"3","RBI":"4"},"adam greenspan":{"PA":"21","Runs":"3","RBI":"5"},"evan steinberg":{"PA":"24","Runs":"6","RBI":"5"},"chris frometa":{"PA":"3","Runs":"0","RBI":"0"},"ben kessler":{"PA":"21","Runs":"2","RBI":"4"},"steve messina":{"PA":"17","Runs":"2","RBI":"0"},"marcus baquero":{"PA":"24","Runs":"2","RBI":"1"},"daniel kessler":{"PA":"26","Runs":"2","RBI":"3"},"david unterweiser":{"PA":"23","Runs":"3","RBI":"0"}},"defenseZByNorm":{},"positionByNorm":{},"calibrationWeights":[-0.3509,0.0127,0.2327,0.0798,-0.0684,0.0661,-0.8749,-0.0005,0.0508]};</script>
+    <script type="module" src="/js/matchup-predictor-client.mjs?v=2"></script>
+    
+    <script>
+      (function () {
+        function sitePath(path) {
+          const base =
+            typeof window.__SITE_BASE_PATH__ !== "undefined"
+              ? String(window.__SITE_BASE_PATH__ || "")
+              : "";
+          const p = path.startsWith("/") ? path : "/" + path;
+          return base + p;
+        }
+
+        function hydratePredictorRecordFromJson() {
+          return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data && data.decided > 0 && !window.__MATCHUP_PREDICTOR_RECORD__) {
+                window.__MATCHUP_PREDICTOR_RECORD__ = data;
+              }
+            })
+            .catch(() => {});
+        }
+
+        function applyMatchupPageChrome() {
+          if (window.MmsMatchupPredictorUi) {
+            window.MmsMatchupPredictorUi.ensurePredictorRecordBlock();
+            window.MmsMatchupPredictorUi.ensurePredictionPanelStyles();
+          }
+        }
+
+        const form = document.getElementById("matchupForm");
+        const awayInput = document.getElementById("awayMissing");
+        const homeInput = document.getElementById("homeMissing");
+        const viewSelect = document.getElementById("view");
+        const matchupSelect = document.getElementById("matchup");
+        if (!form || !awayInput || !homeInput || !viewSelect || !matchupSelect) return;
+        const isStaticSite = true;
+
+        const STORAGE_PREFIX = "mms-matchup-lineup:";
+        const matchupKey = form.getAttribute("data-matchup-key") || "";
+        const matchupCtx = window.__MATCHUP_CLIENT__ || null;
+        const isFinishedGame = !!(matchupCtx && matchupCtx.isFinishedGame);
+
+        function parseList(value) {
+          return value
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+
+        function benchSortedKey(arr) {
+          return [...arr].map((s) => String(s || "").trim()).filter(Boolean).sort().join(",");
+        }
+
+        function matchupKeyToSlug(key) {
+          const k = (key || "").trim();
+          const pipe = k.indexOf("|");
+          if (pipe < 0) return k;
+          return k.slice(0, pipe) + "-" + k.slice(pipe + 1);
+        }
+
+        function redirectLegacyMatchupPath() {
+          if (!isStaticSite) return false;
+          const p = window.location.pathname;
+          const m = p.match(/\/matchup\/([^/?#]+)/);
+          if (!m) return false;
+          const seg = m[1];
+          if (!seg.includes("%7C") && !seg.includes("|")) return false;
+          let decoded = seg;
+          try {
+            decoded = decodeURIComponent(seg);
+          } catch {
+            /* keep seg */
+          }
+          const parts = decoded.split("|");
+          if (parts.length !== 2 || !/^\d+$/.test(parts[0]) || !/^\d+$/.test(parts[1])) return false;
+          const slug = parts[0] + "-" + parts[1];
+          const next = p.replace(/\/matchup\/[^/?#]+/, "/matchup/" + slug) + window.location.search;
+          window.location.replace(next);
+          return true;
+        }
+
+        if (redirectLegacyMatchupPath()) return;
+
+        function submitOrNavigate() {
+          if (!isStaticSite) {
+            form.requestSubmit();
+            return;
+          }
+          const view = (viewSelect.value || "").trim();
+          const matchup = (matchupSelect.value || "").trim();
+          let path = "/matchup-predictor/future";
+          if (view) {
+            path += "/view/" + encodeURIComponent(view);
+            if (matchup) path += "/matchup/" + matchupKeyToSlug(matchup);
+          }
+          const params = new URLSearchParams();
+          if (awayInput.value) params.set("awayMissing", awayInput.value);
+          if (homeInput.value) params.set("homeMissing", homeInput.value);
+          const qs = params.toString();
+          window.location.assign(qs ? path + "?" + qs : path);
+        }
+
+        if (isStaticSite && !window.location.pathname.includes("/view/")) {
+          const url = new URL(window.location.href);
+          const queryView = (url.searchParams.get("view") || "").trim();
+          const queryMatchup = (url.searchParams.get("matchup") || "").trim();
+          const queryAwayMissing = (url.searchParams.get("awayMissing") || "").trim();
+          const queryHomeMissing = (url.searchParams.get("homeMissing") || "").trim();
+          if (queryView) viewSelect.value = queryView;
+          if (queryMatchup) {
+            const pipe = queryMatchup.indexOf("|");
+            matchupSelect.value = pipe >= 0
+              ? queryMatchup.slice(0, pipe) + "|" + queryMatchup.slice(pipe + 1)
+              : queryMatchup.replace(/^(\d+)-(\d+)$/, "$1|$2");
+          }
+          if (queryAwayMissing) awayInput.value = queryAwayMissing;
+          if (queryHomeMissing) homeInput.value = queryHomeMissing;
+          if (queryView || queryMatchup) {
+            submitOrNavigate();
+            return;
+          }
+        }
+
+        function loadStoredBench() {
+          if (!matchupKey) return { awayBench: [], homeBench: [] };
+          try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + matchupKey);
+            if (!raw) return { awayBench: [], homeBench: [] };
+            const data = JSON.parse(raw);
+            const away = data.awayBench ?? data.away;
+            const home = data.homeBench ?? data.home;
+            return {
+              awayBench: Array.isArray(away) ? away : [],
+              homeBench: Array.isArray(home) ? home : [],
+            };
+          } catch {
+            return { awayBench: [], homeBench: [] };
+          }
+        }
+
+        function saveStoredBench(awayBench, homeBench) {
+          if (!matchupKey) return;
+          localStorage.setItem(
+            STORAGE_PREFIX + matchupKey,
+            JSON.stringify({
+              version: 1,
+              awayBench: [...awayBench],
+              homeBench: [...homeBench],
+              updatedAt: new Date().toISOString(),
+            })
+          );
+        }
+
+        function applyBenchToForm(awayBench, homeBench) {
+          awayInput.value = awayBench.join(",");
+          homeInput.value = homeBench.join(",");
+        }
+
+        function syncButtons(awaySet, homeSet) {
+          document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const onBench = (side === "away" ? awaySet : homeSet).has(norm);
+            btn.textContent = onBench ? "Bench" : "Active";
+            btn.classList.toggle("matchup-status-btn--active", !onBench);
+            btn.classList.toggle("matchup-status-btn--missing", onBench);
+            btn.setAttribute("aria-pressed", onBench ? "true" : "false");
+            const row = btn.closest(".matchup-roster-item");
+            if (row) row.classList.toggle("matchup-roster-item--benched", onBench);
+          });
+        }
+
+        let awaySet = new Set(parseList(awayInput.value));
+        let homeSet = new Set(parseList(homeInput.value));
+
+        if (matchupKey) {
+          const stored = loadStoredBench();
+          const hasStored =
+            stored.awayBench.length > 0 || stored.homeBench.length > 0;
+          const serverAway = benchSortedKey([...awaySet]);
+          const serverHome = benchSortedKey([...homeSet]);
+          const storedAway = benchSortedKey(stored.awayBench);
+          const storedHome = benchSortedKey(stored.homeBench);
+
+          if (!isFinishedGame && (isStaticSite || hasStored)) {
+            if (storedAway !== serverAway || storedHome !== serverHome) {
+              awaySet = new Set(stored.awayBench);
+              homeSet = new Set(stored.homeBench);
+              applyBenchToForm(stored.awayBench, stored.homeBench);
+              if (!isStaticSite && !matchupCtx) {
+                submitOrNavigate();
+                return;
+              }
+            }
+          } else if (awaySet.size || homeSet.size) {
+            saveStoredBench([...awaySet], [...homeSet]);
+          }
+        }
+
+        if (isStaticSite && matchupKey) {
+          const url = new URL(window.location.href);
+          if (url.searchParams.has("awayMissing") || url.searchParams.has("homeMissing")) {
+            url.searchParams.delete("awayMissing");
+            url.searchParams.delete("homeMissing");
+            window.history.replaceState({}, "", url.pathname + (url.search || ""));
+          }
+        }
+
+        function recalcPrediction() {
+          if (isFinishedGame) return;
+          if (!matchupCtx || !window.MmsMatchupPredictor || !window.MmsMatchupPredictorUi) return;
+          try {
+            const awayBench = [...awaySet];
+            const homeBench = [...homeSet];
+            const pred = window.MmsMatchupPredictor.predictFromPayload(
+              matchupCtx,
+              awayBench,
+              homeBench
+            );
+            window.MmsMatchupPredictorUi.updatePredictionUi(pred);
+            const awayTotal = matchupCtx.awayPlayers ? matchupCtx.awayPlayers.length : 0;
+            const homeTotal = matchupCtx.homePlayers ? matchupCtx.homePlayers.length : 0;
+            window.MmsMatchupPredictorUi.updateActiveCounts(
+              awayTotal - awaySet.size,
+              homeTotal - homeSet.size,
+              awayTotal,
+              homeTotal
+            );
+            if (window.MmsMatchupPredictor.buildLineupEnrichment) {
+              const enrichment = window.MmsMatchupPredictor.buildLineupEnrichment(
+                matchupCtx,
+                awayBench,
+                homeBench
+              );
+              window.MmsMatchupPredictorUi.updateLineupUi(enrichment);
+            }
+          } catch (err) {
+            console.error("Matchup prediction update failed", err);
+          }
+        }
+
+        function normName(value) {
+          return String(value || "")
+            .toLowerCase()
+            .replace(/[.'’]/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        }
+
+        function remapBenchSet(set, replacementMap) {
+          const out = new Set();
+          for (const n of set) {
+            const key = normName(n);
+            const repl = replacementMap.get(key);
+            out.add(repl ? repl.replacementNorm : key);
+          }
+          return out;
+        }
+
+        function replacementMapFromCtx(ctx) {
+          const map = new Map();
+          for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
+            if (entry?.replacementNorm) map.set(norm, entry);
+          }
+          return map;
+        }
+
+        async function initMatchupClient() {
+          const replMap = replacementMapFromCtx(matchupCtx);
+          if (replMap.size) {
+            awaySet = remapBenchSet(awaySet, replMap);
+            homeSet = remapBenchSet(homeSet, replMap);
+            applyBenchToForm([...awaySet], [...homeSet]);
+          }
+
+          if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.hydrateMatchupReplacements
+          ) {
+            try {
+              await window.MmsMatchupPredictor.hydrateMatchupReplacements(matchupCtx);
+              const liveReplMap = replacementMapFromCtx(matchupCtx);
+              if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.awayPlayersOriginal,
+                  "away",
+                  liveReplMap
+                );
+                window.MmsMatchupPredictorUi.applyReplacementDisplay(
+                  matchupCtx.homePlayersOriginal,
+                  "home",
+                  liveReplMap
+                );
+              }
+              if (liveReplMap.size) {
+                awaySet = remapBenchSet(awaySet, liveReplMap);
+                homeSet = remapBenchSet(homeSet, liveReplMap);
+                applyBenchToForm([...awaySet], [...homeSet]);
+              }
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          }
+          syncButtons(awaySet, homeSet);
+          if (matchupCtx) recalcPrediction();
+        }
+
+        window.__MMS_MATCHUP_BENCH__ = {
+          applyServerMissing(awayNorms, homeNorms) {
+            awaySet = new Set(awayNorms || []);
+            homeSet = new Set(homeNorms || []);
+            applyBenchToForm([...awaySet], [...homeSet]);
+            saveStoredBench([...awaySet], [...homeSet]);
+            syncButtons(awaySet, homeSet);
+            if (matchupCtx && window.MmsMatchupPredictor?.buildLineupEnrichment) {
+              const enrichment = window.MmsMatchupPredictor.buildLineupEnrichment(
+                matchupCtx,
+                [...awaySet],
+                [...homeSet]
+              );
+              window.MmsMatchupPredictorUi?.updateLineupUi?.(enrichment);
+              if (!isFinishedGame) recalcPrediction();
+            }
+          },
+        };
+
+        hydratePredictorRecordFromJson().then(() => {
+          applyMatchupPageChrome();
+          initMatchupClient();
+        });
+
+        viewSelect.addEventListener("change", () => {
+          try {
+            sessionStorage.setItem("mms-matchup-user-picked-view", "1");
+          } catch {
+            /* private mode */
+          }
+          matchupSelect.value = "";
+          submitOrNavigate();
+        });
+
+        matchupSelect.addEventListener("change", () => {
+          submitOrNavigate();
+        });
+
+        document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+          if (isFinishedGame) {
+            btn.disabled = true;
+            btn.setAttribute("aria-disabled", "true");
+            return;
+          }
+          btn.addEventListener("click", () => {
+            const side = btn.getAttribute("data-side");
+            const norm = btn.getAttribute("data-norm");
+            const set = side === "away" ? awaySet : homeSet;
+            if (set.has(norm)) set.delete(norm);
+            else set.add(norm);
+            applyBenchToForm([...awaySet], [...homeSet]);
+            saveStoredBench([...awaySet], [...homeSet]);
+            syncButtons(awaySet, homeSet);
+            if (matchupCtx) recalcPrediction();
+            else if (!isStaticSite) submitOrNavigate();
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>
+
+
