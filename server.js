@@ -6,6 +6,12 @@ const fs = require("fs/promises");
 const path = require("path");
 const { getFirebaseClientConfig } = require("./lib/firebaseClientConfig");
 const { matchupSlugToKey } = require("./lib/matchupSlug");
+const {
+  normalizeMatchupPredictorMode,
+  matchupPredictorModeLabel,
+  matchupPredictorBasePath,
+  matchupPredictorViewPath,
+} = require("./lib/matchupPredictorMode");
 const { buildWeeklyLeaderboardResponse } = require("./lib/dfsLeaderboardResponse");
 const {
   getCachedDfsLeaderboardScoringContext,
@@ -114,7 +120,8 @@ const {
   slateHasGamelogDates,
   resolveActiveDfsSlateToken,
   pickMatchupPredictorDefaultView,
-  filterScheduleOptionsForMatchupPredictor,
+  filterScheduleOptionsForMatchupPredictorMode,
+  pickMatchupPredictorDefaultViewForMode,
   filterScheduleOptionsToDfsVisibility,
   resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
@@ -202,7 +209,7 @@ app.use(
 /** Main site navigation (shared header on all primary pages). */
 const SITE_NAV = Object.freeze([
   { id: "home", label: "League Leaders", href: "/" },
-  { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor" },
+  { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor/future" },
   { id: "dfs", label: "DFS Lineup", href: "/dfs" },
   { id: "power", label: "Power Rankings", href: "/rankings/power" },
 ]);
@@ -2220,21 +2227,24 @@ app.get("/matchup-predictor/season-record.json", async (_req, res) => {
   }
 });
 
-async function loadMatchupPredictorDefaultViewMeta() {
+async function loadMatchupPredictorDefaultViewMeta(mode = "future") {
   const payload = await loadWeeklySchedule();
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-  const view = pickMatchupPredictorDefaultView(payload, refIso, Date.now());
+  const nowMs = Date.now();
+  const view = pickMatchupPredictorDefaultViewForMode(payload, refIso, nowMs, mode);
   if (!view) return null;
   return {
+    mode: normalizeMatchupPredictorMode(mode),
     view: safeText(view).toUpperCase(),
     refIso,
     computedAt: new Date().toISOString(),
   };
 }
 
-app.get("/matchup-predictor/default-view.json", async (_req, res) => {
+async function sendMatchupPredictorDefaultViewJson(req, res) {
   try {
-    const meta = await loadMatchupPredictorDefaultViewMeta();
+    const mode = normalizeMatchupPredictorMode(req.params?.mode);
+    const meta = await loadMatchupPredictorDefaultViewMeta(mode);
     if (!meta?.view) {
       return res.status(404).json({ error: "Default view unavailable" });
     }
@@ -2243,9 +2253,27 @@ app.get("/matchup-predictor/default-view.json", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({ error: publicErrorMessage(error, "Failed to load default view.") });
   }
+}
+
+app.get("/matchup-predictor/default-view.json", (req, res) => sendMatchupPredictorDefaultViewJson(req, res));
+app.get("/matchup-predictor/future/default-view.json", (req, res) => {
+  req.params.mode = "future";
+  return sendMatchupPredictorDefaultViewJson(req, res);
+});
+app.get("/matchup-predictor/past/default-view.json", (req, res) => {
+  req.params.mode = "past";
+  return sendMatchupPredictorDefaultViewJson(req, res);
 });
 
+function parseMatchupPredictorModeFromRequest(req) {
+  if (req.params?.mode) return normalizeMatchupPredictorMode(req.params.mode);
+  const p = safeText(req.path || "");
+  if (/\/matchup-predictor\/past(?:\/|$)/i.test(p)) return "past";
+  return "future";
+}
+
 async function renderMatchupPredictorPage(req, res) {
+  const matchupMode = parseMatchupPredictorModeFromRequest(req);
   try {
     const [
       payload,
@@ -2291,7 +2319,7 @@ async function renderMatchupPredictorPage(req, res) {
 
     if (!viewParam) {
       viewParam =
-        pickMatchupPredictorDefaultView(payload, refIso, nowMs) ||
+        pickMatchupPredictorDefaultViewForMode(payload, refIso, nowMs, matchupMode) ||
         pickSmartDefaultScheduleView(localCalendarIso(), payload) ||
         payload.scheduleOptions.find((o) => /^W\d+$/i.test(o.value))?.value ||
         payload.scheduleOptions[0]?.value ||
@@ -2307,13 +2335,29 @@ async function renderMatchupPredictorPage(req, res) {
     if (!hasExplicitView && viewParam && !req.params?.matchup) {
       return res.redirect(
         302,
-        sitePath(`/matchup-predictor/view/${encodeURIComponent(viewParam)}`)
+        matchupPredictorViewPath(matchupMode, viewParam, "", SITE_BASE_PATH)
       );
     }
 
-    const scheduleOptions = filterScheduleOptionsForMatchupPredictor(
-      payload.scheduleOptions || []
+    const scheduleOptions = filterScheduleOptionsForMatchupPredictorMode(
+      payload.scheduleOptions || [],
+      payload,
+      refIso,
+      nowMs,
+      matchupMode
     );
+    const allowedViews = new Set(
+      scheduleOptions.map((o) => safeText(o.value).toUpperCase()).filter(Boolean)
+    );
+    if (viewParam && allowedViews.size && !allowedViews.has(safeText(viewParam).toUpperCase())) {
+      viewParam = pickMatchupPredictorDefaultViewForMode(payload, refIso, nowMs, matchupMode) || "";
+      if (viewParam && !req.params?.matchup) {
+        return res.redirect(
+          302,
+          matchupPredictorViewPath(matchupMode, viewParam, "", SITE_BASE_PATH)
+        );
+      }
+    }
     const { selectedView, games, summaryLine } = resolveScheduleGamesForView(viewParam, payload);
 
     const matchupOptions = buildMatchupOptionsForGames(games);
@@ -2635,6 +2679,9 @@ async function renderMatchupPredictorPage(req, res) {
 
     renderPage(res, "matchup-predictor", {
       navActive: "matchup",
+      matchupMode,
+      matchupModeLabel: matchupPredictorModeLabel(matchupMode),
+      matchupBasePath: matchupPredictorBasePath(matchupMode, SITE_BASE_PATH),
       pageTitle: "Matchup Predictor",
       scheduleOptions,
       selectedView,
@@ -2659,9 +2706,26 @@ async function renderMatchupPredictorPage(req, res) {
   }
 }
 
-app.get("/matchup-predictor", renderMatchupPredictorPage);
-app.get("/matchup-predictor/view/:view", renderMatchupPredictorPage);
-app.get("/matchup-predictor/view/:view/matchup/:matchup", renderMatchupPredictorPage);
+app.get("/matchup-predictor", (req, res) => {
+  res.redirect(302, sitePath("/matchup-predictor/future"));
+});
+
+app.get("/matchup-predictor/future", renderMatchupPredictorPage);
+app.get("/matchup-predictor/past", renderMatchupPredictorPage);
+app.get("/matchup-predictor/future/view/:view", renderMatchupPredictorPage);
+app.get("/matchup-predictor/past/view/:view", renderMatchupPredictorPage);
+app.get("/matchup-predictor/future/view/:view/matchup/:matchup", renderMatchupPredictorPage);
+app.get("/matchup-predictor/past/view/:view/matchup/:matchup", renderMatchupPredictorPage);
+
+app.get("/matchup-predictor/view/:view", (req, res) => {
+  const view = encodeURIComponent(req.params.view);
+  res.redirect(302, sitePath(`/matchup-predictor/future/view/${view}`));
+});
+app.get("/matchup-predictor/view/:view/matchup/:matchup", (req, res) => {
+  const view = encodeURIComponent(req.params.view);
+  const matchup = encodeURIComponent(req.params.matchup);
+  res.redirect(302, sitePath(`/matchup-predictor/future/view/${view}/matchup/${matchup}`));
+});
 
 /** Schedule page hidden for now. */
 app.get("/schedule", (req, res) => {

@@ -328,7 +328,7 @@ function renderExplainer(data) {
       <p>
         <strong>Season projections</strong> start from each team’s current W-L, then add
         <em>expected</em> wins and losses on every remaining game using the
-        <a href="${esc(sitePath("/matchup-predictor"))}">matchup predictor</a> model
+        <a href="${esc(sitePath("/matchup-predictor/future"))}">matchup predictor</a> model
         (roster offense, schedule runs for/against, active vs benched players).
         Projected win % keeps fractional expected wins; the W-L column rounds to whole numbers. Regular season length:
         <strong>${data.regularSeasonGames} games</strong>.

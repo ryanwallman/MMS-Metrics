@@ -85,8 +85,9 @@ function extractSelectOptionValues(html, selectId) {
   return values;
 }
 
-function matchupPath(view, matchup = "") {
-  const base = `/matchup-predictor/view/${encodeURIComponent(view)}`;
+function matchupPath(view, matchup = "", mode = "future") {
+  const m = String(mode || "future").toLowerCase() === "past" ? "past" : "future";
+  const base = `/matchup-predictor/${m}/view/${encodeURIComponent(view)}`;
   if (!matchup) return base;
   return `${base}/matchup/${matchupKeyToSlug(matchup)}`;
 }
@@ -140,15 +141,19 @@ async function main() {
   await runNpm("build:matchup-predictor-nav");
 
   const { loadWeeklySchedule } = require("../lib/dfsLeaderboardScoringContext.js");
-  const { pickMatchupPredictorDefaultView, referenceIsoForScheduleYear } = require("../lib/dfs.js");
+  const {
+    pickMatchupPredictorDefaultViewForMode,
+    filterScheduleOptionsForMatchupPredictorMode,
+    referenceIsoForScheduleYear,
+  } = require("../lib/dfs.js");
   const { SCHEDULE_CALENDAR_YEAR } = require("../lib/sheetUrls.js");
   const schedulePayload = await loadWeeklySchedule();
   const viewValues = (schedulePayload.scheduleOptions || [])
     .map((o) => String(o.value || "").trim().toUpperCase())
     .filter((v) => /^(W\d+|D\d{8})$/.test(v));
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
-  const defaultView =
-    pickMatchupPredictorDefaultView(schedulePayload, refIso) ||
+  const defaultFutureView =
+    pickMatchupPredictorDefaultViewForMode(schedulePayload, refIso, Date.now(), "future") ||
     viewValues[viewValues.length - 1] ||
     "W1";
 
@@ -173,9 +178,9 @@ async function main() {
     await waitForHealth();
     // Warm schedule + replacement caches before exporting HTML.
     await fetchHtml("/healthz");
-    const defaultRoute = matchupPath(defaultView);
-    console.log(`[matchup-export] Default slate: ${defaultView} (${defaultRoute})`);
-    await fetchHtml(defaultRoute);
+    const defaultFutureRoute = matchupPath(defaultFutureView, "", "future");
+    console.log(`[matchup-export] Default future slate: ${defaultFutureView} (${defaultFutureRoute})`);
+    await fetchHtml(defaultFutureRoute);
 
     const recordRes = await fetch(`http://127.0.0.1:${port}/matchup-predictor/season-record.json`);
     if (recordRes.ok) {
@@ -187,36 +192,71 @@ async function main() {
       console.warn(`[matchup-export] season-record.json → ${recordRes.status}`);
     }
 
-    const defaultRes = await fetch(`http://127.0.0.1:${port}/matchup-predictor/default-view.json`);
-    if (defaultRes.ok) {
-      const defaultMeta = await defaultRes.json();
-      const defaultPath = path.join(outDir, "matchup-predictor/default-view.json");
-      await fs.writeFile(defaultPath, JSON.stringify(defaultMeta), "utf8");
-      console.log(`[matchup-export] wrote matchup-predictor/default-view.json → ${defaultMeta.view}`);
-    } else {
-      console.warn(`[matchup-export] default-view.json → ${defaultRes.status}`);
+    for (const mode of ["future", "past"]) {
+      const defaultRes = await fetch(
+        `http://127.0.0.1:${port}/matchup-predictor/${mode}/default-view.json`
+      );
+      if (defaultRes.ok) {
+        const defaultMeta = await defaultRes.json();
+        const defaultPath = path.join(outDir, `matchup-predictor/${mode}/default-view.json`);
+        await fs.mkdir(path.dirname(defaultPath), { recursive: true });
+        await fs.writeFile(defaultPath, JSON.stringify(defaultMeta), "utf8");
+        console.log(
+          `[matchup-export] wrote matchup-predictor/${mode}/default-view.json → ${defaultMeta.view}`
+        );
+      } else {
+        console.warn(`[matchup-export] ${mode}/default-view.json → ${defaultRes.status}`);
+      }
     }
 
-    const rootHtml = await fetchHtml(defaultRoute);
+    const legacyDefaultRes = await fetch(`http://127.0.0.1:${port}/matchup-predictor/default-view.json`);
+    if (legacyDefaultRes.ok) {
+      const defaultMeta = await legacyDefaultRes.json();
+      await fs.writeFile(
+        path.join(outDir, "matchup-predictor/default-view.json"),
+        JSON.stringify(defaultMeta),
+        "utf8"
+      );
+    }
+
+    const rootHtml = await fetchHtml("/matchup-predictor");
     await writeRoute(rootHtml, "/matchup-predictor");
 
-    console.log(`[matchup-export] Exporting ${viewValues.length} schedule views…`);
+    for (const mode of ["future", "past"]) {
+      const modeViews = filterScheduleOptionsForMatchupPredictorMode(
+        schedulePayload.scheduleOptions || [],
+        schedulePayload,
+        refIso,
+        Date.now(),
+        mode
+      )
+        .map((o) => String(o.value || "").trim().toUpperCase())
+        .filter((v) => /^(W\d+|D\d{8})$/.test(v));
 
-    const matchupRoutes = [];
-    await mapConcurrent(viewValues, 6, async (view) => {
-      const viewRoute = matchupPath(view);
-      const viewHtml = await fetchHtml(viewRoute);
-      await writeRoute(viewHtml, viewRoute);
-      for (const matchup of extractSelectOptionValues(viewHtml, "matchup")) {
-        if (matchup.includes("|")) matchupRoutes.push(matchupPath(view, matchup));
-      }
-    });
+      const modeRoot =
+        mode === "future"
+          ? await fetchHtml(`/matchup-predictor/${mode}`)
+          : await fetchHtml(`/matchup-predictor/${mode}`);
+      await writeRoute(modeRoot, `/matchup-predictor/${mode}`);
 
-    console.log(`[matchup-export] Exporting ${matchupRoutes.length} matchups…`);
-    await mapConcurrent(matchupRoutes, 12, async (route) => {
-      const html = await fetchHtml(route);
-      await writeRoute(html, route);
-    });
+      console.log(`[matchup-export] Exporting ${modeViews.length} ${mode} schedule views…`);
+
+      const matchupRoutes = [];
+      await mapConcurrent(modeViews, 6, async (view) => {
+        const viewRoute = matchupPath(view, "", mode);
+        const viewHtml = await fetchHtml(viewRoute);
+        await writeRoute(viewHtml, viewRoute);
+        for (const matchup of extractSelectOptionValues(viewHtml, "matchup")) {
+          if (matchup.includes("|")) matchupRoutes.push(matchupPath(view, matchup, mode));
+        }
+      });
+
+      console.log(`[matchup-export] Exporting ${matchupRoutes.length} ${mode} matchups…`);
+      await mapConcurrent(matchupRoutes, 12, async (route) => {
+        const html = await fetchHtml(route);
+        await writeRoute(html, route);
+      });
+    }
 
     await copyPublicAssets();
     const matchupDir = path.join(outDir, "matchup-predictor");

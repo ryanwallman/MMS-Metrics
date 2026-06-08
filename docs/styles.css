@@ -418,6 +418,52 @@ pre {
   box-shadow: 0 4px 18px rgba(234, 179, 8, 0.45);
 }
 
+.site-nav-group {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 8.75rem;
+}
+
+.site-nav-link--parent {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.site-nav-sub {
+  display: flex;
+  gap: 4px;
+}
+
+.site-nav-sublink {
+  flex: 1 1 0;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  text-decoration: none;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.site-nav-sublink:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+
+.site-nav-sublink.is-active {
+  background: rgba(254, 240, 138, 0.95);
+  color: var(--mms-brand-ink);
+  border-color: rgba(30, 58, 138, 0.28);
+}
+
 .site-header-meta {
   flex: 0 0 100%;
   width: 100%;
@@ -2671,6 +2717,11 @@ body > main.page-main {
     min-height: 38px;
     padding: 8px 8px;
     font-size: 12px;
+  }
+
+  .site-nav-group {
+    grid-column: 1 / -1;
+    min-width: 0;
   }
 
   .site-header-meta {

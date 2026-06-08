@@ -141,8 +141,9 @@ function extractAllMatches(html, regex) {
   return out;
 }
 
-function matchupPath(view, matchup = "") {
-  const base = `/matchup-predictor/view/${encodeURIComponent(view)}`;
+function matchupPath(view, matchup = "", mode = "future") {
+  const m = String(mode || "future").toLowerCase() === "past" ? "past" : "future";
+  const base = `/matchup-predictor/${m}/view/${encodeURIComponent(view)}`;
   if (!matchup) return base;
   return `${base}/matchup/${matchupKeyToSlug(matchup)}`;
 }
@@ -330,29 +331,37 @@ async function main() {
     if (!process.env.STATIC_SKIP_MATCHUP) {
       const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
       await writeRoute(rootMatchupHtml, "/matchup-predictor");
-      const viewValues = extractSelectOptionValues(rootMatchupHtml, "view");
-      const matchupRoutes = [];
-      console.log(`[static] Exporting ${viewValues.length} schedule views…`);
-      await mapConcurrent(viewValues, 8, async (view) => {
-        const viewRoute = matchupPath(view);
-        const viewHtml = await fetchHtml(port, viewRoute);
-        await writeRoute(viewHtml, viewRoute);
-        const matchupValues = extractSelectOptionValues(viewHtml, "matchup");
-        for (const matchup of matchupValues) {
-          matchupRoutes.push(matchupPath(view, matchup));
-        }
-      });
-      console.log(`[static] Exporting ${matchupRoutes.length} matchups (parallel)…`);
-      await mapConcurrent(matchupRoutes, 24, async (route) => {
-        const html = await fetchHtml(port, route);
-        await writeRoute(html, route);
-      });
+      for (const mode of ["future", "past"]) {
+        const modeRootHtml = await fetchHtml(port, `/matchup-predictor/${mode}`);
+        await writeRoute(modeRootHtml, `/matchup-predictor/${mode}`);
+        const viewValues = extractSelectOptionValues(modeRootHtml, "view");
+        const matchupRoutes = [];
+        console.log(`[static] Exporting ${viewValues.length} ${mode} schedule views…`);
+        await mapConcurrent(viewValues, 8, async (view) => {
+          const viewRoute = matchupPath(view, "", mode);
+          const viewHtml = await fetchHtml(port, viewRoute);
+          await writeRoute(viewHtml, viewRoute);
+          const matchupValues = extractSelectOptionValues(viewHtml, "matchup");
+          for (const matchup of matchupValues) {
+            matchupRoutes.push(matchupPath(view, matchup, mode));
+          }
+        });
+        console.log(`[static] Exporting ${matchupRoutes.length} ${mode} matchups (parallel)…`);
+        await mapConcurrent(matchupRoutes, 24, async (route) => {
+          const html = await fetchHtml(port, route);
+          await writeRoute(html, route);
+        });
+      }
     } else {
       console.log(
         "[static] STATIC_SKIP_MATCHUP=1 — refreshing /matchup-predictor index, keeping view pages"
       );
       const rootMatchupHtml = await fetchHtml(port, "/matchup-predictor");
       await writeRoute(rootMatchupHtml, "/matchup-predictor");
+      for (const mode of ["future", "past"]) {
+        const modeRootHtml = await fetchHtml(port, `/matchup-predictor/${mode}`);
+        await writeRoute(modeRootHtml, `/matchup-predictor/${mode}`);
+      }
     }
 
     // Export pretty DFS links for static navigation.
