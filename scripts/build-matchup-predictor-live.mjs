@@ -23,6 +23,7 @@ await esbuild.build({
     "process.env.STATIC_EXPORT": '"1"',
     "process.env.CSV_FETCH_TIMEOUT_MS": '"90000"',
     "process.env.MATCHUP_SCORE_POLL_MS": '"90000"',
+    "process.env.SCHEDULE_CALENDAR_YEAR": '"2026"',
   },
 });
 

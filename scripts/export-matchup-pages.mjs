@@ -115,6 +115,7 @@ async function copyPublicAssets() {
     ["public/styles.css", "docs/styles.css"],
     ["public/js/matchup-predictor-client.mjs", "docs/js/matchup-predictor-client.mjs"],
     ["public/js/matchup-predictor-nav.mjs", "docs/js/matchup-predictor-nav.mjs"],
+    ["public/js/matchup-predictor-live.mjs", "docs/js/matchup-predictor-live.mjs"],
     ["public/js/matchup-predictor-ui.js", "docs/js/matchup-predictor-ui.js"],
     ["public/js/dfs-lineup-pool.mjs", "docs/js/dfs-lineup-pool.mjs"],
   ];

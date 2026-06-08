@@ -31,6 +31,90 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// lib/sheetUrls.js
+var require_sheetUrls = __commonJS({
+  "lib/sheetUrls.js"(exports, module) {
+    var INDEX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
+    var SCHEDULE_URL2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
+    var ROSTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTFhhdnzm2I_PVTkR4FDL-pbBhf_K53gMj6Pk5u8vtfYTXN9569QbdTRG9pZBuIFpQuWIpT9tJMbLY1/pub?gid=1722495492&single=true&output=csv";
+    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
+    var SHEET_2026_GAMELOGS_ID = "1QGoXil2fphTqS-SlapUNgAOIDoI8uaQNXooW9h_oH2w";
+    var SHEET_2026_GAMELOGS_GID = "1060099039";
+    var SHEET_2026_STATS_ID = "1v1d1lfel2GYuaocKQubLSk4Yd7VeTTLDlLMU-HNnc7Q";
+    var SHEET_2026_STATS_GID = "1197022486";
+    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
+    var CAPTAIN_MAPPING_GID = "0";
+    var REPLACEMENTS_SHEET_ID = "1aYG02LsmBEpZCQap-f81YyEjTaR6a8asPlzNe0n31b0";
+    var REPLACEMENTS_GID = "0";
+    function getReplacementsCsvUrl() {
+      const u = process.env.REPLACEMENTS_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(REPLACEMENTS_SHEET_ID, REPLACEMENTS_GID);
+    }
+    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
+    var SCHEDULE_CALENDAR_YEAR = Number("2026") || 2026;
+    var careerCsvFilePath = null;
+    function setCareerCsvFilePath(filePath) {
+      careerCsvFilePath = filePath ? String(filePath) : null;
+    }
+    function googleSheetCsvExportUrl(spreadsheetId, gid) {
+      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+    }
+    function getGamelogs2026CsvUrl2() {
+      const u = process.env.GAMELOGS_2026_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(SHEET_2026_GAMELOGS_ID, SHEET_2026_GAMELOGS_GID);
+    }
+    function getStats2026CsvUrl() {
+      const u = process.env.STATS_2026_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
+    }
+    function getCaptainMappingCsvUrl() {
+      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
+    }
+    function getCareerCsvSource() {
+      const url = (process.env.CAREER_CSV_URL || "").trim();
+      if (url) return { type: "url", url };
+      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
+      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
+    }
+    function configureCareerCsvForBrowser2(publicUrl = CAREER_CSV_PUBLIC_URL) {
+      if (typeof globalThis !== "undefined") {
+        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
+      }
+    }
+    function resolveCareerCsvSource() {
+      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
+      if (override) return { type: "url", url: override };
+      return getCareerCsvSource();
+    }
+    module.exports = {
+      INDEX_URL,
+      SCHEDULE_URL: SCHEDULE_URL2,
+      ROSTER_URL,
+      HIST_2025_STATS_URL,
+      CAREER_CSV_PUBLIC_URL,
+      SCHEDULE_CALENDAR_YEAR,
+      getGamelogs2026CsvUrl: getGamelogs2026CsvUrl2,
+      getStats2026CsvUrl,
+      getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
+      CAPTAIN_MAPPING_SHEET_ID,
+      CAPTAIN_MAPPING_GID,
+      REPLACEMENTS_SHEET_ID,
+      REPLACEMENTS_GID,
+      googleSheetCsvExportUrl,
+      setCareerCsvFilePath,
+      getCareerCsvSource,
+      resolveCareerCsvSource,
+      configureCareerCsvForBrowser: configureCareerCsvForBrowser2
+    };
+  }
+});
+
 // node_modules/papaparse/papaparse.min.js
 var require_papaparse_min = __commonJS({
   "node_modules/papaparse/papaparse.min.js"(exports, module) {
@@ -640,90 +724,6 @@ var require_pitcherStats2026 = __commonJS({
     module.exports = {
       PITCHER_STATS_BY_TEAM_KEY,
       PITCHER_LEAGUE_AVG
-    };
-  }
-});
-
-// lib/sheetUrls.js
-var require_sheetUrls = __commonJS({
-  "lib/sheetUrls.js"(exports, module) {
-    var INDEX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
-    var SCHEDULE_URL2 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
-    var ROSTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTFhhdnzm2I_PVTkR4FDL-pbBhf_K53gMj6Pk5u8vtfYTXN9569QbdTRG9pZBuIFpQuWIpT9tJMbLY1/pub?gid=1722495492&single=true&output=csv";
-    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
-    var SHEET_2026_GAMELOGS_ID = "1QGoXil2fphTqS-SlapUNgAOIDoI8uaQNXooW9h_oH2w";
-    var SHEET_2026_GAMELOGS_GID = "1060099039";
-    var SHEET_2026_STATS_ID = "1v1d1lfel2GYuaocKQubLSk4Yd7VeTTLDlLMU-HNnc7Q";
-    var SHEET_2026_STATS_GID = "1197022486";
-    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
-    var CAPTAIN_MAPPING_GID = "0";
-    var REPLACEMENTS_SHEET_ID = "1aYG02LsmBEpZCQap-f81YyEjTaR6a8asPlzNe0n31b0";
-    var REPLACEMENTS_GID = "0";
-    function getReplacementsCsvUrl() {
-      const u = process.env.REPLACEMENTS_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(REPLACEMENTS_SHEET_ID, REPLACEMENTS_GID);
-    }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
-    var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
-    var careerCsvFilePath = null;
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function googleSheetCsvExportUrl(spreadsheetId, gid) {
-      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    }
-    function getGamelogs2026CsvUrl2() {
-      const u = process.env.GAMELOGS_2026_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(SHEET_2026_GAMELOGS_ID, SHEET_2026_GAMELOGS_GID);
-    }
-    function getStats2026CsvUrl() {
-      const u = process.env.STATS_2026_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
-    }
-    function getCaptainMappingCsvUrl() {
-      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
-    }
-    function getCareerCsvSource() {
-      const url = (process.env.CAREER_CSV_URL || "").trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
-    }
-    module.exports = {
-      INDEX_URL,
-      SCHEDULE_URL: SCHEDULE_URL2,
-      ROSTER_URL,
-      HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
-      SCHEDULE_CALENDAR_YEAR,
-      getGamelogs2026CsvUrl: getGamelogs2026CsvUrl2,
-      getStats2026CsvUrl,
-      getCaptainMappingCsvUrl,
-      getReplacementsCsvUrl,
-      CAPTAIN_MAPPING_SHEET_ID,
-      CAPTAIN_MAPPING_GID,
-      REPLACEMENTS_SHEET_ID,
-      REPLACEMENTS_GID,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser
     };
   }
 });
@@ -5980,7 +5980,7 @@ var require_powerRankingsCaptains = __commonJS({
 var require_matchupLiveSeasonRecord = __commonJS({
   "lib/matchupLiveSeasonRecord.js"(exports, module) {
     "use strict";
-    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
+    var { normalizePlayerName: normalizePlayerName2, buildTeamCodeById: buildTeamCodeById2, load2026GamelogsByPlayer: load2026GamelogsByPlayer2 } = require_dfs();
     var { computeMatchupPredictorRecord } = require_matchupPredictorRecord();
     var { isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
     var { csvTextCache: csvTextCache2 } = require_fetchCsvText();
@@ -5993,11 +5993,9 @@ var require_matchupLiveSeasonRecord = __commonJS({
     var {
       loadTeamRosters: loadTeamRosters2,
       buildNameToTeamIdMap,
-      buildRosterByTeamId,
-      buildTeamCodeById: buildTeamCodeById2
+      buildRosterByTeamId
     } = require_teamRosters();
     var { load2026StatsByPlayer: load2026StatsByPlayer2 } = require_stats2026Loader();
-    var { load2026GamelogsByPlayer: load2026GamelogsByPlayer2 } = require_dfs();
     var { getCachedPlayerReplacements } = require_playerReplacements();
     var { loadCaptainTeamCodeById: loadCaptainTeamCodeById2 } = require_powerRankingsCaptains();
     function loadDefensiveRatingsNormalizedMap() {
@@ -6077,6 +6075,9 @@ var require_matchupLiveSeasonRecord = __commonJS({
     };
   }
 });
+
+// client/matchup-predictor-live-entry.mjs
+var import_sheetUrls2 = __toESM(require_sheetUrls(), 1);
 
 // client/matchup-live.mjs
 var import_dfs = __toESM(require_dfs(), 1);
@@ -6185,7 +6186,7 @@ async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__) {
   );
   if (!(0, import_matchupGameResult.isParsedGameFinished)(parsedGame)) return;
   const teamCodeById = new Map([
-    ...(0, import_teamRosters.buildTeamCodeById)(teams, stats2026),
+    ...(0, import_dfs2.buildTeamCodeById)(teams, stats2026),
     ...captainCodes
   ]);
   const awayMissingSet = /* @__PURE__ */ new Set();
@@ -6269,6 +6270,9 @@ if (typeof window !== "undefined") {
   };
   bootMatchupLiveWatchers();
 }
+
+// client/matchup-predictor-live-entry.mjs
+(0, import_sheetUrls2.configureCareerCsvForBrowser)();
 /*! Bundled license information:
 
 papaparse/papaparse.min.js:

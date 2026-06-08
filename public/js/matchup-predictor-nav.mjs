@@ -3165,6 +3165,10 @@ async function ensureMatchupPredictorActiveView() {
   const currentView = viewTokenFromPath(pathname);
   const isRoot = !currentView;
   const hasMatchup = /\/matchup\//.test(pathname);
+  if (hasMatchup) {
+    hideLoadingOverlay();
+    return;
+  }
   if (isRoot) {
     try {
       sessionStorage.removeItem(USER_PICKED_VIEW_KEY);
