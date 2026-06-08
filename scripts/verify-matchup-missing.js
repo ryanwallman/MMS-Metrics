@@ -19,8 +19,11 @@ const MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.1;
 const MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.22;
 const MATCHUP_LOGIT_SCALE = 0.6;
 const MATCHUP_RUN_MARGIN_LOGIT = 0.26;
-const MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.82;
-const MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.18;
+const MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.7;
+const MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.2;
+const MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.1;
+const MATCHUP_RECORD_PRIOR_GAMES = 6;
+const MATCHUP_RECORD_LOGIT_SCALE = 2.5;
 const MATCHUP_WIN_PROB_SHRINK = 0.5;
 const MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
 const MATCHUP_RUN_OFF_Z_PCT = 0.08;
@@ -109,11 +112,35 @@ function projectRuns(profile, defender, norms, leagueAvg = 11.5, leagueRa = 11) 
   return w * rpg + (1 - w) * rosterProj;
 }
 
-function winPct(homeRuns, awayRuns, homePow, awayPow) {
+function regressedWinPct(profile) {
+  const gp = Number(profile?.gamesPlayed) || 0;
+  const wins = Number(profile?.wins) || 0;
+  const losses = Number(profile?.losses) || 0;
+  const decided = gp > 0 ? gp : wins + losses;
+  if (decided <= 0) return 0.5;
+  return (wins + MATCHUP_RECORD_PRIOR_GAMES * 0.5) / (decided + MATCHUP_RECORD_PRIOR_GAMES);
+}
+
+function recordConfidence(profile) {
+  const gp = Number(profile?.gamesPlayed) || 0;
+  const wins = Number(profile?.wins) || 0;
+  const losses = Number(profile?.losses) || 0;
+  const decided = gp > 0 ? gp : wins + losses;
+  return decided / (decided + MATCHUP_RECORD_PRIOR_GAMES);
+}
+
+function winPct(homeRuns, awayRuns, homePow, awayPow, homeProfile, awayProfile) {
   const margin = homeRuns - awayRuns;
   const pRuns = 1 / (1 + Math.exp(-MATCHUP_RUN_MARGIN_LOGIT * margin));
   const pTalent = 1 / (1 + Math.exp(-(homePow - awayPow) * MATCHUP_LOGIT_SCALE));
-  const raw = MATCHUP_WIN_WEIGHT_FROM_RUNS * pRuns + MATCHUP_WIN_WEIGHT_FROM_TALENT * pTalent;
+  const diff = regressedWinPct(homeProfile) - regressedWinPct(awayProfile);
+  const pRecRaw = 1 / (1 + Math.exp(-MATCHUP_RECORD_LOGIT_SCALE * diff));
+  const conf = Math.min(recordConfidence(homeProfile), recordConfidence(awayProfile));
+  const pRec = 0.5 + conf * (pRecRaw - 0.5);
+  const raw =
+    MATCHUP_WIN_WEIGHT_FROM_RUNS * pRuns +
+    MATCHUP_WIN_WEIGHT_FROM_TALENT * pTalent +
+    MATCHUP_WIN_WEIGHT_FROM_RECORD * pRec;
   return 0.5 + MATCHUP_WIN_PROB_SHRINK * (raw - 0.5);
 }
 
@@ -132,7 +159,7 @@ function predict(away, home, norms) {
   const homePow = teamPower(home, norms);
   const awayRuns = projectRuns(away, home, norms);
   const homeRuns = projectRuns(home, away, norms);
-  let pHome = winPct(homeRuns, awayRuns, homePow, awayPow);
+  let pHome = winPct(homeRuns, awayRuns, homePow, awayPow, home, away);
   let pAway = 1 - pHome;
   ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(away, home, pAway, pHome));
   return {
