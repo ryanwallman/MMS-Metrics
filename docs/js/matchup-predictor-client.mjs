@@ -960,14 +960,14 @@ var require_dfs = __commonJS({
         }
       }
       if (out.size === 0) {
-        const games = resolveGamesForViewToken(v, schedulePayload);
+        const games = resolveGamesForViewToken2(v, schedulePayload);
         for (const g of games) {
           if (g._iso) out.add(safeText(g._iso));
         }
       }
       return [...out].filter(Boolean).sort((a, b) => a.localeCompare(b));
     }
-    function buildTeamCodeById(teams, stats2026ByPlayer) {
+    function buildTeamCodeById2(teams, stats2026ByPlayer) {
       const votes = /* @__PURE__ */ new Map();
       for (const t of teams) {
         const id = safeText(t.teamId);
@@ -1175,7 +1175,7 @@ ${slice[1]}`;
           isPast: false
         };
       }
-      const games = resolveGamesForViewToken(viewToken, schedulePayload);
+      const games = resolveGamesForViewToken2(viewToken, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -1439,7 +1439,7 @@ ${slice[1]}`;
       const v = safeText(viewToken).toUpperCase();
       if (!v) return null;
       const opt = (slateOptions || []).find((o) => o.value === v);
-      const games = resolveGamesForViewToken(v, schedulePayload);
+      const games = resolveGamesForViewToken2(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -1486,7 +1486,7 @@ ${slice[1]}`;
         isActive: opt?.isActive ?? false
       };
     }
-    function resolveGamesForViewToken(viewToken, payload) {
+    function resolveGamesForViewToken2(viewToken, payload) {
       const v = safeText(viewToken);
       if (/^W\d+$/i.test(v)) {
         const wn = Number(v.slice(1));
@@ -1593,7 +1593,7 @@ ${slice[1]}`;
       const day = String(m[2]).padStart(2, "0");
       return `${m[3]}-${month}-${day}`;
     }
-    async function load2026GamelogsByPlayer() {
+    async function load2026GamelogsByPlayer2() {
       try {
         let text = await fetchCsvText(getGamelogs2026CsvUrl());
         const parsed = Papa.parse(text, { skipEmptyLines: true });
@@ -1695,7 +1695,7 @@ ${slice[1]}`;
       const ix = weekOptions.findIndex((o) => o.value.toUpperCase() === v);
       if (ix <= 0) return null;
       const prev = weekOptions[ix - 1];
-      const games = resolveGamesForViewToken(prev.value, schedulePayload);
+      const games = resolveGamesForViewToken2(prev.value, schedulePayload);
       const isoDates = dfsScoringIsoDatesForToken(prev.value, schedulePayload);
       const wn = Number(prev.value.slice(1));
       return {
@@ -1782,7 +1782,7 @@ ${slice[1]}`;
     function buildWeekSlateFromToken(viewToken, schedulePayload, refIso) {
       const v = safeText(viewToken).toUpperCase();
       if (!/^W\d+$/.test(v)) return null;
-      const games = resolveGamesForViewToken(v, schedulePayload);
+      const games = resolveGamesForViewToken2(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -1842,13 +1842,13 @@ ${slice[1]}`;
       PITCHER_SALARY_WEIGHT,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       DFS_OFFENSE_RATING_WEIGHT_2026,
-      buildTeamCodeById,
+      buildTeamCodeById: buildTeamCodeById2,
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
       resolvePreviousDfsSlate,
-      resolveGamesForViewToken,
+      resolveGamesForViewToken: resolveGamesForViewToken2,
       buildDfsPlayerPool,
-      load2026GamelogsByPlayer,
+      load2026GamelogsByPlayer: load2026GamelogsByPlayer2,
       buildSlatePointsByNorm,
       buildLastWeekPointsByNorm,
       scoreLineupForSlate,
@@ -2629,6 +2629,23 @@ var require_matchupMissingPlayers = __commonJS({
       if (!missing.length) return null;
       return missing.reduce((s, m) => s + m.round, 0) / missing.length;
     }
+    function averageTeamOffenseRating(entries, offenseRatingByNorm) {
+      if (!entries?.length) return 0;
+      let sum = 0;
+      let n = 0;
+      for (const e of entries) {
+        const r = offenseRatingByNorm.get(e.norm);
+        if (r != null && Number.isFinite(r)) {
+          sum += r;
+          n += 1;
+        }
+      }
+      return n > 0 ? sum / n : 0;
+    }
+    function missingRatingFactorVsTeamAvg(missingRating, teamAvg) {
+      const gap = teamAvg - missingRating;
+      return 1 + gap * 0.17;
+    }
     function playerTalentScore(m, offenseRatingByNorm) {
       const rating = offenseRatingByNorm.get(m.norm);
       const r = rating != null && Number.isFinite(rating) ? rating : 0;
@@ -2636,17 +2653,10 @@ var require_matchupMissingPlayers = __commonJS({
       const ratingScore = r / 1.75;
       return 0.52 * ratingScore + 0.48 * roundScore;
     }
-    function isBottomTierOffense(rating, offenseRatingByNorm) {
-      if (rating == null || !Number.isFinite(rating)) return false;
-      const all = [...offenseRatingByNorm.values()].filter((v) => Number.isFinite(v)).sort((a, b) => a - b);
-      if (all.length < 4) return rating < -0.35;
-      const p15 = all[Math.max(0, Math.floor(all.length * 0.15) - 1)];
-      return rating <= p15 + 1e-9;
-    }
     function computeTeamMissingMultiplier(missing, activeEntries, offenseRatingByNorm, allEntries = null) {
       const entries = allEntries || [...activeEntries || [], ...missing || []];
-      const presentCount = (activeEntries || []).length;
       const fieldingPresent = fieldingPresentCount(activeEntries || [], entries);
+      const teamAvg = averageTeamOffenseRating(entries, offenseRatingByNorm);
       if (!missing.length) {
         return {
           offense: 1,
@@ -2661,76 +2671,55 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
-      if (rosterHasPositionData(entries) && fieldingPresent >= FIELDING_SPOTS && missing.length > 0) {
-        const { total } = sumAbsenceDeltas(missing, entries, offenseRatingByNorm);
-        const posMult = multipliersFromAbsenceSum(total, missing.length);
+      if (fieldingPresent >= FIELDING_SPOTS) {
+        let mult = 1;
+        for (const m of missing) {
+          const raw = offenseRatingByNorm.get(m.norm);
+          const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+          mult *= missingRatingFactorVsTeamAvg(rating, teamAvg);
+        }
+        mult = Math.max(0.55, Math.min(1.45, mult));
         return {
-          ...posMult,
+          offense: mult,
+          run: mult,
+          defense: mult,
+          runsAgainst: 1,
+          regime: "lineup-adjust",
           avgMissingRound: avgRound,
           roundGap,
           slotsShort: 0
         };
       }
-      if (fieldingPresent < FIELDING_SPOTS) {
-        const slotsShort = FIELDING_SPOTS - fieldingPresent;
-        let perPlayerFactor = 1;
-        for (const m of missing) {
-          const rating = offenseRatingByNorm.get(m.norm) ?? 0;
-          const bottomTier = isBottomTierOffense(rating, offenseRatingByNorm);
-          if (bottomTier) {
-            perPlayerFactor *= 0.985;
-            continue;
-          }
-          const score = playerTalentScore(m, offenseRatingByNorm);
-          const talentW = Math.max(0.5, 0.78 + Math.abs(rating) * 0.42);
-          const roundW = draftRoundWeight(m.round);
-          const cut = Math.min(0.22, 0.14 * talentW * roundW * (0.95 + Math.max(0, score)));
-          perPlayerFactor *= 1 - cut;
+      const slotsShort = FIELDING_SPOTS - fieldingPresent;
+      const fielderBase = Math.pow(0.52, slotsShort);
+      let qualityMod = 1;
+      for (const m of missing) {
+        const raw = offenseRatingByNorm.get(m.norm);
+        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+        const gap = teamAvg - rating;
+        if (gap > 0) {
+          qualityMod *= 1 + Math.min(0.12, gap * 0.07);
+        } else if (gap < 0) {
+          qualityMod *= 1 + Math.max(-0.18, gap * 0.09);
         }
-        const shortCrush = Math.pow(0.5, slotsShort);
-        let offenseMult = shortCrush * perPlayerFactor;
-        offenseMult = Math.max(0.08, Math.min(0.78, offenseMult));
-        const defenseMult = Math.max(
-          0.04,
-          Math.min(0.55, Math.pow(SHORT_HANDED_DEFENSE_CRUSH_BASE, slotsShort) * Math.pow(perPlayerFactor, 0.9))
-        );
-        const runsAgainstMult = shortHandedRunsAgainstMultiplier(slotsShort);
-        return {
-          offense: offenseMult,
-          run: offenseMult * 0.95,
-          defense: defenseMult,
-          runsAgainst: runsAgainstMult,
-          regime: "short-handed",
-          avgMissingRound: avgRound,
-          roundGap,
-          slotsShort
-        };
       }
-      let mult = 1;
-      const impacts = missing.map((m) => playerTalentScore(m, offenseRatingByNorm));
-      const n = impacts.length;
-      for (let i = 0; i < n; i += 1) {
-        const imp = impacts[i];
-        const compound = Math.pow(1.55, i);
-        const delta = -imp * 0.24 * compound;
-        mult *= 1 + delta;
-      }
-      const avgImpact = impacts.reduce((s, v) => s + v, 0) / n;
-      if (avgImpact > 0.05) {
-        mult *= Math.pow(0.78, Math.pow(n, 1.65) * Math.min(1.55, avgImpact));
-      } else if (avgImpact < -0.05) {
-        mult *= Math.pow(1.14, Math.pow(n, 1.5) * Math.min(1.55, Math.abs(avgImpact)));
-      }
-      mult = Math.max(0.08, Math.min(1.5, mult));
+      qualityMod = Math.max(0.82, Math.min(1.08, qualityMod));
+      let offenseMult = fielderBase * qualityMod;
+      offenseMult = Math.max(0.08, Math.min(0.88, offenseMult));
+      const defenseMult = Math.max(
+        0.04,
+        Math.min(0.55, Math.pow(SHORT_HANDED_DEFENSE_CRUSH_BASE, slotsShort) * Math.pow(qualityMod, 0.85))
+      );
+      const runsAgainstMult = shortHandedRunsAgainstMultiplier(slotsShort);
       return {
-        offense: mult,
-        run: mult,
-        defense: mult,
-        runsAgainst: 1,
-        regime: "lineup-adjust",
+        offense: offenseMult,
+        run: offenseMult * 0.95,
+        defense: defenseMult,
+        runsAgainst: runsAgainstMult,
+        regime: "short-handed",
         avgMissingRound: avgRound,
         roundGap,
-        slotsShort: 0
+        slotsShort
       };
     }
     function applyMissingPlayersToProfile2(baseProfile, rosterPlayerNames, missingSet, offenseRatingByNorm, stats2026ByPlayer, defenseZByNorm, normalizeName, positionByNorm = null) {
@@ -3359,7 +3348,7 @@ var require_teamRosters = __commonJS({
       }
       return { teams, rosterByCaptain };
     }
-    async function loadTeamRosters() {
+    async function loadTeamRosters2() {
       const { teams } = await loadTeamRosterContext();
       return teams;
     }
@@ -3371,7 +3360,7 @@ var require_teamRosters = __commonJS({
       pickRosterEntry,
       resolveTeamCaptain,
       loadTeamRosterContext,
-      loadTeamRosters,
+      loadTeamRosters: loadTeamRosters2,
       normalizeScheduleTeamId,
       normalizeScheduleTeamLabel
     };
@@ -3727,7 +3716,7 @@ var require_matchupPredict = __commonJS({
         score: proj.impliedScore
       };
     }
-    function alignProjectedRunsToWinFavorite(prediction) {
+    function alignProjectedRunsToWinFavorite2(prediction) {
       if (!prediction?.projectedRuns || !prediction?.winPct) return prediction;
       const awayR = Number(prediction.projectedRuns.away);
       const homeR = Number(prediction.projectedRuns.home);
@@ -3773,6 +3762,9 @@ var require_matchupPredict = __commonJS({
       if (!prediction.lines.runLine?.value) {
         prediction.lines.runLine = buildFavoriteRunLine(runs, pHome);
       }
+      const moneylines = americanMoneylineFromRunLine(prediction.lines.runLine);
+      prediction.lines.moneylineAway = moneylines.away;
+      prediction.lines.moneylineHome = moneylines.home;
       return prediction;
     }
     function buildFavoriteRunLine(proj, homeWinProb = 0.5) {
@@ -3954,7 +3946,33 @@ var require_matchupPredict = __commonJS({
       }
       return [fav, dog];
     }
-    function americanMoneylinePair2(probAway, probHome) {
+    function parseRunLineMagnitude(value) {
+      if (value == null) return null;
+      const n = parseFloat(String(value).replace(/[^\d.+-]/g, ""));
+      return Number.isFinite(n) ? Math.abs(n) : null;
+    }
+    function americanMoneylineFromRunLine(runLine) {
+      const side = runLine?.side;
+      if (!side) return { away: "\u2014", home: "\u2014" };
+      let mag = parseRunLineMagnitude(runLine?.value);
+      if (mag == null) mag = 0.5;
+      mag = Math.max(0.5, mag);
+      const halfSteps = Math.max(0, Math.round((mag - 0.5) / 0.5));
+      let favOdds = MONEYLINE_STANDARD_FAVORITE - halfSteps * 15;
+      let dogOdds = MONEYLINE_STANDARD_UNDERDOG + halfSteps * 10;
+      [favOdds, dogOdds] = enforceMoneylineHouseEdge(favOdds, dogOdds);
+      if (side === "away") {
+        return {
+          away: formatAmericanMoneyline(favOdds),
+          home: formatAmericanMoneyline(dogOdds)
+        };
+      }
+      return {
+        away: formatAmericanMoneyline(dogOdds),
+        home: formatAmericanMoneyline(favOdds)
+      };
+    }
+    function americanMoneylinePair(probAway, probHome) {
       const sum = probAway + probHome;
       if (sum <= 0) return { away: "\u2014", home: "\u2014" };
       const qAway = probAway / sum;
@@ -4002,8 +4020,9 @@ var require_matchupPredict = __commonJS({
       predictMatchupGame: predictMatchupGame2,
       predictSeasonGameWinProbs,
       enrichMatchupPredictionLines: enrichMatchupPredictionLines2,
-      alignProjectedRunsToWinFavorite,
-      americanMoneylinePair: americanMoneylinePair2,
+      alignProjectedRunsToWinFavorite: alignProjectedRunsToWinFavorite2,
+      americanMoneylinePair,
+      americanMoneylineFromRunLine,
       roundMatchupN,
       finishedScheduleGameDedupeKey
     };
@@ -4148,10 +4167,10 @@ var require_matchupWinProbCalibration = __commonJS({
       };
       const {
         enrichMatchupPredictionLines: enrichMatchupPredictionLines2,
-        alignProjectedRunsToWinFavorite
+        alignProjectedRunsToWinFavorite: alignProjectedRunsToWinFavorite2
       } = require_matchupPredict();
       adjusted.lines = { ...adjusted.lines || {}, finalScore: null, runLine: null };
-      return alignProjectedRunsToWinFavorite(enrichMatchupPredictionLines2(adjusted));
+      return alignProjectedRunsToWinFavorite2(enrichMatchupPredictionLines2(adjusted));
     }
     function calibratedMatchupWinProbs(awayProfile, homeProfile, leagueNorms, runBase, weights) {
       const { predictMatchupGame: predictMatchupGame2 } = require_matchupPredict();
@@ -4251,7 +4270,7 @@ var require_stats2026Loader = __commonJS({
     function safeText(value) {
       return (value || "").toString().trim();
     }
-    async function load2026StatsByPlayer() {
+    async function load2026StatsByPlayer2() {
       const csvText = await fetchCsvText(getStats2026CsvUrl());
       const rows = Papa.parse(csvText).data;
       const headers = (rows[1] || []).map((h) => safeText(h));
@@ -4272,7 +4291,7 @@ var require_stats2026Loader = __commonJS({
       }
       return statsByPlayer;
     }
-    module.exports = { load2026StatsByPlayer };
+    module.exports = { load2026StatsByPlayer: load2026StatsByPlayer2 };
   }
 });
 
@@ -4283,8 +4302,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     var { fetchCsvText } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
     var {
-      buildTeamCodeById,
-      load2026GamelogsByPlayer,
+      buildTeamCodeById: buildTeamCodeById2,
+      load2026GamelogsByPlayer: load2026GamelogsByPlayer2,
       normalizePlayerName: normalizePlayerName2,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       DFS_OFFENSE_RATING_WEIGHT_2026
@@ -4319,7 +4338,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const csvText = await fetchCsvText(url);
       return Papa.parse(csvText).data;
     }
-    var { loadTeamRosters } = require_teamRosters();
+    var { loadTeamRosters: loadTeamRosters2 } = require_teamRosters();
     var { getCachedPlayerReplacements: getCachedPlayerReplacements2 } = require_playerReplacements();
     function parseScheduleSheetDate(displayDate) {
       const s = safeText(displayDate);
@@ -4518,7 +4537,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return btoa(binary);
     }
     async function loadWeeklySchedule2() {
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL2), loadTeamRosters()]);
+      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL2), loadTeamRosters2()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
         (a, b) => a.localeCompare(b)
@@ -4593,7 +4612,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         parsedGames
       };
     }
-    var { load2026StatsByPlayer } = require_stats2026Loader();
+    var { load2026StatsByPlayer: load2026StatsByPlayer2 } = require_stats2026Loader();
     async function load2025HistoricalByPlayer() {
       const rows = await fetchCsvRows(HIST_2025_STATS_URL);
       const headers = (rows[0] || []).map((h) => safeText(h));
@@ -4845,12 +4864,12 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         gamelogs,
         replacements
       ] = await Promise.all([
-        loadTeamRosters(),
+        loadTeamRosters2(),
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
-        load2026StatsByPlayer(),
+        load2026StatsByPlayer2(),
         loadWeeklySchedule2(),
-        load2026GamelogsByPlayer(),
+        load2026GamelogsByPlayer2(),
         getCachedPlayerReplacements2()
       ]);
       const parsedScheduleGames = schedulePayload.parsedGames || [];
@@ -4866,7 +4885,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         DFS_SALARY_RATING_BLEND
       );
       const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-      const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
+      const teamCodeById = buildTeamCodeById2(teams, stats2026ByPlayer);
       const { parsedGames: _pg, ...scheduleForClient } = schedulePayload;
       return {
         schedulePayload: scheduleForClient,
@@ -5024,6 +5043,234 @@ var require_matchupGameResult = __commonJS({
       isParsedGameFinished: isParsedGameFinished2,
       findParsedGameForMatchup: findParsedGameForMatchup2,
       gradeMatchupModelBets: gradeMatchupModelBets2
+    };
+  }
+});
+
+// lib/matchupScheduleChrome.js
+var require_matchupScheduleChrome = __commonJS({
+  "lib/matchupScheduleChrome.js"(exports, module) {
+    "use strict";
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function matchupGameKey(game) {
+      const away = safeText(game.awayTeamId);
+      const home = safeText(game.homeTeamId);
+      return `${away}|${home}`;
+    }
+    function buildMatchupOptionLabel(game) {
+      return `${game.away} @ ${game.home}${game.time && game.time !== "-" ? ` \xB7 ${game.time}` : ""}${game.result ? ` \xB7 ${game.result}` : ""}`;
+    }
+    function buildMatchupOptionsForGames2(games) {
+      return (games || []).map((g) => ({
+        value: matchupGameKey(g),
+        label: buildMatchupOptionLabel(g),
+        game: g
+      }));
+    }
+    function findGameByMatchupKey(games, key) {
+      const want = safeText(key);
+      if (!want) return null;
+      return (games || []).find((g) => matchupGameKey(g) === want) || null;
+    }
+    module.exports = {
+      matchupGameKey,
+      buildMatchupOptionLabel,
+      buildMatchupOptionsForGames: buildMatchupOptionsForGames2,
+      findGameByMatchupKey
+    };
+  }
+});
+
+// lib/matchupGamelogMissing.js
+var require_matchupGamelogMissing = __commonJS({
+  "lib/matchupGamelogMissing.js"(exports, module) {
+    "use strict";
+    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
+    var { findParsedGameForMatchup: findParsedGameForMatchup2, isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
+    var { normalizeScheduleTeamId } = require_teamRosters();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function isMissedGameFlag(value) {
+      const n = Number(String(value ?? "").trim());
+      return Number.isFinite(n) && n === 1;
+    }
+    function missedPlayerNormsForTeamGame({
+      iso,
+      teamCode,
+      opponentCode = "",
+      gamelogs,
+      normalizeName = normalizePlayerName2
+    }) {
+      const out = /* @__PURE__ */ new Set();
+      const gameIso = safeText(iso);
+      const code = safeText(teamCode).toUpperCase();
+      const opp = safeText(opponentCode).toUpperCase();
+      if (!gameIso || !code || !gamelogs?.bySlateKey) return out;
+      const slateKey = `${gameIso}|${code}`;
+      const entries = gamelogs.bySlateKey.get(slateKey) || [];
+      for (const entry of entries) {
+        if (!entry?.missedGame) continue;
+        if (opp && safeText(entry.opponentCode).toUpperCase() !== opp) continue;
+        const norm = normalizeName(entry.norm || entry.player || "");
+        if (norm) out.add(norm);
+      }
+      return out;
+    }
+    function mapMissedNormsToRoster(missedNorms, playerNames, normalizeName = normalizePlayerName2) {
+      const rosterNorms = new Set(
+        (playerNames || []).map((name) => normalizeName(name)).filter(Boolean)
+      );
+      const out = /* @__PURE__ */ new Set();
+      for (const norm of missedNorms) {
+        if (rosterNorms.has(norm)) out.add(norm);
+      }
+      return out;
+    }
+    function applyGamelogMissingForFinishedGame2({
+      awayMissingSet,
+      homeMissingSet,
+      selectedGame,
+      viewIso,
+      parsedScheduleGames,
+      gamelogs,
+      teamCodeById,
+      awayEffectivePlayers,
+      homeEffectivePlayers,
+      normalizeName = normalizePlayerName2
+    }) {
+      if (!selectedGame || !gamelogs?.bySlateKey?.size || !teamCodeById?.size) return;
+      const parsedGame = findParsedGameForMatchup2(parsedScheduleGames, selectedGame, viewIso);
+      if (!isParsedGameFinished2(parsedGame)) return;
+      const gameIso = safeText(selectedGame.isoDate || viewIso);
+      if (!gameIso) return;
+      const awayId = normalizeScheduleTeamId(selectedGame.awayTeamId);
+      const homeId = normalizeScheduleTeamId(selectedGame.homeTeamId);
+      const awayCode = teamCodeById.get(awayId);
+      const homeCode = teamCodeById.get(homeId);
+      if (!awayCode && !homeCode) return;
+      if (awayCode) {
+        const missed = missedPlayerNormsForTeamGame({
+          iso: gameIso,
+          teamCode: awayCode,
+          opponentCode: homeCode || "",
+          gamelogs,
+          normalizeName
+        });
+        for (const norm of mapMissedNormsToRoster(missed, awayEffectivePlayers, normalizeName)) {
+          awayMissingSet.add(norm);
+        }
+      }
+      if (homeCode) {
+        const missed = missedPlayerNormsForTeamGame({
+          iso: gameIso,
+          teamCode: homeCode,
+          opponentCode: awayCode || "",
+          gamelogs,
+          normalizeName
+        });
+        for (const norm of mapMissedNormsToRoster(missed, homeEffectivePlayers, normalizeName)) {
+          homeMissingSet.add(norm);
+        }
+      }
+    }
+    module.exports = {
+      isMissedGameFlag,
+      missedPlayerNormsForTeamGame,
+      mapMissedNormsToRoster,
+      applyGamelogMissingForFinishedGame: applyGamelogMissingForFinishedGame2
+    };
+  }
+});
+
+// lib/powerRankingsCaptains.js
+var require_powerRankingsCaptains = __commonJS({
+  "lib/powerRankingsCaptains.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { getCaptainMappingCsvUrl } = require_sheetUrls();
+    var { createMemoryCache } = require_memoryCache();
+    var { normalizeScheduleTeamId } = require_teamRosters();
+    var captainMapCache = createMemoryCache(
+      Number(process.env.CAPTAIN_MAPPING_CACHE_TTL_MS) || Number("600000") || 10 * 60 * 1e3,
+      "power-rankings-captains"
+    );
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function extractTeamIdFromLabel(label) {
+      const m = safeText(label).match(/\(#\s*(\d{1,2})\s*\)/i);
+      if (!m) return "";
+      const n = Number(m[1]);
+      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : "";
+    }
+    function normalizeCaptainLookupLabel(label) {
+      return safeText(label).replace(/&amp;/gi, "&").toLowerCase().replace(/\s+/g, " ").trim();
+    }
+    function parseCaptainMappingRows(rows) {
+      const byTeamId = /* @__PURE__ */ new Map();
+      const byLabel = /* @__PURE__ */ new Map();
+      const teamCodeById = /* @__PURE__ */ new Map();
+      if (!rows?.length) return { byTeamId, byLabel, teamCodeById };
+      const header = (rows[0] || []).map((x) => safeText(x));
+      const hasNamedHeader = header.some((h) => /team name/i.test(h) || /team id/i.test(h));
+      let startRow = hasNamedHeader ? 1 : 0;
+      let colTeamLabel = 0;
+      let colCaptain = 1;
+      let colTeamCode = -1;
+      if (hasNamedHeader) {
+        colTeamLabel = header.findIndex((h) => /team name/i.test(h));
+        colCaptain = header.findIndex((h) => /^captain$/i.test(h));
+        colTeamCode = header.findIndex((h) => /team id/i.test(h));
+        if (colTeamLabel < 0) colTeamLabel = 0;
+        if (colCaptain < 0) colCaptain = 1;
+      }
+      for (let i = startRow; i < rows.length; i += 1) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const teamLabel = safeText(row[colTeamLabel]);
+        const captain = safeText(row[colCaptain]);
+        if (!teamLabel || !captain) continue;
+        const teamId = extractTeamIdFromLabel(teamLabel);
+        if (teamId) byTeamId.set(teamId, captain);
+        byLabel.set(normalizeCaptainLookupLabel(teamLabel), captain);
+        const teamCode = colTeamCode >= 0 ? safeText(row[colTeamCode]).toUpperCase() : "";
+        if (teamId && teamCode) teamCodeById.set(teamId, teamCode);
+      }
+      return { byTeamId, byLabel, teamCodeById };
+    }
+    async function loadCaptainTeamCodeById2() {
+      const map = await loadPowerRankingsCaptainMap();
+      return map?.teamCodeById || /* @__PURE__ */ new Map();
+    }
+    async function loadPowerRankingsCaptainMap() {
+      return captainMapCache.get("map", async () => {
+        const url = getCaptainMappingCsvUrl();
+        const csvText = await fetchCsvText(url);
+        const rows = Papa.parse(csvText).data;
+        return parseCaptainMappingRows(rows);
+      });
+    }
+    function lookupPowerRankingsCaptain(captainMap, teamId, teamName) {
+      if (!captainMap) return "";
+      const id = normalizeScheduleTeamId(teamId);
+      if (id && captainMap.byTeamId.has(id)) {
+        return captainMap.byTeamId.get(id);
+      }
+      const displayLabel = `${safeText(teamName)} (#${id})`;
+      const byDisplay = captainMap.byLabel.get(normalizeCaptainLookupLabel(displayLabel));
+      if (byDisplay) return byDisplay;
+      const byName = captainMap.byLabel.get(normalizeCaptainLookupLabel(teamName));
+      return byName || "";
+    }
+    module.exports = {
+      loadPowerRankingsCaptainMap,
+      loadCaptainTeamCodeById: loadCaptainTeamCodeById2,
+      lookupPowerRankingsCaptain,
+      parseCaptainMappingRows,
+      extractTeamIdFromLabel
     };
   }
 });
@@ -5513,108 +5760,6 @@ var require_matchupHistoricalSnapshot = __commonJS({
   }
 });
 
-// lib/matchupGamelogMissing.js
-var require_matchupGamelogMissing = __commonJS({
-  "lib/matchupGamelogMissing.js"(exports, module) {
-    "use strict";
-    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
-    var { findParsedGameForMatchup: findParsedGameForMatchup2, isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
-    var { normalizeScheduleTeamId } = require_teamRosters();
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function isMissedGameFlag(value) {
-      const n = Number(String(value ?? "").trim());
-      return Number.isFinite(n) && n === 1;
-    }
-    function missedPlayerNormsForTeamGame({
-      iso,
-      teamCode,
-      opponentCode = "",
-      gamelogs,
-      normalizeName = normalizePlayerName2
-    }) {
-      const out = /* @__PURE__ */ new Set();
-      const gameIso = safeText(iso);
-      const code = safeText(teamCode).toUpperCase();
-      const opp = safeText(opponentCode).toUpperCase();
-      if (!gameIso || !code || !gamelogs?.bySlateKey) return out;
-      const slateKey = `${gameIso}|${code}`;
-      const entries = gamelogs.bySlateKey.get(slateKey) || [];
-      for (const entry of entries) {
-        if (!entry?.missedGame) continue;
-        if (opp && safeText(entry.opponentCode).toUpperCase() !== opp) continue;
-        const norm = normalizeName(entry.norm || entry.player || "");
-        if (norm) out.add(norm);
-      }
-      return out;
-    }
-    function mapMissedNormsToRoster(missedNorms, playerNames, normalizeName = normalizePlayerName2) {
-      const rosterNorms = new Set(
-        (playerNames || []).map((name) => normalizeName(name)).filter(Boolean)
-      );
-      const out = /* @__PURE__ */ new Set();
-      for (const norm of missedNorms) {
-        if (rosterNorms.has(norm)) out.add(norm);
-      }
-      return out;
-    }
-    function applyGamelogMissingForFinishedGame({
-      awayMissingSet,
-      homeMissingSet,
-      selectedGame,
-      viewIso,
-      parsedScheduleGames,
-      gamelogs,
-      teamCodeById,
-      awayEffectivePlayers,
-      homeEffectivePlayers,
-      normalizeName = normalizePlayerName2
-    }) {
-      if (!selectedGame || !gamelogs?.bySlateKey?.size || !teamCodeById?.size) return;
-      const parsedGame = findParsedGameForMatchup2(parsedScheduleGames, selectedGame, viewIso);
-      if (!isParsedGameFinished2(parsedGame)) return;
-      const gameIso = safeText(selectedGame.isoDate || viewIso);
-      if (!gameIso) return;
-      const awayId = normalizeScheduleTeamId(selectedGame.awayTeamId);
-      const homeId = normalizeScheduleTeamId(selectedGame.homeTeamId);
-      const awayCode = teamCodeById.get(awayId);
-      const homeCode = teamCodeById.get(homeId);
-      if (!awayCode && !homeCode) return;
-      if (awayCode) {
-        const missed = missedPlayerNormsForTeamGame({
-          iso: gameIso,
-          teamCode: awayCode,
-          opponentCode: homeCode || "",
-          gamelogs,
-          normalizeName
-        });
-        for (const norm of mapMissedNormsToRoster(missed, awayEffectivePlayers, normalizeName)) {
-          awayMissingSet.add(norm);
-        }
-      }
-      if (homeCode) {
-        const missed = missedPlayerNormsForTeamGame({
-          iso: gameIso,
-          teamCode: homeCode,
-          opponentCode: awayCode || "",
-          gamelogs,
-          normalizeName
-        });
-        for (const norm of mapMissedNormsToRoster(missed, homeEffectivePlayers, normalizeName)) {
-          homeMissingSet.add(norm);
-        }
-      }
-    }
-    module.exports = {
-      isMissedGameFlag,
-      missedPlayerNormsForTeamGame,
-      mapMissedNormsToRoster,
-      applyGamelogMissingForFinishedGame
-    };
-  }
-});
-
 // data/playerPositions2026.js
 var require_playerPositions2026 = __commonJS({
   "data/playerPositions2026.js"(exports, module) {
@@ -5895,96 +6040,6 @@ var require_matchupPredictorRecord = __commonJS({
   }
 });
 
-// lib/powerRankingsCaptains.js
-var require_powerRankingsCaptains = __commonJS({
-  "lib/powerRankingsCaptains.js"(exports, module) {
-    var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
-    var { getCaptainMappingCsvUrl } = require_sheetUrls();
-    var { createMemoryCache } = require_memoryCache();
-    var { normalizeScheduleTeamId } = require_teamRosters();
-    var captainMapCache = createMemoryCache(
-      Number(process.env.CAPTAIN_MAPPING_CACHE_TTL_MS) || Number("600000") || 10 * 60 * 1e3,
-      "power-rankings-captains"
-    );
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function extractTeamIdFromLabel(label) {
-      const m = safeText(label).match(/\(#\s*(\d{1,2})\s*\)/i);
-      if (!m) return "";
-      const n = Number(m[1]);
-      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : "";
-    }
-    function normalizeCaptainLookupLabel(label) {
-      return safeText(label).replace(/&amp;/gi, "&").toLowerCase().replace(/\s+/g, " ").trim();
-    }
-    function parseCaptainMappingRows(rows) {
-      const byTeamId = /* @__PURE__ */ new Map();
-      const byLabel = /* @__PURE__ */ new Map();
-      const teamCodeById = /* @__PURE__ */ new Map();
-      if (!rows?.length) return { byTeamId, byLabel, teamCodeById };
-      const header = (rows[0] || []).map((x) => safeText(x));
-      const hasNamedHeader = header.some((h) => /team name/i.test(h) || /team id/i.test(h));
-      let startRow = hasNamedHeader ? 1 : 0;
-      let colTeamLabel = 0;
-      let colCaptain = 1;
-      let colTeamCode = -1;
-      if (hasNamedHeader) {
-        colTeamLabel = header.findIndex((h) => /team name/i.test(h));
-        colCaptain = header.findIndex((h) => /^captain$/i.test(h));
-        colTeamCode = header.findIndex((h) => /team id/i.test(h));
-        if (colTeamLabel < 0) colTeamLabel = 0;
-        if (colCaptain < 0) colCaptain = 1;
-      }
-      for (let i = startRow; i < rows.length; i += 1) {
-        const row = rows[i];
-        if (!row || !row.length) continue;
-        const teamLabel = safeText(row[colTeamLabel]);
-        const captain = safeText(row[colCaptain]);
-        if (!teamLabel || !captain) continue;
-        const teamId = extractTeamIdFromLabel(teamLabel);
-        if (teamId) byTeamId.set(teamId, captain);
-        byLabel.set(normalizeCaptainLookupLabel(teamLabel), captain);
-        const teamCode = colTeamCode >= 0 ? safeText(row[colTeamCode]).toUpperCase() : "";
-        if (teamId && teamCode) teamCodeById.set(teamId, teamCode);
-      }
-      return { byTeamId, byLabel, teamCodeById };
-    }
-    async function loadCaptainTeamCodeById() {
-      const map = await loadPowerRankingsCaptainMap();
-      return map?.teamCodeById || /* @__PURE__ */ new Map();
-    }
-    async function loadPowerRankingsCaptainMap() {
-      return captainMapCache.get("map", async () => {
-        const url = getCaptainMappingCsvUrl();
-        const csvText = await fetchCsvText(url);
-        const rows = Papa.parse(csvText).data;
-        return parseCaptainMappingRows(rows);
-      });
-    }
-    function lookupPowerRankingsCaptain(captainMap, teamId, teamName) {
-      if (!captainMap) return "";
-      const id = normalizeScheduleTeamId(teamId);
-      if (id && captainMap.byTeamId.has(id)) {
-        return captainMap.byTeamId.get(id);
-      }
-      const displayLabel = `${safeText(teamName)} (#${id})`;
-      const byDisplay = captainMap.byLabel.get(normalizeCaptainLookupLabel(displayLabel));
-      if (byDisplay) return byDisplay;
-      const byName = captainMap.byLabel.get(normalizeCaptainLookupLabel(teamName));
-      return byName || "";
-    }
-    module.exports = {
-      loadPowerRankingsCaptainMap,
-      loadCaptainTeamCodeById,
-      lookupPowerRankingsCaptain,
-      parseCaptainMappingRows,
-      extractTeamIdFromLabel
-    };
-  }
-});
-
 // lib/matchupLiveSeasonRecord.js
 var require_matchupLiveSeasonRecord = __commonJS({
   "lib/matchupLiveSeasonRecord.js"(exports, module) {
@@ -6000,15 +6055,15 @@ var require_matchupLiveSeasonRecord = __commonJS({
       load2025HistoricalByPlayer
     } = require_dfsLeaderboardScoringContext();
     var {
-      loadTeamRosters,
+      loadTeamRosters: loadTeamRosters2,
       buildNameToTeamIdMap,
       buildRosterByTeamId,
-      buildTeamCodeById
+      buildTeamCodeById: buildTeamCodeById2
     } = require_teamRosters();
-    var { load2026StatsByPlayer } = require_stats2026Loader();
-    var { load2026GamelogsByPlayer } = require_dfs();
+    var { load2026StatsByPlayer: load2026StatsByPlayer2 } = require_stats2026Loader();
+    var { load2026GamelogsByPlayer: load2026GamelogsByPlayer2 } = require_dfs();
     var { getCachedPlayerReplacements: getCachedPlayerReplacements2 } = require_playerReplacements();
-    var { loadCaptainTeamCodeById } = require_powerRankingsCaptains();
+    var { loadCaptainTeamCodeById: loadCaptainTeamCodeById2 } = require_powerRankingsCaptains();
     function loadDefensiveRatingsNormalizedMap() {
       const map = /* @__PURE__ */ new Map();
       try {
@@ -6040,19 +6095,19 @@ var require_matchupLiveSeasonRecord = __commonJS({
         captainTeamCodeById,
         schedulePayload
       ] = await Promise.all([
-        loadTeamRosters(),
+        loadTeamRosters2(),
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
-        load2026StatsByPlayer(),
+        load2026StatsByPlayer2(),
         Promise.resolve(loadDefensiveRatingsNormalizedMap()),
         getCachedPlayerReplacements2(),
-        load2026GamelogsByPlayer(),
-        loadCaptainTeamCodeById(),
+        load2026GamelogsByPlayer2(),
+        loadCaptainTeamCodeById2(),
         loadWeeklySchedule2()
       ]);
       const { byOriginalNorm } = replacements;
       const teamCodeById = new Map([
-        ...buildTeamCodeById(teams, stats2026ByPlayer),
+        ...buildTeamCodeById2(teams, stats2026ByPlayer),
         ...captainTeamCodeById
       ]);
       return {
@@ -6096,6 +6151,11 @@ var import_matchupWinProbCalibration = __toESM(require_matchupWinProbCalibration
 var import_playerReplacements = __toESM(require_playerReplacements(), 1);
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
 var import_matchupGameResult = __toESM(require_matchupGameResult(), 1);
+var import_matchupScheduleChrome = __toESM(require_matchupScheduleChrome(), 1);
+var import_matchupGamelogMissing = __toESM(require_matchupGamelogMissing(), 1);
+var import_teamRosters = __toESM(require_teamRosters(), 1);
+var import_stats2026Loader = __toESM(require_stats2026Loader(), 1);
+var import_powerRankingsCaptains = __toESM(require_powerRankingsCaptains(), 1);
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_fetchCsvText = __toESM(require_fetchCsvText(), 1);
 var import_matchupLiveSeasonRecord = __toESM(require_matchupLiveSeasonRecord(), 1);
@@ -6215,9 +6275,6 @@ function predictFromPayload(ctx, awayMissingList, homeMissingList) {
     );
   }
   (0, import_matchupPredict.enrichMatchupPredictionLines)(prediction);
-  const moneylines = (0, import_matchupPredict.americanMoneylinePair)(prediction.winPct.away / 100, prediction.winPct.home / 100);
-  prediction.lines.moneylineAway = moneylines.away;
-  prediction.lines.moneylineHome = moneylines.home;
   prediction.awayLabel = ctx.awayLabel;
   prediction.homeLabel = ctx.homeLabel;
   return prediction;
@@ -6277,8 +6334,126 @@ function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAU
 }
 var scoreWatchStop = null;
 var seasonRecordWatchTimer = null;
+var liveChromeTimer = null;
 var lastFinishedGameCount = null;
 var lastRecordKey = null;
+var lastMatchupOptionsSig = null;
+var lastGamelogMissingSig = null;
+async function refreshMatchupScheduleChrome() {
+  const viewSelect = document.getElementById("view");
+  const matchupSelect = document.getElementById("matchup");
+  if (!viewSelect || !matchupSelect) return;
+  import_fetchCsvText.csvTextCache.invalidate(import_sheetUrls.SCHEDULE_URL);
+  const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
+  const viewToken = String(viewSelect.value || "").trim();
+  if (!viewToken) return;
+  const games = (0, import_dfs.resolveGamesForViewToken)(viewToken, payload);
+  const options = (0, import_matchupScheduleChrome.buildMatchupOptionsForGames)(games);
+  const sig = options.map((o) => `${o.value}:${o.label}`).join("|");
+  if (sig === lastMatchupOptionsSig) return;
+  lastMatchupOptionsSig = sig;
+  const current = matchupSelect.value;
+  const placeholder = matchupSelect.querySelector('option[value=""]')?.textContent || "\u2014 Select a game \u2014";
+  matchupSelect.innerHTML = "";
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = placeholder;
+  if (!current) blank.selected = true;
+  matchupSelect.appendChild(blank);
+  for (const opt of options) {
+    const el = document.createElement("option");
+    el.value = opt.value;
+    el.textContent = opt.label;
+    if (opt.value === current) el.selected = true;
+    matchupSelect.appendChild(el);
+  }
+  matchupSelect.disabled = options.length === 0;
+}
+function applyGamelogMissingToDom(awayNorms, homeNorms) {
+  const awayInput = document.getElementById("awayMissing");
+  const homeInput = document.getElementById("homeMissing");
+  if (awayInput) awayInput.value = (awayNorms || []).join(",");
+  if (homeInput) homeInput.value = (homeNorms || []).join(",");
+  const awaySet = new Set(awayNorms || []);
+  const homeSet = new Set(homeNorms || []);
+  document.querySelectorAll("[data-lineup-toggle]").forEach((btn) => {
+    const side = btn.getAttribute("data-side");
+    const norm = btn.getAttribute("data-norm");
+    const onBench = (side === "away" ? awaySet : homeSet).has(norm);
+    btn.textContent = onBench ? "Bench" : "Active";
+    btn.classList.toggle("matchup-status-btn--active", !onBench);
+    btn.classList.toggle("matchup-status-btn--missing", onBench);
+    btn.setAttribute("aria-pressed", onBench ? "true" : "false");
+    const row = btn.closest(".matchup-roster-item");
+    if (row) row.classList.toggle("matchup-roster-item--benched", onBench);
+  });
+  const ctx = typeof window !== "undefined" ? window.__MATCHUP_CLIENT__ : null;
+  if (ctx && window.MmsMatchupPredictor?.buildLineupEnrichment) {
+    window.MmsMatchupPredictorUi?.updateLineupUi?.(
+      window.MmsMatchupPredictor.buildLineupEnrichment(ctx, awayNorms || [], homeNorms || [])
+    );
+  }
+}
+async function refreshLiveGamelogMissing(ctx) {
+  if (!ctx?.awayBaseProfile?.teamId || !ctx?.homeBaseProfile?.teamId) return;
+  import_fetchCsvText.csvTextCache.invalidate(import_sheetUrls.SCHEDULE_URL);
+  const [schedule, gamelogs, teams, stats2026, captainCodes] = await Promise.all([
+    (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)(),
+    (0, import_dfs.load2026GamelogsByPlayer)(),
+    (0, import_teamRosters.loadTeamRosters)(),
+    (0, import_stats2026Loader.load2026StatsByPlayer)(),
+    (0, import_powerRankingsCaptains.loadCaptainTeamCodeById)()
+  ]);
+  const selectedGame = {
+    awayTeamId: ctx.awayBaseProfile.teamId,
+    homeTeamId: ctx.homeBaseProfile.teamId,
+    isoDate: ctx.gameIsoDate,
+    gameId: ctx.gameId || "",
+    away: ctx.awayLabel,
+    home: ctx.homeLabel
+  };
+  const parsedGame = (0, import_matchupGameResult.findParsedGameForMatchup)(
+    schedule.parsedGames,
+    selectedGame,
+    ctx.gameIsoDate
+  );
+  if (!(0, import_matchupGameResult.isParsedGameFinished)(parsedGame)) return;
+  const teamCodeById = new Map([
+    ...(0, import_teamRosters.buildTeamCodeById)(teams, stats2026),
+    ...captainCodes
+  ]);
+  const awayMissingSet = /* @__PURE__ */ new Set();
+  const homeMissingSet = /* @__PURE__ */ new Set();
+  (0, import_matchupGamelogMissing.applyGamelogMissingForFinishedGame)({
+    awayMissingSet,
+    homeMissingSet,
+    selectedGame,
+    viewIso: ctx.gameIsoDate,
+    parsedScheduleGames: schedule.parsedGames,
+    gamelogs,
+    teamCodeById,
+    awayEffectivePlayers: ctx.awayPlayers || [],
+    homeEffectivePlayers: ctx.homePlayers || [],
+    normalizeName: import_dfs.normalizePlayerName
+  });
+  const sig = `${[...awayMissingSet].sort().join(",")}|${[...homeMissingSet].sort().join(",")}`;
+  if (sig === lastGamelogMissingSig) return;
+  lastGamelogMissingSig = sig;
+  window.__MMS_MATCHUP_BENCH__?.applyServerMissing?.(
+    [...awayMissingSet],
+    [...homeMissingSet]
+  );
+  applyGamelogMissingToDom([...awayMissingSet], [...homeMissingSet]);
+}
+async function refreshLiveMatchupChrome() {
+  try {
+    await refreshMatchupScheduleChrome();
+    const ctx = typeof window !== "undefined" ? window.__MATCHUP_CLIENT__ : null;
+    if (ctx) await refreshLiveGamelogMissing(ctx);
+  } catch (err) {
+    console.error("Matchup live chrome refresh failed", err);
+  }
+}
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
@@ -6329,6 +6504,7 @@ function autoStartScoreWatcher() {
     onFinished: (gameResult) => {
       window.MmsMatchupPredictorUi?.renderGameResultUi?.(gameResult);
       void refreshSeasonRecord({ force: true });
+      void refreshLiveGamelogMissing(ctx);
     }
   });
 }
@@ -6340,17 +6516,27 @@ function autoStartSeasonRecordWatcher() {
     void refreshSeasonRecord();
   }, Math.max(3e4, DEFAULT_SCORE_POLL_MS));
 }
+function autoStartLiveChromeWatcher() {
+  if (liveChromeTimer) return;
+  if (!document.getElementById("matchupForm")) return;
+  void refreshLiveMatchupChrome();
+  liveChromeTimer = window.setInterval(() => {
+    void refreshLiveMatchupChrome();
+  }, Math.max(3e4, DEFAULT_SCORE_POLL_MS));
+}
 if (typeof window !== "undefined") {
   window.MmsMatchupPredictor = {
     predictFromPayload,
     buildLineupEnrichment: import_matchupLineupClient.buildMatchupLineupEnrichment,
     hydrateMatchupReplacements,
     watchMatchupLiveScores,
-    refreshSeasonRecord
+    refreshSeasonRecord,
+    refreshLiveMatchupChrome
   };
   const kickLiveUpdates = () => {
     window.setTimeout(autoStartScoreWatcher, 1500);
     window.setTimeout(autoStartSeasonRecordWatcher, 2e3);
+    window.setTimeout(autoStartLiveChromeWatcher, 2500);
   };
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", kickLiveUpdates);
@@ -6363,6 +6549,7 @@ export {
   export_buildMatchupLineupEnrichment as buildMatchupLineupEnrichment,
   hydrateMatchupReplacements,
   predictFromPayload,
+  refreshLiveMatchupChrome,
   refreshSeasonRecord,
   watchMatchupLiveScores
 };

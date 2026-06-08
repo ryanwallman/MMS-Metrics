@@ -790,6 +790,25 @@
           if (matchupCtx) recalcPrediction();
         }
 
+        window.__MMS_MATCHUP_BENCH__ = {
+          applyServerMissing(awayNorms, homeNorms) {
+            awaySet = new Set(awayNorms || []);
+            homeSet = new Set(homeNorms || []);
+            applyBenchToForm([...awaySet], [...homeSet]);
+            saveStoredBench([...awaySet], [...homeSet]);
+            syncButtons(awaySet, homeSet);
+            if (matchupCtx && window.MmsMatchupPredictor?.buildLineupEnrichment) {
+              const enrichment = window.MmsMatchupPredictor.buildLineupEnrichment(
+                matchupCtx,
+                [...awaySet],
+                [...homeSet]
+              );
+              window.MmsMatchupPredictorUi?.updateLineupUi?.(enrichment);
+              if (!isFinishedGame) recalcPrediction();
+            }
+          },
+        };
+
         hydratePredictorRecordFromJson().then(() => {
           applyMatchupPageChrome();
           initMatchupClient();

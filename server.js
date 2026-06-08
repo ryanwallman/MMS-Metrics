@@ -67,6 +67,10 @@ const {
   gradeMatchupModelBets,
 } = require("./lib/matchupGameResult");
 const { buildMatchupClientPayload } = require("./lib/matchupClientPayload");
+const {
+  buildMatchupOptionsForGames,
+  findGameByMatchupKey,
+} = require("./lib/matchupScheduleChrome");
 const { applyGamelogMissingForFinishedGame } = require("./lib/matchupGamelogMissing");
 const {
   filterScheduleGamesBeforeIso,
@@ -895,28 +899,6 @@ function resolveScheduleGamesForView(encodedView, payload) {
   }
 
   return { selectedView: selected, games, summaryLine };
-}
-
-function matchupGameKey(game) {
-  const away = safeText(game.awayTeamId);
-  const home = safeText(game.homeTeamId);
-  return `${away}|${home}`;
-}
-
-function findGameByMatchupKey(games, key) {
-  const want = safeText(key);
-  if (!want) return null;
-  return games.find((g) => matchupGameKey(g) === want) || null;
-}
-
-function buildMatchupOptionsForGames(games) {
-  return games.map((g) => ({
-    value: matchupGameKey(g),
-    label: `${g.away} @ ${g.home}${g.time && g.time !== "-" ? ` · ${g.time}` : ""}${
-      g.result ? ` · ${g.result}` : ""
-    }`,
-    game: g,
-  }));
 }
 
 function resolveSundayWeekViewParam(encodedWeek, payload) {
@@ -2573,12 +2555,6 @@ async function renderMatchupPredictorPage(req, res) {
             },
           };
           enrichMatchupPredictionLines(prediction);
-          const moneylines = americanMoneylinePair(
-            prediction.winPct.away / 100,
-            prediction.winPct.home / 100
-          );
-          prediction.lines.moneylineAway = moneylines.away;
-          prediction.lines.moneylineHome = moneylines.home;
           prediction.awayLabel = awayRoster.teamName || selectedGame.away;
           prediction.homeLabel = homeRoster.teamName || selectedGame.home;
 
@@ -2607,6 +2583,7 @@ async function renderMatchupPredictorPage(req, res) {
               homePlayersOriginal: homeRoster.players,
               replacementByOriginalNorm: matchupReplacements,
               gameIsoDate: selectedGame.isoDate || viewIso || null,
+              gameId: selectedGame.gameId || parsedGameForMissing?.gameId || null,
               isFinishedGame: Boolean(gameResult),
               gameResult,
               awayLabel: prediction.awayLabel,
