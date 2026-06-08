@@ -477,6 +477,7 @@
     </main>
     <% if (typeof staticSite !== 'undefined' && staticSite) { %>
     <script type="module" src="<%= sitePath('/js/matchup-predictor-nav.mjs') %>?v=<%= assetVersion %>"></script>
+    <script type="module" src="<%= sitePath('/js/matchup-predictor-live.mjs') %>?v=<%= assetVersion %>"></script>
     <% } %>
     <script src="<%= sitePath('/js/matchup-predictor-ui.js') %>?v=<%= assetVersion %>"></script>
     <% if (typeof matchupClient !== 'undefined' && matchupClient) { %>
@@ -495,11 +496,12 @@
         }
 
         function hydratePredictorRecordFromJson() {
-          if (window.__MATCHUP_PREDICTOR_RECORD__) return Promise.resolve();
           return fetch(sitePath("/matchup-predictor/season-record.json"), { cache: "no-store" })
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
-              if (data && data.decided > 0) window.__MATCHUP_PREDICTOR_RECORD__ = data;
+              if (data && data.decided > 0 && !window.__MATCHUP_PREDICTOR_RECORD__) {
+                window.__MATCHUP_PREDICTOR_RECORD__ = data;
+              }
             })
             .catch(() => {});
         }

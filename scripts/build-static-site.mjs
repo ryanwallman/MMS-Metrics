@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
+import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
 
 const require = createRequire(import.meta.url);
 const { matchupKeyToSlug } = require("../lib/matchupSlug.js");
@@ -200,6 +201,15 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor-nav failed"))));
   });
 
+  console.log("[static] Building matchup predictor live bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:matchup-predictor-live"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:matchup-predictor-live failed"))));
+  });
+
   console.log("[static] Building leaderboard lineup client bundle…");
   await new Promise((resolve, reject) => {
     const child = spawn("npm", ["run", "build:leaderboard-lineup"], {
@@ -371,6 +381,10 @@ async function main() {
       const { patched, skipped } = await patchMatchupPredictorNavHtml(matchupDir, siteBase);
       console.log(
         `[static] Matchup nav script: patched ${patched} page(s), ${skipped} already had it`
+      );
+      const livePatch = await patchMatchupPredictorLiveHtml(matchupDir, siteBase);
+      console.log(
+        `[static] Matchup live script: patched ${livePatch.patched} page(s), ${livePatch.skipped} already had it`
       );
     } catch {
       /* no matchup export */

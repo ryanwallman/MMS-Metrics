@@ -8,6 +8,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
+import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
