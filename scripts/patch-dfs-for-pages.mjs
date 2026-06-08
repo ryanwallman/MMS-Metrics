@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
+import { patchDfsLandingHtml } from "./patch-dfs-landing.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
@@ -113,8 +114,10 @@ async function main() {
   await runNpm("build:leaderboard-scoring");
   await runNpm("build:leaderboard-lineup");
   await runNpm("build:dfs-lineup-pool");
+  await runNpm("build:dfs-landing");
   await runNpm("build:matchup-predictor");
   await runNpm("build:matchup-predictor-nav");
+  await runNpm("build:matchup-predictor-live");
 
   const careerSrc = path.join(root, "data/csv/career.csv");
   const careerDest = path.join(root, "public/data/csv/career.csv");
@@ -201,12 +204,27 @@ async function main() {
   }
   await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
 
+  const dfsDir = path.join(outDir, "dfs");
+  try {
+    await fs.access(dfsDir);
+    const dfsLandingPatch = await patchDfsLandingHtml(dfsDir, siteBase);
+    console.log(
+      `[patch-dfs] DFS landing script: patched ${dfsLandingPatch.patched} page(s), ${dfsLandingPatch.skipped} already had it`
+    );
+  } catch {
+    /* no dfs pages */
+  }
+
   const matchupDir = path.join(outDir, "matchup-predictor");
   try {
     await fs.access(matchupDir);
     const { patched, skipped } = await patchMatchupPredictorNavHtml(matchupDir, siteBase);
     console.log(
       `[patch-dfs] Matchup nav script: patched ${patched} page(s), ${skipped} already had it`
+    );
+    const livePatch = await patchMatchupPredictorLiveHtml(matchupDir, siteBase);
+    console.log(
+      `[patch-dfs] Matchup live script: patched ${livePatch.patched} page(s), ${livePatch.skipped} already had it`
     );
   } catch {
     /* no matchup pages */

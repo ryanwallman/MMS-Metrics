@@ -461,6 +461,9 @@
         showSlateStats: typeof showSlateStats !== 'undefined' && showSlateStats
       }) %>;
     </script>
+    <% if (typeof staticSite !== 'undefined' && staticSite) { %>
+    <script type="module" src="<%= sitePath('/js/dfs-landing.mjs') %>?v=<%= assetVersion %>"></script>
+    <% } %>
     <script type="module" src="<%= sitePath('/js/dfs-lineup-pool.js') %>?v=<%= assetVersion %>"></script>
     <% } %>
 

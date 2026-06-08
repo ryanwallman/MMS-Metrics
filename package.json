@@ -12,6 +12,7 @@
     "build:league-leaders": "node scripts/build-league-leaders.mjs",
     "build:power-rankings": "node scripts/build-power-rankings.mjs",
     "build:dfs-lineup-pool": "node scripts/build-dfs-lineup-pool.mjs",
+    "build:dfs-landing": "node scripts/build-dfs-landing.mjs",
     "build:static": "node scripts/build-static-site.mjs",
     "build:pages": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",
     "build:pages:branch": "STATIC_SKIP_MATCHUP=1 SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",

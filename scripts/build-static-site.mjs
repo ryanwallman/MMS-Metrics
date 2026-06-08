@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
+import { patchDfsLandingHtml } from "./patch-dfs-landing.mjs";
 
 const require = createRequire(import.meta.url);
 const { matchupKeyToSlug } = require("../lib/matchupSlug.js");
@@ -248,6 +249,15 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:dfs-lineup-pool failed"))));
   });
 
+  console.log("[static] Building DFS landing redirect bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:dfs-landing"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:dfs-landing failed"))));
+  });
+
   const careerSrc = path.join(root, "data/csv/career.csv");
   const careerDest = path.join(root, "public/data/csv/career.csv");
   await fs.mkdir(path.dirname(careerDest), { recursive: true });
@@ -374,6 +384,17 @@ async function main() {
     console.log("[static] Copying public/ …");
     await copyDir(path.join(root, "public"), outDir);
     await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
+
+    const dfsDir = path.join(outDir, "dfs");
+    try {
+      await fs.access(dfsDir);
+      const dfsLandingPatch = await patchDfsLandingHtml(dfsDir, siteBase);
+      console.log(
+        `[static] DFS landing script: patched ${dfsLandingPatch.patched} page(s), ${dfsLandingPatch.skipped} already had it`
+      );
+    } catch {
+      /* no dfs pages */
+    }
 
     const matchupDir = path.join(outDir, "matchup-predictor");
     try {

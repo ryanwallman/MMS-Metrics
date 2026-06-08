@@ -156,21 +156,32 @@ function isBareDfsIndexPath() {
 }
 
 async function main() {
+  if (window.__DFS_LANDING_READY__) {
+    await window.__DFS_LANDING_READY__;
+  }
+
   if (!page?.slateToken && !isBareDfsIndexPath()) {
     showPoolError("No slate selected.");
     return;
   }
 
+  const bareLanding = isBareDfsIndexPath() && !slateChosenInUrl();
+  const requestedToken = bareLanding
+    ? ""
+    : String(page.slateToken || slateFromUrl() || "")
+        .trim()
+        .toUpperCase();
+
   try {
-    const requestedToken = String(page.slateToken || "")
-      .trim()
-      .toUpperCase();
-    const data = await loadDfsLineupPool(page.slateToken || "", page.lineupNorms || []);
+    const data = await loadDfsLineupPool(requestedToken, page.lineupNorms || []);
 
     // Bare /dfs tab only: follow live open slate (export may bake a stale token).
-    if (isBareDfsIndexPath() && !slateChosenInUrl() && data.activeSlateToken) {
+    if (bareLanding && data.activeSlateToken) {
       const active = String(data.activeSlateToken).trim().toUpperCase();
-      if (active && active !== requestedToken) {
+      const loaded = String(data.selectedSlate || requestedToken || "")
+        .trim()
+        .toUpperCase();
+      if (active && active !== loaded) {
         navigateToOpenDfsSlate(active);
         return;
       }
@@ -203,7 +214,9 @@ async function main() {
             await navigateToOpenDfsSlate(fresh.activeSlateToken);
             return;
           }
-          window.location.replace(`${dfsLineupUrl(requestedToken)}?t=${Date.now()}`);
+          window.location.replace(
+            `${dfsLineupUrl(data.selectedSlate || requestedToken)}?t=${Date.now()}`
+          );
         },
       });
     } else {
