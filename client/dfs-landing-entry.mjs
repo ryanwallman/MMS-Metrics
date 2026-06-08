@@ -10,9 +10,14 @@ import {
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
 
 function hideLoadingOverlay() {
-  if (typeof window !== "undefined" && window.MmsLoadingScreen) {
-    window.MmsLoadingScreen.hide();
+  if (typeof document === "undefined") return;
+  const screen = document.getElementById("mmsLoadingScreen");
+  if (screen) {
+    screen.hidden = true;
+    screen.setAttribute("aria-busy", "false");
   }
+  document.body?.classList.add("mms-page-ready");
+  document.querySelector(".page-main")?.classList.remove("mms-page-main--loading");
 }
 
 function siteBasePath() {
@@ -29,13 +34,24 @@ function isStaticDfsSite() {
   );
 }
 
+function normalizeSlateToken(raw) {
+  return String(raw || "")
+    .trim()
+    .split(/[?&#]/)[0]
+    .toUpperCase();
+}
+
 function dfsLineupUrl(slateToken) {
   const base = siteBasePath();
-  const t = String(slateToken || "")
-    .trim()
-    .toUpperCase();
+  const t = normalizeSlateToken(slateToken);
   if (!t) return `${base}/dfs`;
   return `${base}/dfs?slate=${encodeURIComponent(t)}`;
+}
+
+function dfsLineupFreshUrl(slateToken) {
+  const url = dfsLineupUrl(slateToken);
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}t=${Date.now()}`;
 }
 
 function isBareDfsLandingPath() {
@@ -47,12 +63,12 @@ function isBareDfsLandingPath() {
 
 function slateFromQuery() {
   const q = new URLSearchParams(window.location.search).get("slate");
-  return q ? String(q).trim().toUpperCase() : "";
+  return q ? normalizeSlateToken(q) : "";
 }
 
 function slateFromLegacyPath() {
   const m = window.location.pathname.match(/\/dfs\/slate\/([^/]+)\/?$/i);
-  return m ? decodeURIComponent(m[1]).trim().toUpperCase() : "";
+  return m ? normalizeSlateToken(decodeURIComponent(m[1])) : "";
 }
 
 function isViewOnlySlateRequest() {
@@ -64,9 +80,9 @@ async function resolveScheduleContext() {
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
   const nowMs = Date.now();
   const options = buildDfsSlateOptions(payload, refIso, nowMs);
-  const active = String(resolveActiveDfsSlateToken(payload, refIso, nowMs) || "")
-    .trim()
-    .toUpperCase();
+  const active = normalizeSlateToken(
+    resolveActiveDfsSlateToken(payload, refIso, nowMs) || ""
+  );
   return { options, active };
 }
 
@@ -74,7 +90,9 @@ function shouldRedirectToOpenSlate(current, active, options) {
   if (!active) return false;
   if (!current) return true;
   if (current === active) return false;
-  const opt = options.find((o) => String(o.value || "").trim().toUpperCase() === current);
+  const opt = options.find(
+    (o) => normalizeSlateToken(o.value) === current
+  );
   return !opt?.canEdit;
 }
 
@@ -88,8 +106,8 @@ export async function ensureDfsOpenSlateLanding() {
   const pathSlate = slateFromLegacyPath();
 
   if (pathSlate && !querySlate) {
-    window.location.replace(`${dfsLineupUrl(pathSlate)}?t=${Date.now()}`);
-    return;
+    window.location.replace(dfsLineupFreshUrl(pathSlate));
+    return new Promise(() => {});
   }
 
   if (isViewOnlySlateRequest()) {
@@ -97,8 +115,7 @@ export async function ensureDfsOpenSlateLanding() {
     return;
   }
 
-  const onDfsLineup =
-    isBareDfsLandingPath() || !!querySlate || !!pathSlate;
+  const onDfsLineup = isBareDfsLandingPath() || !!querySlate || !!pathSlate;
   if (!onDfsLineup) {
     hideLoadingOverlay();
     return;
@@ -113,8 +130,8 @@ export async function ensureDfsOpenSlateLanding() {
 
     const current = querySlate || pathSlate;
     if (shouldRedirectToOpenSlate(current, active, options)) {
-      window.location.replace(`${dfsLineupUrl(active)}?t=${Date.now()}`);
-      return;
+      window.location.replace(dfsLineupFreshUrl(active));
+      return new Promise(() => {});
     }
 
     hideLoadingOverlay();

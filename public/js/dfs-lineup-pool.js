@@ -5,7 +5,8 @@ import { loadDfsLineupPool } from "./dfs-lineup-pool.mjs";
 import {
   setupLineupLockCountdown,
   navigateToOpenDfsSlate,
-  dfsLineupUrl,
+  dfsLineupFreshUrl,
+  normalizeSlateToken,
   isViewOnlySlateRequest,
 } from "./dfs-lock-countdown.js";
 import { hideMmsLoadingScreen } from "./mms-loading-screen.js";
@@ -20,9 +21,9 @@ const page = window.__DFS_LINEUP_PAGE__;
 
 function slateFromUrl() {
   const q = new URLSearchParams(window.location.search).get("slate");
-  if (q) return String(q).trim().toUpperCase();
+  if (q) return normalizeSlateToken(q);
   const m = window.location.pathname.match(/\/dfs\/slate\/([^/]+)\/?$/i);
-  if (m) return m[1].toUpperCase();
+  if (m) return normalizeSlateToken(m[1]);
   return "";
 }
 
@@ -228,7 +229,7 @@ async function main() {
             return;
           }
           window.location.replace(
-            `${dfsLineupUrl(data.selectedSlate || requestedToken)}?t=${Date.now()}`
+            dfsLineupFreshUrl(data.selectedSlate || requestedToken)
           );
         },
       });

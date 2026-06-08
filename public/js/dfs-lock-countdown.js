@@ -40,6 +40,20 @@ export function dfsLineupViewUrl(slateToken) {
   return `${base}${sep}view=1`;
 }
 
+/** Cache-busted navigation URL (must use & when slate= is already present). */
+export function dfsLineupFreshUrl(slateToken) {
+  const base = dfsLineupUrl(slateToken);
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}t=${Date.now()}`;
+}
+
+export function normalizeSlateToken(raw) {
+  return String(raw || "")
+    .trim()
+    .split(/[?&#]/)[0]
+    .toUpperCase();
+}
+
 async function resolveOpenSlateToken(activeSlateToken) {
   let token = String(activeSlateToken || "")
     .trim()
@@ -61,8 +75,7 @@ async function resolveOpenSlateToken(activeSlateToken) {
 /** Navigate to the open editable slate (live schedule when token omitted). */
 export async function navigateToOpenDfsSlate(activeSlateToken) {
   const token = await resolveOpenSlateToken(activeSlateToken);
-  const url = `${dfsLineupUrl(token)}?t=${Date.now()}`;
-  window.location.replace(url);
+  window.location.replace(dfsLineupFreshUrl(token));
 }
 
 /**
