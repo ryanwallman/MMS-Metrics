@@ -5,7 +5,6 @@ import { loadDfsLineupPool } from "./dfs-lineup-pool.mjs";
 import {
   setupLineupLockCountdown,
   navigateToOpenDfsSlate,
-  dfsLineupFreshUrl,
   normalizeSlateToken,
   isViewOnlySlateRequest,
 } from "./dfs-lock-countdown.js";
@@ -27,14 +26,11 @@ function slateFromUrl() {
   return "";
 }
 
-/** True when the user picked a slate via ?slate= or /dfs/slate/ (not the bare DFS tab). */
-function slateChosenInUrl() {
-  return !!slateFromUrl();
-}
-
-if (page) {
-  const urlSlate = slateFromUrl();
-  if (urlSlate) page.slateToken = urlSlate;
+function isBareDfsIndexPath() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  const base = String(window.__SITE_BASE_PATH__ || "").replace(/\/+$/, "");
+  const dfsRoot = `${base}/dfs`.replace(/\/+$/, "") || "/dfs";
+  return path === dfsRoot || path === "/dfs";
 }
 
 function esc(text) {
@@ -150,55 +146,66 @@ function showPoolError(message) {
   hideMmsLoadingScreen();
 }
 
-function isBareDfsIndexPath() {
-  const path = window.location.pathname.replace(/\/+$/, "") || "/";
-  const base = String(window.__SITE_BASE_PATH__ || "").replace(/\/+$/, "");
-  const dfsRoot = `${base}/dfs`.replace(/\/+$/, "") || "/dfs";
-  return path === dfsRoot || path === "/dfs";
+/** Pick slate token for pool load: URL slate, else open slate (ignore baked export token). */
+function resolvePoolSlateToken(landing) {
+  const urlSlate = slateFromUrl();
+  if (urlSlate) return urlSlate;
+  if (landing?.active) return landing.active;
+  return "";
 }
 
 async function main() {
-  if (window.__DFS_LANDING_READY__) {
-    await window.__DFS_LANDING_READY__;
+  let landing = { redirected: false, active: "" };
+  try {
+    if (window.__DFS_LANDING_READY__) {
+      landing = await Promise.race([
+        window.__DFS_LANDING_READY__,
+        new Promise((resolve) =>
+          setTimeout(() => resolve({ redirected: false, active: "", timedOut: true }), 15000)
+        ),
+      ]);
+    }
+  } catch (err) {
+    console.error("DFS landing wait failed", err);
   }
 
-  if (!page?.slateToken && !isBareDfsIndexPath()) {
+  if (landing?.redirected) {
+    return;
+  }
+
+  const requestedToken = resolvePoolSlateToken(landing);
+
+  if (!requestedToken && !isBareDfsIndexPath()) {
     showPoolError("No slate selected.");
     return;
   }
 
-  const bareLanding = isBareDfsIndexPath() && !slateChosenInUrl();
-  const requestedToken = bareLanding
-    ? ""
-    : String(page.slateToken || slateFromUrl() || "")
-        .trim()
-        .toUpperCase();
+  if (page) {
+    page.slateToken = requestedToken;
+  }
 
   try {
-    const data = await loadDfsLineupPool(requestedToken, page.lineupNorms || []);
+    let data = await loadDfsLineupPool(requestedToken, page?.lineupNorms || []);
 
-    const active = String(data.activeSlateToken || "")
-      .trim()
-      .toUpperCase();
-    const loaded = String(data.selectedSlate || requestedToken || "")
-      .trim()
-      .toUpperCase();
+    const active = normalizeSlateToken(data.activeSlateToken || "");
+    const loaded = normalizeSlateToken(data.selectedSlate || requestedToken || "");
 
-    // Stale locked ?slate= from export/bookmarks → open week (unless view=1 for past results).
+    // Landing missed a stale locked URL — swap in open slate data (no redirect).
     if (
       !isViewOnlySlateRequest() &&
       active &&
       !data.slate?.canEdit &&
       loaded !== active
     ) {
-      await navigateToOpenDfsSlate(active);
-      return;
-    }
-
-    // Bare /dfs: canonicalize URL to the open slate so export-time HTML cannot stick.
-    if (bareLanding && active && !slateFromUrl()) {
-      await navigateToOpenDfsSlate(active);
-      return;
+      const openData = await loadDfsLineupPool(active, page?.lineupNorms || []);
+      if (openData.slate?.canEdit) {
+        window.history.replaceState(
+          null,
+          "",
+          `${window.location.pathname}?slate=${encodeURIComponent(active)}`
+        );
+        data = openData;
+      }
     }
 
     if (typeof window.setDfsCanEdit === "function") {
@@ -209,9 +216,9 @@ async function main() {
 
     const canEdit = !!data.slate?.canEdit;
 
-    if (canEdit) {
+    if (canEdit && data.lockDeadlineMs != null && data.lockDeadlineMs > Date.now()) {
       const countdownWrap = document.getElementById("dfsLockCountdown");
-      if (countdownWrap && data.lockDeadlineMs != null) {
+      if (countdownWrap) {
         countdownWrap.setAttribute("data-deadline-ms", String(data.lockDeadlineMs));
         const whenEl = document.getElementById("dfsLockCountdownWhen");
         if (whenEl && data.lockDeadlineLabel) {
@@ -223,14 +230,10 @@ async function main() {
       setupLineupLockCountdown({
         deadlineMs: data.lockDeadlineMs,
         onLocked: async () => {
-          const fresh = await loadDfsLineupPool("", page.lineupNorms || []);
+          const fresh = await loadDfsLineupPool("", page?.lineupNorms || []);
           if (fresh.activeSlateToken) {
             await navigateToOpenDfsSlate(fresh.activeSlateToken);
-            return;
           }
-          window.location.replace(
-            dfsLineupFreshUrl(data.selectedSlate || requestedToken)
-          );
         },
       });
     } else {
@@ -243,6 +246,19 @@ async function main() {
     if (page) {
       page.slateToken = data.selectedSlate || requestedToken;
       page.showSlateStats = !!data.showSlateStats;
+    }
+
+    if (
+      isBareDfsIndexPath() &&
+      !slateFromUrl() &&
+      data.slate?.canEdit &&
+      data.selectedSlate
+    ) {
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}?slate=${encodeURIComponent(data.selectedSlate)}`
+      );
     }
 
     syncSlateChrome(data);

@@ -3136,11 +3136,6 @@ function dfsLineupUrl(slateToken) {
   if (!t) return `${base}/dfs`;
   return `${base}/dfs?slate=${encodeURIComponent(t)}`;
 }
-function dfsLineupFreshUrl(slateToken) {
-  const url = dfsLineupUrl(slateToken);
-  const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}t=${Date.now()}`;
-}
 function isBareDfsLandingPath() {
   const path = (window.location.pathname || "").replace(/\/+$/, "") || "/";
   const base = siteBasePath().replace(/\/+$/, "");
@@ -3158,6 +3153,15 @@ function slateFromLegacyPath() {
 function isViewOnlySlateRequest() {
   return new URLSearchParams(window.location.search).get("view") === "1";
 }
+function stripCacheBusterFromUrl() {
+  if (typeof window === "undefined") return;
+  const params = new URLSearchParams(window.location.search);
+  if (!params.has("t")) return;
+  params.delete("t");
+  const qs = params.toString();
+  const next = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash || ""}`;
+  window.history.replaceState(null, "", next);
+}
 async function resolveScheduleContext() {
   const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
   const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
@@ -3172,48 +3176,48 @@ function shouldRedirectToOpenSlate(current, active, options) {
   if (!active) return false;
   if (!current) return true;
   if (current === active) return false;
-  const opt = options.find(
-    (o) => normalizeSlateToken(o.value) === current
-  );
+  const opt = options.find((o) => normalizeSlateToken(o.value) === current);
   return !opt?.canEdit;
 }
 async function ensureDfsOpenSlateLanding() {
   if (!isStaticDfsSite()) {
     hideLoadingOverlay();
-    return;
+    return { redirected: false, active: "" };
   }
   const querySlate = slateFromQuery();
   const pathSlate = slateFromLegacyPath();
   if (pathSlate && !querySlate) {
-    window.location.replace(dfsLineupFreshUrl(pathSlate));
-    return new Promise(() => {
-    });
+    window.location.replace(dfsLineupUrl(pathSlate));
+    return { redirected: true, active: pathSlate };
   }
   if (isViewOnlySlateRequest()) {
+    stripCacheBusterFromUrl();
     hideLoadingOverlay();
-    return;
+    return { redirected: false, active: querySlate || pathSlate };
   }
   const onDfsLineup = isBareDfsLandingPath() || !!querySlate || !!pathSlate;
   if (!onDfsLineup) {
     hideLoadingOverlay();
-    return;
+    return { redirected: false, active: "" };
   }
   try {
     const { options, active } = await resolveScheduleContext();
     if (!active) {
       hideLoadingOverlay();
-      return;
+      return { redirected: false, active: "" };
     }
     const current = querySlate || pathSlate;
     if (shouldRedirectToOpenSlate(current, active, options)) {
-      window.location.replace(dfsLineupFreshUrl(active));
-      return new Promise(() => {
-      });
+      window.location.replace(dfsLineupUrl(active));
+      return { redirected: true, active };
     }
+    stripCacheBusterFromUrl();
     hideLoadingOverlay();
+    return { redirected: false, active, current: current || active };
   } catch (err) {
     console.error("DFS open slate redirect failed", err);
     hideLoadingOverlay();
+    return { redirected: false, active: "" };
   }
 }
 var dfsLandingReady = ensureDfsOpenSlateLanding();

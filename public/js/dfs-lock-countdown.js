@@ -75,7 +75,13 @@ async function resolveOpenSlateToken(activeSlateToken) {
 /** Navigate to the open editable slate (live schedule when token omitted). */
 export async function navigateToOpenDfsSlate(activeSlateToken) {
   const token = await resolveOpenSlateToken(activeSlateToken);
-  window.location.replace(dfsLineupFreshUrl(token));
+  if (!token) return;
+  const target = dfsLineupUrl(token);
+  const current = normalizeSlateToken(
+    new URLSearchParams(window.location.search).get("slate")
+  );
+  if (current === normalizeSlateToken(token)) return;
+  window.location.replace(target);
 }
 
 /**
