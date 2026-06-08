@@ -2933,7 +2933,7 @@ var require_matchupLineupClient = __commonJS({
         teamName: teamName || roster?.teamName || ""
       }));
     }
-    function replacementMapFromCtx2(ctx) {
+    function replacementMapFromCtx(ctx) {
       const raw = ctx?.replacementByOriginalNorm;
       if (!raw || typeof raw !== "object") return null;
       const map = /* @__PURE__ */ new Map();
@@ -2949,7 +2949,7 @@ var require_matchupLineupClient = __commonJS({
       const maps = { offenseRatingByNorm, stats2026ByPlayer, positionByNorm };
       const awayName = ctx.awayLabel || "Away";
       const homeName = ctx.homeLabel || "Home";
-      const byOriginalNorm = replacementMapFromCtx2(ctx);
+      const byOriginalNorm = replacementMapFromCtx(ctx);
       const awayOriginal = ctx.awayPlayersOriginal || ctx.awayPlayers;
       const homeOriginal = ctx.homePlayersOriginal || ctx.homePlayers;
       const away = buildSideLineupState(awayOriginal, awayName, awayBenchNorms, maps, byOriginalNorm);
@@ -5088,14 +5088,8 @@ function effectiveNormsFromCtx(ctx) {
   }
   return norms;
 }
-function replacementMapFromCtx(ctx) {
-  const map = /* @__PURE__ */ new Map();
-  for (const [norm, entry] of Object.entries(ctx?.replacementByOriginalNorm || {})) {
-    if (entry?.replacementNorm) map.set(norm, entry);
-  }
-  return map;
-}
-async function hydrateMatchupReplacementsWork(ctx) {
+async function hydrateMatchupReplacements(ctx) {
+  if (!ctx) return ctx;
   const [replacements, scoring] = await Promise.all([
     (0, import_playerReplacements.getCachedPlayerReplacements)(),
     (0, import_dfsLeaderboardScoringContext.getCachedDfsLeaderboardScoringContext)()
@@ -5133,36 +5127,6 @@ async function hydrateMatchupReplacementsWork(ctx) {
   }
   ctx.positionByNorm = mapToObject(positionByNorm);
   return ctx;
-}
-function applyHydratedMatchupUi(ctx) {
-  const liveReplMap = replacementMapFromCtx(ctx);
-  if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
-    window.MmsMatchupPredictorUi.applyReplacementDisplay(
-      ctx.awayPlayersOriginal,
-      "away",
-      liveReplMap
-    );
-    window.MmsMatchupPredictorUi.applyReplacementDisplay(
-      ctx.homePlayersOriginal,
-      "home",
-      liveReplMap
-    );
-  }
-  if (!ctx.isFinishedGame) {
-    const { away, home } = benchNormsFromForm();
-    window.MmsMatchupPredictorUi?.updatePredictionUi?.(predictFromPayload(ctx, away, home));
-  }
-}
-async function hydrateMatchupReplacements(ctx) {
-  if (!ctx) return ctx;
-  const isStaticBaked = typeof window !== "undefined" && window.__MATCHUP_CLIENT__ && window.__MATCHUP_CLIENT__ === ctx;
-  if (isStaticBaked) {
-    void hydrateMatchupReplacementsWork(ctx).then(() => applyHydratedMatchupUi(ctx)).catch((err) => {
-      console.error("Matchup replacement hydrate failed", err);
-    });
-    return ctx;
-  }
-  return hydrateMatchupReplacementsWork(ctx);
 }
 function predictFromPayload(ctx, awayMissingList, homeMissingList) {
   const byOriginalNorm = deserializeReplacementMap(ctx.replacementByOriginalNorm);

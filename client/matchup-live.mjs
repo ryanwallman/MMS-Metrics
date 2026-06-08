@@ -25,7 +25,6 @@ import { SCHEDULE_URL, getGamelogs2026CsvUrl } from "../lib/sheetUrls.js";
 import { csvTextCache } from "../lib/fetchCsvText.js";
 
 const DEFAULT_POLL_MS = Number(process.env.MATCHUP_SCORE_POLL_MS) || 90_000;
-const SEASON_RECORD_CACHE_KEY = "mms-matchup-season-record-v1";
 
 let liveWatchStarted = false;
 let seasonRecordWatchTimer = null;
@@ -38,33 +37,6 @@ let lastGamelogMissingSig = null;
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
-}
-
-function readCachedSeasonRecord() {
-  try {
-    const raw = sessionStorage.getItem(SEASON_RECORD_CACHE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (!data?.decided) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function writeCachedSeasonRecord(record) {
-  try {
-    sessionStorage.setItem(SEASON_RECORD_CACHE_KEY, JSON.stringify(record));
-  } catch {
-    /* private mode */
-  }
-}
-
-function applyCachedSeasonRecordOnBoot() {
-  const cached = readCachedSeasonRecord();
-  if (!cached) return;
-  lastRecordKey = recordSignature(cached);
-  window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(cached);
 }
 
 export async function refreshMatchupScheduleChrome() {
@@ -213,7 +185,6 @@ export async function refreshSeasonRecord({ force = false } = {}) {
     const key = recordSignature(record);
     if (key === lastRecordKey) return;
     lastRecordKey = key;
-    writeCachedSeasonRecord(record);
     window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
   } catch (err) {
     console.error("Matchup season record refresh failed", err);
@@ -237,7 +208,8 @@ function startLiveWatchers() {
 
   const pollMs = Math.max(30_000, DEFAULT_POLL_MS);
 
-  void refreshSeasonRecord();
+  void refreshSeasonRecord({ force: true });
+  void refreshLiveMatchupChrome();
 
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
@@ -258,7 +230,6 @@ export function bootMatchupLiveWatchers() {
 }
 
 if (typeof window !== "undefined") {
-  applyCachedSeasonRecordOnBoot();
   window.MmsMatchupPredictorLive = {
     refreshMatchupScheduleChrome,
     refreshSeasonRecord,
