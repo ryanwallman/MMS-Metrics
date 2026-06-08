@@ -111,20 +111,102 @@ function renderCurrentTable(rows) {
     </section>`;
 }
 
-function renderBracketTeam(team, seed) {
-  if (!team) {
-    return `<span class="playoff-bracket-team playoff-bracket-team--empty">—</span>`;
+/** Standard 16-team bracket halves (high seeds). */
+const BRACKET_LEFT_CLUSTERS = [
+  [1, 8],
+  [4, 5],
+];
+const BRACKET_RIGHT_CLUSTERS = [
+  [2, 7],
+  [3, 6],
+];
+
+function matchupByHighSeed(mainMatchups, highSeed) {
+  return (mainMatchups || []).find((m) => m.highSeed === highSeed) || null;
+}
+
+function renderBracketSlotTeam(team, seed, { tbd = false, tbdLabel = null, pig = false } = {}) {
+  if (tbd) {
+    return `<div class="playoff-slot__team playoff-slot__team--tbd">
+      <span class="playoff-slot__seed">#${seed}</span>
+      <span class="playoff-slot__name">${esc(tbdLabel || "TBD")}</span>
+    </div>`;
   }
-  const seedLabel = seed != null ? `<span class="playoff-bracket-seed">#${seed}</span>` : "";
-  const captain = team.captain ? `<span class="playoff-bracket-captain">${esc(team.captain)}</span>` : "";
+  if (!team) {
+    return `<div class="playoff-slot__team playoff-slot__team--empty">
+      <span class="playoff-slot__name">—</span>
+    </div>`;
+  }
+  const captain = team.captain ? `<span class="playoff-slot__meta">${esc(team.captain)}</span>` : "";
   const record = team.projectedRecord
-    ? `<span class="playoff-bracket-record">${esc(team.projectedRecord)}</span>`
+    ? `<span class="playoff-slot__meta">${esc(team.projectedRecord)}</span>`
     : "";
-  return `<div class="playoff-bracket-team">
-    ${seedLabel}
-    <span class="playoff-bracket-name">${esc(team.teamName)}</span>
+  return `<div class="playoff-slot__team${pig ? " playoff-slot__team--pig" : ""}">
+    <span class="playoff-slot__seed">#${seed}</span>
+    <span class="playoff-slot__name">${esc(team.teamName)}</span>
     ${captain}
     ${record}
+  </div>`;
+}
+
+function renderBracketMatchupSlot(matchup) {
+  if (!matchup) return "";
+  const lowTeam = matchup.lowTbd
+    ? renderBracketSlotTeam(null, matchup.lowSeed, {
+        tbd: true,
+        tbdLabel: matchup.pigNote || "TBD",
+      })
+    : renderBracketSlotTeam(matchup.low, matchup.lowSeed);
+  return `<div class="playoff-slot playoff-slot--bo3" title="#${matchup.highSeed} vs #${matchup.lowSeed}, best of 3">
+    <div class="playoff-slot__header">#${matchup.highSeed} vs #${matchup.lowSeed} <span class="playoff-slot__format">Bo3</span></div>
+    ${renderBracketSlotTeam(matchup.high, matchup.highSeed)}
+    ${lowTeam}
+  </div>`;
+}
+
+function renderPigSlot(game) {
+  return `<div class="playoff-slot playoff-slot--pig" title="PIG #${game.highSeed} vs #${game.lowSeed}, single game">
+    <div class="playoff-slot__pig-label">🐷 PIG <span class="playoff-slot__format">1 game</span></div>
+    ${renderBracketSlotTeam(game.high, game.highSeed, { pig: true })}
+    ${renderBracketSlotTeam(game.away, game.lowSeed, { pig: true })}
+  </div>`;
+}
+
+function renderBracketHalf(seedOrder, mainMatchups) {
+  return seedOrder
+    .map((seed) => renderBracketMatchupSlot(matchupByHighSeed(mainMatchups, seed)))
+    .join("");
+}
+
+function renderRound1MobileList(mainMatchups) {
+  const order = [1, 8, 4, 5, 2, 7, 3, 6];
+  return order
+    .map((seed) => renderBracketMatchupSlot(matchupByHighSeed(mainMatchups, seed)))
+    .join("");
+}
+
+function renderLaterRoundsPanel() {
+  const rounds = [
+    { label: "Round 2", detail: "4 best-of-3 series — pairings set by reseeding after Round 1" },
+    { label: "Semifinals", detail: "2 best-of-3 series — pairings set by reseeding after Round 2" },
+    { label: "Championship", detail: "1 best-of-3 series — top two seeds after reseeding" },
+  ];
+  const cards = rounds
+    .map(
+      (r) => `<div class="playoff-later-round">
+      <span class="playoff-later-round__icon" aria-hidden="true">↻</span>
+      <div class="playoff-later-round__body">
+        <strong class="playoff-later-round__label">${esc(r.label)}</strong>
+        <span class="playoff-later-round__detail">${esc(r.detail)}</span>
+        <span class="playoff-later-round__tbd">Matchups TBD</span>
+      </div>
+    </div>`
+    )
+    .join("");
+  return `<div class="playoff-later-rounds">
+    <h3 class="playoff-later-rounds__title">Later rounds — reseeded every time</h3>
+    <p class="playoff-later-rounds__note">Every playoff round except PIG is a <strong>best-of-3 series</strong>. Winners are reseeded before each round — opponents are <strong>not</strong> determined by bracket position.</p>
+    <div class="playoff-later-rounds__grid">${cards}</div>
   </div>`;
 }
 
@@ -133,53 +215,52 @@ function renderPlayoffBracket(bracket) {
     return "";
   }
 
-  const pigHtml = (bracket.pigGames || [])
-    .map(
-      (g) => `<div class="playoff-bracket-matchup playoff-bracket-matchup--pig">
-      <p class="playoff-bracket-matchup-label">🐷 PIG · #${g.highSeed} vs #${g.lowSeed}</p>
-      <div class="playoff-bracket-pair">
-        ${renderBracketTeam(g.high, g.highSeed)}
-        <span class="playoff-bracket-vs">vs</span>
-        ${renderBracketTeam(g.away, g.lowSeed)}
-      </div>
-    </div>`
-    )
-    .join("");
-
-  const mainHtml = (bracket.mainMatchups || [])
-    .map((m) => {
-      const lowSide = m.lowTbd
-        ? `<div class="playoff-bracket-team playoff-bracket-team--tbd">
-            <span class="playoff-bracket-seed">#${m.lowSeed}</span>
-            <span class="playoff-bracket-name">${esc(m.pigNote || "TBD")}</span>
-          </div>`
-        : renderBracketTeam(m.low, m.lowSeed);
-      return `<div class="playoff-bracket-matchup">
-        <p class="playoff-bracket-matchup-label">#${m.highSeed} vs #${m.lowSeed}</p>
-        <div class="playoff-bracket-pair">
-          ${renderBracketTeam(m.high, m.highSeed)}
-          <span class="playoff-bracket-vs">vs</span>
-          ${lowSide}
-        </div>
-      </div>`;
-    })
-    .join("");
+  const main = bracket.mainMatchups || [];
+  const leftSeeds = BRACKET_LEFT_CLUSTERS.flat();
+  const rightSeeds = BRACKET_RIGHT_CLUSTERS.flat();
+  const pigHtml = (bracket.pigGames || []).map((g) => renderPigSlot(g)).join("");
 
   return `<section class="power-rankings-section playoff-bracket-section">
-      <h2>Projected playoff bracket (round 1)</h2>
-      <p class="power-rankings-note">
-        Based on projected final standings. Seeds <strong>1–${bracket.directPlayoffSeeds}</strong> qualify directly.
-        Seeds <strong>15–18</strong> play in the <strong>play-in game (PIG 🐷)</strong>; the two winners join the top
-        ${bracket.directPlayoffSeeds} for a 16-team bracket (<strong>1 vs 16, 2 vs 15, … 8 vs 9</strong>).
-        Later rounds reseed, so only first-round matchups are shown.
-      </p>
-      <div class="playoff-bracket-block">
-        <h3 class="playoff-bracket-subhead">Play-in games</h3>
-        <div class="playoff-bracket-grid playoff-bracket-grid--pig">${pigHtml}</div>
+      <h2>Projected playoff bracket (round 1 only)</h2>
+      <div class="playoff-reseed-callout" role="note">
+        <p class="playoff-reseed-callout__title"><span aria-hidden="true">↻</span> MMS playoffs reseed after <strong>every</strong> round</p>
+        <p class="playoff-reseed-callout__body">
+          Only <strong>Round 1</strong> pairings are shown below (from projected standings).
+          After each round, survivors are reseeded and new matchups are drawn — later-round opponents are
+          <strong>never</strong> fixed by bracket position. PIG winners are also reseeded into the #15 / #16 slots
+          before Round 1, so seeds <strong>1 and 2</strong> do not know their opponent until play-in ends.
+          Every matchup from Round 1 onward is a <strong>best-of-3 series</strong>; PIG is a <strong>single game</strong>.
+        </p>
       </div>
-      <div class="playoff-bracket-block">
-        <h3 class="playoff-bracket-subhead">First round</h3>
-        <div class="playoff-bracket-grid playoff-bracket-grid--main">${mainHtml}</div>
+      <p class="power-rankings-note">
+        Seeds <strong>1–${bracket.directPlayoffSeeds}</strong> qualify directly.
+        Seeds <strong>15–18</strong> play PIG as <strong>#15 vs #18</strong> and <strong>#16 vs #17</strong> (one game each).
+      </p>
+      <div class="playoff-tree-wrap">
+        <div class="playoff-tree__pig-row">
+          <h3 class="playoff-tree__pig-title">Play-in games (fixed pairings)</h3>
+          <div class="playoff-tree__pig-slots">${pigHtml}</div>
+        </div>
+        <h3 class="playoff-round1-heading playoff-round1-heading--desktop">Round 1 — projected pairings (best of 3)</h3>
+        <div class="playoff-tree playoff-tree--desktop" role="img" aria-label="Round 1 bracket positions only; later rounds reseed">
+          <div class="playoff-tree__half playoff-tree__half--left">
+            ${renderBracketHalf(leftSeeds, main)}
+          </div>
+          <div class="playoff-tree__reseed-spine" aria-hidden="true">
+            <span class="playoff-tree__reseed-step">Reseed</span>
+            <span class="playoff-tree__reseed-step">Reseed</span>
+            <span class="playoff-tree__reseed-step">Reseed</span>
+            <span class="playoff-tree__reseed-step playoff-tree__reseed-step--final">Final</span>
+          </div>
+          <div class="playoff-tree__half playoff-tree__half--right">
+            ${renderBracketHalf(rightSeeds, main)}
+          </div>
+        </div>
+        <h3 class="playoff-round1-heading playoff-round1-heading--mobile">Round 1 — projected pairings (best of 3)</h3>
+        <div class="playoff-round1-mobile" aria-label="Round 1 matchups list">
+          ${renderRound1MobileList(main)}
+        </div>
+        ${renderLaterRoundsPanel()}
       </div>
     </section>`;
 }

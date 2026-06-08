@@ -3775,6 +3775,23 @@ var require_matchupMissingPlayers = __commonJS({
       if (!missing.length) return null;
       return missing.reduce((s, m) => s + m.round, 0) / missing.length;
     }
+    function averageTeamOffenseRating(entries, offenseRatingByNorm) {
+      if (!entries?.length) return 0;
+      let sum = 0;
+      let n = 0;
+      for (const e of entries) {
+        const r = offenseRatingByNorm.get(e.norm);
+        if (r != null && Number.isFinite(r)) {
+          sum += r;
+          n += 1;
+        }
+      }
+      return n > 0 ? sum / n : 0;
+    }
+    function missingRatingFactorVsTeamAvg(missingRating, teamAvg) {
+      const gap = teamAvg - missingRating;
+      return 1 + gap * 0.17;
+    }
     function playerTalentScore(m, offenseRatingByNorm) {
       const rating = offenseRatingByNorm.get(m.norm);
       const r = rating != null && Number.isFinite(rating) ? rating : 0;
@@ -3782,17 +3799,10 @@ var require_matchupMissingPlayers = __commonJS({
       const ratingScore = r / 1.75;
       return 0.52 * ratingScore + 0.48 * roundScore;
     }
-    function isBottomTierOffense(rating, offenseRatingByNorm) {
-      if (rating == null || !Number.isFinite(rating)) return false;
-      const all = [...offenseRatingByNorm.values()].filter((v) => Number.isFinite(v)).sort((a, b) => a - b);
-      if (all.length < 4) return rating < -0.35;
-      const p15 = all[Math.max(0, Math.floor(all.length * 0.15) - 1)];
-      return rating <= p15 + 1e-9;
-    }
     function computeTeamMissingMultiplier(missing, activeEntries, offenseRatingByNorm, allEntries = null) {
       const entries = allEntries || [...activeEntries || [], ...missing || []];
-      const presentCount = (activeEntries || []).length;
       const fieldingPresent = fieldingPresentCount(activeEntries || [], entries);
+      const teamAvg = averageTeamOffenseRating(entries, offenseRatingByNorm);
       if (!missing.length) {
         return {
           offense: 1,
@@ -3807,76 +3817,55 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
-      if (rosterHasPositionData(entries) && fieldingPresent >= FIELDING_SPOTS && missing.length > 0) {
-        const { total } = sumAbsenceDeltas(missing, entries, offenseRatingByNorm);
-        const posMult = multipliersFromAbsenceSum(total, missing.length);
+      if (fieldingPresent >= FIELDING_SPOTS) {
+        let mult = 1;
+        for (const m of missing) {
+          const raw = offenseRatingByNorm.get(m.norm);
+          const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+          mult *= missingRatingFactorVsTeamAvg(rating, teamAvg);
+        }
+        mult = Math.max(0.55, Math.min(1.45, mult));
         return {
-          ...posMult,
+          offense: mult,
+          run: mult,
+          defense: mult,
+          runsAgainst: 1,
+          regime: "lineup-adjust",
           avgMissingRound: avgRound,
           roundGap,
           slotsShort: 0
         };
       }
-      if (fieldingPresent < FIELDING_SPOTS) {
-        const slotsShort = FIELDING_SPOTS - fieldingPresent;
-        let perPlayerFactor = 1;
-        for (const m of missing) {
-          const rating = offenseRatingByNorm.get(m.norm) ?? 0;
-          const bottomTier = isBottomTierOffense(rating, offenseRatingByNorm);
-          if (bottomTier) {
-            perPlayerFactor *= 0.985;
-            continue;
-          }
-          const score = playerTalentScore(m, offenseRatingByNorm);
-          const talentW = Math.max(0.5, 0.78 + Math.abs(rating) * 0.42);
-          const roundW = draftRoundWeight(m.round);
-          const cut = Math.min(0.22, 0.14 * talentW * roundW * (0.95 + Math.max(0, score)));
-          perPlayerFactor *= 1 - cut;
+      const slotsShort = FIELDING_SPOTS - fieldingPresent;
+      const fielderBase = Math.pow(0.52, slotsShort);
+      let qualityMod = 1;
+      for (const m of missing) {
+        const raw = offenseRatingByNorm.get(m.norm);
+        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+        const gap = teamAvg - rating;
+        if (gap > 0) {
+          qualityMod *= 1 + Math.min(0.12, gap * 0.07);
+        } else if (gap < 0) {
+          qualityMod *= 1 + Math.max(-0.18, gap * 0.09);
         }
-        const shortCrush = Math.pow(0.5, slotsShort);
-        let offenseMult = shortCrush * perPlayerFactor;
-        offenseMult = Math.max(0.08, Math.min(0.78, offenseMult));
-        const defenseMult = Math.max(
-          0.04,
-          Math.min(0.55, Math.pow(SHORT_HANDED_DEFENSE_CRUSH_BASE, slotsShort) * Math.pow(perPlayerFactor, 0.9))
-        );
-        const runsAgainstMult = shortHandedRunsAgainstMultiplier(slotsShort);
-        return {
-          offense: offenseMult,
-          run: offenseMult * 0.95,
-          defense: defenseMult,
-          runsAgainst: runsAgainstMult,
-          regime: "short-handed",
-          avgMissingRound: avgRound,
-          roundGap,
-          slotsShort
-        };
       }
-      let mult = 1;
-      const impacts = missing.map((m) => playerTalentScore(m, offenseRatingByNorm));
-      const n = impacts.length;
-      for (let i = 0; i < n; i += 1) {
-        const imp = impacts[i];
-        const compound = Math.pow(1.55, i);
-        const delta = -imp * 0.24 * compound;
-        mult *= 1 + delta;
-      }
-      const avgImpact = impacts.reduce((s, v) => s + v, 0) / n;
-      if (avgImpact > 0.05) {
-        mult *= Math.pow(0.78, Math.pow(n, 1.65) * Math.min(1.55, avgImpact));
-      } else if (avgImpact < -0.05) {
-        mult *= Math.pow(1.14, Math.pow(n, 1.5) * Math.min(1.55, Math.abs(avgImpact)));
-      }
-      mult = Math.max(0.08, Math.min(1.5, mult));
+      qualityMod = Math.max(0.82, Math.min(1.08, qualityMod));
+      let offenseMult = fielderBase * qualityMod;
+      offenseMult = Math.max(0.08, Math.min(0.88, offenseMult));
+      const defenseMult = Math.max(
+        0.04,
+        Math.min(0.55, Math.pow(SHORT_HANDED_DEFENSE_CRUSH_BASE, slotsShort) * Math.pow(qualityMod, 0.85))
+      );
+      const runsAgainstMult = shortHandedRunsAgainstMultiplier(slotsShort);
       return {
-        offense: mult,
-        run: mult,
-        defense: mult,
-        runsAgainst: 1,
-        regime: "lineup-adjust",
+        offense: offenseMult,
+        run: offenseMult * 0.95,
+        defense: defenseMult,
+        runsAgainst: runsAgainstMult,
+        regime: "short-handed",
         avgMissingRound: avgRound,
         roundGap,
-        slotsShort: 0
+        slotsShort
       };
     }
     function applyMissingPlayersToProfile(baseProfile, rosterPlayerNames, missingSet, offenseRatingByNorm, stats2026ByPlayer, defenseZByNorm, normalizeName, positionByNorm = null) {
@@ -4460,6 +4449,9 @@ var require_matchupPredict = __commonJS({
       if (!prediction.lines.runLine?.value) {
         prediction.lines.runLine = buildFavoriteRunLine(runs, pHome);
       }
+      const moneylines = americanMoneylineFromRunLine(prediction.lines.runLine);
+      prediction.lines.moneylineAway = moneylines.away;
+      prediction.lines.moneylineHome = moneylines.home;
       return prediction;
     }
     function buildFavoriteRunLine(proj, homeWinProb = 0.5) {
@@ -4641,6 +4633,32 @@ var require_matchupPredict = __commonJS({
       }
       return [fav, dog];
     }
+    function parseRunLineMagnitude(value) {
+      if (value == null) return null;
+      const n = parseFloat(String(value).replace(/[^\d.+-]/g, ""));
+      return Number.isFinite(n) ? Math.abs(n) : null;
+    }
+    function americanMoneylineFromRunLine(runLine) {
+      const side = runLine?.side;
+      if (!side) return { away: "\u2014", home: "\u2014" };
+      let mag = parseRunLineMagnitude(runLine?.value);
+      if (mag == null) mag = 0.5;
+      mag = Math.max(0.5, mag);
+      const halfSteps = Math.max(0, Math.round((mag - 0.5) / 0.5));
+      let favOdds = MONEYLINE_STANDARD_FAVORITE - halfSteps * 15;
+      let dogOdds = MONEYLINE_STANDARD_UNDERDOG + halfSteps * 10;
+      [favOdds, dogOdds] = enforceMoneylineHouseEdge(favOdds, dogOdds);
+      if (side === "away") {
+        return {
+          away: formatAmericanMoneyline(favOdds),
+          home: formatAmericanMoneyline(dogOdds)
+        };
+      }
+      return {
+        away: formatAmericanMoneyline(dogOdds),
+        home: formatAmericanMoneyline(favOdds)
+      };
+    }
     function americanMoneylinePair(probAway, probHome) {
       const sum = probAway + probHome;
       if (sum <= 0) return { away: "\u2014", home: "\u2014" };
@@ -4691,6 +4709,7 @@ var require_matchupPredict = __commonJS({
       enrichMatchupPredictionLines,
       alignProjectedRunsToWinFavorite,
       americanMoneylinePair,
+      americanMoneylineFromRunLine,
       roundMatchupN,
       finishedScheduleGameDedupeKey
     };
@@ -5260,34 +5279,22 @@ var require_playoffBracket = __commonJS({
           highSeed: 15,
           lowSeed: 18,
           high: teamByProjectedRank(projectionRows, 15),
-          away: teamByProjectedRank(projectionRows, 18),
-          winnerMainSeed: 15
+          away: teamByProjectedRank(projectionRows, 18)
         },
         {
           id: "pig-16-17",
           highSeed: 16,
           lowSeed: 17,
           high: teamByProjectedRank(projectionRows, 16),
-          away: teamByProjectedRank(projectionRows, 17),
-          winnerMainSeed: 16
+          away: teamByProjectedRank(projectionRows, 17)
         }
       ];
       const mainMatchups = [];
       for (let highSeed = 1; highSeed <= 8; highSeed += 1) {
         const lowSeed = 17 - highSeed;
         const high = teamByProjectedRank(projectionRows, highSeed);
-        let low = null;
-        let lowTbd = false;
-        let pigNote = null;
-        if (lowSeed === 15) {
-          lowTbd = true;
-          pigNote = "\u{1F437} Winner of #15 vs #18";
-        } else if (lowSeed === 16) {
-          lowTbd = true;
-          pigNote = "\u{1F437} Winner of #16 vs #17";
-        } else {
-          low = teamByProjectedRank(projectionRows, lowSeed);
-        }
+        const lowTbd = lowSeed >= 15;
+        const low = lowTbd ? null : teamByProjectedRank(projectionRows, lowSeed);
         mainMatchups.push({
           matchupIndex: highSeed,
           highSeed,
@@ -5295,7 +5302,7 @@ var require_playoffBracket = __commonJS({
           high,
           low,
           lowTbd,
-          pigNote
+          pigNote: lowTbd ? "Reseeded PIG winner" : null
         });
       }
       return {
