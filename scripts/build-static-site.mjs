@@ -32,6 +32,8 @@ const siteBase = (() => {
 const STATIC_ROUTES = [
   "/",
   "/rankings/power",
+  "/team-analytics",
+  ...Array.from({ length: 18 }, (_, i) => `/team-analytics/${i + 1}`),
   "/dfs",
   "/dfs/leaderboard",
   "/dfs/leaderboard/lineup/",
@@ -238,6 +240,15 @@ async function main() {
       stdio: "inherit",
     });
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:power-rankings failed"))));
+  });
+
+  console.log("[static] Building team analytics client bundle…");
+  await new Promise((resolve, reject) => {
+    const child = spawn("npm", ["run", "build:team-analytics"], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:team-analytics failed"))));
   });
 
   console.log("[static] Building DFS lineup pool client bundle…");

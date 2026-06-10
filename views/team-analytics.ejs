@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <%- include("partials/site-head") %>
+  </head>
+  <body>
+    <%- include("partials/site-header") %>
+
+    <% if (typeof selectedTeam !== "undefined" && selectedTeam) { %>
+    <%- include("partials/mms-loading-screen", { showMmsLoadingScreen: true }) %>
+    <% } %>
+
+    <main class="page-main team-analytics-page<%= (typeof selectedTeam !== "undefined" && selectedTeam) ? " mms-page-main--loading" : "" %>">
+      <h1 class="page-title">
+        <%= typeof selectedTeam !== "undefined" && selectedTeam ? selectedTeam.teamName : "Team Analytics" %>
+      </h1>
+
+      <% if (typeof selectedTeam === "undefined" || !selectedTeam) { %>
+      <p class="page-note team-analytics-pick-note">Pick a team to explore lineup and roster analytics.</p>
+      <% } %>
+      <% if (typeof selectedTeam !== "undefined" && selectedTeam) { %>
+      <div id="teamAnalyticsRoot" aria-live="polite" aria-busy="true"></div>
+      <% } %>
+
+      <nav class="team-nav" aria-label="Teams">
+        <% teams.forEach((team) => { %>
+        <% const isSelected = typeof selectedTeam !== "undefined" && selectedTeam && selectedTeam.teamId === team.teamId; %>
+        <a
+          href="<%= sitePath('/team-analytics/' + team.teamId) %>"
+          class="team-nav-link<%= isSelected ? ' is-selected' : '' %>"
+          <%= isSelected ? 'aria-current="page"' : '' %>
+        >
+          <span
+            class="team-jersey-btn team-<%= team.teamId %>"
+            style="background: <%= team.jerseyColor || '#1f2937' %>; color: <%= team.numberColor || '#ffffff' %>;"
+          >
+            <%= team.teamId %>
+          </span>
+          <span class="team-nav-name"><%= team.teamName %></span>
+        </a>
+        <% }) %>
+      </nav>
+
+      <div id="teamAnalyticsLeagueRoot" aria-live="polite" aria-busy="true"></div>
+    </main>
+
+    <script type="module">
+      import { initTeamAnalyticsPage } from "<%= sitePath('/js/team-analytics-page.js') %>?v=<%= assetVersion %>";
+      initTeamAnalyticsPage(<%= typeof selectedTeam !== "undefined" && selectedTeam ? JSON.stringify(selectedTeam.teamId) : "null" %>);
+    </script>
+  </body>
+</html>

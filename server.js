@@ -212,6 +212,7 @@ const SITE_NAV = Object.freeze([
   { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor/future" },
   { id: "dfs", label: "DFS Lineup", href: "/dfs" },
   { id: "power", label: "Power Rankings", href: "/rankings/power" },
+  { id: "team-analytics", label: "Team Analytics", href: "/team-analytics" },
 ]);
 
 const SITE_DISCLAIMER =
@@ -2741,6 +2742,44 @@ async function renderLeagueLeadersPage(res) {
     pageTitle: "League Leaders",
   });
 }
+
+async function renderTeamAnalyticsPage(res, { selectedTeamId = null } = {}) {
+  const teams = await loadTeamRosters();
+  const selectedTeam = selectedTeamId
+    ? teams.find((t) => t.teamId === selectedTeamId) || null
+    : null;
+  if (selectedTeamId && !selectedTeam) {
+    res.status(404).send("Team not found");
+    return;
+  }
+  renderPage(res, "team-analytics", {
+    navActive: "team-analytics",
+    pageTitle: selectedTeam ? selectedTeam.teamName : "Team Analytics",
+    teams,
+    selectedTeam,
+  });
+}
+
+app.get("/team-analytics", async (req, res) => {
+  try {
+    await renderTeamAnalyticsPage(res);
+  } catch (error) {
+    res.status(500).send(publicErrorMessage(error, "Failed to load team analytics. Please try again."));
+  }
+});
+
+app.get("/team-analytics/:teamId", async (req, res) => {
+  try {
+    const teamId = normalizeScheduleTeamId(req.params.teamId);
+    if (!isValidScheduleTeamNumber(teamId)) {
+      res.status(404).send("Team not found");
+      return;
+    }
+    await renderTeamAnalyticsPage(res, { selectedTeamId: teamId });
+  } catch (error) {
+    res.status(500).send(publicErrorMessage(error, "Failed to load team analytics. Please try again."));
+  }
+});
 
 /** Team stat pages hidden for now. */
 app.get("/stats/team/:teamId", (req, res) => {
