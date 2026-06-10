@@ -3648,7 +3648,7 @@ var require_matchupPredict = __commonJS({
     var MATCHUP_RECORD_LOGIT_SCALE = 2.5;
     var MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
     var MATCHUP_RUN_MARGIN_LOGIT = 0.29;
-    var MATCHUP_RUN_LINE_WIN_SCALE = 0.62;
+    var MATCHUP_RUN_LINE_WIN_SCALE = 1.05;
     var MATCHUP_WIN_PROB_SHRINK = 0.5;
     var SEASON_PROJ_RUN_MARGIN_LOGIT = 0.34;
     var SEASON_PROJ_LOGIT_SCALE = 0.72;
@@ -4076,14 +4076,13 @@ var require_matchupPredict = __commonJS({
         marginHome: homeR - awayR,
         impliedScore: `${prediction.projectedRuns.away} \u2013 ${prediction.projectedRuns.home}`
       };
-      const synced = syncMatchupDisplayWinPctAndRunLine(runs.marginHome, pHome);
-      prediction.winPct = {
-        away: roundMatchupN(synced.pAway * 100, 1),
-        home: roundMatchupN(synced.pHome * 100, 1)
-      };
       prediction.lines = prediction.lines || {};
-      prediction.lines.finalScore = buildPredictedFinalScore(runs, synced.pHome);
-      prediction.lines.runLine = synced.runLine;
+      if (!prediction.lines.finalScore?.winnerSide) {
+        prediction.lines.finalScore = buildPredictedFinalScore(runs, pHome);
+      }
+      if (!prediction.lines.runLine?.value) {
+        prediction.lines.runLine = buildFavoriteRunLine(runs, pHome);
+      }
       const moneylines = americanMoneylineFromRunLine(prediction.lines.runLine);
       prediction.lines.moneylineAway = moneylines.away;
       prediction.lines.moneylineHome = moneylines.home;
@@ -4096,30 +4095,22 @@ var require_matchupPredict = __commonJS({
       const p = Math.max(0.505, Math.min(0.85, favWinProb));
       return Math.log(p / (1 - p)) / MATCHUP_RUN_MARGIN_LOGIT;
     }
-    function favoriteWinProbFromRunMargin(magnitude) {
-      const m = Math.max(0.5, magnitude);
-      const logit = m * MATCHUP_RUN_MARGIN_LOGIT / MATCHUP_RUN_LINE_WIN_SCALE;
-      const p = 1 / (1 + Math.exp(-logit));
-      return Math.max(0.505, Math.min(0.85, p));
-    }
-    function matchupFavoriteRunLineMagnitude(marginHome, favWinProb) {
-      const marginProj = Math.abs(marginHome);
+    function buildFavoriteRunLine(proj, homeWinProb = 0.5) {
+      if (!proj || !Number.isFinite(proj.marginHome)) {
+        return { side: null, value: null };
+      }
+      const margin = proj.marginHome;
+      const homeFavorite = matchupFavoriteSide(margin, homeWinProb) === "home";
+      const favWinProb = homeFavorite ? homeWinProb : 1 - homeWinProb;
+      const marginFromProj = Math.abs(margin);
       const marginFromWin = favoriteRunMarginFromWinProb(favWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
-      let magnitude = Math.max(marginProj, marginFromWin);
+      let magnitude = Math.max(marginFromProj, marginFromWin);
       if (magnitude < 1e-9) magnitude = 0.5;
-      return magnitude;
-    }
-    function syncMatchupDisplayWinPctAndRunLine(marginHome, homeWinProb = 0.5) {
-      const homeFavorite = matchupFavoriteSide(marginHome, homeWinProb) === "home";
-      const blendedFav = homeFavorite ? homeWinProb : 1 - homeWinProb;
-      const magnitude = matchupFavoriteRunLineMagnitude(marginHome, blendedFav);
-      const pFav = favoriteWinProbFromRunMargin(magnitude);
-      const pHome = homeFavorite ? pFav : 1 - pFav;
       const label = formatBettingLineNumber(magnitude);
+      if (label == null) return { side: null, value: null };
       return {
-        pHome,
-        pAway: 1 - pHome,
-        runLine: label ? { side: homeFavorite ? "home" : "away", value: label } : { side: null, value: null }
+        side: homeFavorite ? "home" : "away",
+        value: label
       };
     }
     function finalizeRunProjection(away, home) {
@@ -4211,9 +4202,6 @@ var require_matchupPredict = __commonJS({
       ));
       runs = resolveTiedRunProjection(runs, pHome >= pAway);
       winFromRuns = winProbFromRunMargin(runs.home, runs.away);
-      const synced = syncMatchupDisplayWinPctAndRunLine(runs.marginHome, pHome);
-      pHome = synced.pHome;
-      pAway = synced.pAway;
       return {
         winPct: {
           away: roundMatchupN(pAway * 100, 1),
@@ -4242,7 +4230,7 @@ var require_matchupPredict = __commonJS({
         lines: {
           overUnder: runs.overUnder,
           finalScore: buildPredictedFinalScore(runs, pHome),
-          runLine: synced.runLine,
+          runLine: buildFavoriteRunLine(runs, pHome),
           impliedScore: runs.impliedScore
         },
         strength: {
