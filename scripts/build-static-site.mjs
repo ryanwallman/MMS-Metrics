@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
-import { patchMatchupSiteChromeHtml } from "./patch-matchup-site-chrome.mjs";
+import { patchMatchupSiteChromeHtml, writeSiteHeaderFragment } from "./patch-matchup-site-chrome.mjs";
 import { patchDfsLandingHtml } from "./patch-dfs-landing.mjs";
 
 const require = createRequire(import.meta.url);
@@ -405,6 +405,8 @@ async function main() {
     console.log("[static] Copying public/ …");
     await copyDir(path.join(root, "public"), outDir);
     await fs.writeFile(path.join(outDir, ".nojekyll"), "\n");
+    await writeSiteHeaderFragment(outDir, siteBase);
+    console.log("[static] Wrote docs/site-header.html for client header refresh");
 
     const dfsDir = path.join(outDir, "dfs");
     try {

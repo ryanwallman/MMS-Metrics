@@ -28,10 +28,18 @@ function resolveSiteBase() {
   return repoName ? `/${repoName}` : "/MMS-Metrics";
 }
 
-function patchMatchupHtml(html, { headerHtml, faviconTags, assetVersion, siteBase }) {
+const SITE_CHROME_MARKER = "site-chrome.js";
+
+export function siteChromeScriptTag(siteBasePath = "", assetVersion = "4") {
+  const base = String(siteBasePath || "").replace(/\/$/, "");
+  return `    <script defer src="${base}/js/site-chrome.js?v=${assetVersion}"></script>\n`;
+}
+
+function patchMatchupHtml(html, { headerHtml, faviconTags, assetVersion, siteBase, chromeScriptTag }) {
   let next = html;
 
   next = next.replace(/<header class="site-header">[\s\S]*?<\/header>/, headerHtml.trim());
+  next = next.replace(/<span class="site-brand-tagline">[\s\S]*?<\/span>\s*/g, "");
 
   if (!next.includes('rel="icon"')) {
     next = next.replace(/(<title>[^<]*<\/title>)/i, `$1\n${faviconTags}`);
@@ -48,7 +56,23 @@ function patchMatchupHtml(html, { headerHtml, faviconTags, assetVersion, siteBas
   const logoSrc = `${sitePath("/mms-stats-logo.png", siteBase)}?v=${assetVersion}`;
   next = next.replace(/src="[^"]*\/mms-stats-logo\.png\?v=[^"]+"/g, `src="${logoSrc}"`);
 
+  if (chromeScriptTag && !next.includes(SITE_CHROME_MARKER)) {
+    const idx = next.lastIndexOf("</body>");
+    if (idx >= 0) {
+      next = next.slice(0, idx) + chromeScriptTag + next.slice(idx);
+    }
+  }
+
   return next;
+}
+
+function headerNeedsRefresh(html) {
+  return (
+    html.includes("site-brand-tagline") ||
+    !html.includes("mms-stats-logo") ||
+    !html.includes('href="/team-analytics"') ||
+    !html.includes('width="80"')
+  );
 }
 
 export async function patchMatchupSiteChromeHtml(matchupDir, siteBasePath = "") {
@@ -56,6 +80,7 @@ export async function patchMatchupSiteChromeHtml(matchupDir, siteBasePath = "") 
   const assetVersion = getAssetVersion();
   const headerHtml = await renderSiteHeaderPartial({ navActive: "matchup", siteBasePath: siteBase });
   const faviconTags = renderFaviconHeadTags({ siteBasePath: siteBase });
+  const chromeScriptTag = siteChromeScriptTag(siteBase, assetVersion);
 
   let patched = 0;
   let unchanged = 0;
@@ -73,8 +98,14 @@ export async function patchMatchupSiteChromeHtml(matchupDir, siteBasePath = "") 
         await walk(full);
       } else if (ent.name.endsWith(".html")) {
         const before = await fs.readFile(full, "utf8");
-        const after = patchMatchupHtml(before, { headerHtml, faviconTags, assetVersion, siteBase });
-        if (after === before) {
+        const after = patchMatchupHtml(before, {
+          headerHtml,
+          faviconTags,
+          assetVersion,
+          siteBase,
+          chromeScriptTag,
+        });
+        if (after === before && !headerNeedsRefresh(before)) {
           unchanged += 1;
           continue;
         }
@@ -86,6 +117,11 @@ export async function patchMatchupSiteChromeHtml(matchupDir, siteBasePath = "") 
 
   await walk(matchupDir);
   return { patched, unchanged, assetVersion };
+}
+
+export async function writeSiteHeaderFragment(outDir, siteBasePath = "") {
+  const headerHtml = await renderSiteHeaderPartial({ navActive: null, siteBasePath });
+  await fs.writeFile(path.join(outDir, "site-header.html"), headerHtml.trim() + "\n");
 }
 
 async function main() {
