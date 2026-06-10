@@ -1,12 +1,12 @@
-# GitHub Pages production site (generated)
+# Static assets (runtime web root)
 
-**Do not edit by hand.** This folder is the live site at https://mmsmetrics.com/, built from Express + EJS + `public/`.
+Express serves this folder at the site root (`express.static("public")`). URLs like `/styles.css` and `/js/team-analytics.js` map to files here.
 
-```bash
-npm run build:pages:branch   # fast: skips full matchup HTML regen
-npm run build:pages          # full rebuild (30+ min; all matchup pages)
-```
+| Path | Purpose |
+|------|---------|
+| `styles.css` | Global site styles |
+| `favicon*.png`, `apple-touch-icon.png`, `mms-stats-logo.png` | Icons (generated from `assets/brand/stats.png`) |
+| `js/` | Page loaders (`.js`) and esbuild bundles (`.mjs`) — **rebuild via `npm run build:*`** |
+| `data/csv/career.csv` | Copy of career data for browser fetch on static hosting |
 
-Then commit and push `docs/` to `main`. GitHub Pages serves `/docs` on the custom domain (`docs/CNAME` → `mmsmetrics.com`).
-
-Structure mirrors URL paths: `docs/index.html` → `/`, `docs/team-analytics/5/index.html` → `/team-analytics/5`, etc.
+On deploy, `scripts/build-static-site.mjs` copies all of `public/` into `docs/`. Do not put secrets here.
