@@ -595,7 +595,7 @@ var require_metricsSourcesRegistry = __commonJS({
   "lib/metricsSourcesRegistry.js"(exports, module) {
     "use strict";
     var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
+    var { csvTextCache } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
     var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
     var METRICS_SOURCES_GID = "0";
@@ -676,14 +676,24 @@ var require_metricsSourcesRegistry = __commonJS({
       }
       return out;
     }
-    var registryCache = createMemoryCache(
-      Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 5 * 60 * 1e3,
-      "metrics-sources"
-    );
+    var REGISTRY_CACHE_TTL_MS = Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 60 * 1e3;
+    async function fetchRegistryCsvText() {
+      const base = metricsSourcesRegistryCsvUrl();
+      const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const timeoutMs = Number("90000") || 0;
+      const opts = { cache: "no-store" };
+      if (timeoutMs > 0) opts.signal = AbortSignal.timeout(timeoutMs);
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        throw new Error(`Metrics sources registry fetch failed (${res.status})`);
+      }
+      return (await res.text()).replace(/^\ufeff/, "");
+    }
+    var registryCache = createMemoryCache(REGISTRY_CACHE_TTL_MS, "metrics-sources");
     async function loadMetricsSourcesRegistry(force = false) {
       if (force) registryCache.invalidate("registry");
       return registryCache.get("registry", async () => {
-        const csvText = await fetchCsvText(metricsSourcesRegistryCsvUrl());
+        const csvText = await fetchRegistryCsvText();
         const registry = parseRegistryCsv(csvText);
         for (const key of REQUIRED_KEYS) {
           if (!registry[key]) {
@@ -695,6 +705,7 @@ var require_metricsSourcesRegistry = __commonJS({
     }
     function invalidateMetricsSourcesRegistry() {
       registryCache.invalidate("registry");
+      csvTextCache.invalidate(metricsSourcesRegistryCsvUrl());
     }
     async function getMetricsSourceUrl(key) {
       const registry = await loadMetricsSourcesRegistry();
