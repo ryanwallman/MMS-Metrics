@@ -4073,11 +4073,9 @@ var require_matchupPredict = __commonJS({
       return prediction;
     }
     function matchupFavoriteSide(marginHome, homeWinProb = 0.5) {
-      return marginHome > 1e-9 || Math.abs(marginHome) <= 1e-9 && homeWinProb >= 0.5 ? "home" : "away";
-    }
-    function favoriteRunMarginFromWinProb(favWinProb) {
-      const p = Math.max(0.505, Math.min(0.85, favWinProb));
-      return Math.log(p / (1 - p)) / MATCHUP_RUN_MARGIN_LOGIT;
+      if (marginHome > 1e-9) return "home";
+      if (marginHome < -1e-9) return "away";
+      return homeWinProb >= 0.5 ? "home" : "away";
     }
     function favoriteWinProbFromRunLine(magnitude) {
       const m = Math.max(0.5, magnitude);
@@ -4085,16 +4083,9 @@ var require_matchupPredict = __commonJS({
       const pRaw = 1 / (1 + Math.exp(-logit));
       return shrinkWinProbTowardEven(pRaw, MATCHUP_DISPLAY_WIN_FROM_LINE_SHRINK);
     }
-    function matchupFavoriteRunLineMagnitude(marginHome, modelFavWinProb) {
-      const marginProj = Math.abs(marginHome);
-      const marginFromWin = favoriteRunMarginFromWinProb(modelFavWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
-      if (marginProj > 0.5 + 1e-9) return marginProj;
-      return Math.max(0.5, marginFromWin);
-    }
     function buildMatchupLineAndDisplayWinPct(marginHome, modelHomeWinProb = 0.5) {
+      const magnitude = Math.abs(marginHome);
       const homeFavorite = matchupFavoriteSide(marginHome, modelHomeWinProb) === "home";
-      const modelFav = homeFavorite ? modelHomeWinProb : 1 - modelHomeWinProb;
-      const magnitude = matchupFavoriteRunLineMagnitude(marginHome, modelFav);
       const displayFav = favoriteWinProbFromRunLine(magnitude);
       const pHome = homeFavorite ? displayFav : 1 - displayFav;
       const label = formatBettingLineNumber(magnitude);
