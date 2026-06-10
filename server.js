@@ -2384,6 +2384,7 @@ async function renderMatchupPredictorPage(req, res) {
       parsedScheduleGames,
       defenseMap,
       rosterByTeamId,
+      byOriginalNorm,
     });
     let activeStats2026 = stats2026ByPlayer;
 
@@ -2469,6 +2470,7 @@ async function renderMatchupPredictorPage(req, res) {
               parsedScheduleGames: histGames,
               defenseMap,
               rosterByTeamId,
+              byOriginalNorm,
             });
             runBase = histCtx.runBase;
             offenseRatingByNorm = histCtx.offenseRatingByNorm;
