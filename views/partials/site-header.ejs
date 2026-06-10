@@ -1,7 +1,17 @@
 <header class="site-header">
   <div class="site-header-inner">
     <div class="site-brand-block">
-      <a href="<%= sitePath('/') %>" class="site-brand">Marlboro Men's Softball</a>
+      <a href="<%= sitePath('/') %>" class="site-brand">
+        <img
+          src="<%= sitePath('/mms-stats-logo.png') %>?v=<%= assetVersion %>"
+          alt=""
+          class="site-brand-logo"
+          width="44"
+          height="44"
+          decoding="async"
+        />
+        <span class="site-brand-text">Marlboro Men's Softball</span>
+      </a>
       <span class="site-brand-tagline">League stats · DFS · all the numbers</span>
     </div>
     <nav class="site-nav" aria-label="Main">
