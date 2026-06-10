@@ -19,8 +19,8 @@
   }
 })();
 </script>
-<link rel="preload" href="/styles.css?v=3" as="style" />
-<link rel="stylesheet" href="/styles.css?v=3" />
+<link rel="preload" href="/styles.css?v=2" as="style" />
+<link rel="stylesheet" href="/styles.css?v=2" />
 
     <title>DFS Lineup — Marlboro Men's Softball</title>
   </head>
@@ -65,6 +65,14 @@
         Power Rankings
       </a>
       
+      <a
+        href="/team-analytics"
+        class="site-nav-link"
+        
+      >
+        Team Analytics
+      </a>
+      
     </nav>
     <div class="site-header-meta">
       
@@ -97,7 +105,7 @@
 
     
     
-    <main class="page-main dfs-page dfs-page--readonly mms-page-main--loading">
+    <main class="page-main dfs-page mms-page-main--loading">
       <div class="dfs-page-head">
         <h1 class="page-title">DFS Lineup Builder</h1>
         <div class="dfs-page-head-actions">
@@ -185,116 +193,119 @@
         <nav class="dfs-slate-picker" aria-label="Choose slate">
           
           <a
-            href="/dfs?slate=W1"
+            href="/dfs?slate=W1&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W1"
             
           >Sun, 26-Apr • Week 1 · locked</a>
           
           <a
-            href="/dfs?slate=D20260429"
+            href="/dfs?slate=D20260429&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260429"
             
           >Wed, 29-Apr · locked</a>
           
           <a
-            href="/dfs?slate=W2"
+            href="/dfs?slate=W2&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W2"
             
           >Sun, 3-May • Week 2 · locked</a>
           
           <a
-            href="/dfs?slate=D20260506"
-            class="dfs-slate-chip is-selected dfs-slate-chip--locked dfs-slate-chip--past"
+            href="/dfs?slate=D20260506&amp;view=1"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260506"
-            aria-current=&#34;page&#34;
+            
           >Wed, 6-May · locked</a>
           
           <a
-            href="/dfs?slate=W3"
+            href="/dfs?slate=W3&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W3"
             
           >Sun, 10-May • Week 3 · locked</a>
           
           <a
-            href="/dfs?slate=D20260513"
+            href="/dfs?slate=D20260513&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260513"
             
           >Wed, 13-May · locked</a>
           
           <a
-            href="/dfs?slate=W4"
+            href="/dfs?slate=W4&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W4"
             
           >Sun, 17-May • Week 4 · locked</a>
           
           <a
-            href="/dfs?slate=D20260527"
+            href="/dfs?slate=D20260527&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260527"
             
           >Wed, 27-May · locked</a>
           
           <a
-            href="/dfs?slate=W5"
+            href="/dfs?slate=W5&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W5"
             
           >Sun, 31-May • Week 5 · locked</a>
           
           <a
-            href="/dfs?slate=D20260603"
+            href="/dfs?slate=D20260603&amp;view=1"
             class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="D20260603"
             
           >Wed, 3-Jun · locked</a>
           
           <a
-            href="/dfs?slate=W6"
-            class="dfs-slate-chip dfs-slate-chip--open"
+            href="/dfs?slate=W6&amp;view=1"
+            class="dfs-slate-chip dfs-slate-chip--locked dfs-slate-chip--past"
             data-slate="W6"
             
-          >Sun, 7-Jun • Week 6 · open</a>
+          >Sun, 7-Jun • Week 6 · locked</a>
+          
+          <a
+            href="/dfs?slate=D20260610"
+            class="dfs-slate-chip is-selected dfs-slate-chip--open"
+            data-slate="D20260610"
+            aria-current=&#34;page&#34;
+          >Wed, 10-Jun · open</a>
           
         </nav>
         <input type="hidden" name="lineup" id="lineupInput" value="" />
       </div>
 
       
-      <p class="dfs-slate-lock-notice dfs-slate-lock-notice--view" role="status">
-        <strong>View only.</strong> The lineup deadline for this slate has passed — review picks and scores below.
-        
-        <a href="/dfs?slate=W6" class="dfs-slate-lock-link">Go to open slate</a>
-        
-      </p>
-      
 
       <div class="dfs-layout">
         <div class="dfs-top-row">
           <section class="dfs-slate-banner dfs-top-panel" aria-label="Current slate">
-            <h2 class="dfs-slate-title">Wed, 6-May</h2>
+            <h2 class="dfs-slate-title">Wed, 10-Jun</h2>
             
-            <p class="dfs-slate-status dfs-slate-status--past">View only — lineup deadline passed. Scores appear when results are available for this slate.</p>
+            <p class="dfs-slate-status dfs-slate-status--open">
+              Open for lineups through <strong>Wed, Jun 10, 2026, 8:00 PM EDT</strong> (8:00 PM Eastern on game day) ·
+              2 games · 4 teams
+            </p>
             
             
             <ul class="dfs-game-list">
               
               <li>
-                <span class="matchup-side-tag">Away</span> EB CONSTRUCTION <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> PRINCETON BRAIN
+                <span class="matchup-side-tag">Away</span> FREEHOLD GMC <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> CG TAX
                 
-                <span class="dfs-game-field">UH LEFT · UHL</span>
+                <span class="dfs-game-field">UH RIGHT · UHR</span>
                 
               </li>
               
               <li>
-                <span class="matchup-side-tag">Away</span> FREEHOLD GMC <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> TUSCANYROSE
+                <span class="matchup-side-tag">Away</span> GAME CHANGER <span class="dfs-at">@</span> <span class="matchup-side-tag">Home</span> GODDARD HOME
                 
-                <span class="dfs-game-field">UH RIGHT · UHR</span>
+                <span class="dfs-game-field">UH LEFT · UHL</span>
                 
               </li>
               
@@ -305,7 +316,7 @@
           <section class="dfs-lineup-card dfs-top-panel">
             <h2 class="section-heading dfs-lineup-heading">
               <span class="dfs-lineup-heading-title">Your lineup</span>
-              <span class="dfs-lineup-heading-points" id="lineupHeadingScore">Points: <strong data-points-value>—</strong></span>
+              <span class="dfs-lineup-heading-points" id="lineupHeadingScore" hidden>Points: <strong data-points-value>—</strong></span>
             </h2>
             <p class="dfs-budget">
               <span id="salaryUsedLabel">$0</span>
@@ -381,11 +392,34 @@
               
             </ol>
             
+            <section class="dfs-submit-panel" id="dfsSubmitPanel" aria-label="Submit lineup to leaderboard">
+              <h3 class="dfs-submit-panel__title">Submit to the leaderboard</h3>
+              <p class="dfs-submit-panel__lead">Pick your 8 players above, then enter your name and press Submit.</p>
+              <div class="dfs-submit-row">
+                <label class="dfs-submit-row__label" for="dfsUsername">Your name</label>
+                <input
+                  type="text"
+                  id="dfsUsername"
+                  class="dfs-username-input dfs-submit-row__input"
+                  maxlength="24"
+                  minlength="2"
+                  required
+                  autocomplete="nickname"
+                  placeholder="Leaderboard name"
+                />
+                <button type="button" class="dfs-btn dfs-btn--primary dfs-btn--submit" id="saveLineupBtn">
+                  Submit lineup
+                </button>
+              </div>
+              <p class="dfs-auth-status dfs-submit-panel__status" id="dfsSubmitStatus" role="status" aria-live="polite"></p>
+              <p class="dfs-submit-hint">2–24 characters · shown on the leaderboard · one entry per device per slate</p>
+            </section>
+            
             <p class="dfs-lineup-actions">
               
               <button type="button" class="dfs-btn" id="loadFromDbBtn" disabled title="Load your saved lineup from the database">Load saved lineup</button>
               
-              <button type="button" class="dfs-btn" id="clearLineupBtn" disabled>Clear lineup</button>
+              <button type="button" class="dfs-btn" id="clearLineupBtn" >Clear lineup</button>
             </p>
             
             <p class="dfs-lineup-sync-status" id="dfsLineupSyncStatus" role="status" aria-live="polite" hidden></p>
@@ -399,14 +433,14 @@
               <div
                 class="dfs-lock-countdown"
                 id="dfsLockCountdown"
-                data-deadline-ms="1778111999999"
+                data-deadline-ms="1781135999999"
                 aria-live="polite"
                 
               >
                 <p class="dfs-lock-countdown__label">Lineups lock in (New York time)</p>
                 <p class="dfs-lock-countdown__timer" id="dfsLockCountdownTimer">—</p>
                 
-                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen">Wed, May 6, 2026, 8:00 PM EDT</p>
+                <p class="dfs-lock-countdown__when" id="dfsLockCountdownWhen">Wed, Jun 10, 2026, 8:00 PM EDT</p>
                 
                 <p class="dfs-lock-countdown__rule">Wednesday slates lock at <strong>8:00 PM Eastern</strong> on game day.</p>
                 
@@ -441,8 +475,12 @@
           
 
           
-          <section class="dfs-score-card" id="slateScoreCard">
+          <section class="dfs-score-card" id="slateScoreCard" hidden>
             <h2 class="section-heading">Your lineup score</h2>
+            
+            
+            <p class="dfs-rules-note">Game results aren’t available for this slate’s scheduled dates yet — fantasy points will show here once they are.</p>
+            
             
             <p class="dfs-score-total">
               <span id="slateScoreTotal">—</span>
@@ -453,17 +491,17 @@
             </ul>
           </section>
           
-          <script type="application/json" id="slatePointsData">{"mike santaromita":{"name":"Mike Santaromita","points":44,"games":1},"david vignapiano":{"name":"David Vignapiano","points":32,"games":1},"stephen milhaven":{"name":"Stephen Milhaven","points":44,"games":1},"cole fluta":{"name":"Cole Fluta","points":27,"games":1},"mike conti":{"name":"Mike Conti","points":35,"games":1},"eric becker":{"name":"Eric Becker","points":22,"games":1},"matt granese":{"name":"Matt Granese","points":7,"games":1},"fred lugos":{"name":"Fred Lugos","points":8,"games":1},"gregory deluise":{"name":"Gregory Deluise","points":15,"games":1},"nick deluise":{"name":"Nick Deluise","points":14,"games":1},"joe mamone":{"name":"Joe Mamone","points":14,"games":1},"mark magariello":{"name":"Mark Magariello","points":21,"games":1},"dave polzer":{"name":"Dave Polzer","points":26,"games":1},"dave wagreich":{"name":"Dave Wagreich","points":2,"games":1},"jeff beja":{"name":"Jeff Beja","points":5,"games":1},"billy loschiavo":{"name":"Billy Loschiavo","points":6,"games":1},"mike brullo":{"name":"Mike Brullo","points":0,"games":1},"lucas preiss":{"name":"Lucas Preiss","points":17,"games":1},"andy pargament":{"name":"Andy Pargament","points":7,"games":1},"mike steinberg":{"name":"Mike Steinberg","points":13,"games":1},"brock hor":{"name":"Brock Hor","points":0,"games":1},"dan manochio jr":{"name":"Dan Manochio Jr","points":33,"games":1},"matt whelen":{"name":"Matt Whelen","points":15,"games":1},"mat manochio":{"name":"Mat Manochio","points":20,"games":1},"chris curti":{"name":"Chris Curti","points":7,"games":1},"ryan cumber":{"name":"Ryan Cumber","points":13,"games":1},"dan manochio sr":{"name":"Dan Manochio Sr","points":0,"games":1},"james pezzulo":{"name":"James Pezzulo","points":32,"games":1},"joe pargament":{"name":"Joe Pargament","points":17,"games":1},"alex goldfarb":{"name":"Alex Goldfarb","points":8,"games":1},"patrick thomas":{"name":"Patrick Thomas","points":12,"games":1},"joel podos":{"name":"Joel Podos","points":5,"games":1},"rich allen":{"name":"Rich Allen","points":13,"games":1},"jeff arnold":{"name":"Jeff Arnold","points":5,"games":1},"michael podolla":{"name":"Michael Podolla","points":16,"games":1},"tom bongiovani":{"name":"Tom Bongiovani","points":5,"games":1},"bill chiusano":{"name":"Bill Chiusano","points":7,"games":1},"christian gaglio":{"name":"Christian Gaglio","points":0,"games":1},"dhimant balar":{"name":"Dhimant Balar","points":0,"games":1},"jay podos":{"name":"Jay Podos","points":5,"games":1},"jesse panassidi":{"name":"Jesse Panassidi","points":6,"games":1},"joe olivencia":{"name":"Joe Olivencia","points":9,"games":1},"lou baffuto":{"name":"Lou Baffuto","points":0,"games":1},"paul steinberg":{"name":"Paul Steinberg","points":10,"games":1},"ralph calabro":{"name":"Ralph Calabro","points":0,"games":1},"raymond porzio":{"name":"Raymond Porzio","points":0,"games":1},"reid goldfarb":{"name":"Reid Goldfarb","points":5,"games":1},"rich hartly":{"name":"Rich Hartly","points":10,"games":1},"ryan ramirez":{"name":"Ryan Ramirez","points":7,"games":1},"ryan wallman":{"name":"Ryan Wallman","points":0,"games":1},"sudipta ray":{"name":"Sudipta Ray","points":7,"games":1},"todd wallman":{"name":"Todd Wallman","points":2,"games":1}}</script>
+          <script type="application/json" id="slatePointsData">{}</script>
           
           
         </div>
 
         
-        <p class="dfs-pool-hidden-notice" id="dfsPoolHiddenNotice" role="status">
+        <p class="dfs-pool-hidden-notice" id="dfsPoolHiddenNotice" role="status" hidden>
           The player pool is hidden after the lineup deadline. Your saved lineup and locked salaries are shown above; the leaderboard uses those same prices.
         </p>
         
-        <section class="dfs-pool-section" id="dfsPoolSection" hidden>
+        <section class="dfs-pool-section" id="dfsPoolSection" >
           <div class="dfs-pool-toolbar">
             <h2 class="section-heading">Player pool</h2>
             <p class="dfs-doubleheader-note" role="note">
@@ -523,17 +561,19 @@
     <script>
       window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};
     </script>
-    <script type="module" src="/js/dfs-firebase.js?v=3"></script>
+    <script type="module" src="/js/dfs-firebase.js?v=2"></script>
     
 
     
     <script>
       window.__STATIC_SITE__ = true;
       window.__MMS_CAREER_CSV_URL__ = "/data/csv/career.csv";
-      window.__DFS_LINEUP_PAGE__ = {"slateToken":"D20260506","lineupNorms":[],"showSlateStats":true};
+      window.__DFS_LINEUP_PAGE__ = {"slateToken":"D20260610","lineupNorms":[],"showSlateStats":false};
     </script>
-            <script type="module" src="/js/dfs-landing.mjs?v=3"></script>
-<script type="module" src="/js/dfs-lineup-pool.js?v=3"></script>
+    
+        <script type="module" src="/js/dfs-landing.mjs?v=3"></script>
+    
+    <script type="module" src="/js/dfs-lineup-pool.js?v=2"></script>
     
 
     
@@ -542,7 +582,7 @@
       window.initDfsLineupPage = async function () {
         const LINEUP_SIZE = 8;
         const SALARY_CAP = 60000;
-        var CAN_EDIT = false;
+        var CAN_EDIT = true;
         window.setDfsCanEdit = function (editable) {
           CAN_EDIT = !!editable;
           const page = document.querySelector(".dfs-page");
@@ -556,11 +596,11 @@
         };
         let SHOW_SLATE_STATS =
           window.__DFS_SHOW_SLATE_STATS__ === true ||
-          true;
+          false;
         const STORAGE_PREFIX = "mms-dfs-lineup:";
         const slateKey = String(
           (window.__DFS_LINEUP_PAGE__ && window.__DFS_LINEUP_PAGE__.slateToken) ||
-            "D20260506"
+            "D20260610"
         )
           .trim()
           .toUpperCase();

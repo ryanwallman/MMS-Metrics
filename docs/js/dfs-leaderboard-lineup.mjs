@@ -619,6 +619,40 @@ var require_fetchCsvText = __commonJS({
         throw csvFetchUserError("error");
       }
     }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -628,7 +662,13 @@ var require_fetchCsvText = __commonJS({
       if (fetchCsvTextOverride) {
         return fetchCsvTextOverride(safeUrl);
       }
-      return csvTextCache.get(safeUrl, () => fetchUrlText(safeUrl));
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
     }
     module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
@@ -1418,6 +1458,28 @@ ${slice[1]}`;
       const opts = schedulePayload?.scheduleOptions || [];
       return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
     }
+    function buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs = Date.now()) {
+      const past = /* @__PURE__ */ new Set();
+      const future = /* @__PURE__ */ new Set();
+      for (const o of buildDfsSlateOptions(schedulePayload, refIso, nowMs)) {
+        if (o.lineupDeadlinePassed) past.add(o.value);
+        else future.add(o.value);
+      }
+      return { past, future };
+    }
+    function filterScheduleOptionsForMatchupPredictorMode(scheduleOptions, schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      const { past, future } = buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs);
+      const allowed = normalized === "past" ? past : future;
+      return (scheduleOptions || []).filter((o) => allowed.has(safeText(o.value).toUpperCase()));
+    }
+    function pickMatchupPredictorDefaultViewForMode(schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      if (normalized === "past") {
+        return resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs) || "";
+      }
+      return pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs);
+    }
     function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
       return scheduleOptions || [];
     }
@@ -1587,16 +1649,16 @@ ${slice[1]}`;
       const day = String(m[2]).padStart(2, "0");
       return `${m[3]}-${month}-${day}`;
     }
-    async function load2026GamelogsByPlayer() {
+    var EMPTY_GAMELOGS = { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+    function parse2026GamelogsFromCsvText(text) {
       try {
-        let text = await fetchCsvText(getGamelogs2026CsvUrl());
         const parsed = Papa.parse(text, { skipEmptyLines: true });
         const rows = parsed.data || [];
-        if (rows.length < 3) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (rows.length < 3) return EMPTY_GAMELOGS;
         const headerRow = rows.find(
           (r) => safeText(r[0]).replace(/^\ufeff/, "") === "Team" && safeText(r[1]) === "Date"
         );
-        if (!headerRow) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (!headerRow) return EMPTY_GAMELOGS;
         const headerIdx = rows.indexOf(headerRow);
         const h = headerRow.map((x) => safeText(x));
         const col = (name) => h.indexOf(name);
@@ -1644,7 +1706,15 @@ ${slice[1]}`;
         }
         return { byNorm, bySlateKey, gameIsos };
       } catch {
-        return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        return EMPTY_GAMELOGS;
+      }
+    }
+    async function load2026GamelogsByPlayer() {
+      try {
+        const text = await fetchCsvText(getGamelogs2026CsvUrl());
+        return parse2026GamelogsFromCsvText(text);
+      } catch {
+        return EMPTY_GAMELOGS;
       }
     }
     function slateHasGamelogDates(slate, gamelogs) {
@@ -1843,6 +1913,7 @@ ${slice[1]}`;
       resolveGamesForViewToken,
       buildDfsPlayerPool,
       load2026GamelogsByPlayer,
+      parse2026GamelogsFromCsvText,
       buildSlatePointsByNorm,
       buildLastWeekPointsByNorm,
       scoreLineupForSlate,
@@ -1860,6 +1931,9 @@ ${slice[1]}`;
       resolveMostRecentlyLockedSlateToken,
       resolveNextUpcomingScheduleViewToken,
       pickMatchupPredictorDefaultView,
+      buildMatchupPredictorSlateSets,
+      filterScheduleOptionsForMatchupPredictorMode,
+      pickMatchupPredictorDefaultViewForMode,
       filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,

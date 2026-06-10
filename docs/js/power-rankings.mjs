@@ -822,6 +822,40 @@ var require_fetchCsvText = __commonJS({
         throw csvFetchUserError("error");
       }
     }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -831,7 +865,13 @@ var require_fetchCsvText = __commonJS({
       if (fetchCsvTextOverride) {
         return fetchCsvTextOverride(safeUrl);
       }
-      return csvTextCache.get(safeUrl, () => fetchUrlText(safeUrl));
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
     }
     module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
@@ -1424,6 +1464,28 @@ ${slice[1]}`;
       const opts = schedulePayload?.scheduleOptions || [];
       return opts.length ? safeText(opts[opts.length - 1].value).toUpperCase() : "";
     }
+    function buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs = Date.now()) {
+      const past = /* @__PURE__ */ new Set();
+      const future = /* @__PURE__ */ new Set();
+      for (const o of buildDfsSlateOptions(schedulePayload, refIso, nowMs)) {
+        if (o.lineupDeadlinePassed) past.add(o.value);
+        else future.add(o.value);
+      }
+      return { past, future };
+    }
+    function filterScheduleOptionsForMatchupPredictorMode(scheduleOptions, schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      const { past, future } = buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs);
+      const allowed = normalized === "past" ? past : future;
+      return (scheduleOptions || []).filter((o) => allowed.has(safeText(o.value).toUpperCase()));
+    }
+    function pickMatchupPredictorDefaultViewForMode(schedulePayload, refIso, nowMs, mode) {
+      const normalized = safeText(mode).toLowerCase() === "past" ? "past" : "future";
+      if (normalized === "past") {
+        return resolveMostRecentlyLockedSlateToken(schedulePayload, refIso, nowMs) || "";
+      }
+      return pickMatchupPredictorDefaultView(schedulePayload, refIso, nowMs);
+    }
     function filterScheduleOptionsForMatchupPredictor(scheduleOptions) {
       return scheduleOptions || [];
     }
@@ -1593,16 +1655,16 @@ ${slice[1]}`;
       const day = String(m[2]).padStart(2, "0");
       return `${m[3]}-${month}-${day}`;
     }
-    async function load2026GamelogsByPlayer() {
+    var EMPTY_GAMELOGS = { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+    function parse2026GamelogsFromCsvText(text) {
       try {
-        let text = await fetchCsvText(getGamelogs2026CsvUrl());
         const parsed = Papa.parse(text, { skipEmptyLines: true });
         const rows = parsed.data || [];
-        if (rows.length < 3) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (rows.length < 3) return EMPTY_GAMELOGS;
         const headerRow = rows.find(
           (r) => safeText(r[0]).replace(/^\ufeff/, "") === "Team" && safeText(r[1]) === "Date"
         );
-        if (!headerRow) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (!headerRow) return EMPTY_GAMELOGS;
         const headerIdx = rows.indexOf(headerRow);
         const h = headerRow.map((x) => safeText(x));
         const col = (name) => h.indexOf(name);
@@ -1650,7 +1712,15 @@ ${slice[1]}`;
         }
         return { byNorm, bySlateKey, gameIsos };
       } catch {
-        return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        return EMPTY_GAMELOGS;
+      }
+    }
+    async function load2026GamelogsByPlayer() {
+      try {
+        const text = await fetchCsvText(getGamelogs2026CsvUrl());
+        return parse2026GamelogsFromCsvText(text);
+      } catch {
+        return EMPTY_GAMELOGS;
       }
     }
     function slateHasGamelogDates(slate, gamelogs) {
@@ -1849,6 +1919,7 @@ ${slice[1]}`;
       resolveGamesForViewToken,
       buildDfsPlayerPool,
       load2026GamelogsByPlayer,
+      parse2026GamelogsFromCsvText,
       buildSlatePointsByNorm,
       buildLastWeekPointsByNorm,
       scoreLineupForSlate,
@@ -1866,6 +1937,9 @@ ${slice[1]}`;
       resolveMostRecentlyLockedSlateToken,
       resolveNextUpcomingScheduleViewToken,
       pickMatchupPredictorDefaultView,
+      buildMatchupPredictorSlateSets,
+      filterScheduleOptionsForMatchupPredictorMode,
+      pickMatchupPredictorDefaultViewForMode,
       filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
       resolveNextLineupLockDeadline,
@@ -3788,9 +3862,35 @@ var require_matchupMissingPlayers = __commonJS({
       }
       return n > 0 ? sum / n : 0;
     }
-    function missingRatingFactorVsTeamAvg(missingRating, teamAvg) {
-      const gap = teamAvg - missingRating;
-      return 1 + gap * 0.17;
+    var BENCH_VS_AVG_SENSITIVITY = 0.68;
+    function benchIdentityWeight(missingCount) {
+      if (missingCount <= 0) return 0;
+      if (missingCount === 1) return 0.42;
+      return Math.min(0.92, 0.42 + 0.22 * (missingCount - 1));
+    }
+    function blendBenchIdentity(benchFactor, missingCount) {
+      const w = benchIdentityWeight(missingCount);
+      return 1 + (benchFactor - 1) * w;
+    }
+    function compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg) {
+      let mult = 1;
+      let starsBenched = 0;
+      for (const m of missing) {
+        const raw = offenseRatingByNorm.get(m.norm);
+        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+        const gap = rating - teamAvg;
+        if (gap > 0) {
+          starsBenched += 1;
+          const starEscalation = 1 + 0.58 * (starsBenched - 1);
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * starEscalation);
+        } else if (gap < 0) {
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * 0.72);
+        }
+      }
+      if (starsBenched >= 2) {
+        mult *= Math.pow(0.87, starsBenched - 1);
+      }
+      return mult;
     }
     function playerTalentScore(m, offenseRatingByNorm) {
       const rating = offenseRatingByNorm.get(m.norm);
@@ -3818,13 +3918,7 @@ var require_matchupMissingPlayers = __commonJS({
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
       if (fieldingPresent >= FIELDING_SPOTS) {
-        let mult = 1;
-        for (const m of missing) {
-          const raw = offenseRatingByNorm.get(m.norm);
-          const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-          mult *= missingRatingFactorVsTeamAvg(rating, teamAvg);
-        }
-        mult = Math.max(0.55, Math.min(1.45, mult));
+        const mult = Math.max(0.38, Math.min(1.48, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg)));
         return {
           offense: mult,
           run: mult,
@@ -3838,18 +3932,10 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const slotsShort = FIELDING_SPOTS - fieldingPresent;
       const fielderBase = Math.pow(0.52, slotsShort);
-      let qualityMod = 1;
-      for (const m of missing) {
-        const raw = offenseRatingByNorm.get(m.norm);
-        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-        const gap = teamAvg - rating;
-        if (gap > 0) {
-          qualityMod *= 1 + Math.min(0.12, gap * 0.07);
-        } else if (gap < 0) {
-          qualityMod *= 1 + Math.max(-0.18, gap * 0.09);
-        }
-      }
-      qualityMod = Math.max(0.82, Math.min(1.08, qualityMod));
+      const qualityMod = Math.max(
+        0.58,
+        Math.min(1.55, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg))
+      );
       let offenseMult = fielderBase * qualityMod;
       offenseMult = Math.max(0.08, Math.min(0.88, offenseMult));
       const defenseMult = Math.max(
@@ -3903,16 +3989,32 @@ var require_matchupMissingPlayers = __commonJS({
       const anchorOff = baseProfile.offenseRating != null && Number.isFinite(baseProfile.offenseRating) ? baseProfile.offenseRating : offenseRating ?? 0;
       const anchorRun = baseProfile.runProd2026 != null && Number.isFinite(baseProfile.runProd2026) ? baseProfile.runProd2026 : runProd2026 ?? 0;
       const anchorDef = baseProfile.defenseZ != null && Number.isFinite(baseProfile.defenseZ) ? baseProfile.defenseZ : defenseZ ?? 0;
+      const rosterOff = offenseRating ?? anchorOff;
+      const rosterRun = runProd2026 ?? anchorRun;
+      const rosterDef = defenseZ ?? anchorDef;
       let lineupHoleDrag = 0;
       if (doubleBatter && missing.length > 0 && secondTurn.weight < 0.45) {
         lineupHoleDrag = (0.45 - secondTurn.weight) * 0.45 * Math.min(missing.length, 5);
       }
-      const runScale = Math.pow(teamMult.offense, 0.9);
-      const adjustedOffense = anchorOff * teamMult.offense - lineupHoleDrag;
-      const adjustedRunProd = anchorRun * teamMult.run;
-      const adjustedDefense = anchorDef * teamMult.defense;
+      const rosterOffFactor = anchorOff > 0 ? rosterOff / anchorOff : 1;
+      const rosterRunFactor = anchorRun > 0 ? rosterRun / anchorRun : 1;
+      const rosterDefFactor = anchorDef !== 0 ? rosterDef / anchorDef : 1;
+      let offenseMult = teamMult.offense;
+      let runMult = teamMult.run;
+      if (teamMult.regime === "lineup-adjust") {
+        const identityMult = blendBenchIdentity(teamMult.offense, missing.length);
+        offenseMult = identityMult;
+        runMult = identityMult;
+      }
+      const runScale = Math.pow(offenseMult, 0.9);
+      const adjustedOffense = Math.max(
+        -0.2,
+        anchorOff * rosterOffFactor * offenseMult - lineupHoleDrag
+      );
+      const adjustedRunProd = anchorRun * rosterRunFactor * runMult;
+      const adjustedDefense = teamMult.regime === "lineup-adjust" ? anchorDef * rosterDefFactor : rosterDef * teamMult.defense;
       const baseTeam = baseProfile.teamOverall;
-      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) ? baseTeam * teamMult.offense : baseTeam;
+      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) && anchorOff > 0 ? baseTeam * rosterOffFactor * offenseMult : baseTeam;
       const runsPerGame = baseProfile.runsPerGame != null && Number.isFinite(baseProfile.runsPerGame) ? baseProfile.runsPerGame * runScale : baseProfile.runsPerGame;
       const runsAgainstMult = teamMult.runsAgainst ?? 1;
       const runsAgainstPerGame = baseProfile.runsAgainstPerGame != null && Number.isFinite(baseProfile.runsAgainstPerGame) ? baseProfile.runsAgainstPerGame * runsAgainstMult : baseProfile.runsAgainstPerGame;
@@ -3935,7 +4037,7 @@ var require_matchupMissingPlayers = __commonJS({
         fieldingPresentCount: fieldingPresent,
         missingCount: missing.length,
         lineupAlerts,
-        teamMultiplier: teamMult.offense,
+        teamMultiplier: anchorOff > 0 ? Math.max(0.01, adjustedOffense / anchorOff) : teamMult.offense,
         defenseMultiplier: teamMult.defense,
         runsAgainstMultiplier: runsAgainstMult,
         shortHandedSlots: teamMult.slotsShort ?? 0
@@ -4080,8 +4182,13 @@ var require_matchupPredict = __commonJS({
     }
     var MATCHUP_LOGIT_SCALE = 0.6;
     var MATCHUP_HOME_FIELD_LOGIT = 0.1;
-    var MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.82;
-    var MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.18;
+    var MATCHUP_WIN_WEIGHT_FROM_RUNS = 0.5;
+    var MATCHUP_WIN_WEIGHT_FROM_TALENT = 0.25;
+    var MATCHUP_WIN_WEIGHT_FROM_RECORD = 0.15;
+    var MATCHUP_WIN_WEIGHT_FROM_POWER = 0.1;
+    var MATCHUP_RECORD_PRIOR_GAMES = 6;
+    var MATCHUP_RECORD_LOGIT_SCALE = 2.5;
+    var MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
     var MATCHUP_RUN_MARGIN_LOGIT = 0.26;
     var MATCHUP_WIN_PROB_SHRINK = 0.5;
     var SEASON_PROJ_RUN_MARGIN_LOGIT = 0.34;
@@ -4089,17 +4196,18 @@ var require_matchupPredict = __commonJS({
     var SEASON_PROJ_WIN_WEIGHT_FROM_RUNS = 0.8;
     var SEASON_PROJ_WIN_WEIGHT_FROM_TALENT = 0.2;
     var SEASON_PROJ_WIN_PROB_SHRINK = 0.82;
-    var MATCHUP_POWER_WEIGHT_OFFENSE = 0.35;
-    var MATCHUP_POWER_WEIGHT_RUN_PROD = 0.12;
-    var MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.1;
-    var MATCHUP_POWER_WEIGHT_RUNS_AGAINST = 0.08;
-    var MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.22;
-    var MATCHUP_POWER_WEIGHT_WIN_PCT = 0.08;
+    var MATCHUP_POWER_WEIGHT_OFFENSE = 0.26;
+    var MATCHUP_POWER_WEIGHT_RUN_PROD = 0.08;
+    var MATCHUP_POWER_WEIGHT_RUNS_FOR = 0.15;
+    var MATCHUP_POWER_WEIGHT_RUNS_AGAINST = 0.15;
+    var MATCHUP_POWER_WEIGHT_DEFENSE_Z = 0.08;
+    var MATCHUP_POWER_WEIGHT_TEAM_OVERALL = 0.28;
     var MATCHUP_POWER_WEIGHT_SOS = 0.05;
-    var MATCHUP_RUN_OFF_Z_PCT = 0.08;
-    var MATCHUP_RUN_DEF_Z_PCT = 0.06;
-    var MATCHUP_SCHEDULE_RUNS_BLEND = 0.55;
-    var MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.45;
+    var MATCHUP_RUN_OFF_Z_PCT = 0.1;
+    var MATCHUP_RUN_DEF_Z_PCT = 0.12;
+    var MATCHUP_SCHEDULE_RUNS_BLEND = 0.5;
+    var MATCHUP_SCHEDULE_DEFENSE_BLEND = 0.45;
+    var MATCHUP_OPP_RUNS_AGAINST_SCALE = 0.72;
     var MATCHUP_SHORT_HANDED_RA_SCALE_MAX = 1.05;
     var MATCHUP_SHORT_HANDED_DEF_Z_PCT_MAX = 0.16;
     var MATCHUP_SHORT_HANDED_SCHEDULE_BLEND_FLOOR = 0.08;
@@ -4264,6 +4372,9 @@ var require_matchupPredict = __commonJS({
           offenseRating,
           runProd2026,
           defenseZ: defenseZ ?? 0,
+          wins: st?.wins ?? 0,
+          losses: st?.losses ?? 0,
+          gamesPlayed: st?.gamesPlayed ?? 0,
           winPct: st?.winPct ?? null,
           sosOppWinPct: st?.sosOppWinPct ?? null,
           teamOverall: overall?.teamOffenseRating ?? null,
@@ -4286,7 +4397,8 @@ var require_matchupPredict = __commonJS({
         teamOverall: meanAndStd(list.map((p) => p.teamOverall)),
         winPct: meanAndStd(list.map((p) => p.winPct)),
         sos: meanAndStd(list.map((p) => p.sosOppWinPct)),
-        defenseZ: meanAndStd(list.map((p) => p.defenseZ))
+        defenseZ: meanAndStd(list.map((p) => p.defenseZ)),
+        runDiffPerGame: meanAndStd(list.map((p) => p.runDiffPerGame))
       };
     }
     function teamCompositePower(profile, norms, isHome) {
@@ -4298,15 +4410,55 @@ var require_matchupPredict = __commonJS({
         -norms.runsAgainstPerGame.mean,
         norms.runsAgainstPerGame.std
       );
+      const zDef = zFrom(profile.defenseZ, norms.defenseZ.mean, norms.defenseZ.std);
       const zTeam = zFrom(profile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
-      const zRec = zFrom(profile.winPct, norms.winPct.mean, norms.winPct.std);
       const zSos = zFrom(profile.sosOppWinPct, norms.sos.mean, norms.sos.std);
-      let power = MATCHUP_POWER_WEIGHT_OFFENSE * zOff + MATCHUP_POWER_WEIGHT_RUN_PROD * zRun + MATCHUP_POWER_WEIGHT_RUNS_FOR * zRf + MATCHUP_POWER_WEIGHT_RUNS_AGAINST * zRa + MATCHUP_POWER_WEIGHT_TEAM_OVERALL * zTeam + MATCHUP_POWER_WEIGHT_WIN_PCT * zRec + MATCHUP_POWER_WEIGHT_SOS * zSos;
+      let power = MATCHUP_POWER_WEIGHT_OFFENSE * zOff + MATCHUP_POWER_WEIGHT_RUN_PROD * zRun + MATCHUP_POWER_WEIGHT_RUNS_FOR * zRf + MATCHUP_POWER_WEIGHT_RUNS_AGAINST * zRa + MATCHUP_POWER_WEIGHT_DEFENSE_Z * zDef + MATCHUP_POWER_WEIGHT_TEAM_OVERALL * zTeam + MATCHUP_POWER_WEIGHT_SOS * zSos;
       if (isHome) power += MATCHUP_HOME_FIELD_LOGIT / MATCHUP_LOGIT_SCALE;
       return {
         power,
-        components: { zOff, zRun, zRf, zRa, zTeam, zRec, zSos }
+        components: { zOff, zRun, zRf, zRa, zDef, zTeam, zSos }
       };
+    }
+    function regressedTeamWinPct(profile, priorGames = MATCHUP_RECORD_PRIOR_GAMES) {
+      const gamesPlayed = Number(profile?.gamesPlayed) || 0;
+      const wins = Number(profile?.wins) || 0;
+      const losses = Number(profile?.losses) || 0;
+      const decided = gamesPlayed > 0 ? gamesPlayed : wins + losses;
+      if (decided <= 0) return 0.5;
+      return (wins + priorGames * 0.5) / (decided + priorGames);
+    }
+    function recordSampleConfidence(profile, priorGames = MATCHUP_RECORD_PRIOR_GAMES) {
+      const gamesPlayed = Number(profile?.gamesPlayed) || 0;
+      const wins = Number(profile?.wins) || 0;
+      const losses = Number(profile?.losses) || 0;
+      const decided = gamesPlayed > 0 ? gamesPlayed : wins + losses;
+      return decided / (decided + priorGames);
+    }
+    function winProbFromRecord(homeProfile, awayProfile, recordLogitScale = MATCHUP_RECORD_LOGIT_SCALE) {
+      const homeRec = regressedTeamWinPct(homeProfile);
+      const awayRec = regressedTeamWinPct(awayProfile);
+      const diff = homeRec - awayRec;
+      const pHomeRaw = 1 / (1 + Math.exp(-recordLogitScale * diff));
+      const confidence = Math.min(
+        recordSampleConfidence(homeProfile),
+        recordSampleConfidence(awayProfile)
+      );
+      const pHome = 0.5 + confidence * (pHomeRaw - 0.5);
+      return {
+        home: pHome,
+        away: 1 - pHome,
+        homeRegressedWinPct: homeRec,
+        awayRegressedWinPct: awayRec,
+        confidence
+      };
+    }
+    function winProbFromPowerRanking(homeProfile, awayProfile, norms, logitScale = MATCHUP_POWER_RANK_LOGIT_SCALE) {
+      const zHome = zFrom(homeProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+      const zAway = zFrom(awayProfile.teamOverall, norms.teamOverall.mean, norms.teamOverall.std);
+      const diff = (zHome - zAway) * logitScale;
+      const pHome = 1 / (1 + Math.exp(-diff));
+      return { home: pHome, away: 1 - pHome };
     }
     function shrinkWinProbTowardEven(p, shrink = MATCHUP_WIN_PROB_SHRINK) {
       if (!Number.isFinite(p)) return 0.5;
@@ -4352,23 +4504,43 @@ var require_matchupPredict = __commonJS({
       const zOff = zFrom(profile.offenseRating, norms.offense.mean, norms.offense.std);
       const zRun = zFrom(profile.runProd2026, norms.runProd.mean, norms.runProd.std);
       const zRf = zFrom(profile.runsPerGame, norms.runsPerGame.mean, norms.runsPerGame.std);
-      const offBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
+      const attackBlend = 0.5 * zOff + 0.25 * zRun + 0.25 * zRf;
       const defOpp = opponentProfile.defenseZ ?? 0;
       const oppRa = opponentProfile.runsAgainstPerGame;
+      const oppRd = opponentProfile.runDiffPerGame;
       const leagueRa = runBase.avgRunsAgainstPerGame || runBase.avgRunsPerTeam;
       const { runsAgainstScale, defenseZScale } = matchupOpponentDefenseScales(opponentProfile);
-      let mult = (1 + MATCHUP_RUN_OFF_Z_PCT * offBlend) * (1 - defenseZScale * defOpp) * venueFactor;
+      const zRaOpp = zFrom(
+        oppRa != null ? -oppRa : null,
+        -norms.runsAgainstPerGame.mean,
+        norms.runsAgainstPerGame.std
+      );
+      const zRdOpp = zFrom(oppRd, norms.runDiffPerGame.mean, norms.runDiffPerGame.std);
+      const defBlend = 0.5 * zRaOpp + 0.3 * defOpp + 0.2 * zRdOpp;
+      let mult = (1 + MATCHUP_RUN_OFF_Z_PCT * attackBlend) * (1 - defenseZScale * defBlend) * venueFactor;
       if (oppRa != null && leagueRa > 0) {
         const oppAllowFactor = oppRa / leagueRa;
         mult *= 1 + runsAgainstScale * (oppAllowFactor - 1);
       }
       return Math.max(2, runBase.avgRunsPerTeam * mult);
     }
+    function scheduleMatchupRunsEstimate(profile, opponentProfile, runBase) {
+      const leagueAvg = runBase.avgRunsPerTeam;
+      const attack = profile.runsPerGame;
+      const oppAllowed = opponentProfile.runsAgainstPerGame;
+      if (attack == null && oppAllowed == null) return null;
+      const attackEst = attack ?? leagueAvg;
+      if (oppAllowed == null || oppAllowed <= 0 || leagueAvg <= 0) return attackEst;
+      const defenseEst = leagueAvg * leagueAvg / oppAllowed;
+      return (1 - MATCHUP_SCHEDULE_DEFENSE_BLEND) * attackEst + MATCHUP_SCHEDULE_DEFENSE_BLEND * defenseEst;
+    }
     function projectTeamRuns(profile, opponentProfile, norms, runBase, venueFactor) {
       const rosterProj = projectRosterExpectedRuns(profile, opponentProfile, norms, runBase, venueFactor);
-      if (profile.runsPerGame != null && profile.scheduleGames >= 2) {
+      const scheduleProj = scheduleMatchupRunsEstimate(profile, opponentProfile, runBase);
+      const hasSched = scheduleProj != null && (profile.runsPerGame != null && profile.scheduleGames >= 2 || opponentProfile.runsAgainstPerGame != null && opponentProfile.scheduleGames >= 2);
+      if (hasSched) {
         const w = matchupScheduleBlendWeight(profile, opponentProfile);
-        return Math.max(2, w * profile.runsPerGame + (1 - w) * rosterProj);
+        return Math.max(2, w * scheduleProj + (1 - w) * rosterProj);
       }
       return rosterProj;
     }
@@ -4544,8 +4716,10 @@ var require_matchupPredict = __commonJS({
         };
       }
       const winFromTalent = logisticWinProb(homePow.power, awayPow.power);
+      const winFromRecord = winProbFromRecord(homeProfile, awayProfile);
+      const winFromPower = winProbFromPowerRanking(homeProfile, awayProfile, norms);
       let winFromRuns = winProbFromRunMargin(runs.home, runs.away);
-      const pHomeRaw = MATCHUP_WIN_WEIGHT_FROM_RUNS * winFromRuns.home + MATCHUP_WIN_WEIGHT_FROM_TALENT * winFromTalent.home;
+      const pHomeRaw = MATCHUP_WIN_WEIGHT_FROM_RUNS * winFromRuns.home + MATCHUP_WIN_WEIGHT_FROM_TALENT * winFromTalent.home + MATCHUP_WIN_WEIGHT_FROM_RECORD * winFromRecord.home + MATCHUP_WIN_WEIGHT_FROM_POWER * winFromPower.home;
       let pHome = shrinkWinProbTowardEven(pHomeRaw);
       let pAway = 1 - pHome;
       ({ away: pAway, home: pHome } = applyCriticalRosterWinCap(

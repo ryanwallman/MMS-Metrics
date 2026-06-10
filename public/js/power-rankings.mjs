@@ -822,6 +822,40 @@ var require_fetchCsvText = __commonJS({
         throw csvFetchUserError("error");
       }
     }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -831,7 +865,13 @@ var require_fetchCsvText = __commonJS({
       if (fetchCsvTextOverride) {
         return fetchCsvTextOverride(safeUrl);
       }
-      return csvTextCache.get(safeUrl, () => fetchUrlText(safeUrl));
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
     }
     module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
@@ -1615,16 +1655,16 @@ ${slice[1]}`;
       const day = String(m[2]).padStart(2, "0");
       return `${m[3]}-${month}-${day}`;
     }
-    async function load2026GamelogsByPlayer() {
+    var EMPTY_GAMELOGS = { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+    function parse2026GamelogsFromCsvText(text) {
       try {
-        let text = await fetchCsvText(getGamelogs2026CsvUrl());
         const parsed = Papa.parse(text, { skipEmptyLines: true });
         const rows = parsed.data || [];
-        if (rows.length < 3) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (rows.length < 3) return EMPTY_GAMELOGS;
         const headerRow = rows.find(
           (r) => safeText(r[0]).replace(/^\ufeff/, "") === "Team" && safeText(r[1]) === "Date"
         );
-        if (!headerRow) return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        if (!headerRow) return EMPTY_GAMELOGS;
         const headerIdx = rows.indexOf(headerRow);
         const h = headerRow.map((x) => safeText(x));
         const col = (name) => h.indexOf(name);
@@ -1672,7 +1712,15 @@ ${slice[1]}`;
         }
         return { byNorm, bySlateKey, gameIsos };
       } catch {
-        return { byNorm: /* @__PURE__ */ new Map(), bySlateKey: /* @__PURE__ */ new Map(), gameIsos: /* @__PURE__ */ new Set() };
+        return EMPTY_GAMELOGS;
+      }
+    }
+    async function load2026GamelogsByPlayer() {
+      try {
+        const text = await fetchCsvText(getGamelogs2026CsvUrl());
+        return parse2026GamelogsFromCsvText(text);
+      } catch {
+        return EMPTY_GAMELOGS;
       }
     }
     function slateHasGamelogDates(slate, gamelogs) {
@@ -1871,6 +1919,7 @@ ${slice[1]}`;
       resolveGamesForViewToken,
       buildDfsPlayerPool,
       load2026GamelogsByPlayer,
+      parse2026GamelogsFromCsvText,
       buildSlatePointsByNorm,
       buildLastWeekPointsByNorm,
       scoreLineupForSlate,
@@ -3813,9 +3862,35 @@ var require_matchupMissingPlayers = __commonJS({
       }
       return n > 0 ? sum / n : 0;
     }
-    function missingRatingFactorVsTeamAvg(missingRating, teamAvg) {
-      const gap = teamAvg - missingRating;
-      return 1 + gap * 0.17;
+    var BENCH_VS_AVG_SENSITIVITY = 0.68;
+    function benchIdentityWeight(missingCount) {
+      if (missingCount <= 0) return 0;
+      if (missingCount === 1) return 0.42;
+      return Math.min(0.92, 0.42 + 0.22 * (missingCount - 1));
+    }
+    function blendBenchIdentity(benchFactor, missingCount) {
+      const w = benchIdentityWeight(missingCount);
+      return 1 + (benchFactor - 1) * w;
+    }
+    function compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg) {
+      let mult = 1;
+      let starsBenched = 0;
+      for (const m of missing) {
+        const raw = offenseRatingByNorm.get(m.norm);
+        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
+        const gap = rating - teamAvg;
+        if (gap > 0) {
+          starsBenched += 1;
+          const starEscalation = 1 + 0.58 * (starsBenched - 1);
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * starEscalation);
+        } else if (gap < 0) {
+          mult *= Math.exp(-gap * BENCH_VS_AVG_SENSITIVITY * 0.72);
+        }
+      }
+      if (starsBenched >= 2) {
+        mult *= Math.pow(0.87, starsBenched - 1);
+      }
+      return mult;
     }
     function playerTalentScore(m, offenseRatingByNorm) {
       const rating = offenseRatingByNorm.get(m.norm);
@@ -3843,13 +3918,7 @@ var require_matchupMissingPlayers = __commonJS({
       const avgRound = averageMissingRound(missing);
       const roundGap = avgRound != null ? DRAFT_ROUND_MEDIAN - avgRound : 0;
       if (fieldingPresent >= FIELDING_SPOTS) {
-        let mult = 1;
-        for (const m of missing) {
-          const raw = offenseRatingByNorm.get(m.norm);
-          const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-          mult *= missingRatingFactorVsTeamAvg(rating, teamAvg);
-        }
-        mult = Math.max(0.55, Math.min(1.45, mult));
+        const mult = Math.max(0.38, Math.min(1.48, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg)));
         return {
           offense: mult,
           run: mult,
@@ -3863,18 +3932,10 @@ var require_matchupMissingPlayers = __commonJS({
       }
       const slotsShort = FIELDING_SPOTS - fieldingPresent;
       const fielderBase = Math.pow(0.52, slotsShort);
-      let qualityMod = 1;
-      for (const m of missing) {
-        const raw = offenseRatingByNorm.get(m.norm);
-        const rating = raw != null && Number.isFinite(raw) ? raw : teamAvg;
-        const gap = teamAvg - rating;
-        if (gap > 0) {
-          qualityMod *= 1 + Math.min(0.12, gap * 0.07);
-        } else if (gap < 0) {
-          qualityMod *= 1 + Math.max(-0.18, gap * 0.09);
-        }
-      }
-      qualityMod = Math.max(0.82, Math.min(1.08, qualityMod));
+      const qualityMod = Math.max(
+        0.58,
+        Math.min(1.55, compoundBenchMultiplier(missing, offenseRatingByNorm, teamAvg))
+      );
       let offenseMult = fielderBase * qualityMod;
       offenseMult = Math.max(0.08, Math.min(0.88, offenseMult));
       const defenseMult = Math.max(
@@ -3928,16 +3989,32 @@ var require_matchupMissingPlayers = __commonJS({
       const anchorOff = baseProfile.offenseRating != null && Number.isFinite(baseProfile.offenseRating) ? baseProfile.offenseRating : offenseRating ?? 0;
       const anchorRun = baseProfile.runProd2026 != null && Number.isFinite(baseProfile.runProd2026) ? baseProfile.runProd2026 : runProd2026 ?? 0;
       const anchorDef = baseProfile.defenseZ != null && Number.isFinite(baseProfile.defenseZ) ? baseProfile.defenseZ : defenseZ ?? 0;
+      const rosterOff = offenseRating ?? anchorOff;
+      const rosterRun = runProd2026 ?? anchorRun;
+      const rosterDef = defenseZ ?? anchorDef;
       let lineupHoleDrag = 0;
       if (doubleBatter && missing.length > 0 && secondTurn.weight < 0.45) {
         lineupHoleDrag = (0.45 - secondTurn.weight) * 0.45 * Math.min(missing.length, 5);
       }
-      const runScale = Math.pow(teamMult.offense, 0.9);
-      const adjustedOffense = anchorOff * teamMult.offense - lineupHoleDrag;
-      const adjustedRunProd = anchorRun * teamMult.run;
-      const adjustedDefense = anchorDef * teamMult.defense;
+      const rosterOffFactor = anchorOff > 0 ? rosterOff / anchorOff : 1;
+      const rosterRunFactor = anchorRun > 0 ? rosterRun / anchorRun : 1;
+      const rosterDefFactor = anchorDef !== 0 ? rosterDef / anchorDef : 1;
+      let offenseMult = teamMult.offense;
+      let runMult = teamMult.run;
+      if (teamMult.regime === "lineup-adjust") {
+        const identityMult = blendBenchIdentity(teamMult.offense, missing.length);
+        offenseMult = identityMult;
+        runMult = identityMult;
+      }
+      const runScale = Math.pow(offenseMult, 0.9);
+      const adjustedOffense = Math.max(
+        -0.2,
+        anchorOff * rosterOffFactor * offenseMult - lineupHoleDrag
+      );
+      const adjustedRunProd = anchorRun * rosterRunFactor * runMult;
+      const adjustedDefense = teamMult.regime === "lineup-adjust" ? anchorDef * rosterDefFactor : rosterDef * teamMult.defense;
       const baseTeam = baseProfile.teamOverall;
-      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) ? baseTeam * teamMult.offense : baseTeam;
+      const adjustedTeamOverall = baseTeam != null && Number.isFinite(baseTeam) && anchorOff > 0 ? baseTeam * rosterOffFactor * offenseMult : baseTeam;
       const runsPerGame = baseProfile.runsPerGame != null && Number.isFinite(baseProfile.runsPerGame) ? baseProfile.runsPerGame * runScale : baseProfile.runsPerGame;
       const runsAgainstMult = teamMult.runsAgainst ?? 1;
       const runsAgainstPerGame = baseProfile.runsAgainstPerGame != null && Number.isFinite(baseProfile.runsAgainstPerGame) ? baseProfile.runsAgainstPerGame * runsAgainstMult : baseProfile.runsAgainstPerGame;
@@ -3960,7 +4037,7 @@ var require_matchupMissingPlayers = __commonJS({
         fieldingPresentCount: fieldingPresent,
         missingCount: missing.length,
         lineupAlerts,
-        teamMultiplier: teamMult.offense,
+        teamMultiplier: anchorOff > 0 ? Math.max(0.01, adjustedOffense / anchorOff) : teamMult.offense,
         defenseMultiplier: teamMult.defense,
         runsAgainstMultiplier: runsAgainstMult,
         shortHandedSlots: teamMult.slotsShort ?? 0

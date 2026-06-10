@@ -512,6 +512,206 @@ body > main.page-main {
   text-align: center;
 }
 
+.team-nav-link.is-selected .team-jersey-btn {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.team-analytics-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  margin: 12px 0 20px;
+}
+
+.team-analytics-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.team-analytics-table--team {
+  width: 52rem;
+  min-width: 52rem;
+}
+
+.team-analytics-table--league {
+  width: 40rem;
+  min-width: 40rem;
+}
+
+.team-analytics-table .ta-num {
+  text-align: right;
+}
+
+.team-analytics-table th,
+.team-analytics-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.team-analytics-table col.ta-col-lineup,
+.team-analytics-table .ta-col-lineup {
+  width: 6.5rem;
+}
+
+.team-analytics-table col.ta-col-rank,
+.team-analytics-table .ta-col-rank {
+  width: 2.75rem;
+}
+
+.team-analytics-table col.ta-col-team,
+.team-analytics-table .ta-col-team {
+  width: 10.5rem;
+}
+
+.team-analytics-table col.ta-col-captain,
+.team-analytics-table .ta-col-captain {
+  width: 8.5rem;
+}
+
+.team-analytics-table col.ta-col-games,
+.team-analytics-table .ta-col-games {
+  width: 3.5rem;
+}
+
+.team-analytics-table col.ta-col-wl,
+.team-analytics-table .ta-col-wl {
+  width: 3.75rem;
+}
+
+.team-analytics-table col.ta-col-miss,
+.team-analytics-table .ta-col-miss {
+  width: 5.25rem;
+}
+
+.team-analytics-table col.ta-col-winpct,
+.team-analytics-table .ta-col-winpct {
+  width: 4.25rem;
+}
+
+.team-analytics-table col.ta-col-windiff,
+.team-analytics-table .ta-col-windiff {
+  width: 4.5rem;
+}
+
+.team-analytics-table col.ta-col-runs,
+.team-analytics-table .ta-col-runs {
+  width: 4.25rem;
+}
+
+.team-analytics-table col.ta-col-rate,
+.team-analytics-table .ta-col-rate {
+  width: 3.5rem;
+}
+
+.team-analytics-section .page-note--error {
+  color: #b91c1c;
+}
+
+.team-analytics-heading {
+  font-size: 1.15rem;
+  margin: 0 0 10px;
+}
+
+.team-analytics-subheading {
+  font-size: 1rem;
+  margin: 18px 0 8px;
+}
+
+.team-analytics-league {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.team-analytics-league-section + .team-analytics-league-section {
+  margin-top: 8px;
+}
+
+.team-analytics-row--highlight {
+  background: #eff6ff;
+}
+
+.team-analytics-row--highlight td {
+  font-weight: 600;
+}
+
+.team-analytics-row--highlight .ta-sticky-rank,
+.team-analytics-row--highlight .ta-sticky-team {
+  background: #eff6ff;
+}
+
+.team-analytics-heat-cell {
+  transition: background-color 0.15s ease;
+}
+
+.team-analytics-table thead th {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+@media (max-width: 720px) {
+  .team-analytics-table {
+    font-size: 12px;
+  }
+
+  .team-analytics-table th,
+  .team-analytics-table td {
+    padding: 7px 8px;
+  }
+
+  .team-analytics-table--team {
+    width: 48rem;
+    min-width: 48rem;
+  }
+
+  .team-analytics-table--league {
+    width: 36rem;
+    min-width: 36rem;
+  }
+
+  .team-analytics-table .ta-col-team {
+    width: 9rem;
+  }
+
+  .team-analytics-table .ta-col-captain {
+    width: 7rem;
+  }
+
+  .team-analytics-table--league .ta-sticky-rank,
+  .team-analytics-table--league .ta-sticky-team {
+    position: sticky;
+    z-index: 2;
+    background: #fff;
+  }
+
+  .team-analytics-table--league thead .ta-sticky-rank,
+  .team-analytics-table--league thead .ta-sticky-team {
+    z-index: 3;
+  }
+
+  .team-analytics-table--league .ta-sticky-rank {
+    left: 0;
+  }
+
+  .team-analytics-table--league .ta-sticky-team {
+    left: 2.75rem;
+    box-shadow: 4px 0 6px -4px rgba(15, 23, 42, 0.18);
+  }
+
+  .team-analytics-row--highlight .ta-sticky-rank,
+  .team-analytics-row--highlight .ta-sticky-team {
+    background: #eff6ff;
+  }
+}
+
 /* Shared table styling — same look and full width within their container */
 .page-table,
 .leader-table,
