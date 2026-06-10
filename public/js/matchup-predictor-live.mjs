@@ -4088,9 +4088,8 @@ var require_matchupPredict = __commonJS({
     function matchupFavoriteRunLineMagnitude(marginHome, modelFavWinProb) {
       const marginProj = Math.abs(marginHome);
       const marginFromWin = favoriteRunMarginFromWinProb(modelFavWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
-      let magnitude = Math.max(marginProj, marginFromWin);
-      if (magnitude < 1e-9) magnitude = 0.5;
-      return magnitude;
+      if (marginProj > 0.5 + 1e-9) return marginProj;
+      return Math.max(0.5, marginFromWin);
     }
     function buildMatchupLineAndDisplayWinPct(marginHome, modelHomeWinProb = 0.5) {
       const homeFavorite = matchupFavoriteSide(marginHome, modelHomeWinProb) === "home";
