@@ -1,7 +1,11 @@
-# Firebase Hosting root (placeholder)
+# Firebase Hosting — not in use
 
-Full static site export will land here. For now, production pages are still served by Express on Render.
+**Production is GitHub Pages** (`docs/` on `main`). This folder is a placeholder referenced by `firebase.json` only if you run `firebase deploy --only hosting`.
 
-After `npm run build:leaderboard-scoring`, copy assets from `public/` into this folder when you add static HTML shells.
+Firestore rules (used by DFS lineups) deploy separately:
 
-Deploy: `firebase deploy --only hosting` (from repo root).
+```bash
+firebase deploy --only firestore
+```
+
+Do not move this folder without updating `firebase.json`.
