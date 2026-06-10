@@ -136,7 +136,7 @@ if (process.env.NODE_ENV === "production") {
 app.locals.assetVersion =
   process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
   process.env.ASSET_VERSION ||
-  "4";
+  "5";
 
 app.use(express.json({ limit: "512kb" }));
 

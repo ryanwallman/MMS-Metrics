@@ -30,7 +30,7 @@ function resolveSiteBase() {
 
 const SITE_CHROME_MARKER = "site-chrome.js";
 
-export function siteChromeScriptTag(siteBasePath = "", assetVersion = "4") {
+export function siteChromeScriptTag(siteBasePath = "", assetVersion = "5") {
   const base = String(siteBasePath || "").replace(/\/$/, "");
   return `    <script defer src="${base}/js/site-chrome.js?v=${assetVersion}"></script>\n`;
 }
@@ -71,7 +71,8 @@ function headerNeedsRefresh(html) {
     html.includes("site-brand-tagline") ||
     !html.includes("mms-stats-logo") ||
     !html.includes('href="/team-analytics"') ||
-    !html.includes('width="80"')
+    !html.includes('width="80"') ||
+    !html.includes("site-nav-toggle")
   );
 }
 
