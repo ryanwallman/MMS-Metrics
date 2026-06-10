@@ -4252,6 +4252,7 @@ var require_matchupPredict = __commonJS({
     var MATCHUP_RECORD_LOGIT_SCALE = 2.5;
     var MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
     var MATCHUP_RUN_MARGIN_LOGIT = 0.29;
+    var MATCHUP_RUN_LINE_WIN_SCALE = 0.62;
     var MATCHUP_WIN_PROB_SHRINK = 0.5;
     var SEASON_PROJ_RUN_MARGIN_LOGIT = 0.34;
     var SEASON_PROJ_LOGIT_SCALE = 0.72;
@@ -4691,13 +4692,20 @@ var require_matchupPredict = __commonJS({
       prediction.lines.moneylineHome = moneylines.home;
       return prediction;
     }
+    function favoriteRunMarginFromWinProb(favWinProb) {
+      const p = Math.max(0.505, Math.min(0.85, favWinProb));
+      return Math.log(p / (1 - p)) / MATCHUP_RUN_MARGIN_LOGIT;
+    }
     function buildFavoriteRunLine(proj, homeWinProb = 0.5) {
       if (!proj || !Number.isFinite(proj.marginHome)) {
         return { side: null, value: null };
       }
       const margin = proj.marginHome;
       const homeFavorite = margin > 1e-9 || Math.abs(margin) <= 1e-9 && homeWinProb >= 0.5;
-      let magnitude = Math.abs(margin);
+      const favWinProb = homeFavorite ? homeWinProb : 1 - homeWinProb;
+      const marginFromProj = Math.abs(margin);
+      const marginFromWin = favoriteRunMarginFromWinProb(favWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
+      let magnitude = Math.max(marginFromProj, marginFromWin);
       if (magnitude < 1e-9) magnitude = 0.5;
       const label = formatBettingLineNumber(magnitude);
       if (label == null) return { side: null, value: null };
