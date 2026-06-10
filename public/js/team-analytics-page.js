@@ -31,40 +31,39 @@ function formatMissingRound(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
-function lerpRgb(a, b, t) {
-  const u = Math.max(0, Math.min(1, t));
-  return {
-    r: a.r + (b.r - a.r) * u,
-    g: a.g + (b.g - a.g) * u,
-    b: a.b + (b.b - a.b) * u,
-  };
+function heatMapRgb(t) {
+  const clamped = Math.max(0, Math.min(1, t));
+  const red = { r: 248, g: 113, b: 113 };
+  const mid = { r: 254, g: 243, b: 199 };
+  const green = { r: 74, g: 222, b: 128 };
+  let r;
+  let g;
+  let b;
+  if (clamped < 0.5) {
+    const u = clamped / 0.5;
+    r = red.r + (mid.r - red.r) * u;
+    g = red.g + (mid.g - red.g) * u;
+    b = red.b + (mid.b - red.b) * u;
+  } else {
+    const u = (clamped - 0.5) / 0.5;
+    r = mid.r + (green.r - mid.r) * u;
+    g = mid.g + (green.g - mid.g) * u;
+    b = mid.b + (green.b - mid.b) * u;
+  }
+  return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
 
-function rgbString(c) {
-  return `rgb(${Math.round(c.r)}, ${Math.round(c.g)}, ${Math.round(c.b)})`;
+/** Map avg miss round to 0–1 for heatMapRgb (same palette as power rankings). */
+function missingRoundHeatT(value) {
+  if (value < 5) return ((Math.max(value, 1) - 1) / 4) * 0.4;
+  if (value < 10) return 0.4 + ((value - 5) / 5) * 0.2;
+  return 0.6 + Math.min(1, (value - 10) / 5) * 0.4;
 }
 
-/** Fixed scale: 1–4.99 red, 5–9.99 yellow/orange, 10+ green (higher miss round = greener). */
+/** Fixed scale: 1–4.99 red, 5–9.99 dull cream, 10+ green (higher miss round = greener). */
 function missingRoundHeatRgb(value) {
   if (value == null || !Number.isFinite(value)) return null;
-
-  const deepRed = { r: 220, g: 38, b: 38 };
-  const lightRed = { r: 252, g: 165, b: 165 };
-  const orange = { r: 249, g: 115, b: 22 };
-  const yellow = { r: 253, g: 224, b: 71 };
-  const lightGreen = { r: 134, g: 239, b: 172 };
-  const deepGreen = { r: 22, g: 163, b: 74 };
-
-  if (value < 5) {
-    const t = (Math.max(value, 1) - 1) / 4;
-    return rgbString(lerpRgb(deepRed, lightRed, t));
-  }
-  if (value < 10) {
-    const t = (value - 5) / 5;
-    return rgbString(lerpRgb(orange, yellow, t));
-  }
-  const t = Math.min(1, (value - 10) / 5);
-  return rgbString(lerpRgb(lightGreen, deepGreen, t));
+  return heatMapRgb(missingRoundHeatT(value));
 }
 
 function missingRoundHeatBackground(value) {
