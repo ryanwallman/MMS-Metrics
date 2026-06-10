@@ -136,7 +136,7 @@ if (process.env.NODE_ENV === "production") {
 app.locals.assetVersion =
   process.env.RENDER_GIT_COMMIT?.slice(0, 12) ||
   process.env.ASSET_VERSION ||
-  "2";
+  "3";
 
 app.use(express.json({ limit: "512kb" }));
 
@@ -206,17 +206,7 @@ app.use(
   })
 );
 
-/** Main site navigation (shared header on all primary pages). */
-const SITE_NAV = Object.freeze([
-  { id: "home", label: "League Leaders", href: "/" },
-  { id: "matchup", label: "Matchup Predictor", href: "/matchup-predictor/future" },
-  { id: "dfs", label: "DFS Lineup", href: "/dfs" },
-  { id: "power", label: "Power Rankings", href: "/rankings/power" },
-  { id: "team-analytics", label: "Team Analytics", href: "/team-analytics" },
-]);
-
-const SITE_DISCLAIMER =
-  "This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.";
+const { SITE_NAV, SITE_DISCLAIMER } = require("./lib/renderSiteChrome");
 
 function formatDataUpdatedLabel(iso) {
   try {

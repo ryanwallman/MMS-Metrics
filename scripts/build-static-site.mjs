@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
 import { patchMatchupPredictorLiveHtml } from "./patch-matchup-predictor-live.mjs";
+import { patchMatchupSiteChromeHtml } from "./patch-matchup-site-chrome.mjs";
 import { patchDfsLandingHtml } from "./patch-dfs-landing.mjs";
 
 const require = createRequire(import.meta.url);
@@ -426,6 +427,10 @@ async function main() {
       const livePatch = await patchMatchupPredictorLiveHtml(matchupDir, siteBase);
       console.log(
         `[static] Matchup live script: patched ${livePatch.patched} page(s), ${livePatch.skipped} already had it`
+      );
+      const chromePatch = await patchMatchupSiteChromeHtml(matchupDir, siteBase);
+      console.log(
+        `[static] Matchup site chrome: patched ${chromePatch.patched} page(s), ${chromePatch.unchanged} unchanged (v=${chromePatch.assetVersion})`
       );
     } catch {
       /* no matchup export */

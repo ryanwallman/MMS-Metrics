@@ -22,6 +22,7 @@
     "patch:pages-dfs": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-dfs-for-pages.mjs",
     "patch:matchup-nav": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-matchup-predictor-nav.mjs",
     "patch:matchup-live": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-matchup-predictor-live.mjs",
+    "patch:matchup-chrome": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-matchup-site-chrome.mjs",
     "verify:domain": "node scripts/verify-custom-domain-dns.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
