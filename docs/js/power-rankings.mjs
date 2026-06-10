@@ -4343,6 +4343,7 @@ var require_matchupPredict = __commonJS({
     var MATCHUP_POWER_RANK_LOGIT_SCALE = 0.55;
     var MATCHUP_RUN_MARGIN_LOGIT = 0.29;
     var MATCHUP_RUN_LINE_WIN_SCALE = 1.05;
+    var MATCHUP_DISPLAY_WIN_FROM_LINE_SHRINK = 0.5;
     var MATCHUP_WIN_PROB_SHRINK = 0.5;
     var SEASON_PROJ_RUN_MARGIN_LOGIT = 0.34;
     var SEASON_PROJ_LOGIT_SCALE = 0.72;
@@ -4764,19 +4765,25 @@ var require_matchupPredict = __commonJS({
       const homeR = Number(prediction.projectedRuns.home);
       if (!Number.isFinite(awayR) || !Number.isFinite(homeR)) return prediction;
       const pHome = prediction.winPct.home / 100;
+      const modelPHome = prediction.modelWinPct?.home != null ? prediction.modelWinPct.home / 100 : pHome;
       const runs = {
         away: awayR,
         home: homeR,
         marginHome: homeR - awayR,
         impliedScore: `${prediction.projectedRuns.away} \u2013 ${prediction.projectedRuns.home}`
       };
+      const synced = buildMatchupLineAndDisplayWinPct(runs.marginHome, modelPHome);
+      prediction.modelWinPct = {
+        away: roundMatchupN(synced.modelPAway * 100, 1),
+        home: roundMatchupN(synced.modelPHome * 100, 1)
+      };
+      prediction.winPct = {
+        away: roundMatchupN(synced.pAway * 100, 1),
+        home: roundMatchupN(synced.pHome * 100, 1)
+      };
       prediction.lines = prediction.lines || {};
-      if (!prediction.lines.finalScore?.winnerSide) {
-        prediction.lines.finalScore = buildPredictedFinalScore(runs, pHome);
-      }
-      if (!prediction.lines.runLine?.value) {
-        prediction.lines.runLine = buildFavoriteRunLine(runs, pHome);
-      }
+      prediction.lines.finalScore = buildPredictedFinalScore(runs, synced.pHome);
+      prediction.lines.runLine = synced.runLine;
       const moneylines = americanMoneylineFromRunLine(prediction.lines.runLine);
       prediction.lines.moneylineAway = moneylines.away;
       prediction.lines.moneylineHome = moneylines.home;
@@ -4789,22 +4796,32 @@ var require_matchupPredict = __commonJS({
       const p = Math.max(0.505, Math.min(0.85, favWinProb));
       return Math.log(p / (1 - p)) / MATCHUP_RUN_MARGIN_LOGIT;
     }
-    function buildFavoriteRunLine(proj, homeWinProb = 0.5) {
-      if (!proj || !Number.isFinite(proj.marginHome)) {
-        return { side: null, value: null };
-      }
-      const margin = proj.marginHome;
-      const homeFavorite = matchupFavoriteSide(margin, homeWinProb) === "home";
-      const favWinProb = homeFavorite ? homeWinProb : 1 - homeWinProb;
-      const marginFromProj = Math.abs(margin);
-      const marginFromWin = favoriteRunMarginFromWinProb(favWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
-      let magnitude = Math.max(marginFromProj, marginFromWin);
+    function favoriteWinProbFromRunLine(magnitude) {
+      const m = Math.max(0.5, magnitude);
+      const logit = m * MATCHUP_RUN_MARGIN_LOGIT / MATCHUP_RUN_LINE_WIN_SCALE;
+      const pRaw = 1 / (1 + Math.exp(-logit));
+      return shrinkWinProbTowardEven(pRaw, MATCHUP_DISPLAY_WIN_FROM_LINE_SHRINK);
+    }
+    function matchupFavoriteRunLineMagnitude(marginHome, modelFavWinProb) {
+      const marginProj = Math.abs(marginHome);
+      const marginFromWin = favoriteRunMarginFromWinProb(modelFavWinProb) * MATCHUP_RUN_LINE_WIN_SCALE;
+      let magnitude = Math.max(marginProj, marginFromWin);
       if (magnitude < 1e-9) magnitude = 0.5;
+      return magnitude;
+    }
+    function buildMatchupLineAndDisplayWinPct(marginHome, modelHomeWinProb = 0.5) {
+      const homeFavorite = matchupFavoriteSide(marginHome, modelHomeWinProb) === "home";
+      const modelFav = homeFavorite ? modelHomeWinProb : 1 - modelHomeWinProb;
+      const magnitude = matchupFavoriteRunLineMagnitude(marginHome, modelFav);
+      const displayFav = favoriteWinProbFromRunLine(magnitude);
+      const pHome = homeFavorite ? displayFav : 1 - displayFav;
       const label = formatBettingLineNumber(magnitude);
-      if (label == null) return { side: null, value: null };
       return {
-        side: homeFavorite ? "home" : "away",
-        value: label
+        modelPHome: modelHomeWinProb,
+        modelPAway: 1 - modelHomeWinProb,
+        pHome,
+        pAway: 1 - pHome,
+        runLine: label ? { side: homeFavorite ? "home" : "away", value: label } : { side: null, value: null }
       };
     }
     function finalizeRunProjection(away, home) {
@@ -4896,10 +4913,17 @@ var require_matchupPredict = __commonJS({
       ));
       runs = resolveTiedRunProjection(runs, pHome >= pAway);
       winFromRuns = winProbFromRunMargin(runs.home, runs.away);
+      const synced = buildMatchupLineAndDisplayWinPct(runs.marginHome, pHome);
+      pHome = synced.pHome;
+      pAway = synced.pAway;
       return {
         winPct: {
           away: roundMatchupN(pAway * 100, 1),
           home: roundMatchupN(pHome * 100, 1)
+        },
+        modelWinPct: {
+          away: roundMatchupN(synced.modelPAway * 100, 1),
+          home: roundMatchupN(synced.modelPHome * 100, 1)
         },
         winPctFromRuns: {
           away: roundMatchupN(winFromRuns.away * 100, 1),
@@ -4924,7 +4948,7 @@ var require_matchupPredict = __commonJS({
         lines: {
           overUnder: runs.overUnder,
           finalScore: buildPredictedFinalScore(runs, pHome),
-          runLine: buildFavoriteRunLine(runs, pHome),
+          runLine: synced.runLine,
           impliedScore: runs.impliedScore
         },
         strength: {
