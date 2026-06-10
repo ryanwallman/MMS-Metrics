@@ -611,7 +611,8 @@ var require_metricsSourcesRegistry = __commonJS({
       rosters: "rosters",
       gamelogs2026: "gamelogs2026",
       stats2026: "stats2026",
-      replacements: "replacements"
+      replacements: "replacements",
+      captainMapping: "captainMapping"
     });
     var REQUIRED_KEYS = Object.freeze([
       SOURCE_KEYS2.schedule,
@@ -619,7 +620,8 @@ var require_metricsSourcesRegistry = __commonJS({
       SOURCE_KEYS2.rosters,
       SOURCE_KEYS2.gamelogs2026,
       SOURCE_KEYS2.stats2026,
-      SOURCE_KEYS2.replacements
+      SOURCE_KEYS2.replacements,
+      SOURCE_KEYS2.captainMapping
     ]);
     function safeText(value) {
       return (value || "").toString().trim();
@@ -638,6 +640,7 @@ var require_metricsSourcesRegistry = __commonJS({
       if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS2.gamelogs2026;
       if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS2.stats2026;
       if (n.includes("replacement")) return SOURCE_KEYS2.replacements;
+      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS2.captainMapping;
       return null;
     }
     function browserUrlToCsvFetchUrl(input) {
@@ -730,8 +733,11 @@ var require_sheetUrls = __commonJS({
       metricsSourcesRegistryCsvUrl
     } = require_metricsSourcesRegistry();
     var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
-    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
-    var CAPTAIN_MAPPING_GID = "0";
+    async function getCaptainMappingCsvUrl() {
+      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return getMetricsSourceUrl(SOURCE_KEYS2.captainMapping);
+    }
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR = Number("2026") || 2026;
     var careerCsvFilePath = null;
@@ -755,11 +761,6 @@ var require_sheetUrls = __commonJS({
     }
     async function getReplacementsCsvUrl() {
       return getMetricsSourceUrl(SOURCE_KEYS2.replacements);
-    }
-    function getCaptainMappingCsvUrl() {
-      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
     }
     function setCareerCsvFilePath(filePath) {
       careerCsvFilePath = filePath ? String(filePath) : null;
@@ -809,8 +810,6 @@ var require_sheetUrls = __commonJS({
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
       getReplacementsCsvUrl,
-      CAPTAIN_MAPPING_SHEET_ID,
-      CAPTAIN_MAPPING_GID,
       googleSheetCsvExportUrl,
       setCareerCsvFilePath,
       getCareerCsvSource,
@@ -6267,7 +6266,7 @@ var require_powerRankingsCaptains = __commonJS({
     }
     async function loadPowerRankingsCaptainMap() {
       return captainMapCache.get("map", async () => {
-        const url = getCaptainMappingCsvUrl();
+        const url = await getCaptainMappingCsvUrl();
         const csvText = await fetchCsvText(url);
         const rows = Papa.parse(csvText).data;
         return parseCaptainMappingRows(rows);
