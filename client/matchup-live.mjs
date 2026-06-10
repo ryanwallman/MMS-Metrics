@@ -21,8 +21,7 @@ import {
 import { loadTeamRosters } from "../lib/teamRosters.js";
 import { load2026StatsByPlayer } from "../lib/stats2026Loader.js";
 import { loadCaptainTeamCodeById } from "../lib/powerRankingsCaptains.js";
-import { SCHEDULE_URL, getGamelogs2026CsvUrl } from "../lib/sheetUrls.js";
-import { csvTextCache } from "../lib/fetchCsvText.js";
+import { invalidateSourceCsvCache, SOURCE_KEYS } from "../lib/sheetUrls.js";
 
 const DEFAULT_POLL_MS = Number(process.env.MATCHUP_SCORE_POLL_MS) || 90_000;
 
@@ -44,7 +43,7 @@ export async function refreshMatchupScheduleChrome() {
   const matchupSelect = document.getElementById("matchup");
   if (!viewSelect || !matchupSelect) return;
 
-  csvTextCache.invalidate(SCHEDULE_URL);
+  await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
   const payload = await loadWeeklySchedule();
   const viewToken = String(viewSelect.value || "").trim();
   if (!viewToken) return;
@@ -110,8 +109,8 @@ function applyGamelogMissingToDom(awayNorms, homeNorms) {
 export async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__) {
   if (!ctx?.awayBaseProfile?.teamId || !ctx?.homeBaseProfile?.teamId) return;
 
-  csvTextCache.invalidate(SCHEDULE_URL);
-  csvTextCache.invalidate(getGamelogs2026CsvUrl());
+  await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
+  await invalidateSourceCsvCache(SOURCE_KEYS.gamelogs2026);
 
   const [schedule, gamelogs, teams, stats2026, captainCodes] = await Promise.all([
     loadWeeklySchedule(),
@@ -167,7 +166,7 @@ export async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__)
 export async function refreshSeasonRecord({ force = false } = {}) {
   try {
     if (!force) {
-      csvTextCache.invalidate(SCHEDULE_URL);
+      await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
       const schedule = await loadWeeklySchedule();
       const finishedCount = countFinishedScheduleGames(schedule.parsedGames);
       if (

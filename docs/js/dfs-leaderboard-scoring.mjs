@@ -25,90 +25,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// lib/sheetUrls.js
-var require_sheetUrls = __commonJS({
-  "lib/sheetUrls.js"(exports, module) {
-    var INDEX_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
-    var SCHEDULE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
-    var ROSTER_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTFhhdnzm2I_PVTkR4FDL-pbBhf_K53gMj6Pk5u8vtfYTXN9569QbdTRG9pZBuIFpQuWIpT9tJMbLY1/pub?gid=1722495492&single=true&output=csv";
-    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
-    var SHEET_2026_GAMELOGS_ID = "1QGoXil2fphTqS-SlapUNgAOIDoI8uaQNXooW9h_oH2w";
-    var SHEET_2026_GAMELOGS_GID = "1060099039";
-    var SHEET_2026_STATS_ID = "1v1d1lfel2GYuaocKQubLSk4Yd7VeTTLDlLMU-HNnc7Q";
-    var SHEET_2026_STATS_GID = "1197022486";
-    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
-    var CAPTAIN_MAPPING_GID = "0";
-    var REPLACEMENTS_SHEET_ID = "1aYG02LsmBEpZCQap-f81YyEjTaR6a8asPlzNe0n31b0";
-    var REPLACEMENTS_GID = "0";
-    function getReplacementsCsvUrl() {
-      const u = process.env.REPLACEMENTS_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(REPLACEMENTS_SHEET_ID, REPLACEMENTS_GID);
-    }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
-    var SCHEDULE_CALENDAR_YEAR2 = Number("2026") || 2026;
-    var careerCsvFilePath = null;
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function googleSheetCsvExportUrl(spreadsheetId, gid) {
-      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    }
-    function getGamelogs2026CsvUrl() {
-      const u = "";
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(SHEET_2026_GAMELOGS_ID, SHEET_2026_GAMELOGS_GID);
-    }
-    function getStats2026CsvUrl() {
-      const u = "";
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(SHEET_2026_STATS_ID, SHEET_2026_STATS_GID);
-    }
-    function getCaptainMappingCsvUrl() {
-      const u = "";
-      if (u && u.trim()) return u.trim();
-      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
-    }
-    function getCareerCsvSource() {
-      const url = "/data/csv/career.csv".trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser2(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
-    }
-    module.exports = {
-      INDEX_URL,
-      SCHEDULE_URL,
-      ROSTER_URL,
-      HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
-      SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
-      getGamelogs2026CsvUrl,
-      getStats2026CsvUrl,
-      getCaptainMappingCsvUrl,
-      getReplacementsCsvUrl,
-      CAPTAIN_MAPPING_SHEET_ID,
-      CAPTAIN_MAPPING_GID,
-      REPLACEMENTS_SHEET_ID,
-      REPLACEMENTS_GID,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser: configureCareerCsvForBrowser2
-    };
-  }
-});
-
 // lib/memoryCache.js
 var require_memoryCache = __commonJS({
   "lib/memoryCache.js"(exports, module) {
@@ -138,6 +54,123 @@ var require_memoryCache = __commonJS({
       };
     }
     module.exports = { createMemoryCache };
+  }
+});
+
+// lib/fetchCsvText.js
+var require_fetchCsvText = __commonJS({
+  "lib/fetchCsvText.js"(exports, module) {
+    var { createMemoryCache } = require_memoryCache();
+    var csvTextCache = createMemoryCache(
+      Number("600000") || 10 * 60 * 1e3,
+      "csv-text"
+    );
+    var fetchCsvTextOverride = null;
+    function setFetchCsvTextOverride(fn) {
+      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
+    }
+    function csvFetchTimeoutMs() {
+      const fromEnv = Number("90000");
+      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+      if (true) return 9e4;
+      return 0;
+    }
+    function logCsvFetchFailure(kind, url, detail) {
+      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
+      if (typeof console !== "undefined" && console.error) {
+        console.error(msg, url);
+      }
+    }
+    function csvFetchUserError(kind) {
+      if (kind === "timeout") {
+        return new Error(
+          "League data took too long to load. Check your connection and try again."
+        );
+      }
+      if (kind === "http") {
+        return new Error("Could not load league data right now. Please try again in a moment.");
+      }
+      if (kind === "empty") {
+        return new Error("Could not load league data. Please try again.");
+      }
+      return new Error("Could not load league data. Please try again.");
+    }
+    async function fetchUrlText(url) {
+      const timeoutMs = csvFetchTimeoutMs();
+      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+      try {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+          logCsvFetchFailure("HTTP", url, String(res.status));
+          throw csvFetchUserError("http");
+        }
+        let text = await res.text();
+        text = text.replace(/^\ufeff/, "");
+        return text;
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
+          throw csvFetchUserError("timeout");
+        }
+        if (err.message && !/https?:\/\//i.test(err.message)) {
+          throw err;
+        }
+        logCsvFetchFailure("error", url, err.message || err);
+        throw csvFetchUserError("error");
+      }
+    }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
+    async function fetchCsvText(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
+    }
+    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
 });
 
@@ -557,6 +590,230 @@ var require_papaparse_min = __commonJS({
   }
 });
 
+// lib/metricsSourcesRegistry.js
+var require_metricsSourcesRegistry = __commonJS({
+  "lib/metricsSourcesRegistry.js"(exports, module) {
+    "use strict";
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { createMemoryCache } = require_memoryCache();
+    var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
+    var METRICS_SOURCES_GID = "0";
+    var SOURCE_KEYS = Object.freeze({
+      schedule: "schedule",
+      index: "index",
+      rosters: "rosters",
+      gamelogs2026: "gamelogs2026",
+      stats2026: "stats2026",
+      replacements: "replacements"
+    });
+    var REQUIRED_KEYS = Object.freeze([
+      SOURCE_KEYS.schedule,
+      SOURCE_KEYS.index,
+      SOURCE_KEYS.rosters,
+      SOURCE_KEYS.gamelogs2026,
+      SOURCE_KEYS.stats2026,
+      SOURCE_KEYS.replacements
+    ]);
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function metricsSourcesRegistryCsvUrl() {
+      const override = (process.env.METRICS_SOURCES_REGISTRY_CSV_URL || "").trim();
+      if (override) return override;
+      return `https://docs.google.com/spreadsheets/d/${METRICS_SOURCES_SHEET_ID}/export?format=csv&gid=${METRICS_SOURCES_GID}`;
+    }
+    function resolveSourceKey(name) {
+      const n = safeText(name).toLowerCase();
+      if (!n) return null;
+      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS.schedule;
+      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS.index;
+      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS.rosters;
+      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS.gamelogs2026;
+      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
+      if (n.includes("replacement")) return SOURCE_KEYS.replacements;
+      return null;
+    }
+    function browserUrlToCsvFetchUrl(input) {
+      const url = safeText(input);
+      if (!url) return "";
+      if (/output=csv|format=csv/i.test(url)) return url;
+      if (url.includes("/pubhtml")) {
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `${url.split("/pubhtml")[0]}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/edit/);
+      if (editMatch) {
+        const id = editMatch[1];
+        const gidMatch = url.match(/[#?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+      }
+      const pubMatch = url.match(/\/spreadsheets\/d\/(e\/[a-zA-Z0-9_-]+)/);
+      if (pubMatch && !url.includes("/edit")) {
+        const id = pubMatch[1];
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      return url;
+    }
+    function parseRegistryCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const out = {};
+      for (let i = 1; i < rows.length; i += 1) {
+        const name = safeText(rows[i][0]);
+        const rawUrl = safeText(rows[i][1]);
+        if (!name || !rawUrl) continue;
+        if (rawUrl.includes("console.firebase.google.com")) continue;
+        const key = resolveSourceKey(name);
+        if (!key) continue;
+        out[key] = browserUrlToCsvFetchUrl(rawUrl);
+      }
+      return out;
+    }
+    var registryCache = createMemoryCache(
+      Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 5 * 60 * 1e3,
+      "metrics-sources"
+    );
+    async function loadMetricsSourcesRegistry(force = false) {
+      if (force) registryCache.invalidate("registry");
+      return registryCache.get("registry", async () => {
+        const csvText = await fetchCsvText(metricsSourcesRegistryCsvUrl());
+        const registry = parseRegistryCsv(csvText);
+        for (const key of REQUIRED_KEYS) {
+          if (!registry[key]) {
+            throw new Error(`Metrics sources registry missing required row: ${key}`);
+          }
+        }
+        return registry;
+      });
+    }
+    function invalidateMetricsSourcesRegistry() {
+      registryCache.invalidate("registry");
+    }
+    async function getMetricsSourceUrl(key) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[key];
+      if (!url) throw new Error(`Metrics sources registry missing URL for: ${key}`);
+      return url;
+    }
+    module.exports = {
+      SOURCE_KEYS,
+      METRICS_SOURCES_SHEET_ID,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      getMetricsSourceUrl
+    };
+  }
+});
+
+// lib/sheetUrls.js
+var require_sheetUrls = __commonJS({
+  "lib/sheetUrls.js"(exports, module) {
+    var { csvTextCache } = require_fetchCsvText();
+    var {
+      SOURCE_KEYS,
+      getMetricsSourceUrl,
+      invalidateMetricsSourcesRegistry,
+      loadMetricsSourcesRegistry,
+      browserUrlToCsvFetchUrl,
+      metricsSourcesRegistryCsvUrl
+    } = require_metricsSourcesRegistry();
+    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
+    var CAPTAIN_MAPPING_SHEET_ID = "1xIQsuZQI5skEQ_KEic6cXDOaFDdX4oHXVtl9FBov0-o";
+    var CAPTAIN_MAPPING_GID = "0";
+    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
+    var SCHEDULE_CALENDAR_YEAR2 = Number("2026") || 2026;
+    var careerCsvFilePath = null;
+    function googleSheetCsvExportUrl(spreadsheetId, gid) {
+      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+    }
+    async function getScheduleUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.schedule);
+    }
+    async function getIndexUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.index);
+    }
+    async function getRosterUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.rosters);
+    }
+    async function getGamelogs2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.gamelogs2026);
+    }
+    async function getStats2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.stats2026);
+    }
+    async function getReplacementsCsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.replacements);
+    }
+    function getCaptainMappingCsvUrl() {
+      const u = "";
+      if (u && u.trim()) return u.trim();
+      return googleSheetCsvExportUrl(CAPTAIN_MAPPING_SHEET_ID, CAPTAIN_MAPPING_GID);
+    }
+    function setCareerCsvFilePath(filePath) {
+      careerCsvFilePath = filePath ? String(filePath) : null;
+    }
+    function getCareerCsvSource() {
+      const url = "/data/csv/career.csv".trim();
+      if (url) return { type: "url", url };
+      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
+      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
+    }
+    function configureCareerCsvForBrowser2(publicUrl = CAREER_CSV_PUBLIC_URL) {
+      if (typeof globalThis !== "undefined") {
+        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
+      }
+    }
+    function resolveCareerCsvSource() {
+      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
+      if (override) return { type: "url", url: override };
+      return getCareerCsvSource();
+    }
+    async function invalidateSourceCsvCache(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      if (url) csvTextCache.invalidate(url);
+    }
+    async function invalidateLiveSourceCsvCache(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      invalidateMetricsSourcesRegistry();
+      if (url) csvTextCache.invalidate(url);
+    }
+    module.exports = {
+      HIST_2025_STATS_URL,
+      CAREER_CSV_PUBLIC_URL,
+      SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
+      SOURCE_KEYS,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      invalidateSourceCsvCache,
+      invalidateLiveSourceCsvCache,
+      getScheduleUrl,
+      getIndexUrl,
+      getRosterUrl,
+      getGamelogs2026CsvUrl,
+      getStats2026CsvUrl,
+      getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
+      CAPTAIN_MAPPING_SHEET_ID,
+      CAPTAIN_MAPPING_GID,
+      googleSheetCsvExportUrl,
+      setCareerCsvFilePath,
+      getCareerCsvSource,
+      resolveCareerCsvSource,
+      configureCareerCsvForBrowser: configureCareerCsvForBrowser2
+    };
+  }
+});
+
 // data/pitcherStats2026.js
 var require_pitcherStats2026 = __commonJS({
   "data/pitcherStats2026.js"(exports, module) {
@@ -751,123 +1008,6 @@ var require_pitcherStats2026 = __commonJS({
       PITCHER_STATS_BY_TEAM_KEY,
       PITCHER_LEAGUE_AVG
     };
-  }
-});
-
-// lib/fetchCsvText.js
-var require_fetchCsvText = __commonJS({
-  "lib/fetchCsvText.js"(exports, module) {
-    var { createMemoryCache } = require_memoryCache();
-    var csvTextCache = createMemoryCache(
-      Number("600000") || 10 * 60 * 1e3,
-      "csv-text"
-    );
-    var fetchCsvTextOverride = null;
-    function setFetchCsvTextOverride(fn) {
-      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
-    }
-    function csvFetchTimeoutMs() {
-      const fromEnv = Number("90000");
-      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (true) return 9e4;
-      return 0;
-    }
-    function logCsvFetchFailure(kind, url, detail) {
-      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
-      if (typeof console !== "undefined" && console.error) {
-        console.error(msg, url);
-      }
-    }
-    function csvFetchUserError(kind) {
-      if (kind === "timeout") {
-        return new Error(
-          "League data took too long to load. Check your connection and try again."
-        );
-      }
-      if (kind === "http") {
-        return new Error("Could not load league data right now. Please try again in a moment.");
-      }
-      if (kind === "empty") {
-        return new Error("Could not load league data. Please try again.");
-      }
-      return new Error("Could not load league data. Please try again.");
-    }
-    async function fetchUrlText(url) {
-      const timeoutMs = csvFetchTimeoutMs();
-      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
-      try {
-        const res = await fetch(url, opts);
-        if (!res.ok) {
-          logCsvFetchFailure("HTTP", url, String(res.status));
-          throw csvFetchUserError("http");
-        }
-        let text = await res.text();
-        text = text.replace(/^\ufeff/, "");
-        return text;
-      } catch (err) {
-        if (err.name === "TimeoutError" || err.name === "AbortError") {
-          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
-          throw csvFetchUserError("timeout");
-        }
-        if (err.message && !/https?:\/\//i.test(err.message)) {
-          throw err;
-        }
-        logCsvFetchFailure("error", url, err.message || err);
-        throw csvFetchUserError("error");
-      }
-    }
-    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
-    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
-    function browserCsvStorageKey(url) {
-      return BROWSER_CSV_STORAGE_PREFIX + url;
-    }
-    function readBrowserCsvCache(url) {
-      if (typeof sessionStorage === "undefined") return null;
-      try {
-        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        if (Date.now() > parsed.expiresAt) {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        return parsed.text;
-      } catch {
-        return null;
-      }
-    }
-    function writeBrowserCsvCache(url, text) {
-      if (typeof sessionStorage === "undefined") return;
-      try {
-        sessionStorage.setItem(
-          browserCsvStorageKey(url),
-          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
-        );
-      } catch {
-      }
-    }
-    async function fetchCsvText(url) {
-      const safeUrl = (url || "").toString().trim();
-      if (!safeUrl) {
-        logCsvFetchFailure("empty-url", safeUrl);
-        throw csvFetchUserError("empty");
-      }
-      if (fetchCsvTextOverride) {
-        return fetchCsvTextOverride(safeUrl);
-      }
-      const browserCached = readBrowserCsvCache(safeUrl);
-      if (browserCached) return browserCached;
-      return csvTextCache.get(safeUrl, async () => {
-        const text = await fetchUrlText(safeUrl);
-        writeBrowserCsvCache(safeUrl, text);
-        return text;
-      });
-    }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
 });
 
@@ -1711,7 +1851,7 @@ ${slice[1]}`;
     }
     async function load2026GamelogsByPlayer() {
       try {
-        const text = await fetchCsvText(getGamelogs2026CsvUrl());
+        const text = await fetchCsvText(await getGamelogs2026CsvUrl());
         return parse2026GamelogsFromCsvText(text);
       } catch {
         return EMPTY_GAMELOGS;
@@ -2610,7 +2750,7 @@ var require_teamRosters = __commonJS({
     var Papa = require_papaparse_min();
     var { canonicalRostersByTeamId } = require_customRosters2026();
     var { fetchCsvText } = require_fetchCsvText();
-    var { INDEX_URL, ROSTER_URL } = require_sheetUrls();
+    var { getIndexUrl, getRosterUrl } = require_sheetUrls();
     function safeText(value) {
       return (value || "").toString().trim();
     }
@@ -2709,9 +2849,10 @@ var require_teamRosters = __commonJS({
       return pickRosterEntry(rosterByTeamId, nameToTeamId, teamId, teamName).captain || "";
     }
     async function loadTeamRosterContext() {
+      const [indexUrl, rosterUrl] = await Promise.all([getIndexUrl(), getRosterUrl()]);
       const [indexRows, rosterRows] = await Promise.all([
-        fetchCsvRows(INDEX_URL),
-        fetchCsvRows(ROSTER_URL)
+        fetchCsvRows(indexUrl),
+        fetchCsvRows(rosterUrl)
       ]);
       const teamMap = buildTeamMap(indexRows);
       const rosterByCaptain = buildRosterByCaptain(rosterRows);
@@ -2869,7 +3010,7 @@ var require_playerReplacements = __commonJS({
     }
     async function loadPlayerReplacements() {
       try {
-        const text = await fetchCsvText(getReplacementsCsvUrl());
+        const text = await fetchCsvText(await getReplacementsCsvUrl());
         const parsed = Papa.parse(text, { skipEmptyLines: true });
         return parseReplacementsRows(parsed.data || []);
       } catch (err) {
@@ -2926,7 +3067,7 @@ var require_stats2026Loader = __commonJS({
       return (value || "").toString().trim();
     }
     async function load2026StatsByPlayer() {
-      const csvText = await fetchCsvText(getStats2026CsvUrl());
+      const csvText = await fetchCsvText(await getStats2026CsvUrl());
       const rows = Papa.parse(csvText).data;
       const headers = (rows[1] || []).map((h) => safeText(h));
       const dataRows = rows.slice(2);
@@ -2964,7 +3105,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       DFS_OFFENSE_RATING_WEIGHT_2026
     } = require_dfs();
     var {
-      SCHEDULE_URL,
+      getScheduleUrl,
       HIST_2025_STATS_URL,
       SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
       resolveCareerCsvSource
@@ -3192,7 +3333,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return btoa(binary);
     }
     async function loadWeeklySchedule2() {
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(SCHEDULE_URL), loadTeamRosters()]);
+      const scheduleUrl = await getScheduleUrl();
+      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(scheduleUrl), loadTeamRosters()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
         (a, b) => a.localeCompare(b)

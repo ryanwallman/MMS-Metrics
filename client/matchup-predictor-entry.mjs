@@ -23,8 +23,7 @@ import {
   isParsedGameFinished,
   gradeMatchupModelBets,
 } from "../lib/matchupGameResult.js";
-import { SCHEDULE_URL } from "../lib/sheetUrls.js";
-import { csvTextCache } from "../lib/fetchCsvText.js";
+import { invalidateSourceCsvCache, SOURCE_KEYS } from "../lib/sheetUrls.js";
 
 function mapFromObject(obj) {
   return new Map(Object.entries(obj || {}));
@@ -178,7 +177,7 @@ function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAU
   async function check() {
     if (stopped || ctx.isFinishedGame) return;
     try {
-      csvTextCache.invalidate(SCHEDULE_URL);
+      await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
       const schedule = await loadWeeklySchedule();
       const parsedGame = findParsedGameForMatchup(
         schedule.parsedGames,

@@ -145,16 +145,10 @@ app.get("/healthz", (_req, res) => {
   res.status(200).json({ ok: true });
 });
 
-const INDEX_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=1191877237&single=true&output=csv";
-const SCHEDULE_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS4gZ_lSTJs9QfCC-FCDFLCSX8q88t6txvtDgKFinSQJqX0seyYhK5wHr0WwwjRaA1mxZdETC0CGNMz/pub?gid=0&single=true&output=csv";
-const ROSTER_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTFhhdnzm2I_PVTkR4FDL-pbBhf_K53gMj6Pk5u8vtfYTXN9569QbdTRG9pZBuIFpQuWIpT9tJMbLY1/pub?gid=1722495492&single=true&output=csv";
-const HIST_2025_STATS_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
 const {
   getStats2026CsvUrl,
+  getScheduleUrl,
+  HIST_2025_STATS_URL,
   CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
@@ -1784,7 +1778,7 @@ app.get("/dfs", async (req, res) => {
       getCachedPlayerReplacements(),
     ]);
 
-    const scheduleRows = await fetchCsvRows(SCHEDULE_URL);
+    const scheduleRows = await fetchCsvRows(await getScheduleUrl());
     const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
     const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
 
@@ -2162,7 +2156,7 @@ async function loadMatchupPredictorSeasonRecord() {
     loadCareerByPlayer(),
     load2025HistoricalByPlayer(),
     load2026StatsByPlayer(),
-    fetchCsvRows(SCHEDULE_URL),
+    fetchCsvRows(await getScheduleUrl()),
     loadDefensiveRatingsNormalizedMap(),
     getCachedPlayerReplacements(),
     load2026GamelogsByPlayer(),
@@ -2276,7 +2270,7 @@ async function renderMatchupPredictorPage(req, res) {
       loadCareerByPlayer(),
       load2025HistoricalByPlayer(),
       load2026StatsByPlayer(),
-      fetchCsvRows(SCHEDULE_URL),
+      fetchCsvRows(await getScheduleUrl()),
       loadDefensiveRatingsNormalizedMap(),
       getCachedPlayerReplacements(),
       load2026GamelogsByPlayer(),
