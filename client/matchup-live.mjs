@@ -1,8 +1,14 @@
 /**
  * Live schedule chrome, season record, and MG roster refresh for all matchup pages.
  */
-import { resolveGamesForViewToken } from "../lib/dfs.js";
+import {
+  resolveGamesForViewToken,
+  referenceIsoForScheduleYear,
+  filterScheduleOptionsForMatchupPredictorMode,
+} from "../lib/dfs.js";
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
+import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
+import { matchupModeFromPathname } from "../lib/matchupPredictorStaticNav.js";
 import {
   findParsedGameForMatchup,
   isParsedGameFinished,
@@ -32,10 +38,71 @@ let lastFinishedGameCount = null;
 let lastRecordKey = null;
 let lastMatchupOptionsSig = null;
 let lastGamelogMissingSig = null;
+let lastViewOptionsSig = null;
+let lastScheduleSignature = null;
+
+function safeText(value) {
+  return (value || "").toString().trim();
+}
 
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
+}
+
+function scheduleSignature(parsedGames) {
+  let n = 0;
+  let scoreSig = "";
+  for (const g of parsedGames || []) {
+    if (g?.awayScore == null || g?.homeScore == null) continue;
+    n += 1;
+    scoreSig += `|${g.isoDate}:${g.awayId}-${g.homeId}:${g.awayScore}-${g.homeScore}`;
+  }
+  return `${n}:${scoreSig}`;
+}
+
+export async function refreshMatchupViewSelect() {
+  const viewSelect = document.getElementById("view");
+  if (!viewSelect) return;
+
+  await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
+  const payload = await loadWeeklySchedule();
+  const mode = matchupModeFromPathname(window.location.pathname || "");
+  const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+  const options = filterScheduleOptionsForMatchupPredictorMode(
+    payload.scheduleOptions || [],
+    payload,
+    refIso,
+    Date.now(),
+    mode
+  );
+  const sig = options.map((o) => `${o.value}:${o.label}`).join("|");
+  if (sig === lastViewOptionsSig) return;
+  lastViewOptionsSig = sig;
+
+  const current = String(viewSelect.value || "").trim().toUpperCase();
+  viewSelect.innerHTML = "";
+  if (!options.length) {
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "No dates available";
+    viewSelect.appendChild(blank);
+    return;
+  }
+
+  for (const opt of options) {
+    const el = document.createElement("option");
+    el.value = opt.value;
+    el.textContent = opt.label;
+    if (safeText(opt.value).toUpperCase() === current) el.selected = true;
+    viewSelect.appendChild(el);
+  }
+
+  const url = new URL(window.location.href);
+  const queryView = safeText(url.searchParams.get("view")).toUpperCase();
+  if (queryView && [...viewSelect.options].some((o) => o.value.toUpperCase() === queryView)) {
+    viewSelect.value = queryView;
+  }
 }
 
 export async function refreshMatchupScheduleChrome() {
@@ -45,6 +112,14 @@ export async function refreshMatchupScheduleChrome() {
 
   await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
   const payload = await loadWeeklySchedule();
+  await refreshMatchupViewSelect();
+
+  const schedSig = scheduleSignature(payload.parsedGames);
+  if (schedSig !== lastScheduleSignature) {
+    lastScheduleSignature = schedSig;
+    lastRecordKey = null;
+  }
+
   const viewToken = String(viewSelect.value || "").trim();
   if (!viewToken) return;
 
@@ -167,28 +242,28 @@ export async function refreshSeasonRecord({ force = false } = {}) {
   try {
     if (!force) {
       await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
+      await invalidateSourceCsvCache(SOURCE_KEYS.gamelogs2026);
       const schedule = await loadWeeklySchedule();
       const finishedCount = countFinishedScheduleGames(schedule.parsedGames);
+      const schedSig = scheduleSignature(schedule.parsedGames);
       if (
         lastFinishedGameCount != null &&
         finishedCount === lastFinishedGameCount &&
+        schedSig === lastScheduleSignature &&
         lastRecordKey
       ) {
         return;
       }
       lastFinishedGameCount = finishedCount;
+      lastScheduleSignature = schedSig;
     }
 
-    const record = await loadLiveMatchupSeasonRecord({ refreshSchedule: force });
+    const record = await loadLiveMatchupSeasonRecord({ refreshSchedule: true });
     if (!record) return;
     const key = recordSignature(record);
     if (key === lastRecordKey) return;
-    const initial = window.__MATCHUP_PREDICTOR_RECORD__;
-    if (initial && recordSignature(initial) === key) {
-      lastRecordKey = key;
-      return;
-    }
     lastRecordKey = key;
+    window.__MATCHUP_PREDICTOR_RECORD__ = record;
     window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
   } catch (err) {
     console.error("Matchup season record refresh failed", err);
@@ -213,6 +288,7 @@ function startLiveWatchers() {
   const pollMs = Math.max(30_000, DEFAULT_POLL_MS);
 
   void refreshLiveMatchupChrome();
+  void refreshSeasonRecord({ force: true });
 
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
@@ -234,6 +310,7 @@ export function bootMatchupLiveWatchers() {
 
 if (typeof window !== "undefined") {
   window.MmsMatchupPredictorLive = {
+    refreshMatchupViewSelect,
     refreshMatchupScheduleChrome,
     refreshSeasonRecord,
     refreshLiveGamelogMissing,

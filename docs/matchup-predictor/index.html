@@ -25,6 +25,7 @@
 </script>
 <link rel="preload" href="/styles.css?v=5" as="style" />
 <link rel="stylesheet" href="/styles.css?v=5" />
+    <script>window.__STATIC_SITE__ = true;</script>
 
     <script>
     (function () {
@@ -43,15 +44,7 @@
         location.replace(sitePath("/matchup-predictor/future"));
         return;
       }
-      fetch(sitePath("/matchup-predictor/" + mode + "/default-view.json"), { cache: "no-store" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-          if (!d || !d.view) return;
-          var target = sitePath("/matchup-predictor/" + mode + "/view/" + encodeURIComponent(d.view));
-          if (path.indexOf("/view/") < 0) location.replace(target);
-        })
-        .catch(function () {});
-    })();
+      })();
     </script>
   </head>
   

@@ -19,6 +19,8 @@ const siteBase = (() => {
 })();
 
 const NAV_MARKER = "matchup-predictor-nav.mjs";
+const STALE_DEFAULT_VIEW_SCRIPT =
+  /fetch\(sitePath\("\/matchup-predictor\/" \+ mode \+ "\/default-view\.json"\)[\s\S]*?\.catch\(function \(\) \{\}\);\s*/g;
 
 export function matchupNavScriptTag(siteBasePath = "", assetVersion = "1") {
   const base = String(siteBasePath || "").replace(/\/$/, "");
@@ -47,15 +49,30 @@ export async function patchMatchupPredictorNavHtml(
         await walk(full);
       } else if (ent.name.endsWith(".html")) {
         let html = await fs.readFile(full, "utf8");
-        if (html.includes(NAV_MARKER)) {
-          skipped++;
-          continue;
+        let changed = false;
+        if (STALE_DEFAULT_VIEW_SCRIPT.test(html)) {
+          html = html.replace(STALE_DEFAULT_VIEW_SCRIPT, "");
+          changed = true;
         }
-        const idx = html.lastIndexOf("</body>");
-        if (idx < 0) continue;
-        html = html.slice(0, idx) + scriptTag + html.slice(idx);
-        await fs.writeFile(full, html);
-        patched++;
+        if (!html.includes("__STATIC_SITE__")) {
+          html = html.replace(
+            /<link rel="stylesheet" href="[^"]*styles\.css[^"]*" \/>/i,
+            (m) => `${m}\n    <script>window.__STATIC_SITE__ = true;</script>`
+          );
+          changed = true;
+        }
+        if (!html.includes(NAV_MARKER)) {
+          const idx = html.lastIndexOf("</body>");
+          if (idx < 0) continue;
+          html = html.slice(0, idx) + scriptTag + html.slice(idx);
+          changed = true;
+          patched++;
+        } else if (changed) {
+          patched++;
+        } else {
+          skipped++;
+        }
+        if (changed) await fs.writeFile(full, html);
       }
     }
   }

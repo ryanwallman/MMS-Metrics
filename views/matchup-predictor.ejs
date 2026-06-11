@@ -2,33 +2,9 @@
 <html lang="en">
   <head>
     <%- include("partials/site-head") %>
-    <script>
-    (function () {
-      var base = typeof window.__SITE_BASE_PATH__ !== "undefined" ? String(window.__SITE_BASE_PATH__ || "") : "";
-      function sitePath(p) { return base + (p.charAt(0) === "/" ? p : "/" + p); }
-      var path = location.pathname || "";
-      if (path.indexOf("/view/") >= 0) return;
-      var q = new URLSearchParams(location.search);
-      if (q.get("view") || q.get("week") || /^\d{8}$/.test((q.get("wed") || "").replace(/^D/i, ""))) return;
-      var mode = /\/matchup-predictor\/past(?:\/|$)/i.test(path) ? "past" : "future";
-      if (/\/matchup-predictor\/view\//i.test(path) && !/\/matchup-predictor\/(?:past|future)\//i.test(path)) {
-        location.replace(path.replace("/matchup-predictor/view/", "/matchup-predictor/future/view/"));
-        return;
-      }
-      if (path.replace(/\/$/, "") === sitePath("/matchup-predictor")) {
-        location.replace(sitePath("/matchup-predictor/future"));
-        return;
-      }
-      fetch(sitePath("/matchup-predictor/" + mode + "/default-view.json"), { cache: "no-store" })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) {
-          if (!d || !d.view) return;
-          var target = sitePath("/matchup-predictor/" + mode + "/view/" + encodeURIComponent(d.view));
-          if (path.indexOf("/view/") < 0) location.replace(target);
-        })
-        .catch(function () {});
-    })();
-    </script>
+    <% if (typeof staticSite !== 'undefined' && staticSite) { %>
+    <script>window.__STATIC_SITE__ = true;</script>
+    <% } %>
   </head>
   <% const mmsMatchupLoading = typeof staticSite !== 'undefined' && staticSite && !(typeof matchupPageReady !== 'undefined' && matchupPageReady); %>
   <body<%= mmsMatchupLoading ? '' : ' class="mms-page-ready"' %>>
@@ -593,23 +569,38 @@
 
         if (redirectLegacyMatchupPath()) return;
 
-        function submitOrNavigate() {
+        function matchupModeFromPath() {
+          const p = window.location.pathname || "";
+          return /\/matchup-predictor\/past(?:\/|$)/i.test(p) ? "past" : "future";
+        }
+
+        async function submitOrNavigate() {
           if (!isStaticSite) {
             form.requestSubmit();
             return;
           }
           const view = (viewSelect.value || "").trim();
           const matchup = (matchupSelect.value || "").trim();
-          let path = "<%= mpBase %>";
-          if (view) {
-            path += "/view/" + encodeURIComponent(view);
-            if (matchup) path += "/matchup/" + matchupKeyToSlug(matchup);
-          }
           const params = new URLSearchParams();
           if (awayInput.value) params.set("awayMissing", awayInput.value);
           if (homeInput.value) params.set("homeMissing", homeInput.value);
           const qs = params.toString();
-          window.location.assign(qs ? path + "?" + qs : path);
+
+          let path = "<%= mpBase %>";
+          if (window.MmsMatchupPredictorNav?.navigateMatchupPredictorView) {
+            path = await window.MmsMatchupPredictorNav.navigateMatchupPredictorView(
+              matchupModeFromPath(),
+              view,
+              matchup
+            );
+          } else if (view) {
+            path += "/view/" + encodeURIComponent(view);
+            if (matchup) path += "/matchup/" + matchupKeyToSlug(matchup);
+          }
+          const dest = new URL(path, window.location.origin);
+          if (awayInput.value) dest.searchParams.set("awayMissing", awayInput.value);
+          if (homeInput.value) dest.searchParams.set("homeMissing", homeInput.value);
+          window.location.assign(dest.pathname + dest.search);
         }
 
         if (isStaticSite && !window.location.pathname.includes("/view/")) {
@@ -627,10 +618,6 @@
           }
           if (queryAwayMissing) awayInput.value = queryAwayMissing;
           if (queryHomeMissing) homeInput.value = queryHomeMissing;
-          if (queryView || queryMatchup) {
-            submitOrNavigate();
-            return;
-          }
         }
 
         function loadStoredBench() {
@@ -837,10 +824,17 @@
           },
         };
 
-        hydratePredictorRecordFromJson().then(() => {
-          applyMatchupPageChrome();
-          initMatchupClient();
-        });
+        Promise.resolve()
+          .then(() => {
+            if (isStaticSite && window.MmsMatchupPredictorLive?.refreshSeasonRecord) {
+              return window.MmsMatchupPredictorLive.refreshSeasonRecord({ force: true });
+            }
+            return hydratePredictorRecordFromJson();
+          })
+          .then(() => {
+            applyMatchupPageChrome();
+            return initMatchupClient();
+          });
 
         viewSelect.addEventListener("change", () => {
           try {
