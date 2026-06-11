@@ -9,6 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 import { patchMatchupPredictorNavHtml } from "./patch-matchup-predictor-nav.mjs";
+import { walk as patchMatchupQueryNav } from "./patch-matchup-query-nav.mjs";
 
 const require = createRequire(import.meta.url);
 const { matchupKeyToSlug } = require("../lib/matchupSlug.js");
@@ -264,6 +265,8 @@ async function main() {
     const matchupDir = path.join(outDir, "matchup-predictor");
     const { patched, skipped } = await patchMatchupPredictorNavHtml(matchupDir);
     console.log(`[matchup-export] Nav patch: ${patched} patched, ${skipped} skipped`);
+    const queryNavPatched = await patchMatchupQueryNav(matchupDir);
+    console.log(`[matchup-export] Query-nav patch: ${queryNavPatched} patched`);
     console.log("[matchup-export] Done.");
   } finally {
     server.kill("SIGKILL");

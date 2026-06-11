@@ -626,23 +626,43 @@
 
         if (redirectLegacyMatchupPath()) return;
 
-        function submitOrNavigate() {
+        function matchupModeFromPath() {
+          if (window.MmsMatchupPredictorNav?.getEffectiveMatchupMode) {
+            return window.MmsMatchupPredictorNav.getEffectiveMatchupMode(
+              window.location.pathname || "",
+              new URL(window.location.href)
+            );
+          }
+          const url = new URL(window.location.href);
+          const q = (url.searchParams.get("mode") || "").toLowerCase();
+          if (q === "past" || q === "future") return q;
+          const p = window.location.pathname || "";
+          return /\/matchup-predictor\/past(?:\/|$)/i.test(p) ? "past" : "future";
+        }
+
+        async function submitOrNavigate() {
           if (!isStaticSite) {
             form.requestSubmit();
             return;
           }
           const view = (viewSelect.value || "").trim();
           const matchup = (matchupSelect.value || "").trim();
+
           let path = "/matchup-predictor/future";
-          if (view) {
+          if (window.MmsMatchupPredictorNav?.navigateMatchupPredictorView) {
+            path = await window.MmsMatchupPredictorNav.navigateMatchupPredictorView(
+              matchupModeFromPath(),
+              view,
+              matchup
+            );
+          } else if (view) {
             path += "/view/" + encodeURIComponent(view);
             if (matchup) path += "/matchup/" + matchupKeyToSlug(matchup);
           }
-          const params = new URLSearchParams();
-          if (awayInput.value) params.set("awayMissing", awayInput.value);
-          if (homeInput.value) params.set("homeMissing", homeInput.value);
-          const qs = params.toString();
-          window.location.assign(qs ? path + "?" + qs : path);
+          const dest = new URL(path, window.location.origin);
+          if (awayInput.value) dest.searchParams.set("awayMissing", awayInput.value);
+          if (homeInput.value) dest.searchParams.set("homeMissing", homeInput.value);
+          window.location.assign(dest.pathname + dest.search);
         }
 
         if (isStaticSite && !window.location.pathname.includes("/view/")) {
@@ -660,7 +680,7 @@
           }
           if (queryAwayMissing) awayInput.value = queryAwayMissing;
           if (queryHomeMissing) homeInput.value = queryHomeMissing;
-          if (queryView || queryMatchup) {
+          if (queryMatchup) {
             submitOrNavigate();
             return;
           }

@@ -627,6 +627,10 @@
           }
           if (queryAwayMissing) awayInput.value = queryAwayMissing;
           if (queryHomeMissing) homeInput.value = queryHomeMissing;
+          if (queryMatchup) {
+            submitOrNavigate();
+            return;
+          }
         }
 
         function loadStoredBench() {
