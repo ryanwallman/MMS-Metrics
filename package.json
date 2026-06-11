@@ -24,6 +24,8 @@
     "patch:matchup-live": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-matchup-predictor-live.mjs",
     "patch:matchup-chrome": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/patch-matchup-site-chrome.mjs",
     "patch:matchup-query-nav": "node scripts/patch-matchup-query-nav.mjs",
+    "patch:matchup-season-record": "node scripts/patch-matchup-season-record-bootstrap.mjs",
+    "write:season-record": "node scripts/write-season-record-json.js",
     "verify:domain": "node scripts/verify-custom-domain-dns.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

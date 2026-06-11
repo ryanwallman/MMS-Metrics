@@ -1391,10 +1391,21 @@
           },
         };
 
-        hydratePredictorRecordFromJson().then(() => {
-          applyMatchupPageChrome();
-          initMatchupClient();
-        });
+        Promise.resolve()
+          .then(() => {
+            const useLiveRecord =
+              isStaticSite &&
+              document.querySelector('script[src*="matchup-predictor-live"]');
+            if (useLiveRecord) return;
+            if (isStaticSite && window.MmsMatchupPredictorLive?.refreshSeasonRecord) {
+              return window.MmsMatchupPredictorLive.refreshSeasonRecord({ force: true });
+            }
+            return hydratePredictorRecordFromJson();
+          })
+          .then(() => {
+            applyMatchupPageChrome();
+            return initMatchupClient();
+          });
 
         viewSelect.addEventListener("change", () => {
           try {
