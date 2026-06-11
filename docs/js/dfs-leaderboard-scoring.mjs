@@ -599,7 +599,7 @@ var require_metricsSourcesRegistry = __commonJS({
     var { createMemoryCache } = require_memoryCache();
     var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
     var METRICS_SOURCES_GID = "0";
-    var SOURCE_KEYS = Object.freeze({
+    var SOURCE_KEYS2 = Object.freeze({
       schedule: "schedule",
       index: "index",
       rosters: "rosters",
@@ -609,13 +609,13 @@ var require_metricsSourcesRegistry = __commonJS({
       captainMapping: "captainMapping"
     });
     var REQUIRED_KEYS = Object.freeze([
-      SOURCE_KEYS.schedule,
-      SOURCE_KEYS.index,
-      SOURCE_KEYS.rosters,
-      SOURCE_KEYS.gamelogs2026,
-      SOURCE_KEYS.stats2026,
-      SOURCE_KEYS.replacements,
-      SOURCE_KEYS.captainMapping
+      SOURCE_KEYS2.schedule,
+      SOURCE_KEYS2.index,
+      SOURCE_KEYS2.rosters,
+      SOURCE_KEYS2.gamelogs2026,
+      SOURCE_KEYS2.stats2026,
+      SOURCE_KEYS2.replacements,
+      SOURCE_KEYS2.captainMapping
     ]);
     function safeText(value) {
       return (value || "").toString().trim();
@@ -628,13 +628,13 @@ var require_metricsSourcesRegistry = __commonJS({
     function resolveSourceKey(name) {
       const n = safeText(name).toLowerCase();
       if (!n) return null;
-      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS.schedule;
-      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS.index;
-      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS.rosters;
-      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS.gamelogs2026;
-      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
-      if (n.includes("replacement")) return SOURCE_KEYS.replacements;
-      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS.captainMapping;
+      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS2.schedule;
+      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS2.index;
+      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS2.rosters;
+      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS2.gamelogs2026;
+      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS2.stats2026;
+      if (n.includes("replacement")) return SOURCE_KEYS2.replacements;
+      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS2.captainMapping;
       return null;
     }
     function browserUrlToCsvFetchUrl(input) {
@@ -714,7 +714,7 @@ var require_metricsSourcesRegistry = __commonJS({
       return url;
     }
     module.exports = {
-      SOURCE_KEYS,
+      SOURCE_KEYS: SOURCE_KEYS2,
       METRICS_SOURCES_SHEET_ID,
       metricsSourcesRegistryCsvUrl,
       browserUrlToCsvFetchUrl,
@@ -730,7 +730,7 @@ var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
     var { csvTextCache } = require_fetchCsvText();
     var {
-      SOURCE_KEYS,
+      SOURCE_KEYS: SOURCE_KEYS2,
       getMetricsSourceUrl,
       invalidateMetricsSourcesRegistry,
       loadMetricsSourcesRegistry,
@@ -741,7 +741,7 @@ var require_sheetUrls = __commonJS({
     async function getCaptainMappingCsvUrl() {
       const u = "";
       if (u && u.trim()) return u.trim();
-      return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
+      return getMetricsSourceUrl(SOURCE_KEYS2.captainMapping);
     }
     var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR2 = Number("2026") || 2026;
@@ -750,22 +750,22 @@ var require_sheetUrls = __commonJS({
       return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
     }
     async function getScheduleUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.schedule);
+      return getMetricsSourceUrl(SOURCE_KEYS2.schedule);
     }
     async function getIndexUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.index);
+      return getMetricsSourceUrl(SOURCE_KEYS2.index);
     }
     async function getRosterUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.rosters);
+      return getMetricsSourceUrl(SOURCE_KEYS2.rosters);
     }
     async function getGamelogs2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.gamelogs2026);
+      return getMetricsSourceUrl(SOURCE_KEYS2.gamelogs2026);
     }
     async function getStats2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.stats2026);
+      return getMetricsSourceUrl(SOURCE_KEYS2.stats2026);
     }
     async function getReplacementsCsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.replacements);
+      return getMetricsSourceUrl(SOURCE_KEYS2.replacements);
     }
     function setCareerCsvFilePath(filePath) {
       careerCsvFilePath = filePath ? String(filePath) : null;
@@ -786,7 +786,7 @@ var require_sheetUrls = __commonJS({
       if (override) return { type: "url", url: override };
       return getCareerCsvSource();
     }
-    async function invalidateSourceCsvCache(sourceKey) {
+    async function invalidateSourceCsvCache2(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       if (url) csvTextCache.invalidate(url);
@@ -801,12 +801,12 @@ var require_sheetUrls = __commonJS({
       HIST_2025_STATS_URL,
       CAREER_CSV_PUBLIC_URL,
       SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
-      SOURCE_KEYS,
+      SOURCE_KEYS: SOURCE_KEYS2,
       metricsSourcesRegistryCsvUrl,
       browserUrlToCsvFetchUrl,
       loadMetricsSourcesRegistry,
       invalidateMetricsSourcesRegistry,
-      invalidateSourceCsvCache,
+      invalidateSourceCsvCache: invalidateSourceCsvCache2,
       invalidateLiveSourceCsvCache,
       getScheduleUrl,
       getIndexUrl,
@@ -1983,7 +1983,7 @@ ${slice[1]}`;
         };
       });
     }
-    function defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs = Date.now()) {
+    function defaultLeaderboardWeek2(weekOptions, schedulePayload, refIso, nowMs = Date.now()) {
       if (schedulePayload && refIso) {
         const token = resolveMostRecentlyLockedSlateToken2(schedulePayload, refIso, nowMs);
         if (token && (weekOptions || []).some((w) => w.value === token)) return token;
@@ -2029,7 +2029,7 @@ ${slice[1]}`;
       const slateOptions = buildDfsSlateOptions(schedulePayload, refIso, nowMs);
       return buildSlateFromToken(v, schedulePayload, refIso, slateOptions, nowMs);
     }
-    function listLeaderboardSlateOptions(schedulePayload, refIso, nowMs = Date.now()) {
+    function listLeaderboardSlateOptions2(schedulePayload, refIso, nowMs = Date.now()) {
       return (schedulePayload.scheduleOptions || []).filter((o) => /^(W\d+|D\d{8})$/i.test(o.value)).map((o) => {
         const value = safeText(o.value).toUpperCase();
         const isWeek = /^W\d+$/.test(value);
@@ -2070,8 +2070,8 @@ ${slice[1]}`;
       scoreLineupFromPointsMap,
       referenceIsoForScheduleYear: referenceIsoForScheduleYear2,
       listWeekSlateOptions,
-      listLeaderboardSlateOptions,
-      defaultLeaderboardWeek,
+      listLeaderboardSlateOptions: listLeaderboardSlateOptions2,
+      defaultLeaderboardWeek: defaultLeaderboardWeek2,
       buildWeekSlateFromToken,
       buildLeaderboardSlateFromToken,
       slateFirstIso,
@@ -5782,8 +5782,8 @@ var require_dfsLeaderboardResponse = __commonJS({
     } = require_dfsLeaderboard();
     var {
       buildLeaderboardSlateFromToken,
-      defaultLeaderboardWeek,
-      listLeaderboardSlateOptions,
+      defaultLeaderboardWeek: defaultLeaderboardWeek2,
+      listLeaderboardSlateOptions: listLeaderboardSlateOptions2,
       referenceIsoForScheduleYear: referenceIsoForScheduleYear2,
       slateHasGamelogDates
     } = require_dfs();
@@ -5793,8 +5793,8 @@ var require_dfsLeaderboardResponse = __commonJS({
       const { schedulePayload, gamelogs, scoringDeps } = await getCachedDfsLeaderboardScoringContext();
       const refIso = referenceIsoForScheduleYear2(SCHEDULE_CALENDAR_YEAR2);
       const nowMs = Date.now();
-      const weekOptions = listLeaderboardSlateOptions(schedulePayload, refIso, nowMs);
-      const week = selectedWeek && weekOptions.some((w) => w.value === selectedWeek) ? selectedWeek : defaultLeaderboardWeek(weekOptions, schedulePayload, refIso, nowMs);
+      const weekOptions = listLeaderboardSlateOptions2(schedulePayload, refIso, nowMs);
+      const week = selectedWeek && weekOptions.some((w) => w.value === selectedWeek) ? selectedWeek : defaultLeaderboardWeek2(weekOptions, schedulePayload, refIso, nowMs);
       const slate = buildLeaderboardSlateFromToken(week, schedulePayload, refIso, nowMs);
       const weekly = slate && Array.isArray(lineups) ? await buildWeeklyLeaderboardFromLineups(lineups, slate, scoringDeps) : { rows: [], entryCount: 0 };
       return {
@@ -5815,25 +5815,84 @@ var import_dfsLeaderboardResponse = __toESM(require_dfsLeaderboardResponse(), 1)
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
 var import_dfs = __toESM(require_dfs(), 1);
 var import_sheetUrls2 = __toESM(require_sheetUrls(), 1);
+var lastWeekOptionsSig = null;
+function sitePath(path) {
+  const base = typeof window !== "undefined" && window.__SITE_BASE_PATH__ != null ? String(window.__SITE_BASE_PATH__ || "") : "";
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${p}`;
+}
+function formatWeekOptionLabel(opt) {
+  return opt.isPast ? opt.label : `${opt.label} (upcoming)`;
+}
 var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
 (0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
 async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
   return (0, import_dfsLeaderboardResponse.buildWeeklyLeaderboardResponse)(selectedWeek, lineups);
 }
-async function fetchLiveSlateDefaults() {
+async function fetchLiveLeaderboardWeekOptions(opts = {}) {
+  if (opts.refreshSchedule) {
+    await (0, import_sheetUrls2.invalidateSourceCsvCache)(import_sheetUrls2.SOURCE_KEYS.schedule);
+  }
   const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
   const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls2.SCHEDULE_CALENDAR_YEAR);
   const nowMs = Date.now();
+  const weekOptions = (0, import_dfs.listLeaderboardSlateOptions)(payload, refIso, nowMs);
   return {
+    weekOptions,
+    defaultWeek: (0, import_dfs.defaultLeaderboardWeek)(weekOptions, payload, refIso, nowMs),
     activeSlateToken: (0, import_dfs.resolveActiveDfsSlateToken)(payload, refIso, nowMs),
     defaultLockedSlateToken: (0, import_dfs.resolveMostRecentlyLockedSlateToken)(payload, refIso, nowMs)
   };
 }
+async function fetchLiveSlateDefaults() {
+  const live = await fetchLiveLeaderboardWeekOptions();
+  return {
+    activeSlateToken: live.activeSlateToken,
+    defaultLockedSlateToken: live.defaultLockedSlateToken
+  };
+}
+async function refreshLeaderboardWeekSelect() {
+  const select = document.getElementById("week");
+  if (!select) return false;
+  const { weekOptions } = await fetchLiveLeaderboardWeekOptions({ refreshSchedule: true });
+  const sig = weekOptions.map((o) => `${o.value}:${o.isPast ? 1 : 0}`).join("|");
+  if (sig === lastWeekOptionsSig) return false;
+  lastWeekOptionsSig = sig;
+  const current = String(select.value || "").trim().toUpperCase();
+  select.innerHTML = "";
+  for (const opt of weekOptions) {
+    const el = document.createElement("option");
+    el.value = opt.value;
+    el.dataset.href = sitePath(`/dfs/leaderboard/week/${encodeURIComponent(opt.value)}`);
+    el.textContent = formatWeekOptionLabel(opt);
+    if (opt.value.toUpperCase() === current) el.selected = true;
+    select.appendChild(el);
+  }
+  const active = weekOptions.find((o) => o.value.toUpperCase() === current);
+  if (active?.isPast) {
+    const statusEl = document.getElementById("weeklySlateStatus");
+    if (statusEl) statusEl.hidden = true;
+    if (window.__LEADERBOARD_PAGE__?.slate) {
+      window.__LEADERBOARD_PAGE__.slate.isPast = true;
+      window.__LEADERBOARD_PAGE__.slate.canEdit = false;
+      window.__LEADERBOARD_PAGE__.slate.isLocked = true;
+      window.__LEADERBOARD_PAGE__.slateLocked = true;
+    }
+  }
+  return true;
+}
 if (typeof window !== "undefined") {
-  window.MmsLeaderboardScoring = { scoreWeeklyLeaderboard, fetchLiveSlateDefaults };
+  window.MmsLeaderboardScoring = {
+    scoreWeeklyLeaderboard,
+    fetchLiveSlateDefaults,
+    fetchLiveLeaderboardWeekOptions,
+    refreshLeaderboardWeekSelect
+  };
 }
 export {
+  fetchLiveLeaderboardWeekOptions,
   fetchLiveSlateDefaults,
+  refreshLeaderboardWeekSelect,
   scoreWeeklyLeaderboard
 };
 /*! Bundled license information:

@@ -321,32 +321,57 @@ async function loadViaBrowserFirestore() {
   return data;
 }
 
+function isLeaderboardRootPath() {
+  const p = (window.location.pathname || "").replace(/\/$/, "");
+  return /\/dfs\/leaderboard$/i.test(p) || /\/dfs\/leaderboard\/index\.html$/i.test(p);
+}
+
 async function ensureLeaderboardDefaultWeek() {
   if (!page || page.serverRendered) return false;
 
+  const urlWeek = weekFromUrl();
+  if (urlWeek) return false;
+  if (!isLeaderboardRootPath()) return false;
+
   let defaults;
   try {
-    defaults = await fetchLiveSlateDefaults();
+    defaults = window.MmsLeaderboardScoring?.fetchLiveLeaderboardWeekOptions
+      ? await window.MmsLeaderboardScoring.fetchLiveLeaderboardWeekOptions({ refreshSchedule: true })
+      : await fetchLiveSlateDefaults();
   } catch (err) {
     console.error("Leaderboard default week lookup failed", err);
     return false;
   }
 
-  const urlWeek = weekFromUrl();
-  if (urlWeek) return false;
-
-  const target = String(defaults.defaultLockedSlateToken || "")
+  const target = String(defaults.defaultLockedSlateToken || defaults.defaultWeek || "")
     .trim()
     .toUpperCase();
   if (!target) return false;
 
-  const current = String(page.selectedWeek || "")
+  const select = document.getElementById("week");
+  const current = String(select?.value || page.selectedWeek || "")
     .trim()
     .toUpperCase();
   if (current === target) return false;
 
   window.location.replace(siteUrl(`/dfs/leaderboard/week/${encodeURIComponent(target)}/`));
   return true;
+}
+
+const LEADERBOARD_LIVE_POLL_MS = 90_000;
+let leaderboardLiveWatchStarted = false;
+
+function startLeaderboardLiveWatchers() {
+  if (leaderboardLiveWatchStarted) return;
+  if (!document.getElementById("week")) return;
+  if (!window.MmsLeaderboardScoring?.refreshLeaderboardWeekSelect) return;
+  leaderboardLiveWatchStarted = true;
+
+  void window.MmsLeaderboardScoring.refreshLeaderboardWeekSelect();
+  window.setInterval(() => {
+    void window.MmsLeaderboardScoring.refreshLeaderboardWeekSelect();
+    void ensureLeaderboardDefaultWeek();
+  }, LEADERBOARD_LIVE_POLL_MS);
 }
 
 async function loadLeaderboard() {
@@ -388,4 +413,14 @@ async function loadLeaderboard() {
   }
 }
 
-loadLeaderboard();
+function bootLeaderboardPage() {
+  const kickLive = () => window.setTimeout(startLeaderboardLiveWatchers, 400);
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", kickLive);
+  } else {
+    kickLive();
+  }
+  void loadLeaderboard();
+}
+
+bootLeaderboardPage();
