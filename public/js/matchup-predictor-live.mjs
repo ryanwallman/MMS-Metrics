@@ -5491,7 +5491,6 @@ var require_matchupPredictorStaticNav = __commonJS({
   "lib/matchupPredictorStaticNav.js"(exports, module) {
     "use strict";
     var { sitePath } = require_sitePaths();
-    var { matchupKeyToSlug } = require_matchupSlug();
     var { matchupPredictorBasePath, matchupPredictorViewPath } = require_matchupPredictorMode();
     function safeText2(value) {
       return (value || "").toString().trim();
@@ -5531,27 +5530,7 @@ var require_matchupPredictorStaticNav = __commonJS({
       const qs = params.toString();
       return qs ? `${base}?${qs}` : base;
     }
-    async function resolveStaticMatchupNavigateUrl({
-      mode,
-      view,
-      matchup = "",
-      basePath = "",
-      preferModes = null
-    }) {
-      const normalizedMode = safeText2(mode).toLowerCase() === "past" ? "past" : "future";
-      const viewToken = safeText2(view).toUpperCase();
-      const modes = preferModes || (normalizedMode === "past" ? ["past", "future"] : ["future", "past"]);
-      if (viewToken) {
-        for (const m of modes) {
-          const route = matchupViewRoute(m, viewToken, matchup, basePath);
-          if (await staticMatchupPageExists(route, basePath)) {
-            return sitePath(route, basePath);
-          }
-        }
-      }
-      return matchupViewQueryUrl(normalizedMode, viewToken, matchup, basePath);
-    }
-    function matchupModeFromPathname2(pathname) {
+    function matchupModeFromPathname(pathname) {
       const p = safeText2(pathname);
       if (/\/matchup-predictor\/past(?:\/|$)/i.test(p)) return "past";
       return "future";
@@ -5560,14 +5539,65 @@ var require_matchupPredictorStaticNav = __commonJS({
       const m = pathname.match(/\/matchup-predictor\/(?:past|future)\/view\/([^/]+)/i) || pathname.match(/\/matchup-predictor\/view\/([^/]+)/i);
       return m ? decodeURIComponent(m[1]).toUpperCase() : "";
     }
+    function getEffectiveMatchupMode2(pathname, url) {
+      const qMode = safeText2(url?.searchParams?.get("mode")).toLowerCase();
+      if (qMode === "past" || qMode === "future") return qMode;
+      return matchupModeFromPathname(pathname);
+    }
+    function shouldSkipMatchupAutoRedirect(pathname, url) {
+      if (!url) return false;
+      if (url.searchParams.get("view")) return true;
+      if (url.searchParams.get("week")) return true;
+      const wed = (url.searchParams.get("wed") || "").replace(/^D/i, "");
+      if (/^\d{8}$/.test(wed)) return true;
+      if (safeText2(url.searchParams.get("mode")).toLowerCase() === "past" && viewTokenFromPathname(pathname)) {
+        return true;
+      }
+      return false;
+    }
+    async function resolveStaticMatchupNavigateUrl({
+      mode,
+      view,
+      matchup = "",
+      basePath = ""
+    }) {
+      const normalizedMode = safeText2(mode).toLowerCase() === "past" ? "past" : "future";
+      const viewToken = safeText2(view).toUpperCase();
+      const hasMatchup = !!safeText2(matchup);
+      if (!viewToken) {
+        return matchupViewQueryUrl(normalizedMode, "", "", basePath);
+      }
+      if (normalizedMode === "past") {
+        const pastRoute = matchupViewRoute("past", viewToken, matchup, basePath);
+        if (await staticMatchupPageExists(pastRoute, basePath)) {
+          return sitePath(pastRoute, basePath);
+        }
+        if (hasMatchup) {
+          const futureRoute = matchupViewRoute("future", viewToken, matchup, basePath);
+          if (await staticMatchupPageExists(futureRoute, basePath)) {
+            return `${sitePath(futureRoute, basePath)}?mode=past`;
+          }
+        }
+        return matchupViewQueryUrl("past", viewToken, matchup, basePath);
+      }
+      for (const m of ["future", "past"]) {
+        const route = matchupViewRoute(m, viewToken, matchup, basePath);
+        if (await staticMatchupPageExists(route, basePath)) {
+          return sitePath(route, basePath);
+        }
+      }
+      return matchupViewQueryUrl("future", viewToken, matchup, basePath);
+    }
     module.exports = {
       isStaticMatchupHost,
       staticMatchupPageExists,
       matchupViewRoute,
       matchupViewQueryUrl,
       resolveStaticMatchupNavigateUrl,
-      matchupModeFromPathname: matchupModeFromPathname2,
-      viewTokenFromPathname
+      matchupModeFromPathname,
+      viewTokenFromPathname,
+      getEffectiveMatchupMode: getEffectiveMatchupMode2,
+      shouldSkipMatchupAutoRedirect
     };
   }
 });
@@ -6764,7 +6794,10 @@ async function refreshMatchupViewSelect() {
   if (!viewSelect) return;
   await (0, import_sheetUrls2.invalidateSourceCsvCache)(import_sheetUrls2.SOURCE_KEYS.schedule);
   const payload = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
-  const mode = (0, import_matchupPredictorStaticNav.matchupModeFromPathname)(window.location.pathname || "");
+  const mode = (0, import_matchupPredictorStaticNav.getEffectiveMatchupMode)(
+    window.location.pathname || "",
+    new URL(window.location.href)
+  );
   const refIso = (0, import_dfs.referenceIsoForScheduleYear)(import_sheetUrls.SCHEDULE_CALENDAR_YEAR);
   const options = (0, import_dfs.filterScheduleOptionsForMatchupPredictorMode)(
     payload.scheduleOptions || [],

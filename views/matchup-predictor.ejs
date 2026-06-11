@@ -570,6 +570,15 @@
         if (redirectLegacyMatchupPath()) return;
 
         function matchupModeFromPath() {
+          if (window.MmsMatchupPredictorNav?.getEffectiveMatchupMode) {
+            return window.MmsMatchupPredictorNav.getEffectiveMatchupMode(
+              window.location.pathname || "",
+              new URL(window.location.href)
+            );
+          }
+          const url = new URL(window.location.href);
+          const q = (url.searchParams.get("mode") || "").toLowerCase();
+          if (q === "past" || q === "future") return q;
           const p = window.location.pathname || "";
           return /\/matchup-predictor\/past(?:\/|$)/i.test(p) ? "past" : "future";
         }

@@ -8,7 +8,7 @@ import {
 } from "../lib/dfs.js";
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
-import { matchupModeFromPathname } from "../lib/matchupPredictorStaticNav.js";
+import { getEffectiveMatchupMode } from "../lib/matchupPredictorStaticNav.js";
 import {
   findParsedGameForMatchup,
   isParsedGameFinished,
@@ -67,7 +67,10 @@ export async function refreshMatchupViewSelect() {
 
   await invalidateSourceCsvCache(SOURCE_KEYS.schedule);
   const payload = await loadWeeklySchedule();
-  const mode = matchupModeFromPathname(window.location.pathname || "");
+  const mode = getEffectiveMatchupMode(
+    window.location.pathname || "",
+    new URL(window.location.href)
+  );
   const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
   const options = filterScheduleOptionsForMatchupPredictorMode(
     payload.scheduleOptions || [],

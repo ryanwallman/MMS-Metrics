@@ -5,8 +5,6 @@ import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import {
   referenceIsoForScheduleYear,
   pickMatchupPredictorDefaultViewForMode,
-  filterScheduleOptionsForMatchupPredictorMode,
-  resolveGamesForViewToken,
 } from "../lib/dfs.js";
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
 import {
@@ -14,6 +12,8 @@ import {
   resolveStaticMatchupNavigateUrl,
   matchupModeFromPathname,
   viewTokenFromPathname,
+  getEffectiveMatchupMode,
+  shouldSkipMatchupAutoRedirect,
 } from "../lib/matchupPredictorStaticNav.js";
 
 const USER_PICKED_VIEW_KEY = "mms-matchup-user-picked-view";
@@ -41,6 +41,20 @@ function normalizeMode(raw) {
   return safeText(raw).toLowerCase() === "past" ? "past" : "future";
 }
 
+export function syncMatchupModeTabs(mode) {
+  if (typeof document === "undefined") return;
+  const normalized = normalizeMode(mode);
+  document.querySelectorAll(".matchup-mode-tab").forEach((tab) => {
+    const href = safeText(tab.getAttribute("href"));
+    const isPast = /\/matchup-predictor\/past(?:\/|$)/i.test(href);
+    const isFuture = /\/matchup-predictor\/future(?:\/|$)/i.test(href);
+    const active = normalized === "past" ? isPast : isFuture;
+    tab.classList.toggle("is-active", active);
+    if (active) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  });
+}
+
 function redirectLegacyMatchupPaths(pathname) {
   const p = safeText(pathname);
   if (p.replace(/\/$/, "") === sitePath("/matchup-predictor")) {
@@ -54,13 +68,6 @@ function redirectLegacyMatchupPaths(pathname) {
     return true;
   }
   return false;
-}
-
-function hasViewQueryParams(url) {
-  if (url.searchParams.get("view")) return true;
-  if (url.searchParams.get("week")) return true;
-  const wed = (url.searchParams.get("wed") || "").replace(/^D/i, "");
-  return /^\d{8}$/.test(wed);
 }
 
 async function resolveDefaultViewToken(mode) {
@@ -106,14 +113,18 @@ export async function ensureMatchupPredictorActiveView() {
   if (redirectLegacyMatchupPaths(pathname)) return;
 
   const url = new URL(window.location.href);
-  if (hasViewQueryParams(url)) {
+  const effectiveMode = getEffectiveMatchupMode(pathname, url);
+  syncMatchupModeTabs(effectiveMode);
+
+  if (shouldSkipMatchupAutoRedirect(pathname, url)) {
     hideLoadingOverlay();
     return;
   }
 
-  const mode = matchupModeFromPathname(pathname);
   const currentView = viewTokenFromPathname(pathname);
-  const isModeRoot = new RegExp(`/matchup-predictor/${mode}/?$`, "i").test(pathname.replace(/\/$/, ""));
+  const isModeRoot = new RegExp(`/matchup-predictor/${effectiveMode}/?$`, "i").test(
+    pathname.replace(/\/$/, "")
+  );
   const hasMatchup = /\/matchup\//.test(pathname);
 
   if (hasMatchup) {
@@ -130,7 +141,7 @@ export async function ensureMatchupPredictorActiveView() {
   }
 
   try {
-    const active = await resolveDefaultViewToken(mode);
+    const active = await resolveDefaultViewToken(effectiveMode);
     if (!active) {
       hideLoadingOverlay();
       return;
@@ -145,8 +156,8 @@ export async function ensureMatchupPredictorActiveView() {
     })();
 
     if (isModeRoot) {
-      const target = await resolveNavigateTarget(mode, active);
-      if (!pathname.includes(`/view/${encodeURIComponent(active)}`) && window.location.href !== target) {
+      const target = await resolveNavigateTarget(effectiveMode, active);
+      if (window.location.href !== target && !window.location.href.startsWith(target.split("?")[0] + "?")) {
         window.location.replace(target);
         return;
       }
@@ -155,7 +166,7 @@ export async function ensureMatchupPredictorActiveView() {
     }
 
     if (!hasMatchup && !userPickedView && currentView && currentView !== active) {
-      const target = await resolveNavigateTarget(mode, active);
+      const target = await resolveNavigateTarget(effectiveMode, active);
       if (window.location.href !== target) {
         window.location.replace(target);
         return;
@@ -182,20 +193,16 @@ export async function navigateMatchupPredictorView(mode, view, matchup = "") {
     typeof window !== "undefined" && window.__SITE_BASE_PATH__ != null
       ? String(window.__SITE_BASE_PATH__ || "")
       : "";
-  let target;
   if (isStaticMatchupHost()) {
-    target = await resolveStaticMatchupNavigateUrl({ mode, view, matchup, basePath });
-  } else {
-    let path = `/matchup-predictor/${normalizeMode(mode)}/view/${encodeURIComponent(view)}`;
-    if (matchup) {
-      const pipe = matchup.indexOf("|");
-      const slug =
-        pipe >= 0 ? `${matchup.slice(0, pipe)}-${matchup.slice(pipe + 1)}` : matchup;
-      path += `/matchup/${slug}`;
-    }
-    target = sitePath(path);
+    return resolveStaticMatchupNavigateUrl({ mode, view, matchup, basePath });
   }
-  return target;
+  let path = `/matchup-predictor/${normalizeMode(mode)}/view/${encodeURIComponent(view)}`;
+  if (matchup) {
+    const pipe = matchup.indexOf("|");
+    const slug = pipe >= 0 ? `${matchup.slice(0, pipe)}-${matchup.slice(pipe + 1)}` : matchup;
+    path += `/matchup/${slug}`;
+  }
+  return sitePath(path);
 }
 
 if (typeof window !== "undefined") {
@@ -205,6 +212,8 @@ if (typeof window !== "undefined") {
     navigateMatchupPredictorView,
     resolveStaticMatchupNavigateUrl,
     isStaticMatchupHost,
+    syncMatchupModeTabs,
+    getEffectiveMatchupMode,
   };
 
   ensureMatchupPredictorActiveView().catch((err) => {

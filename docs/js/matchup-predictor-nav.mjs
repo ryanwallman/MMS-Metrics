@@ -1144,7 +1144,7 @@ var require_dfs = __commonJS({
         }
       }
       if (out.size === 0) {
-        const games = resolveGamesForViewToken2(v, schedulePayload);
+        const games = resolveGamesForViewToken(v, schedulePayload);
         for (const g of games) {
           if (g._iso) out.add(safeText2(g._iso));
         }
@@ -1359,7 +1359,7 @@ ${slice[1]}`;
           isPast: false
         };
       }
-      const games = resolveGamesForViewToken2(viewToken, schedulePayload);
+      const games = resolveGamesForViewToken(viewToken, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -1617,7 +1617,7 @@ ${slice[1]}`;
       }
       return { past, future };
     }
-    function filterScheduleOptionsForMatchupPredictorMode2(scheduleOptions, schedulePayload, refIso, nowMs, mode) {
+    function filterScheduleOptionsForMatchupPredictorMode(scheduleOptions, schedulePayload, refIso, nowMs, mode) {
       const normalized = safeText2(mode).toLowerCase() === "past" ? "past" : "future";
       const { past, future } = buildMatchupPredictorSlateSets(schedulePayload, refIso, nowMs);
       const allowed = normalized === "past" ? past : future;
@@ -1645,7 +1645,7 @@ ${slice[1]}`;
       const v = safeText2(viewToken).toUpperCase();
       if (!v) return null;
       const opt = (slateOptions || []).find((o) => o.value === v);
-      const games = resolveGamesForViewToken2(v, schedulePayload);
+      const games = resolveGamesForViewToken(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -1692,7 +1692,7 @@ ${slice[1]}`;
         isActive: opt?.isActive ?? false
       };
     }
-    function resolveGamesForViewToken2(viewToken, payload) {
+    function resolveGamesForViewToken(viewToken, payload) {
       const v = safeText2(viewToken);
       if (/^W\d+$/i.test(v)) {
         const wn = Number(v.slice(1));
@@ -1909,7 +1909,7 @@ ${slice[1]}`;
       const ix = weekOptions.findIndex((o) => o.value.toUpperCase() === v);
       if (ix <= 0) return null;
       const prev = weekOptions[ix - 1];
-      const games = resolveGamesForViewToken2(prev.value, schedulePayload);
+      const games = resolveGamesForViewToken(prev.value, schedulePayload);
       const isoDates = dfsScoringIsoDatesForToken(prev.value, schedulePayload);
       const wn = Number(prev.value.slice(1));
       return {
@@ -1996,7 +1996,7 @@ ${slice[1]}`;
     function buildWeekSlateFromToken(viewToken, schedulePayload, refIso) {
       const v = safeText2(viewToken).toUpperCase();
       if (!/^W\d+$/.test(v)) return null;
-      const games = resolveGamesForViewToken2(v, schedulePayload);
+      const games = resolveGamesForViewToken(v, schedulePayload);
       const teamIds = /* @__PURE__ */ new Set();
       const isoDates = /* @__PURE__ */ new Set();
       for (const g of games) {
@@ -2060,7 +2060,7 @@ ${slice[1]}`;
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
       resolvePreviousDfsSlate,
-      resolveGamesForViewToken: resolveGamesForViewToken2,
+      resolveGamesForViewToken,
       buildDfsPlayerPool,
       load2026GamelogsByPlayer,
       parse2026GamelogsFromCsvText,
@@ -2082,7 +2082,7 @@ ${slice[1]}`;
       resolveNextUpcomingScheduleViewToken,
       pickMatchupPredictorDefaultView,
       buildMatchupPredictorSlateSets,
-      filterScheduleOptionsForMatchupPredictorMode: filterScheduleOptionsForMatchupPredictorMode2,
+      filterScheduleOptionsForMatchupPredictorMode,
       pickMatchupPredictorDefaultViewForMode: pickMatchupPredictorDefaultViewForMode2,
       filterScheduleOptionsForMatchupPredictor,
       filterScheduleOptionsToDfsVisibility,
@@ -5485,7 +5485,6 @@ var require_matchupPredictorStaticNav = __commonJS({
   "lib/matchupPredictorStaticNav.js"(exports, module) {
     "use strict";
     var { sitePath: sitePath2 } = require_sitePaths();
-    var { matchupKeyToSlug } = require_matchupSlug();
     var { matchupPredictorBasePath, matchupPredictorViewPath } = require_matchupPredictorMode();
     function safeText2(value) {
       return (value || "").toString().trim();
@@ -5525,26 +5524,6 @@ var require_matchupPredictorStaticNav = __commonJS({
       const qs = params.toString();
       return qs ? `${base}?${qs}` : base;
     }
-    async function resolveStaticMatchupNavigateUrl2({
-      mode,
-      view,
-      matchup = "",
-      basePath = "",
-      preferModes = null
-    }) {
-      const normalizedMode = safeText2(mode).toLowerCase() === "past" ? "past" : "future";
-      const viewToken = safeText2(view).toUpperCase();
-      const modes = preferModes || (normalizedMode === "past" ? ["past", "future"] : ["future", "past"]);
-      if (viewToken) {
-        for (const m of modes) {
-          const route = matchupViewRoute(m, viewToken, matchup, basePath);
-          if (await staticMatchupPageExists(route, basePath)) {
-            return sitePath2(route, basePath);
-          }
-        }
-      }
-      return matchupViewQueryUrl(normalizedMode, viewToken, matchup, basePath);
-    }
     function matchupModeFromPathname2(pathname) {
       const p = safeText2(pathname);
       if (/\/matchup-predictor\/past(?:\/|$)/i.test(p)) return "past";
@@ -5554,6 +5533,55 @@ var require_matchupPredictorStaticNav = __commonJS({
       const m = pathname.match(/\/matchup-predictor\/(?:past|future)\/view\/([^/]+)/i) || pathname.match(/\/matchup-predictor\/view\/([^/]+)/i);
       return m ? decodeURIComponent(m[1]).toUpperCase() : "";
     }
+    function getEffectiveMatchupMode2(pathname, url) {
+      const qMode = safeText2(url?.searchParams?.get("mode")).toLowerCase();
+      if (qMode === "past" || qMode === "future") return qMode;
+      return matchupModeFromPathname2(pathname);
+    }
+    function shouldSkipMatchupAutoRedirect2(pathname, url) {
+      if (!url) return false;
+      if (url.searchParams.get("view")) return true;
+      if (url.searchParams.get("week")) return true;
+      const wed = (url.searchParams.get("wed") || "").replace(/^D/i, "");
+      if (/^\d{8}$/.test(wed)) return true;
+      if (safeText2(url.searchParams.get("mode")).toLowerCase() === "past" && viewTokenFromPathname2(pathname)) {
+        return true;
+      }
+      return false;
+    }
+    async function resolveStaticMatchupNavigateUrl2({
+      mode,
+      view,
+      matchup = "",
+      basePath = ""
+    }) {
+      const normalizedMode = safeText2(mode).toLowerCase() === "past" ? "past" : "future";
+      const viewToken = safeText2(view).toUpperCase();
+      const hasMatchup = !!safeText2(matchup);
+      if (!viewToken) {
+        return matchupViewQueryUrl(normalizedMode, "", "", basePath);
+      }
+      if (normalizedMode === "past") {
+        const pastRoute = matchupViewRoute("past", viewToken, matchup, basePath);
+        if (await staticMatchupPageExists(pastRoute, basePath)) {
+          return sitePath2(pastRoute, basePath);
+        }
+        if (hasMatchup) {
+          const futureRoute = matchupViewRoute("future", viewToken, matchup, basePath);
+          if (await staticMatchupPageExists(futureRoute, basePath)) {
+            return `${sitePath2(futureRoute, basePath)}?mode=past`;
+          }
+        }
+        return matchupViewQueryUrl("past", viewToken, matchup, basePath);
+      }
+      for (const m of ["future", "past"]) {
+        const route = matchupViewRoute(m, viewToken, matchup, basePath);
+        if (await staticMatchupPageExists(route, basePath)) {
+          return sitePath2(route, basePath);
+        }
+      }
+      return matchupViewQueryUrl("future", viewToken, matchup, basePath);
+    }
     module.exports = {
       isStaticMatchupHost: isStaticMatchupHost2,
       staticMatchupPageExists,
@@ -5561,7 +5589,9 @@ var require_matchupPredictorStaticNav = __commonJS({
       matchupViewQueryUrl,
       resolveStaticMatchupNavigateUrl: resolveStaticMatchupNavigateUrl2,
       matchupModeFromPathname: matchupModeFromPathname2,
-      viewTokenFromPathname: viewTokenFromPathname2
+      viewTokenFromPathname: viewTokenFromPathname2,
+      getEffectiveMatchupMode: getEffectiveMatchupMode2,
+      shouldSkipMatchupAutoRedirect: shouldSkipMatchupAutoRedirect2
     };
   }
 });
@@ -5588,6 +5618,19 @@ function safeText(value) {
 function normalizeMode(raw) {
   return safeText(raw).toLowerCase() === "past" ? "past" : "future";
 }
+function syncMatchupModeTabs(mode) {
+  if (typeof document === "undefined") return;
+  const normalized = normalizeMode(mode);
+  document.querySelectorAll(".matchup-mode-tab").forEach((tab) => {
+    const href = safeText(tab.getAttribute("href"));
+    const isPast = /\/matchup-predictor\/past(?:\/|$)/i.test(href);
+    const isFuture = /\/matchup-predictor\/future(?:\/|$)/i.test(href);
+    const active = normalized === "past" ? isPast : isFuture;
+    tab.classList.toggle("is-active", active);
+    if (active) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  });
+}
 function redirectLegacyMatchupPaths(pathname) {
   const p = safeText(pathname);
   if (p.replace(/\/$/, "") === sitePath("/matchup-predictor")) {
@@ -5601,12 +5644,6 @@ function redirectLegacyMatchupPaths(pathname) {
     return true;
   }
   return false;
-}
-function hasViewQueryParams(url) {
-  if (url.searchParams.get("view")) return true;
-  if (url.searchParams.get("week")) return true;
-  const wed = (url.searchParams.get("wed") || "").replace(/^D/i, "");
-  return /^\d{8}$/.test(wed);
 }
 async function resolveDefaultViewToken(mode) {
   const normalized = normalizeMode(mode);
@@ -5643,13 +5680,16 @@ async function ensureMatchupPredictorActiveView() {
   const pathname = window.location.pathname || "";
   if (redirectLegacyMatchupPaths(pathname)) return;
   const url = new URL(window.location.href);
-  if (hasViewQueryParams(url)) {
+  const effectiveMode = (0, import_matchupPredictorStaticNav.getEffectiveMatchupMode)(pathname, url);
+  syncMatchupModeTabs(effectiveMode);
+  if ((0, import_matchupPredictorStaticNav.shouldSkipMatchupAutoRedirect)(pathname, url)) {
     hideLoadingOverlay();
     return;
   }
-  const mode = (0, import_matchupPredictorStaticNav.matchupModeFromPathname)(pathname);
   const currentView = (0, import_matchupPredictorStaticNav.viewTokenFromPathname)(pathname);
-  const isModeRoot = new RegExp(`/matchup-predictor/${mode}/?$`, "i").test(pathname.replace(/\/$/, ""));
+  const isModeRoot = new RegExp(`/matchup-predictor/${effectiveMode}/?$`, "i").test(
+    pathname.replace(/\/$/, "")
+  );
   const hasMatchup = /\/matchup\//.test(pathname);
   if (hasMatchup) {
     hideLoadingOverlay();
@@ -5662,7 +5702,7 @@ async function ensureMatchupPredictorActiveView() {
     }
   }
   try {
-    const active = await resolveDefaultViewToken(mode);
+    const active = await resolveDefaultViewToken(effectiveMode);
     if (!active) {
       hideLoadingOverlay();
       return;
@@ -5675,8 +5715,8 @@ async function ensureMatchupPredictorActiveView() {
       }
     })();
     if (isModeRoot) {
-      const target = await resolveNavigateTarget(mode, active);
-      if (!pathname.includes(`/view/${encodeURIComponent(active)}`) && window.location.href !== target) {
+      const target = await resolveNavigateTarget(effectiveMode, active);
+      if (window.location.href !== target && !window.location.href.startsWith(target.split("?")[0] + "?")) {
         window.location.replace(target);
         return;
       }
@@ -5684,7 +5724,7 @@ async function ensureMatchupPredictorActiveView() {
       return;
     }
     if (!hasMatchup && !userPickedView && currentView && currentView !== active) {
-      const target = await resolveNavigateTarget(mode, active);
+      const target = await resolveNavigateTarget(effectiveMode, active);
       if (window.location.href !== target) {
         window.location.replace(target);
         return;
@@ -5704,19 +5744,16 @@ function markMatchupUserPickedView() {
 }
 async function navigateMatchupPredictorView(mode, view, matchup = "") {
   const basePath = typeof window !== "undefined" && window.__SITE_BASE_PATH__ != null ? String(window.__SITE_BASE_PATH__ || "") : "";
-  let target;
   if ((0, import_matchupPredictorStaticNav.isStaticMatchupHost)()) {
-    target = await (0, import_matchupPredictorStaticNav.resolveStaticMatchupNavigateUrl)({ mode, view, matchup, basePath });
-  } else {
-    let path = `/matchup-predictor/${normalizeMode(mode)}/view/${encodeURIComponent(view)}`;
-    if (matchup) {
-      const pipe = matchup.indexOf("|");
-      const slug = pipe >= 0 ? `${matchup.slice(0, pipe)}-${matchup.slice(pipe + 1)}` : matchup;
-      path += `/matchup/${slug}`;
-    }
-    target = sitePath(path);
+    return (0, import_matchupPredictorStaticNav.resolveStaticMatchupNavigateUrl)({ mode, view, matchup, basePath });
   }
-  return target;
+  let path = `/matchup-predictor/${normalizeMode(mode)}/view/${encodeURIComponent(view)}`;
+  if (matchup) {
+    const pipe = matchup.indexOf("|");
+    const slug = pipe >= 0 ? `${matchup.slice(0, pipe)}-${matchup.slice(pipe + 1)}` : matchup;
+    path += `/matchup/${slug}`;
+  }
+  return sitePath(path);
 }
 if (typeof window !== "undefined") {
   window.MmsMatchupPredictorNav = {
@@ -5724,7 +5761,9 @@ if (typeof window !== "undefined") {
     markMatchupUserPickedView,
     navigateMatchupPredictorView,
     resolveStaticMatchupNavigateUrl: import_matchupPredictorStaticNav.resolveStaticMatchupNavigateUrl,
-    isStaticMatchupHost: import_matchupPredictorStaticNav.isStaticMatchupHost
+    isStaticMatchupHost: import_matchupPredictorStaticNav.isStaticMatchupHost,
+    syncMatchupModeTabs,
+    getEffectiveMatchupMode: import_matchupPredictorStaticNav.getEffectiveMatchupMode
   };
   ensureMatchupPredictorActiveView().catch((err) => {
     console.error("Matchup predictor schedule redirect failed", err);
@@ -5733,7 +5772,8 @@ if (typeof window !== "undefined") {
 export {
   ensureMatchupPredictorActiveView,
   markMatchupUserPickedView,
-  navigateMatchupPredictorView
+  navigateMatchupPredictorView,
+  syncMatchupModeTabs
 };
 /*! Bundled license information:
 
