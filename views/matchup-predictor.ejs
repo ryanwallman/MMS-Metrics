@@ -129,12 +129,27 @@
             <% } else { %>
             <td class="matchup-lines-team matchup-lines-team--both">Tie</td>
             <% } %>
+            <% const predFinal = mp.lines && mp.lines.finalScore ? mp.lines.finalScore : {}; %>
+            <% let predWinnerSide = predFinal.winnerSide; %>
+            <% if (!predWinnerSide && mp.projectedRuns) {
+              const predAway = Number(mp.projectedRuns.away);
+              const predHome = Number(mp.projectedRuns.home);
+              if (!isNaN(predAway) && !isNaN(predHome)) {
+                if (predAway > predHome) predWinnerSide = 'away';
+                else if (predHome > predAway) predWinnerSide = 'home';
+                else predWinnerSide = 'tie';
+              }
+            } %>
             <td class="matchup-lines-value matchup-lines-score">
-              <span class="matchup-score-runs <%= gr.winnerSide === 'away' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= gr.awayScore %></span>
+              <span class="matchup-score-runs <%= predWinnerSide === 'away' ? 'matchup-score-runs--winner' : predWinnerSide === 'home' ? 'matchup-score-runs--loser' : '' %>"><%= mp.projectedRuns ? mp.projectedRuns.away : '—' %></span>
               <span class="matchup-score-sep">–</span>
-              <span class="matchup-score-runs <%= gr.winnerSide === 'home' ? 'matchup-score-runs--winner' : 'matchup-score-runs--loser' %>"><%= gr.homeScore %></span>
+              <span class="matchup-score-runs <%= predWinnerSide === 'home' ? 'matchup-score-runs--winner' : predWinnerSide === 'away' ? 'matchup-score-runs--loser' : '' %>"><%= mp.projectedRuns ? mp.projectedRuns.home : '—' %></span>
             </td>
-            <td class="matchup-bet-result">Actual</td>
+            <td class="matchup-bet-result matchup-lines-score">
+              <span class="matchup-score-runs <%= gr.winnerSide === 'away' ? 'matchup-score-runs--winner' : gr.winnerSide === 'home' ? 'matchup-score-runs--loser' : '' %>"><%= gr.awayScore %></span>
+              <span class="matchup-score-sep">–</span>
+              <span class="matchup-score-runs <%= gr.winnerSide === 'home' ? 'matchup-score-runs--winner' : gr.winnerSide === 'away' ? 'matchup-score-runs--loser' : '' %>"><%= gr.homeScore %></span>
+            </td>
           </tr>
           <% const ou = bets.overUnder || {}; %>
           <tr>

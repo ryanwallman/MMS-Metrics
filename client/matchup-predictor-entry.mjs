@@ -239,7 +239,13 @@ function benchNormsFromForm() {
 function autoStartScoreWatcher() {
   if (scoreWatchStop) return;
   const ctx = typeof window !== "undefined" ? window.__MATCHUP_CLIENT__ : null;
-  if (!ctx || ctx.isFinishedGame) return;
+  if (!ctx) return;
+
+  if (ctx.isFinishedGame && ctx.gameResult) {
+    window.MmsMatchupPredictorUi?.renderGameResultUi?.(ctx.gameResult);
+    return;
+  }
+
   if (!document.querySelector(".matchup-prediction:not(.matchup-prediction--final)")) return;
 
   scoreWatchStop = watchMatchupLiveScores({

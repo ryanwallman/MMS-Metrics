@@ -439,6 +439,55 @@
     return "";
   }
 
+  function predictedWinnerSideFromPrediction(mp) {
+    const fs = mp?.lines?.finalScore;
+    if (fs?.winnerSide) return fs.winnerSide;
+    const away = Number(mp?.projectedRuns?.away);
+    const home = Number(mp?.projectedRuns?.home);
+    if (!Number.isFinite(away) || !Number.isFinite(home)) return null;
+    if (away > home) return "away";
+    if (home > away) return "home";
+    return "tie";
+  }
+
+  function renderScoreRunsMarkup(awayRuns, homeRuns, winnerSide) {
+    const awayNum = Number(awayRuns);
+    const homeNum = Number(homeRuns);
+    const awayText = Number.isFinite(awayNum) ? String(awayNum) : "—";
+    const homeText = Number.isFinite(homeNum) ? String(homeNum) : "—";
+    let awayClass = "matchup-score-runs";
+    let homeClass = "matchup-score-runs";
+    if (winnerSide === "away") {
+      awayClass += " matchup-score-runs--winner";
+      homeClass += " matchup-score-runs--loser";
+    } else if (winnerSide === "home") {
+      homeClass += " matchup-score-runs--winner";
+      awayClass += " matchup-score-runs--loser";
+    }
+    return (
+      '<span class="' +
+      awayClass +
+      '">' +
+      escapeHtml(awayText) +
+      '</span><span class="matchup-score-sep">–</span><span class="' +
+      homeClass +
+      '">' +
+      escapeHtml(homeText) +
+      "</span>"
+    );
+  }
+
+  function renderScoreRunsCell(awayRuns, homeRuns, winnerSide, cellClass) {
+    const cls = cellClass || "matchup-lines-value matchup-lines-score";
+    return (
+      '<td class="' +
+      cls +
+      '">' +
+      renderScoreRunsMarkup(awayRuns, homeRuns, winnerSide) +
+      "</td>"
+    );
+  }
+
   function renderGameResultUi(gameResult) {
     if (!gameResult) return;
     const section = document.querySelector(".matchup-prediction");
@@ -494,6 +543,9 @@
       ou.pick === "over" ? "Over" : ou.pick === "under" ? "Under" : "—";
     const mlAwayLine = mp.lines?.moneylineAway || "—";
     const mlHomeLine = mp.lines?.moneylineHome || "—";
+    const predWinnerSide = predictedWinnerSideFromPrediction(mp);
+    const predAway = mp.projectedRuns?.away;
+    const predHome = mp.projectedRuns?.home;
 
     section.className = "matchup-prediction matchup-predictor-panel matchup-prediction--final";
     section.innerHTML =
@@ -517,15 +569,14 @@
       '<div class="page-table-wrap"><table class="matchup-pred-lines page-table"><thead><tr><th>Line</th><th>Team / pick</th><th>Value</th><th>Result</th></tr></thead><tbody>' +
       '<tr class="matchup-lines-row--final-score"><td>Final score</td>' +
       winnerTeamCell +
-      '<td class="matchup-lines-value matchup-lines-score"><span class="matchup-score-runs ' +
-      (winnerSide === "away" ? "matchup-score-runs--winner" : "matchup-score-runs--loser") +
-      '">' +
-      escapeHtml(gr.awayScore) +
-      '</span><span class="matchup-score-sep">–</span><span class="matchup-score-runs ' +
-      (winnerSide === "home" ? "matchup-score-runs--winner" : "matchup-score-runs--loser") +
-      '">' +
-      escapeHtml(gr.homeScore) +
-      '</span></td><td class="matchup-bet-result">Actual</td></tr>' +
+      renderScoreRunsCell(predAway, predHome, predWinnerSide) +
+      renderScoreRunsCell(
+        gr.awayScore,
+        gr.homeScore,
+        winnerSide,
+        "matchup-bet-result matchup-lines-score"
+      ) +
+      "</tr>" +
       "<tr><td>Over / under (total runs)</td>" +
       '<td class="matchup-lines-team matchup-lines-team--both">' +
       escapeHtml(ouPickLabel) +
