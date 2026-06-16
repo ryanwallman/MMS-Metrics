@@ -16,7 +16,7 @@ import {
 import { buildMatchupOptionsForGames } from "../lib/matchupScheduleChrome.js";
 import { applyGamelogMissingForFinishedGame } from "../lib/matchupGamelogMissing.js";
 import {
-  loadLiveMatchupSeasonRecord,
+  loadLiveMatchupPredictorSnapshot,
   countFinishedScheduleGames,
 } from "../lib/matchupLiveSeasonRecord.js";
 import {
@@ -36,6 +36,7 @@ let seasonRecordWatchTimer = null;
 let liveChromeTimer = null;
 let lastFinishedGameCount = null;
 let lastRecordKey = null;
+let lastAuditKey = null;
 let lastMatchupOptionsSig = null;
 let lastGamelogMissingSig = null;
 let lastViewOptionsSig = null;
@@ -48,6 +49,17 @@ function safeText(value) {
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
+}
+
+function auditSignature(audit) {
+  if (!audit) return "";
+  const misses = (audit.closeMisses || [])
+    .map((m) => `${m.matchupKey || m.label}:${m.score}`)
+    .join("|");
+  const weeks = (audit.weeks || [])
+    .map((w) => `${w.weekNumber}:${w.base?.wins}-${w.base?.losses}:${w.closeMisses}`)
+    .join("|");
+  return `${audit.decided}|${audit.wins}|${audit.losses}|${misses}|${weeks}`;
 }
 
 function scheduleSignature(parsedGames) {
@@ -121,6 +133,7 @@ export async function refreshMatchupScheduleChrome() {
   if (schedSig !== lastScheduleSignature) {
     lastScheduleSignature = schedSig;
     lastRecordKey = null;
+    lastAuditKey = null;
   }
 
   const viewToken = String(viewSelect.value || "").trim();
@@ -253,7 +266,8 @@ export async function refreshSeasonRecord({ force = false } = {}) {
         lastFinishedGameCount != null &&
         finishedCount === lastFinishedGameCount &&
         schedSig === lastScheduleSignature &&
-        lastRecordKey
+        lastRecordKey &&
+        lastAuditKey
       ) {
         return;
       }
@@ -261,13 +275,28 @@ export async function refreshSeasonRecord({ force = false } = {}) {
       lastScheduleSignature = schedSig;
     }
 
-    const record = await loadLiveMatchupSeasonRecord({ refreshSchedule: true });
-    if (!record) return;
-    const key = recordSignature(record);
-    if (key === lastRecordKey) return;
-    lastRecordKey = key;
-    window.__MATCHUP_PREDICTOR_RECORD__ = record;
-    window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
+    const snapshot = await loadLiveMatchupPredictorSnapshot({ refreshSchedule: true });
+    if (!snapshot) return;
+
+    const record = snapshot.record;
+    if (record) {
+      const key = recordSignature(record);
+      if (key !== lastRecordKey) {
+        lastRecordKey = key;
+        window.__MATCHUP_PREDICTOR_RECORD__ = record;
+        window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
+      }
+    }
+
+    const audit = snapshot.audit;
+    if (audit) {
+      const auditKey = auditSignature(audit);
+      if (auditKey !== lastAuditKey) {
+        lastAuditKey = auditKey;
+        window.__MATCHUP_PREDICTOR_AUDIT__ = audit;
+        window.MmsMatchupPredictorUi?.updatePredictorAuditUi?.(audit);
+      }
+    }
   } catch (err) {
     console.error("Matchup season record refresh failed", err);
   }

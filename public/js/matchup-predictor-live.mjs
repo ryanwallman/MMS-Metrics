@@ -6556,6 +6556,138 @@ var require_matchupPredictorRecord = __commonJS({
   }
 });
 
+// lib/matchupPredictorAudit.js
+var require_matchupPredictorAudit = __commonJS({
+  "lib/matchupPredictorAudit.js"(exports, module) {
+    "use strict";
+    var { evaluateFinishedMatchupGames } = require_matchupPredictorRecord();
+    var {
+      buildCalibrationWeights,
+      buildWalkForwardWeeklyAudit,
+      CLOSE_CALL_WIN_PCT
+    } = require_matchupWinProbCalibration();
+    var { matchupKeyToSlug } = require_matchupSlug();
+    var { createMemoryCache } = require_memoryCache();
+    var auditCache = createMemoryCache(
+      Number(process.env.MATCHUP_RECORD_CACHE_TTL_MS) || Number("600000") || 5 * 60 * 1e3,
+      "matchup-predictor-audit"
+    );
+    function summarizeRecord(gameRows) {
+      let wins = 0;
+      let losses = 0;
+      for (const row of gameRows || []) {
+        if (row.correct === true) wins += 1;
+        else if (row.correct === false) losses += 1;
+      }
+      return {
+        wins,
+        losses,
+        decided: wins + losses,
+        winPct: wins + losses > 0 ? Math.round(wins / (wins + losses) * 1e3) / 10 : null
+      };
+    }
+    function compactDayDigitsFromIso(iso) {
+      return safeText2(iso).replace(/-/g, "");
+    }
+    function safeText2(value) {
+      return (value || "").toString().trim();
+    }
+    function viewTokenForGame(row) {
+      if (row.weekNumber != null && row.weekday === 0) return `W${row.weekNumber}`;
+      if (row.isoDate) return `D${compactDayDigitsFromIso(row.isoDate)}`;
+      if (row.weekNumber != null) return `W${row.weekNumber}`;
+      return "";
+    }
+    function formatGameLink(row) {
+      const view = viewTokenForGame(row);
+      const slug = matchupKeyToSlug(row.matchupKey);
+      if (!view || !slug) return null;
+      return `/matchup-predictor/past/view/${encodeURIComponent(view)}/matchup/${encodeURIComponent(slug)}`;
+    }
+    function buildCloseMisses(gameRows) {
+      return (gameRows || []).filter((row) => row.isCloseMiss).sort((a, b) => (a.isoDate || "").localeCompare(b.isoDate || "")).map((row) => ({
+        isoDate: row.isoDate,
+        weekNumber: row.weekNumber,
+        label: row.label,
+        predictedSide: row.predictedSide,
+        predictedTeam: row.predictedSide === "home" ? row.homeName : row.awayName,
+        favoredWinPct: row.favoredWinPct,
+        actualSide: row.actualSide,
+        actualWinner: row.actualSide === "home" ? row.homeName : row.actualSide === "away" ? row.awayName : "Tie",
+        score: `${row.awayScore}\u2013${row.homeScore}`,
+        viewToken: viewTokenForGame(row),
+        matchupKey: row.matchupKey,
+        link: formatGameLink(row)
+      }));
+    }
+    function walkForwardCalibratedRecord(weeks) {
+      let wins = 0;
+      let losses = 0;
+      for (const wk of weeks || []) {
+        const block = wk.calibrated || wk.base;
+        wins += block.wins;
+        losses += block.losses;
+      }
+      return {
+        wins,
+        losses,
+        decided: wins + losses,
+        winPct: wins + losses > 0 ? Math.round(wins / (wins + losses) * 1e3) / 10 : null
+      };
+    }
+    function computeMatchupPredictorAudit(input) {
+      const gameRows = evaluateFinishedMatchupGames(input);
+      const record = summarizeRecord(gameRows);
+      const weeks = buildWalkForwardWeeklyAudit(gameRows);
+      const closeMisses = buildCloseMisses(gameRows);
+      const calibration = buildCalibrationWeights(gameRows);
+      const calibratedRecord = walkForwardCalibratedRecord(weeks);
+      return {
+        ...record,
+        weeks,
+        closeMisses,
+        closeCallThresholdPct: CLOSE_CALL_WIN_PCT,
+        calibration: {
+          ...calibration,
+          weights: calibration.weights ? calibration.weights.map((w) => round4(w)) : null
+        },
+        calibratedRecord,
+        evaluatedGames: gameRows.length
+      };
+    }
+    function round4(n) {
+      return Math.round(n * 1e4) / 1e4;
+    }
+    async function getMatchupPredictorAudit(input) {
+      return auditCache.get("audit", async () => computeMatchupPredictorAudit(input));
+    }
+    async function getMatchupCalibrationForProjections(input) {
+      const audit = await getMatchupPredictorAudit(input);
+      return {
+        weights: audit?.calibration?.weights || null,
+        trainingGames: audit?.calibration?.trainingGames ?? 0,
+        mlEnabled: Boolean(audit?.calibration?.weights?.length)
+      };
+    }
+    function matchupPredictorHeadlineRecord(audit) {
+      if (!audit || audit.decided <= 0) return null;
+      return {
+        wins: audit.wins,
+        losses: audit.losses,
+        decided: audit.decided,
+        winPct: audit.winPct
+      };
+    }
+    module.exports = {
+      computeMatchupPredictorAudit,
+      getMatchupPredictorAudit,
+      getMatchupCalibrationForProjections,
+      summarizeRecord,
+      matchupPredictorHeadlineRecord
+    };
+  }
+});
+
 // lib/powerRankingsCaptains.js
 var require_powerRankingsCaptains = __commonJS({
   "lib/powerRankingsCaptains.js"(exports, module) {
@@ -6652,6 +6784,7 @@ var require_matchupLiveSeasonRecord = __commonJS({
     "use strict";
     var { normalizePlayerName: normalizePlayerName2, buildTeamCodeById: buildTeamCodeById2, load2026GamelogsByPlayer: load2026GamelogsByPlayer2 } = require_dfs();
     var { computeMatchupPredictorRecord } = require_matchupPredictorRecord();
+    var { computeMatchupPredictorAudit } = require_matchupPredictorAudit();
     var { isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
     var { invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
     var {
@@ -6728,17 +6861,25 @@ var require_matchupLiveSeasonRecord = __commonJS({
         sundayIsosSorted: schedulePayload.sundayIsosSorted
       };
     }
-    async function loadLiveMatchupSeasonRecord2(opts = {}) {
+    async function loadLiveMatchupSeasonRecord(opts = {}) {
+      const snapshot = await loadLiveMatchupPredictorSnapshot2(opts);
+      return snapshot?.record || null;
+    }
+    async function loadLiveMatchupPredictorSnapshot2(opts = {}) {
       if (opts.refreshSchedule) {
         await invalidateSourceCsvCache2(SOURCE_KEYS2.schedule);
       }
       const deps = await gatherMatchupSeasonRecordDeps();
       const record = computeMatchupPredictorRecord(deps);
-      if (!record?.decided) return null;
-      return record;
+      const audit = computeMatchupPredictorAudit(deps);
+      return {
+        record: record?.decided ? record : null,
+        audit: audit?.decided ? audit : null
+      };
     }
     module.exports = {
-      loadLiveMatchupSeasonRecord: loadLiveMatchupSeasonRecord2,
+      loadLiveMatchupSeasonRecord,
+      loadLiveMatchupPredictorSnapshot: loadLiveMatchupPredictorSnapshot2,
       gatherMatchupSeasonRecordDeps,
       countFinishedScheduleGames: countFinishedScheduleGames2
     };
@@ -6768,6 +6909,7 @@ var seasonRecordWatchTimer = null;
 var liveChromeTimer = null;
 var lastFinishedGameCount = null;
 var lastRecordKey = null;
+var lastAuditKey = null;
 var lastMatchupOptionsSig = null;
 var lastGamelogMissingSig = null;
 var lastViewOptionsSig = null;
@@ -6778,6 +6920,12 @@ function safeText(value) {
 function recordSignature(record) {
   if (!record) return "";
   return `${record.wins}|${record.losses}|${record.decided}`;
+}
+function auditSignature(audit) {
+  if (!audit) return "";
+  const misses = (audit.closeMisses || []).map((m) => `${m.matchupKey || m.label}:${m.score}`).join("|");
+  const weeks = (audit.weeks || []).map((w) => `${w.weekNumber}:${w.base?.wins}-${w.base?.losses}:${w.closeMisses}`).join("|");
+  return `${audit.decided}|${audit.wins}|${audit.losses}|${misses}|${weeks}`;
 }
 function scheduleSignature(parsedGames) {
   let n = 0;
@@ -6842,6 +6990,7 @@ async function refreshMatchupScheduleChrome() {
   if (schedSig !== lastScheduleSignature) {
     lastScheduleSignature = schedSig;
     lastRecordKey = null;
+    lastAuditKey = null;
   }
   const viewToken = String(viewSelect.value || "").trim();
   if (!viewToken) return;
@@ -6949,19 +7098,32 @@ async function refreshSeasonRecord({ force = false } = {}) {
       const schedule = await (0, import_dfsLeaderboardScoringContext.loadWeeklySchedule)();
       const finishedCount = (0, import_matchupLiveSeasonRecord.countFinishedScheduleGames)(schedule.parsedGames);
       const schedSig = scheduleSignature(schedule.parsedGames);
-      if (lastFinishedGameCount != null && finishedCount === lastFinishedGameCount && schedSig === lastScheduleSignature && lastRecordKey) {
+      if (lastFinishedGameCount != null && finishedCount === lastFinishedGameCount && schedSig === lastScheduleSignature && lastRecordKey && lastAuditKey) {
         return;
       }
       lastFinishedGameCount = finishedCount;
       lastScheduleSignature = schedSig;
     }
-    const record = await (0, import_matchupLiveSeasonRecord.loadLiveMatchupSeasonRecord)({ refreshSchedule: true });
-    if (!record) return;
-    const key = recordSignature(record);
-    if (key === lastRecordKey) return;
-    lastRecordKey = key;
-    window.__MATCHUP_PREDICTOR_RECORD__ = record;
-    window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
+    const snapshot = await (0, import_matchupLiveSeasonRecord.loadLiveMatchupPredictorSnapshot)({ refreshSchedule: true });
+    if (!snapshot) return;
+    const record = snapshot.record;
+    if (record) {
+      const key = recordSignature(record);
+      if (key !== lastRecordKey) {
+        lastRecordKey = key;
+        window.__MATCHUP_PREDICTOR_RECORD__ = record;
+        window.MmsMatchupPredictorUi?.updatePredictorRecordUi?.(record);
+      }
+    }
+    const audit = snapshot.audit;
+    if (audit) {
+      const auditKey = auditSignature(audit);
+      if (auditKey !== lastAuditKey) {
+        lastAuditKey = auditKey;
+        window.__MATCHUP_PREDICTOR_AUDIT__ = audit;
+        window.MmsMatchupPredictorUi?.updatePredictorAuditUi?.(audit);
+      }
+    }
   } catch (err) {
     console.error("Matchup season record refresh failed", err);
   }

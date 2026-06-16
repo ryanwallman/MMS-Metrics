@@ -407,6 +407,105 @@
     ensurePredictorRecordBlock(record);
   }
 
+  function matchupSitePath(path) {
+    const base =
+      typeof window.__SITE_BASE_PATH__ !== "undefined"
+        ? String(window.__SITE_BASE_PATH__ || "")
+        : "";
+    const p = String(path || "").startsWith("/") ? path : "/" + String(path || "");
+    return base + p;
+  }
+
+  function formatAuditSummaryMeta(audit) {
+    return `${audit.decided} graded games · ${(audit.closeMisses || []).length} close misses`;
+  }
+
+  function renderAuditWeekRows(weeks) {
+    return (weeks || [])
+      .map(
+        (wk) =>
+          "<tr>" +
+          `<td>W${wk.weekNumber}</td>` +
+          `<td>${wk.games}</td>` +
+          `<td>${wk.base.wins}–${wk.base.losses}</td>` +
+          `<td>${wk.closeMisses}</td>` +
+          "</tr>"
+      )
+      .join("");
+  }
+
+  function renderAuditCloseMissRows(misses) {
+    return (misses || [])
+      .map((miss) => {
+        const weekCell = miss.weekNumber != null ? `W${miss.weekNumber}` : "—";
+        const label = miss.link
+          ? `<a href="${escapeHtml(matchupSitePath(miss.link))}">${escapeHtml(miss.label || "")}</a>`
+          : escapeHtml(miss.label || "");
+        return (
+          "<tr>" +
+          `<td>${weekCell}</td>` +
+          `<td>${label}</td>` +
+          `<td>${escapeHtml(miss.predictedTeam || "")}</td>` +
+          `<td>${miss.favoredWinPct != null ? `${miss.favoredWinPct}%` : "—"}</td>` +
+          `<td>${escapeHtml(miss.actualWinner || "")}</td>` +
+          `<td>${escapeHtml(miss.score || "")}</td>` +
+          "</tr>"
+        );
+      })
+      .join("");
+  }
+
+  function updatePredictorAuditUi(audit) {
+    if (!audit || !audit.decided) return;
+    window.__MATCHUP_PREDICTOR_AUDIT__ = audit;
+
+    const section = document.querySelector(".matchup-predictor-audit");
+    if (!section) return;
+
+    const meta = section.querySelector(".matchup-audit-summary-meta");
+    if (meta) meta.textContent = formatAuditSummaryMeta(audit);
+
+    const note = section.querySelector(".matchup-audit-note");
+    if (note && audit.closeCallThresholdPct != null) {
+      note.textContent =
+        "Each game uses frozen pre-game stats (through the day before that game). Close misses are wrong picks where the favorite was under " +
+        audit.closeCallThresholdPct +
+        "% (coin-flip territory).";
+    }
+
+    const weekTable = section.querySelector(
+      ".matchup-audit-table:not(.matchup-audit-table--misses) tbody"
+    );
+    if (weekTable && audit.weeks?.length) {
+      weekTable.innerHTML = renderAuditWeekRows(audit.weeks);
+    }
+
+    const missesTable = section.querySelector(".matchup-audit-table--misses tbody");
+    const emptyMsg = section.querySelector(".matchup-audit-empty");
+    const missesHeading = [...section.querySelectorAll(".matchup-audit-heading")].find(
+      (h) => h.textContent.trim() === "Close misses"
+    );
+    const missesWrap = missesTable?.closest(".matchup-audit-table-wrap");
+
+    if (audit.closeMisses?.length) {
+      if (emptyMsg) emptyMsg.hidden = true;
+      if (missesHeading) missesHeading.hidden = false;
+      if (missesWrap) missesWrap.hidden = false;
+      if (missesTable) {
+        missesTable.innerHTML = renderAuditCloseMissRows(audit.closeMisses);
+      }
+    } else {
+      if (missesTable) missesTable.innerHTML = "";
+      if (missesHeading) missesHeading.hidden = true;
+      if (missesWrap) missesWrap.hidden = true;
+      if (emptyMsg) {
+        emptyMsg.hidden = false;
+        emptyMsg.textContent =
+          "No close misses yet — the model either picked confidently or got the coin flips right.";
+      }
+    }
+  }
+
   function ensurePredictionPanelStyles() {
     document.querySelectorAll("section.matchup-prediction").forEach((el) => {
       el.classList.add("matchup-predictor-panel");
@@ -639,6 +738,7 @@
     applyReplacementDisplay,
     ensurePredictorRecordBlock,
     updatePredictorRecordUi,
+    updatePredictorAuditUi,
     ensurePredictionPanelStyles,
     renderGameResultUi,
   };
