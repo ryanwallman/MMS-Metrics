@@ -11,6 +11,8 @@ import {
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
+import { findOffensiveTerm } from "./offensive-words-check.mjs";
+
 const DEVICE_KEY = "mms-dfs-device-id";
 const DEVICE_COOKIE = "mms_dfs_device_id";
 const USERNAME_KEY = "mms-dfs-username";
@@ -99,6 +101,9 @@ function validateUsername(name) {
   }
   if (trimmed.length > 24) {
     throw new Error("Display name must be 24 characters or fewer.");
+  }
+  if (findOffensiveTerm(trimmed)) {
+    throw new Error("Display name is not allowed. Please choose a different name.");
   }
   return trimmed;
 }

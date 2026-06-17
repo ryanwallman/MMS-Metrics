@@ -13,6 +13,7 @@
     "build:power-rankings": "node scripts/build-power-rankings.mjs",
     "build:team-analytics": "node scripts/build-team-analytics.mjs",
     "build:dfs-lineup-pool": "node scripts/build-dfs-lineup-pool.mjs",
+    "build:offensive-words": "node scripts/build-offensive-words.mjs",
     "build:dfs-landing": "node scripts/build-dfs-landing.mjs",
     "build:static": "node scripts/build-static-site.mjs",
     "build:pages": "SITE_BASE_PATH= CUSTOM_DOMAIN=mmsmetrics.com node scripts/build-static-site.mjs",
