@@ -10,12 +10,13 @@ import {
   enrichMatchupPredictionLines,
 } from "../lib/matchupPredict.js";
 import {
-  getCachedPlayerReplacements,
+  refreshLivePlayerReplacements,
   applyReplacementsToPlayerNames,
   remapLineupNorms,
   buildRosterEntriesWithReplacements,
   serializeReplacementsForClient,
   filterReplacementsForDate,
+  activeReplacementsSignature,
 } from "../lib/playerReplacements.js";
 import { getCachedDfsLeaderboardScoringContext, loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import {
@@ -67,13 +68,11 @@ function effectiveNormsFromCtx(ctx) {
   return norms;
 }
 
-async function hydrateMatchupReplacements(ctx) {
+async function hydrateMatchupReplacements(ctx, preloadedReplacements = null) {
   if (!ctx) return ctx;
 
-  const [replacements, scoring] = await Promise.all([
-    getCachedPlayerReplacements(),
-    getCachedDfsLeaderboardScoringContext(),
-  ]);
+  const replacements = preloadedReplacements || (await refreshLivePlayerReplacements());
+  const scoring = await getCachedDfsLeaderboardScoringContext();
 
   const { byOriginalNorm } = replacements;
   const gameIsoDate = ctx.gameIsoDate || null;
@@ -221,6 +220,60 @@ function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAU
 
 let scoreWatchStop = null;
 
+function applyBenchToForm(awayNorms, homeNorms) {
+  const awayInput = document.getElementById("awayMissing");
+  const homeInput = document.getElementById("homeMissing");
+  if (awayInput) awayInput.value = (awayNorms || []).join(",");
+  if (homeInput) homeInput.value = (homeNorms || []).join(",");
+}
+
+let lastReplacementSig = null;
+
+async function refreshMatchupReplacementsLive(ctx, { force = false } = {}) {
+  if (!ctx) return false;
+
+  const replacements = await refreshLivePlayerReplacements();
+  const newSig = activeReplacementsSignature(replacements.byOriginalNorm, ctx.gameIsoDate);
+  if (!force && newSig === lastReplacementSig) return false;
+  lastReplacementSig = newSig;
+
+  await hydrateMatchupReplacements(ctx, replacements);
+
+  const activeMap = deserializeReplacementMap(ctx.replacementByOriginalNorm);
+
+  if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.awayPlayersOriginal,
+      "away",
+      activeMap
+    );
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.homePlayersOriginal,
+      "home",
+      activeMap
+    );
+  }
+
+  const { away, home } = benchNormsFromForm();
+  const remappedAway = remapLineupNorms(away, activeMap);
+  const remappedHome = remapLineupNorms(home, activeMap);
+  applyBenchToForm(remappedAway, remappedHome);
+
+  if (window.__MMS_MATCHUP_BENCH__?.applyServerMissing) {
+    window.__MMS_MATCHUP_BENCH__.applyServerMissing(remappedAway, remappedHome);
+    return true;
+  }
+
+  if (!ctx.isFinishedGame && window.MmsMatchupPredictorUi?.updatePredictionUi) {
+    const prediction = predictFromPayload(ctx, remappedAway, remappedHome);
+    window.MmsMatchupPredictorUi.updatePredictionUi(prediction);
+    const enrichment = buildMatchupLineupEnrichment(ctx, remappedAway, remappedHome);
+    window.MmsMatchupPredictorUi.updateLineupUi(enrichment);
+  }
+
+  return true;
+}
+
 function benchNormsFromForm() {
   function parseList(value) {
     return String(value || "")
@@ -267,13 +320,22 @@ if (typeof window !== "undefined") {
     predictFromPayload,
     buildLineupEnrichment: buildMatchupLineupEnrichment,
     hydrateMatchupReplacements,
+    refreshMatchupReplacementsLive,
     watchMatchupLiveScores,
   };
 
   const kickScoreWatch = () => window.setTimeout(autoStartScoreWatcher, 1500);
+  const kickReplacementRefresh = () => {
+    const ctx = window.__MATCHUP_CLIENT__;
+    if (ctx) void refreshMatchupReplacementsLive(ctx, { force: true });
+  };
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", kickScoreWatch);
+    document.addEventListener("DOMContentLoaded", () => {
+      kickReplacementRefresh();
+      kickScoreWatch();
+    });
   } else {
+    kickReplacementRefresh();
     kickScoreWatch();
   }
 }
@@ -282,5 +344,6 @@ export {
   predictFromPayload,
   buildMatchupLineupEnrichment,
   hydrateMatchupReplacements,
+  refreshMatchupReplacementsLive,
   watchMatchupLiveScores,
 };

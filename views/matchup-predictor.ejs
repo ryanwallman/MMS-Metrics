@@ -803,6 +803,18 @@
           if (
             isStaticSite &&
             matchupCtx &&
+            window.MmsMatchupPredictor?.refreshMatchupReplacementsLive
+          ) {
+            try {
+              await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(matchupCtx, {
+                force: true,
+              });
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          } else if (
+            isStaticSite &&
+            matchupCtx &&
             window.MmsMatchupPredictor?.hydrateMatchupReplacements
           ) {
             try {

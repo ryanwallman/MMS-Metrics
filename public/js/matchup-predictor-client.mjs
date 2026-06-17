@@ -2239,7 +2239,7 @@ var require_playerReplacements = __commonJS({
   "lib/playerReplacements.js"(exports, module) {
     var Papa = require_papaparse_min();
     var { fetchCsvText } = require_fetchCsvText();
-    var { getReplacementsCsvUrl } = require_sheetUrls();
+    var { getReplacementsCsvUrl, invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
     var { createMemoryCache } = require_memoryCache();
     var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
     function safeText(value) {
@@ -2372,8 +2372,28 @@ var require_playerReplacements = __commonJS({
       Number(process.env.REPLACEMENTS_CACHE_TTL_MS) || 5 * 60 * 1e3,
       "replacements"
     );
-    function getCachedPlayerReplacements2() {
+    function getCachedPlayerReplacements() {
       return replacementsCache.get("player-replacements", loadPlayerReplacements);
+    }
+    async function refreshLivePlayerReplacements2() {
+      await invalidateSourceCsvCache2(SOURCE_KEYS2.replacements);
+      replacementsCache.invalidate("player-replacements");
+      return loadPlayerReplacements();
+    }
+    function replacementsSignature(byOriginalNorm) {
+      if (!byOriginalNorm?.size) return "";
+      const parts = [];
+      for (const [norm, entry] of [...byOriginalNorm.entries()].sort(
+        (a, b) => a[0].localeCompare(b[0])
+      )) {
+        parts.push(
+          `${norm}:${entry.replacementNorm}:${entry.replacementDateIso || ""}:${entry.replacement || ""}`
+        );
+      }
+      return parts.join("|");
+    }
+    function activeReplacementsSignature2(byOriginalNorm, gameIsoDate) {
+      return replacementsSignature(filterReplacementsForDate2(byOriginalNorm, gameIsoDate));
     }
     function serializeReplacementsForClient2(byOriginalNorm) {
       const out = {};
@@ -2399,7 +2419,10 @@ var require_playerReplacements = __commonJS({
       remapLineupNorms: remapLineupNorms2,
       buildRosterEntriesWithReplacements: buildRosterEntriesWithReplacements2,
       loadPlayerReplacements,
-      getCachedPlayerReplacements: getCachedPlayerReplacements2,
+      getCachedPlayerReplacements,
+      refreshLivePlayerReplacements: refreshLivePlayerReplacements2,
+      replacementsSignature,
+      activeReplacementsSignature: activeReplacementsSignature2,
       emptyReplacementContext,
       serializeReplacementsForClient: serializeReplacementsForClient2
     };
@@ -4817,7 +4840,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return Papa.parse(csvText).data;
     }
     var { loadTeamRosters } = require_teamRosters();
-    var { getCachedPlayerReplacements: getCachedPlayerReplacements2 } = require_playerReplacements();
+    var { getCachedPlayerReplacements } = require_playerReplacements();
     function parseScheduleSheetDate(displayDate) {
       const s = safeText(displayDate);
       if (!s) return null;
@@ -5405,7 +5428,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     async function loadDfsLeaderboardScoringContext() {
       const [base, replacements] = await Promise.all([
         loadDfsLeaderboardScoringContextBase(),
-        getCachedPlayerReplacements2()
+        getCachedPlayerReplacements()
       ]);
       return {
         schedulePayload: base.schedulePayload,
@@ -5420,7 +5443,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     async function getCachedDfsLeaderboardScoringContext2() {
       const [base, replacements] = await Promise.all([
         dfsScoringContextCache.get("leaderboard-scoring-base", loadDfsLeaderboardScoringContextBase),
-        getCachedPlayerReplacements2()
+        getCachedPlayerReplacements()
       ]);
       return {
         schedulePayload: base.schedulePayload,
@@ -5612,12 +5635,10 @@ function effectiveNormsFromCtx(ctx) {
   }
   return norms;
 }
-async function hydrateMatchupReplacements(ctx) {
+async function hydrateMatchupReplacements(ctx, preloadedReplacements = null) {
   if (!ctx) return ctx;
-  const [replacements, scoring] = await Promise.all([
-    (0, import_playerReplacements.getCachedPlayerReplacements)(),
-    (0, import_dfsLeaderboardScoringContext.getCachedDfsLeaderboardScoringContext)()
-  ]);
+  const replacements = preloadedReplacements || await (0, import_playerReplacements.refreshLivePlayerReplacements)();
+  const scoring = await (0, import_dfsLeaderboardScoringContext.getCachedDfsLeaderboardScoringContext)();
   const { byOriginalNorm } = replacements;
   const gameIsoDate = ctx.gameIsoDate || null;
   const activeReplacements = (0, import_playerReplacements.filterReplacementsForDate)(byOriginalNorm, gameIsoDate);
@@ -5742,6 +5763,49 @@ function watchMatchupLiveScores({ ctx, getPrediction, onFinished, pollMs = DEFAU
   };
 }
 var scoreWatchStop = null;
+function applyBenchToForm(awayNorms, homeNorms) {
+  const awayInput = document.getElementById("awayMissing");
+  const homeInput = document.getElementById("homeMissing");
+  if (awayInput) awayInput.value = (awayNorms || []).join(",");
+  if (homeInput) homeInput.value = (homeNorms || []).join(",");
+}
+var lastReplacementSig = null;
+async function refreshMatchupReplacementsLive(ctx, { force = false } = {}) {
+  if (!ctx) return false;
+  const replacements = await (0, import_playerReplacements.refreshLivePlayerReplacements)();
+  const newSig = (0, import_playerReplacements.activeReplacementsSignature)(replacements.byOriginalNorm, ctx.gameIsoDate);
+  if (!force && newSig === lastReplacementSig) return false;
+  lastReplacementSig = newSig;
+  await hydrateMatchupReplacements(ctx, replacements);
+  const activeMap = deserializeReplacementMap(ctx.replacementByOriginalNorm);
+  if (window.MmsMatchupPredictorUi?.applyReplacementDisplay) {
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.awayPlayersOriginal,
+      "away",
+      activeMap
+    );
+    window.MmsMatchupPredictorUi.applyReplacementDisplay(
+      ctx.homePlayersOriginal,
+      "home",
+      activeMap
+    );
+  }
+  const { away, home } = benchNormsFromForm();
+  const remappedAway = (0, import_playerReplacements.remapLineupNorms)(away, activeMap);
+  const remappedHome = (0, import_playerReplacements.remapLineupNorms)(home, activeMap);
+  applyBenchToForm(remappedAway, remappedHome);
+  if (window.__MMS_MATCHUP_BENCH__?.applyServerMissing) {
+    window.__MMS_MATCHUP_BENCH__.applyServerMissing(remappedAway, remappedHome);
+    return true;
+  }
+  if (!ctx.isFinishedGame && window.MmsMatchupPredictorUi?.updatePredictionUi) {
+    const prediction = predictFromPayload(ctx, remappedAway, remappedHome);
+    window.MmsMatchupPredictorUi.updatePredictionUi(prediction);
+    const enrichment = (0, import_matchupLineupClient.buildMatchupLineupEnrichment)(ctx, remappedAway, remappedHome);
+    window.MmsMatchupPredictorUi.updateLineupUi(enrichment);
+  }
+  return true;
+}
 function benchNormsFromForm() {
   function parseList(value) {
     return String(value || "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -5780,6 +5844,7 @@ if (typeof window !== "undefined") {
     predictFromPayload,
     buildLineupEnrichment: import_matchupLineupClient.buildMatchupLineupEnrichment,
     hydrateMatchupReplacements,
+    refreshMatchupReplacementsLive,
     watchMatchupLiveScores
   };
   const kickScoreWatch = () => window.setTimeout(autoStartScoreWatcher, 1500);
@@ -5794,6 +5859,7 @@ export {
   export_buildMatchupLineupEnrichment as buildMatchupLineupEnrichment,
   hydrateMatchupReplacements,
   predictFromPayload,
+  refreshMatchupReplacementsLive,
   watchMatchupLiveScores
 };
 /*! Bundled license information:

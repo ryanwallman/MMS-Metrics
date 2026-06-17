@@ -254,6 +254,17 @@ export async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__)
   applyGamelogMissingToDom([...awayMissingSet], [...homeMissingSet]);
 }
 
+export async function refreshMatchupReplacements({ force = false } = {}) {
+  try {
+    const ctx = window.__MATCHUP_CLIENT__;
+    if (!ctx?.awayPlayersOriginal?.length && !ctx?.homePlayersOriginal?.length) return;
+    if (!window.MmsMatchupPredictor?.refreshMatchupReplacementsLive) return;
+    await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(ctx, { force });
+  } catch (err) {
+    console.error("Matchup replacements refresh failed", err);
+  }
+}
+
 export async function refreshSeasonRecord({ force = false } = {}) {
   try {
     if (!force) {
@@ -321,9 +332,11 @@ function startLiveWatchers() {
 
   void refreshLiveMatchupChrome();
   void refreshSeasonRecord({ force: true });
+  void refreshMatchupReplacements({ force: true });
 
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
+    void refreshMatchupReplacements();
   }, pollMs);
 
   liveChromeTimer = window.setInterval(() => {
@@ -345,6 +358,7 @@ if (typeof window !== "undefined") {
     refreshMatchupViewSelect,
     refreshMatchupScheduleChrome,
     refreshSeasonRecord,
+    refreshMatchupReplacements,
     refreshLiveGamelogMissing,
     refreshLiveMatchupChrome,
     bootMatchupLiveWatchers,

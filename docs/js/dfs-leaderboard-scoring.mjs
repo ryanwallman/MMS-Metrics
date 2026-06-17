@@ -25,155 +25,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// lib/memoryCache.js
-var require_memoryCache = __commonJS({
-  "lib/memoryCache.js"(exports, module) {
-    function createMemoryCache(ttlMs, label = "cache") {
-      const store = /* @__PURE__ */ new Map();
-      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
-      return {
-        async get(key, loader) {
-          const k = String(key);
-          const hit = store.get(k);
-          if (hit && Date.now() < hit.expiresAt) {
-            return hit.value;
-          }
-          const value = await loader();
-          store.set(k, { value, expiresAt: Date.now() + ttl });
-          return value;
-        },
-        clear() {
-          store.clear();
-        },
-        invalidate(key) {
-          store.delete(String(key));
-        },
-        stats() {
-          return { label, entries: store.size, ttlMs: ttl };
-        }
-      };
-    }
-    module.exports = { createMemoryCache };
-  }
-});
-
-// lib/fetchCsvText.js
-var require_fetchCsvText = __commonJS({
-  "lib/fetchCsvText.js"(exports, module) {
-    var { createMemoryCache } = require_memoryCache();
-    var csvTextCache = createMemoryCache(
-      Number("600000") || 10 * 60 * 1e3,
-      "csv-text"
-    );
-    var fetchCsvTextOverride = null;
-    function setFetchCsvTextOverride(fn) {
-      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
-    }
-    function csvFetchTimeoutMs() {
-      const fromEnv = Number("90000");
-      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (true) return 9e4;
-      return 0;
-    }
-    function logCsvFetchFailure(kind, url, detail) {
-      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
-      if (typeof console !== "undefined" && console.error) {
-        console.error(msg, url);
-      }
-    }
-    function csvFetchUserError(kind) {
-      if (kind === "timeout") {
-        return new Error(
-          "League data took too long to load. Check your connection and try again."
-        );
-      }
-      if (kind === "http") {
-        return new Error("Could not load league data right now. Please try again in a moment.");
-      }
-      if (kind === "empty") {
-        return new Error("Could not load league data. Please try again.");
-      }
-      return new Error("Could not load league data. Please try again.");
-    }
-    async function fetchUrlText(url) {
-      const timeoutMs = csvFetchTimeoutMs();
-      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
-      try {
-        const res = await fetch(url, opts);
-        if (!res.ok) {
-          logCsvFetchFailure("HTTP", url, String(res.status));
-          throw csvFetchUserError("http");
-        }
-        let text = await res.text();
-        text = text.replace(/^\ufeff/, "");
-        return text;
-      } catch (err) {
-        if (err.name === "TimeoutError" || err.name === "AbortError") {
-          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
-          throw csvFetchUserError("timeout");
-        }
-        if (err.message && !/https?:\/\//i.test(err.message)) {
-          throw err;
-        }
-        logCsvFetchFailure("error", url, err.message || err);
-        throw csvFetchUserError("error");
-      }
-    }
-    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
-    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
-    function browserCsvStorageKey(url) {
-      return BROWSER_CSV_STORAGE_PREFIX + url;
-    }
-    function readBrowserCsvCache(url) {
-      if (typeof sessionStorage === "undefined") return null;
-      try {
-        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        if (Date.now() > parsed.expiresAt) {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        return parsed.text;
-      } catch {
-        return null;
-      }
-    }
-    function writeBrowserCsvCache(url, text) {
-      if (typeof sessionStorage === "undefined") return;
-      try {
-        sessionStorage.setItem(
-          browserCsvStorageKey(url),
-          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
-        );
-      } catch {
-      }
-    }
-    async function fetchCsvText(url) {
-      const safeUrl = (url || "").toString().trim();
-      if (!safeUrl) {
-        logCsvFetchFailure("empty-url", safeUrl);
-        throw csvFetchUserError("empty");
-      }
-      if (fetchCsvTextOverride) {
-        return fetchCsvTextOverride(safeUrl);
-      }
-      const browserCached = readBrowserCsvCache(safeUrl);
-      if (browserCached) return browserCached;
-      return csvTextCache.get(safeUrl, async () => {
-        const text = await fetchUrlText(safeUrl);
-        writeBrowserCsvCache(safeUrl, text);
-        return text;
-      });
-    }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
-  }
-});
-
 // node_modules/papaparse/papaparse.min.js
 var require_papaparse_min = __commonJS({
   "node_modules/papaparse/papaparse.min.js"(exports, module) {
@@ -587,6 +438,155 @@ var require_papaparse_min = __commonJS({
         "string" == typeof e.input ? n.postMessage({ workerId: v.WORKER_ID, results: v.parse(e.input, e.config), finished: true }) : (n.File && e.input instanceof File || e.input instanceof Object) && (e = v.parse(e.input, e.config)) && n.postMessage({ workerId: v.WORKER_ID, results: e, finished: true });
       }), (f.prototype = Object.create(u.prototype)).constructor = f, (l.prototype = Object.create(u.prototype)).constructor = l, (c.prototype = Object.create(c.prototype)).constructor = c, (p.prototype = Object.create(u.prototype)).constructor = p, v;
     });
+  }
+});
+
+// lib/memoryCache.js
+var require_memoryCache = __commonJS({
+  "lib/memoryCache.js"(exports, module) {
+    function createMemoryCache(ttlMs, label = "cache") {
+      const store = /* @__PURE__ */ new Map();
+      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
+      return {
+        async get(key, loader) {
+          const k = String(key);
+          const hit = store.get(k);
+          if (hit && Date.now() < hit.expiresAt) {
+            return hit.value;
+          }
+          const value = await loader();
+          store.set(k, { value, expiresAt: Date.now() + ttl });
+          return value;
+        },
+        clear() {
+          store.clear();
+        },
+        invalidate(key) {
+          store.delete(String(key));
+        },
+        stats() {
+          return { label, entries: store.size, ttlMs: ttl };
+        }
+      };
+    }
+    module.exports = { createMemoryCache };
+  }
+});
+
+// lib/fetchCsvText.js
+var require_fetchCsvText = __commonJS({
+  "lib/fetchCsvText.js"(exports, module) {
+    var { createMemoryCache } = require_memoryCache();
+    var csvTextCache = createMemoryCache(
+      Number("600000") || 10 * 60 * 1e3,
+      "csv-text"
+    );
+    var fetchCsvTextOverride = null;
+    function setFetchCsvTextOverride(fn) {
+      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
+    }
+    function csvFetchTimeoutMs() {
+      const fromEnv = Number("90000");
+      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+      if (true) return 9e4;
+      return 0;
+    }
+    function logCsvFetchFailure(kind, url, detail) {
+      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
+      if (typeof console !== "undefined" && console.error) {
+        console.error(msg, url);
+      }
+    }
+    function csvFetchUserError(kind) {
+      if (kind === "timeout") {
+        return new Error(
+          "League data took too long to load. Check your connection and try again."
+        );
+      }
+      if (kind === "http") {
+        return new Error("Could not load league data right now. Please try again in a moment.");
+      }
+      if (kind === "empty") {
+        return new Error("Could not load league data. Please try again.");
+      }
+      return new Error("Could not load league data. Please try again.");
+    }
+    async function fetchUrlText(url) {
+      const timeoutMs = csvFetchTimeoutMs();
+      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+      try {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+          logCsvFetchFailure("HTTP", url, String(res.status));
+          throw csvFetchUserError("http");
+        }
+        let text = await res.text();
+        text = text.replace(/^\ufeff/, "");
+        return text;
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
+          throw csvFetchUserError("timeout");
+        }
+        if (err.message && !/https?:\/\//i.test(err.message)) {
+          throw err;
+        }
+        logCsvFetchFailure("error", url, err.message || err);
+        throw csvFetchUserError("error");
+      }
+    }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
+    async function fetchCsvText(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
+    }
+    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
   }
 });
 
@@ -2102,6 +2102,201 @@ ${slice[1]}`;
   }
 });
 
+// lib/playerReplacements.js
+var require_playerReplacements = __commonJS({
+  "lib/playerReplacements.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { getReplacementsCsvUrl, invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
+    var { createMemoryCache } = require_memoryCache();
+    var { normalizePlayerName } = require_dfs();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function parseReplacementDateCell(cell) {
+      let s = safeText(cell).replace(/^\ufeff/g, "");
+      if (!s) return null;
+      s = s.replace(/[\u00a0\u202f]/g, " ").trim().replace(/^["']+|["']+$/g, "");
+      const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      const slashMatch = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{2,4})/.exec(s);
+      if (!slashMatch) return null;
+      const month = String(slashMatch[1]).padStart(2, "0");
+      const day = String(slashMatch[2]).padStart(2, "0");
+      let year = Number(slashMatch[3]);
+      if (!Number.isFinite(year)) return null;
+      if (year < 100) year += 2e3;
+      return `${year}-${month}-${day}`;
+    }
+    function isReplacementActiveForDate(entry, gameIsoDate) {
+      if (!entry) return false;
+      if (!entry.replacementDateIso) return true;
+      if (!gameIsoDate) return false;
+      return safeText(gameIsoDate) >= entry.replacementDateIso;
+    }
+    function filterReplacementsForDate(byOriginalNorm, gameIsoDate) {
+      if (!byOriginalNorm?.size) return /* @__PURE__ */ new Map();
+      if (!gameIsoDate) return /* @__PURE__ */ new Map();
+      const filtered = /* @__PURE__ */ new Map();
+      for (const [norm, entry] of byOriginalNorm.entries()) {
+        if (isReplacementActiveForDate(entry, gameIsoDate)) filtered.set(norm, entry);
+      }
+      return filtered;
+    }
+    function parseReplacementsRows(rows) {
+      const list = [];
+      const byOriginalNorm = /* @__PURE__ */ new Map();
+      const replacementNorms = /* @__PURE__ */ new Set();
+      for (let i = 0; i < (rows || []).length; i += 1) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const original = safeText(row[0]);
+        const replacement = safeText(row[1]);
+        const replacementDateRaw = safeText(row[2]);
+        if (!original || !replacement) continue;
+        if (i === 0 && /original/i.test(original) && (/new/i.test(replacement) || /replacement/i.test(replacement))) {
+          continue;
+        }
+        const originalNorm = normalizePlayerName(original);
+        const replacementNorm = normalizePlayerName(replacement);
+        if (!originalNorm || !replacementNorm || originalNorm === replacementNorm) continue;
+        const replacementDateIso = parseReplacementDateCell(replacementDateRaw);
+        const entry = {
+          original,
+          replacement,
+          originalNorm,
+          replacementNorm,
+          replacementDateIso,
+          replacementDateRaw: replacementDateRaw || null
+        };
+        list.push(entry);
+        byOriginalNorm.set(originalNorm, entry);
+        replacementNorms.add(replacementNorm);
+      }
+      return { list, byOriginalNorm, replacementNorms };
+    }
+    function emptyReplacementContext() {
+      return { list: [], byOriginalNorm: /* @__PURE__ */ new Map(), replacementNorms: /* @__PURE__ */ new Set() };
+    }
+    function resolveEffectivePlayer(originalName, byOriginalNorm) {
+      const norm = normalizePlayerName(originalName);
+      const repl = byOriginalNorm?.get(norm);
+      if (repl) {
+        return {
+          name: repl.replacement,
+          norm: repl.replacementNorm,
+          replacedName: repl.original,
+          isReplacement: true
+        };
+      }
+      return {
+        name: String(originalName || "").trim(),
+        norm,
+        replacedName: null,
+        isReplacement: false
+      };
+    }
+    function applyReplacementsToPlayerNames(playerNames, byOriginalNorm) {
+      return (playerNames || []).map(
+        (name) => resolveEffectivePlayer(name, byOriginalNorm).name
+      );
+    }
+    function remapLineupNorms(lineupNorms, byOriginalNorm) {
+      return (lineupNorms || []).map((n) => {
+        const norm = normalizePlayerName(n);
+        const repl = byOriginalNorm?.get(norm);
+        return repl ? repl.replacementNorm : norm;
+      }).filter(Boolean);
+    }
+    function positionFromMap(positionByNorm, norm) {
+      if (!positionByNorm || norm == null) return null;
+      if (positionByNorm instanceof Map) return positionByNorm.get(norm) || null;
+      return positionByNorm[norm] || null;
+    }
+    function buildRosterEntriesWithReplacements(playerNames, normalizeName = normalizePlayerName, positionByNorm = null, byOriginalNorm = null) {
+      return (playerNames || []).map((name, idx) => {
+        const eff = resolveEffectivePlayer(name, byOriginalNorm);
+        return {
+          round: idx + 1,
+          norm: eff.norm,
+          name: eff.name,
+          replacedName: eff.replacedName,
+          isReplacement: eff.isReplacement,
+          position: positionFromMap(positionByNorm, eff.norm)
+        };
+      });
+    }
+    async function loadPlayerReplacements() {
+      try {
+        const text = await fetchCsvText(await getReplacementsCsvUrl());
+        const parsed = Papa.parse(text, { skipEmptyLines: true });
+        return parseReplacementsRows(parsed.data || []);
+      } catch (err) {
+        console.error("Could not load player replacements sheet", err);
+        return emptyReplacementContext();
+      }
+    }
+    var replacementsCache = createMemoryCache(
+      Number(process.env.REPLACEMENTS_CACHE_TTL_MS) || 5 * 60 * 1e3,
+      "replacements"
+    );
+    function getCachedPlayerReplacements() {
+      return replacementsCache.get("player-replacements", loadPlayerReplacements);
+    }
+    async function refreshLivePlayerReplacements2() {
+      await invalidateSourceCsvCache2(SOURCE_KEYS2.replacements);
+      replacementsCache.invalidate("player-replacements");
+      return loadPlayerReplacements();
+    }
+    function replacementsSignature(byOriginalNorm) {
+      if (!byOriginalNorm?.size) return "";
+      const parts = [];
+      for (const [norm, entry] of [...byOriginalNorm.entries()].sort(
+        (a, b) => a[0].localeCompare(b[0])
+      )) {
+        parts.push(
+          `${norm}:${entry.replacementNorm}:${entry.replacementDateIso || ""}:${entry.replacement || ""}`
+        );
+      }
+      return parts.join("|");
+    }
+    function activeReplacementsSignature(byOriginalNorm, gameIsoDate) {
+      return replacementsSignature(filterReplacementsForDate(byOriginalNorm, gameIsoDate));
+    }
+    function serializeReplacementsForClient(byOriginalNorm) {
+      const out = {};
+      if (!byOriginalNorm) return out;
+      for (const [norm, entry] of byOriginalNorm.entries()) {
+        out[norm] = {
+          original: entry.original,
+          replacement: entry.replacement,
+          originalNorm: entry.originalNorm,
+          replacementNorm: entry.replacementNorm,
+          replacementDateIso: entry.replacementDateIso || null
+        };
+      }
+      return out;
+    }
+    module.exports = {
+      parseReplacementDateCell,
+      isReplacementActiveForDate,
+      filterReplacementsForDate,
+      parseReplacementsRows,
+      resolveEffectivePlayer,
+      applyReplacementsToPlayerNames,
+      remapLineupNorms,
+      buildRosterEntriesWithReplacements,
+      loadPlayerReplacements,
+      getCachedPlayerReplacements,
+      refreshLivePlayerReplacements: refreshLivePlayerReplacements2,
+      replacementsSignature,
+      activeReplacementsSignature,
+      emptyReplacementContext,
+      serializeReplacementsForClient
+    };
+  }
+});
+
 // lib/dfsLeaderboard.js
 var require_dfsLeaderboard = __commonJS({
   "lib/dfsLeaderboard.js"(exports, module) {
@@ -2890,178 +3085,6 @@ var require_teamRosters = __commonJS({
       loadTeamRosters,
       normalizeScheduleTeamId,
       normalizeScheduleTeamLabel
-    };
-  }
-});
-
-// lib/playerReplacements.js
-var require_playerReplacements = __commonJS({
-  "lib/playerReplacements.js"(exports, module) {
-    var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
-    var { getReplacementsCsvUrl } = require_sheetUrls();
-    var { createMemoryCache } = require_memoryCache();
-    var { normalizePlayerName } = require_dfs();
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function parseReplacementDateCell(cell) {
-      let s = safeText(cell).replace(/^\ufeff/g, "");
-      if (!s) return null;
-      s = s.replace(/[\u00a0\u202f]/g, " ").trim().replace(/^["']+|["']+$/g, "");
-      const isoMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-      const slashMatch = /(\d{1,2})\s*\/\s*(\d{1,2})\s*\/\s*(\d{2,4})/.exec(s);
-      if (!slashMatch) return null;
-      const month = String(slashMatch[1]).padStart(2, "0");
-      const day = String(slashMatch[2]).padStart(2, "0");
-      let year = Number(slashMatch[3]);
-      if (!Number.isFinite(year)) return null;
-      if (year < 100) year += 2e3;
-      return `${year}-${month}-${day}`;
-    }
-    function isReplacementActiveForDate(entry, gameIsoDate) {
-      if (!entry) return false;
-      if (!entry.replacementDateIso) return true;
-      if (!gameIsoDate) return false;
-      return safeText(gameIsoDate) >= entry.replacementDateIso;
-    }
-    function filterReplacementsForDate(byOriginalNorm, gameIsoDate) {
-      if (!byOriginalNorm?.size) return /* @__PURE__ */ new Map();
-      if (!gameIsoDate) return /* @__PURE__ */ new Map();
-      const filtered = /* @__PURE__ */ new Map();
-      for (const [norm, entry] of byOriginalNorm.entries()) {
-        if (isReplacementActiveForDate(entry, gameIsoDate)) filtered.set(norm, entry);
-      }
-      return filtered;
-    }
-    function parseReplacementsRows(rows) {
-      const list = [];
-      const byOriginalNorm = /* @__PURE__ */ new Map();
-      const replacementNorms = /* @__PURE__ */ new Set();
-      for (let i = 0; i < (rows || []).length; i += 1) {
-        const row = rows[i];
-        if (!row || !row.length) continue;
-        const original = safeText(row[0]);
-        const replacement = safeText(row[1]);
-        const replacementDateRaw = safeText(row[2]);
-        if (!original || !replacement) continue;
-        if (i === 0 && /original/i.test(original) && (/new/i.test(replacement) || /replacement/i.test(replacement))) {
-          continue;
-        }
-        const originalNorm = normalizePlayerName(original);
-        const replacementNorm = normalizePlayerName(replacement);
-        if (!originalNorm || !replacementNorm || originalNorm === replacementNorm) continue;
-        const replacementDateIso = parseReplacementDateCell(replacementDateRaw);
-        const entry = {
-          original,
-          replacement,
-          originalNorm,
-          replacementNorm,
-          replacementDateIso,
-          replacementDateRaw: replacementDateRaw || null
-        };
-        list.push(entry);
-        byOriginalNorm.set(originalNorm, entry);
-        replacementNorms.add(replacementNorm);
-      }
-      return { list, byOriginalNorm, replacementNorms };
-    }
-    function emptyReplacementContext() {
-      return { list: [], byOriginalNorm: /* @__PURE__ */ new Map(), replacementNorms: /* @__PURE__ */ new Set() };
-    }
-    function resolveEffectivePlayer(originalName, byOriginalNorm) {
-      const norm = normalizePlayerName(originalName);
-      const repl = byOriginalNorm?.get(norm);
-      if (repl) {
-        return {
-          name: repl.replacement,
-          norm: repl.replacementNorm,
-          replacedName: repl.original,
-          isReplacement: true
-        };
-      }
-      return {
-        name: String(originalName || "").trim(),
-        norm,
-        replacedName: null,
-        isReplacement: false
-      };
-    }
-    function applyReplacementsToPlayerNames(playerNames, byOriginalNorm) {
-      return (playerNames || []).map(
-        (name) => resolveEffectivePlayer(name, byOriginalNorm).name
-      );
-    }
-    function remapLineupNorms(lineupNorms, byOriginalNorm) {
-      return (lineupNorms || []).map((n) => {
-        const norm = normalizePlayerName(n);
-        const repl = byOriginalNorm?.get(norm);
-        return repl ? repl.replacementNorm : norm;
-      }).filter(Boolean);
-    }
-    function positionFromMap(positionByNorm, norm) {
-      if (!positionByNorm || norm == null) return null;
-      if (positionByNorm instanceof Map) return positionByNorm.get(norm) || null;
-      return positionByNorm[norm] || null;
-    }
-    function buildRosterEntriesWithReplacements(playerNames, normalizeName = normalizePlayerName, positionByNorm = null, byOriginalNorm = null) {
-      return (playerNames || []).map((name, idx) => {
-        const eff = resolveEffectivePlayer(name, byOriginalNorm);
-        return {
-          round: idx + 1,
-          norm: eff.norm,
-          name: eff.name,
-          replacedName: eff.replacedName,
-          isReplacement: eff.isReplacement,
-          position: positionFromMap(positionByNorm, eff.norm)
-        };
-      });
-    }
-    async function loadPlayerReplacements() {
-      try {
-        const text = await fetchCsvText(await getReplacementsCsvUrl());
-        const parsed = Papa.parse(text, { skipEmptyLines: true });
-        return parseReplacementsRows(parsed.data || []);
-      } catch (err) {
-        console.error("Could not load player replacements sheet", err);
-        return emptyReplacementContext();
-      }
-    }
-    var replacementsCache = createMemoryCache(
-      Number(process.env.REPLACEMENTS_CACHE_TTL_MS) || 5 * 60 * 1e3,
-      "replacements"
-    );
-    function getCachedPlayerReplacements() {
-      return replacementsCache.get("player-replacements", loadPlayerReplacements);
-    }
-    function serializeReplacementsForClient(byOriginalNorm) {
-      const out = {};
-      if (!byOriginalNorm) return out;
-      for (const [norm, entry] of byOriginalNorm.entries()) {
-        out[norm] = {
-          original: entry.original,
-          replacement: entry.replacement,
-          originalNorm: entry.originalNorm,
-          replacementNorm: entry.replacementNorm,
-          replacementDateIso: entry.replacementDateIso || null
-        };
-      }
-      return out;
-    }
-    module.exports = {
-      parseReplacementDateCell,
-      isReplacementActiveForDate,
-      filterReplacementsForDate,
-      parseReplacementsRows,
-      resolveEffectivePlayer,
-      applyReplacementsToPlayerNames,
-      remapLineupNorms,
-      buildRosterEntriesWithReplacements,
-      loadPlayerReplacements,
-      getCachedPlayerReplacements,
-      emptyReplacementContext,
-      serializeReplacementsForClient
     };
   }
 });
@@ -5810,6 +5833,7 @@ var require_dfsLeaderboardResponse = __commonJS({
 });
 
 // client/leaderboard-scoring-entry.mjs
+var import_playerReplacements = __toESM(require_playerReplacements(), 1);
 var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_dfsLeaderboardResponse = __toESM(require_dfsLeaderboardResponse(), 1);
 var import_dfsLeaderboardScoringContext = __toESM(require_dfsLeaderboardScoringContext(), 1);
@@ -5827,6 +5851,7 @@ function formatWeekOptionLabel(opt) {
 var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
 (0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
 async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
+  await (0, import_playerReplacements.refreshLivePlayerReplacements)();
   return (0, import_dfsLeaderboardResponse.buildWeeklyLeaderboardResponse)(selectedWeek, lineups);
 }
 async function fetchLiveLeaderboardWeekOptions(opts = {}) {

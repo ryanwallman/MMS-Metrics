@@ -2509,7 +2509,7 @@ var require_playerReplacements = __commonJS({
   "lib/playerReplacements.js"(exports, module) {
     var Papa = require_papaparse_min();
     var { fetchCsvText } = require_fetchCsvText();
-    var { getReplacementsCsvUrl } = require_sheetUrls();
+    var { getReplacementsCsvUrl, invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
     var { createMemoryCache } = require_memoryCache();
     var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
     function safeText2(value) {
@@ -2645,6 +2645,26 @@ var require_playerReplacements = __commonJS({
     function getCachedPlayerReplacements() {
       return replacementsCache.get("player-replacements", loadPlayerReplacements);
     }
+    async function refreshLivePlayerReplacements() {
+      await invalidateSourceCsvCache2(SOURCE_KEYS2.replacements);
+      replacementsCache.invalidate("player-replacements");
+      return loadPlayerReplacements();
+    }
+    function replacementsSignature(byOriginalNorm) {
+      if (!byOriginalNorm?.size) return "";
+      const parts = [];
+      for (const [norm, entry] of [...byOriginalNorm.entries()].sort(
+        (a, b) => a[0].localeCompare(b[0])
+      )) {
+        parts.push(
+          `${norm}:${entry.replacementNorm}:${entry.replacementDateIso || ""}:${entry.replacement || ""}`
+        );
+      }
+      return parts.join("|");
+    }
+    function activeReplacementsSignature(byOriginalNorm, gameIsoDate) {
+      return replacementsSignature(filterReplacementsForDate(byOriginalNorm, gameIsoDate));
+    }
     function serializeReplacementsForClient(byOriginalNorm) {
       const out = {};
       if (!byOriginalNorm) return out;
@@ -2670,6 +2690,9 @@ var require_playerReplacements = __commonJS({
       buildRosterEntriesWithReplacements,
       loadPlayerReplacements,
       getCachedPlayerReplacements,
+      refreshLivePlayerReplacements,
+      replacementsSignature,
+      activeReplacementsSignature,
       emptyReplacementContext,
       serializeReplacementsForClient
     };
@@ -6798,7 +6821,7 @@ var require_matchupLiveSeasonRecord = __commonJS({
       buildRosterByTeamId
     } = require_teamRosters();
     var { load2026StatsByPlayer: load2026StatsByPlayer2 } = require_stats2026Loader();
-    var { getCachedPlayerReplacements } = require_playerReplacements();
+    var { getCachedPlayerReplacements, refreshLivePlayerReplacements } = require_playerReplacements();
     var { loadCaptainTeamCodeById: loadCaptainTeamCodeById2 } = require_powerRankingsCaptains();
     function loadDefensiveRatingsNormalizedMap() {
       const map = /* @__PURE__ */ new Map();
@@ -6819,7 +6842,8 @@ var require_matchupLiveSeasonRecord = __commonJS({
       }
       return n;
     }
-    async function gatherMatchupSeasonRecordDeps() {
+    async function gatherMatchupSeasonRecordDeps(opts = {}) {
+      const replacementsPromise = opts.refreshReplacements ? refreshLivePlayerReplacements() : getCachedPlayerReplacements();
       const [
         teams,
         careerByPlayer,
@@ -6836,7 +6860,7 @@ var require_matchupLiveSeasonRecord = __commonJS({
         load2025HistoricalByPlayer(),
         load2026StatsByPlayer2(),
         Promise.resolve(loadDefensiveRatingsNormalizedMap()),
-        getCachedPlayerReplacements(),
+        replacementsPromise,
         load2026GamelogsByPlayer2(),
         loadCaptainTeamCodeById2(),
         loadWeeklySchedule2()
@@ -6869,7 +6893,9 @@ var require_matchupLiveSeasonRecord = __commonJS({
       if (opts.refreshSchedule) {
         await invalidateSourceCsvCache2(SOURCE_KEYS2.schedule);
       }
-      const deps = await gatherMatchupSeasonRecordDeps();
+      const deps = await gatherMatchupSeasonRecordDeps({
+        refreshReplacements: Boolean(opts.refreshSchedule)
+      });
       const record = computeMatchupPredictorRecord(deps);
       const audit = computeMatchupPredictorAudit(deps);
       return {
@@ -7090,6 +7116,16 @@ async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__) {
   lastGamelogMissingSig = sig;
   applyGamelogMissingToDom([...awayMissingSet], [...homeMissingSet]);
 }
+async function refreshMatchupReplacements({ force = false } = {}) {
+  try {
+    const ctx = window.__MATCHUP_CLIENT__;
+    if (!ctx?.awayPlayersOriginal?.length && !ctx?.homePlayersOriginal?.length) return;
+    if (!window.MmsMatchupPredictor?.refreshMatchupReplacementsLive) return;
+    await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(ctx, { force });
+  } catch (err) {
+    console.error("Matchup replacements refresh failed", err);
+  }
+}
 async function refreshSeasonRecord({ force = false } = {}) {
   try {
     if (!force) {
@@ -7144,8 +7180,10 @@ function startLiveWatchers() {
   const pollMs = Math.max(3e4, DEFAULT_POLL_MS);
   void refreshLiveMatchupChrome();
   void refreshSeasonRecord({ force: true });
+  void refreshMatchupReplacements({ force: true });
   seasonRecordWatchTimer = window.setInterval(() => {
     void refreshSeasonRecord();
+    void refreshMatchupReplacements();
   }, pollMs);
   liveChromeTimer = window.setInterval(() => {
     void refreshLiveMatchupChrome();
@@ -7164,6 +7202,7 @@ if (typeof window !== "undefined") {
     refreshMatchupViewSelect,
     refreshMatchupScheduleChrome,
     refreshSeasonRecord,
+    refreshMatchupReplacements,
     refreshLiveGamelogMissing,
     refreshLiveMatchupChrome,
     bootMatchupLiveWatchers
