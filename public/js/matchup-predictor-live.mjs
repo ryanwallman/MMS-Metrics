@@ -159,6 +159,17 @@ var require_fetchCsvText = __commonJS({
       } catch {
       }
     }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -176,7 +187,7 @@ var require_fetchCsvText = __commonJS({
         return text;
       });
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride, invalidateCsvUrlCache };
   }
 });
 
@@ -734,7 +745,7 @@ var require_metricsSourcesRegistry = __commonJS({
 // lib/sheetUrls.js
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
     var {
       SOURCE_KEYS: SOURCE_KEYS2,
       getMetricsSourceUrl,
@@ -795,13 +806,13 @@ var require_sheetUrls = __commonJS({
     async function invalidateSourceCsvCache2(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     async function invalidateLiveSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     module.exports = {
       HIST_2025_STATS_URL,
@@ -1771,6 +1782,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -7119,7 +7133,10 @@ async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__) {
 async function refreshMatchupReplacements({ force = false } = {}) {
   try {
     const ctx = window.__MATCHUP_CLIENT__;
-    if (!ctx?.awayPlayersOriginal?.length && !ctx?.homePlayersOriginal?.length) return;
+    if (!ctx) return;
+    const origAway = ctx.awayPlayersOriginal || ctx.awayPlayers || [];
+    const origHome = ctx.homePlayersOriginal || ctx.homePlayers || [];
+    if (!origAway.length && !origHome.length) return;
     if (!window.MmsMatchupPredictor?.refreshMatchupReplacementsLive) return;
     await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(ctx, { force });
   } catch (err) {

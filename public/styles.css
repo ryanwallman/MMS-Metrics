@@ -1733,6 +1733,17 @@ body > main.page-main {
   margin-right: 0.25rem;
 }
 
+.dfs-roster-replaced-name {
+  text-decoration: line-through;
+  color: var(--color-muted, #6b7280);
+  margin-right: 0.25rem;
+}
+
+.dfs-player-row--replacement .dfs-player-name {
+  border-left: 3px solid #7c3aed;
+  padding-left: 8px;
+}
+
 .matchup-replacement-tag {
   display: inline-block;
   margin-left: 0.4rem;

@@ -92,6 +92,15 @@ async function hydrateMatchupReplacements(ctx, preloadedReplacements = null) {
   ctx.offenseRatingByNorm = ctx.offenseRatingByNorm || {};
   ctx.stats2026ByPlayer = ctx.stats2026ByPlayer || {};
   mergeNormSubsetIntoObject(ctx.offenseRatingByNorm, offenseRatingByNorm, norms);
+  for (const entry of activeReplacements.values()) {
+    const replNorm = entry?.replacementNorm;
+    if (!replNorm) continue;
+    if (offenseRatingByNorm?.has?.(replNorm)) {
+      ctx.offenseRatingByNorm[replNorm] = offenseRatingByNorm.get(replNorm);
+    }
+    const row = statsRowForNorm(stats2026ByPlayer, replNorm);
+    if (row) ctx.stats2026ByPlayer[replNorm] = row;
+  }
   for (const norm of norms) {
     const row = statsRowForNorm(stats2026ByPlayer, norm);
     if (row) ctx.stats2026ByPlayer[norm] = row;

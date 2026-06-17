@@ -257,7 +257,10 @@ export async function refreshLiveGamelogMissing(ctx = window.__MATCHUP_CLIENT__)
 export async function refreshMatchupReplacements({ force = false } = {}) {
   try {
     const ctx = window.__MATCHUP_CLIENT__;
-    if (!ctx?.awayPlayersOriginal?.length && !ctx?.homePlayersOriginal?.length) return;
+    if (!ctx) return;
+    const origAway = ctx.awayPlayersOriginal || ctx.awayPlayers || [];
+    const origHome = ctx.homePlayersOriginal || ctx.homePlayers || [];
+    if (!origAway.length && !origHome.length) return;
     if (!window.MmsMatchupPredictor?.refreshMatchupReplacementsLive) return;
     await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(ctx, { force });
   } catch (err) {

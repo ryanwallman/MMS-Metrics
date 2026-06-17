@@ -72,6 +72,17 @@ function updateSiteUpdated(iso) {
   wrap.innerHTML = `Data updated <time datetime="${esc(iso)}">${esc(formatDataUpdatedLabel(iso))}</time>`;
 }
 
+function renderDfsPlayerName(p) {
+  if (p.isReplacement && p.replacedName) {
+    return (
+      `<span class="dfs-roster-replaced-name">${esc(p.replacedName)}</span> ` +
+      `${esc(p.name)}` +
+      '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>'
+    );
+  }
+  return esc(p.name);
+}
+
 function renderPoolRows(data) {
   const tbody = document.querySelector("#playerPoolTable tbody");
   const empty = document.querySelector(".dfs-empty-pool");
@@ -97,7 +108,9 @@ function renderPoolRows(data) {
         p.pitcherBaa != null ? `BAA ${p.pitcherBaa}, Runs/G ${p.pitcherRunsG}` : "";
       const fieldAttr = escAttr(String(field).replace(/\n/g, " "));
       return `<tr
-        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}"
+        class="dfs-player-row${inLineup ? " dfs-player-row--selected" : ""}${
+          p.isReplacement ? " dfs-player-row--replacement" : ""
+        }"
         data-norm="${escAttr(p.norm)}"
         data-name="${escAttr(p.name)}"
         data-team="${escAttr(p.teamName)}"
@@ -115,7 +128,7 @@ function renderPoolRows(data) {
                 inLineup ? "true" : "false"
               }">${inLineup ? "−" : "+"}</button></td>`
         }
-        <td class="dfs-player-name">${esc(p.name)}${
+        <td class="dfs-player-name">${renderDfsPlayerName(p)}${
           p.doubleHeader
             ? '<span class="dfs-doubleheader-tag" title="Two games this slate">2G</span>'
             : ""
@@ -152,6 +165,42 @@ function resolvePoolSlateToken(landing) {
   if (urlSlate) return urlSlate;
   if (landing?.active) return landing.active;
   return "";
+}
+
+function poolReplacementSignature(players) {
+  return (players || [])
+    .filter((p) => p.isReplacement)
+    .map((p) => `${p.replacedName || ""}:${p.norm}:${p.name}`)
+    .sort()
+    .join("|");
+}
+
+function startDfsReplacementWatch(getToken, getLineupNorms, initialSig = "") {
+  let lastSig = initialSig;
+  const pollMs = Math.max(30_000, Number(window.__MATCHUP_SCORE_POLL_MS) || 90_000);
+
+  const tick = async () => {
+    try {
+      const token = typeof getToken === "function" ? getToken() : "";
+      const lineupNorms = typeof getLineupNorms === "function" ? getLineupNorms() : [];
+      if (!token) return;
+      const fresh = await loadDfsLineupPool(token, lineupNorms);
+      const sig = poolReplacementSignature(fresh.playerPool);
+      if (sig === lastSig) return;
+      lastSig = sig;
+      if (page) {
+        page.lineupNorms = fresh.lineupNorms || page.lineupNorms;
+      }
+      renderPoolRows(fresh);
+      updateSiteUpdated(fresh.fetchedAt);
+    } catch (err) {
+      console.error("DFS replacement refresh failed", err);
+    }
+  };
+
+  window.setInterval(() => {
+    void tick();
+  }, pollMs);
 }
 
 async function main() {
@@ -271,6 +320,11 @@ async function main() {
 
     renderPoolRows(data);
     updateSiteUpdated(data.fetchedAt);
+    startDfsReplacementWatch(
+      () => page?.slateToken || data.selectedSlate || requestedToken,
+      () => page?.lineupNorms || [],
+      poolReplacementSignature(data.playerPool)
+    );
     if (typeof window.initDfsLineupPage === "function") {
       await window.initDfsLineupPage();
     }

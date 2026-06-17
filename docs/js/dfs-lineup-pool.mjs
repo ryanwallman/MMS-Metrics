@@ -153,6 +153,17 @@ var require_fetchCsvText = __commonJS({
       } catch {
       }
     }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -170,7 +181,7 @@ var require_fetchCsvText = __commonJS({
         return text;
       });
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride, invalidateCsvUrlCache };
   }
 });
 
@@ -728,7 +739,7 @@ var require_metricsSourcesRegistry = __commonJS({
 // lib/sheetUrls.js
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
     var {
       SOURCE_KEYS,
       getMetricsSourceUrl,
@@ -789,13 +800,13 @@ var require_sheetUrls = __commonJS({
     async function invalidateSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     async function invalidateLiveSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     module.exports = {
       HIST_2025_STATS_URL,
@@ -1765,6 +1776,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -5423,9 +5437,13 @@ var require_dfsLineupPageData = __commonJS({
       getCachedDfsLeaderboardScoringContext,
       loadWeeklySchedule
     } = require_dfsLeaderboardScoringContext();
-    var { remapLineupNorms } = require_playerReplacements();
+    var { remapLineupNorms, filterReplacementsForDate } = require_playerReplacements();
     function normalizePlayerName(name) {
       return String(name || "").toLowerCase().replace(/[.'’]/g, "").replace(/\s+/g, " ").trim();
+    }
+    function slateReplacementReferenceIso(slate) {
+      if (!slate?.isoDates?.length) return null;
+      return [...slate.isoDates].sort().pop();
     }
     async function buildDfsLineupPageData2({ slateToken, lineupNorms = [] }) {
       const [{ schedulePayload: scheduleLite, gamelogs, scoringDeps }, scheduleFull] = await Promise.all([getCachedDfsLeaderboardScoringContext(), loadWeeklySchedule()]);
@@ -5462,6 +5480,11 @@ var require_dfsLineupPageData = __commonJS({
         teamCodeById,
         replacementByOriginalNorm
       } = scoringDeps;
+      const slateRefIso = slateReplacementReferenceIso(slate);
+      const activeReplacements = filterReplacementsForDate(
+        replacementByOriginalNorm,
+        slateRefIso
+      );
       const playerPool = buildDfsPlayerPool({
         teams,
         slate,
@@ -5469,10 +5492,10 @@ var require_dfsLineupPageData = __commonJS({
         scheduleRunRates,
         stats2026ByPlayer,
         teamCodeById,
-        replacementByOriginalNorm
+        replacementByOriginalNorm: activeReplacements
       });
       const poolByNorm = new Map(playerPool.map((p) => [p.norm, p]));
-      const remappedNorms = remapLineupNorms(lineupNorms, replacementByOriginalNorm);
+      const remappedNorms = remapLineupNorms(lineupNorms, activeReplacements);
       const norms = remappedNorms.filter((n) => poolByNorm.has(n)).slice(0, DFS_LINEUP_SIZE);
       const showSlateStats = Boolean(slate && !slate.canEdit);
       let slateStats = { byNorm: {}, hasStats: false };

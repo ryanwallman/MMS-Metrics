@@ -766,6 +766,17 @@ var require_fetchCsvText = __commonJS({
       } catch {
       }
     }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -783,7 +794,7 @@ var require_fetchCsvText = __commonJS({
         return text;
       });
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride, invalidateCsvUrlCache };
   }
 });
 
@@ -925,7 +936,7 @@ var require_metricsSourcesRegistry = __commonJS({
 // lib/sheetUrls.js
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
     var {
       SOURCE_KEYS: SOURCE_KEYS2,
       getMetricsSourceUrl,
@@ -986,13 +997,13 @@ var require_sheetUrls = __commonJS({
     async function invalidateSourceCsvCache2(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     async function invalidateLiveSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     module.exports = {
       HIST_2025_STATS_URL,
@@ -1765,6 +1776,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -5654,6 +5668,15 @@ async function hydrateMatchupReplacements(ctx, preloadedReplacements = null) {
   ctx.offenseRatingByNorm = ctx.offenseRatingByNorm || {};
   ctx.stats2026ByPlayer = ctx.stats2026ByPlayer || {};
   mergeNormSubsetIntoObject(ctx.offenseRatingByNorm, offenseRatingByNorm, norms);
+  for (const entry of activeReplacements.values()) {
+    const replNorm = entry?.replacementNorm;
+    if (!replNorm) continue;
+    if (offenseRatingByNorm?.has?.(replNorm)) {
+      ctx.offenseRatingByNorm[replNorm] = offenseRatingByNorm.get(replNorm);
+    }
+    const row = statsRowForNorm(stats2026ByPlayer, replNorm);
+    if (row) ctx.stats2026ByPlayer[replNorm] = row;
+  }
   for (const norm of norms) {
     const row = statsRowForNorm(stats2026ByPlayer, norm);
     if (row) ctx.stats2026ByPlayer[norm] = row;
@@ -5848,9 +5871,17 @@ if (typeof window !== "undefined") {
     watchMatchupLiveScores
   };
   const kickScoreWatch = () => window.setTimeout(autoStartScoreWatcher, 1500);
+  const kickReplacementRefresh = () => {
+    const ctx = window.__MATCHUP_CLIENT__;
+    if (ctx) void refreshMatchupReplacementsLive(ctx, { force: true });
+  };
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", kickScoreWatch);
+    document.addEventListener("DOMContentLoaded", () => {
+      kickReplacementRefresh();
+      kickScoreWatch();
+    });
   } else {
+    kickReplacementRefresh();
     kickScoreWatch();
   }
 }
