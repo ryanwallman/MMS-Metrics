@@ -5596,6 +5596,11 @@ var require_powerRankingsCore = __commonJS({
       if (safeText(g?.isoDate) > ref) return false;
       return isPlayedScheduleGame(g);
     }
+    function isUnplayedScheduleGame(g, referenceIso) {
+      if (isPastPlayedScheduleGame(g, referenceIso)) return false;
+      if (isPlayedScheduleGame(g)) return false;
+      return true;
+    }
     function filterPastPlayedScheduleGames(parsedGames, referenceIso) {
       const ref = safeText(referenceIso) || defaultScheduleReferenceIso();
       return (parsedGames || []).filter((g) => isPastPlayedScheduleGame(g, ref));
@@ -5605,7 +5610,7 @@ var require_powerRankingsCore = __commonJS({
       const seen = /* @__PURE__ */ new Set();
       const remaining = [];
       for (const g of parsedGames) {
-        if (isPastPlayedScheduleGame(g, ref)) continue;
+        if (!isUnplayedScheduleGame(g, ref)) continue;
         const awayId = normalizeScheduleTeamId(g.awayId);
         const homeId = normalizeScheduleTeamId(g.homeId);
         const gid = safeText(g.gameId);
@@ -5712,43 +5717,58 @@ var require_powerRankingsCore = __commonJS({
         const awayProfile = teamProfiles.get(g.awayId);
         const homeProfile = teamProfiles.get(g.homeId);
         if (!awayProfile || !homeProfile) continue;
+        const awayRow = rowsById.get(g.awayId);
+        const homeRow = rowsById.get(g.homeId);
+        if (!awayRow || !homeRow) continue;
+        const awaySlotsLeft = REGULAR_SEASON_GAMES - awayRow.gamesPlayed - awayRow.scheduledRemaining;
+        const homeSlotsLeft = REGULAR_SEASON_GAMES - homeRow.gamesPlayed - homeRow.scheduledRemaining;
+        if (awaySlotsLeft <= 0 || homeSlotsLeft <= 0) continue;
         const { away: pAway, home: pHome } = predictSeasonGameWinProbs(
           awayProfile,
           homeProfile,
           leagueNorms,
           runBase
         );
-        const awayRow = rowsById.get(g.awayId);
-        const homeRow = rowsById.get(g.homeId);
-        if (awayRow) {
-          awayRow.expFutureWins += pAway;
-          awayRow.expFutureLosses += pHome;
-          awayRow.scheduledRemaining += 1;
-        }
-        if (homeRow) {
-          homeRow.expFutureWins += pHome;
-          homeRow.expFutureLosses += pAway;
-          homeRow.scheduledRemaining += 1;
-        }
+        awayRow.expFutureWins += pAway;
+        awayRow.expFutureLosses += pHome;
+        awayRow.scheduledRemaining += 1;
+        homeRow.expFutureWins += pHome;
+        homeRow.expFutureLosses += pAway;
+        homeRow.scheduledRemaining += 1;
         remainingGamesSimulated += 1;
       }
       const rows = [];
       for (const row of rowsById.values()) {
-        const projWins = row.currentWins + row.expFutureWins;
-        const projLosses = row.currentLosses + row.expFutureLosses;
+        const seasonGames = Math.min(
+          REGULAR_SEASON_GAMES,
+          row.gamesPlayed + row.scheduledRemaining
+        );
+        let projWins = row.currentWins + row.expFutureWins;
+        let projLosses = row.currentLosses + row.expFutureLosses;
         const projGames = projWins + projLosses;
-        const roundedWins = Math.round(projWins);
-        const roundedLosses = Math.round(projLosses);
+        if (projGames > seasonGames && projGames > 0) {
+          const scale = seasonGames / projGames;
+          projWins *= scale;
+          projLosses *= scale;
+        }
+        let roundedWins = Math.round(projWins);
+        let roundedLosses = Math.round(projLosses);
+        if (roundedWins + roundedLosses !== seasonGames && seasonGames > 0) {
+          roundedWins = Math.round(projWins / (projWins + projLosses) * seasonGames);
+          roundedLosses = seasonGames - roundedWins;
+        }
         const expRestWins = roundedWins - row.currentWins;
         const expRestLosses = roundedLosses - row.currentLosses;
+        const finalProjGames = projWins + projLosses;
         rows.push({
           ...row,
           projectedWins: roundMatchupN(projWins, 1),
           projectedLosses: roundMatchupN(projLosses, 1),
           projectedRecord: `${roundedWins}-${roundedLosses}`,
-          projectedWinPct: projGames > 0 ? roundMatchupN(projWins / projGames * 100, 1) : null,
+          projectedWinPct: finalProjGames > 0 ? roundMatchupN(projWins / finalProjGames * 100, 1) : null,
           expRestRecord: `${expRestWins}-${expRestLosses}`,
-          gamesToReachSeason: Math.max(0, REGULAR_SEASON_GAMES - row.gamesPlayed)
+          gamesToReachSeason: Math.max(0, REGULAR_SEASON_GAMES - row.gamesPlayed),
+          seasonGames
         });
       }
       rows.sort((a, b) => {
@@ -5791,6 +5811,7 @@ var require_powerRankingsCore = __commonJS({
       attachCaptainsToProjectionRows,
       isPlayedScheduleGame,
       isPastPlayedScheduleGame,
+      isUnplayedScheduleGame,
       filterPastPlayedScheduleGames,
       defaultScheduleReferenceIso,
       buildRemainingScheduleGames,
