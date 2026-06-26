@@ -2947,7 +2947,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       getAllTimeStatsCsvUrl,
       SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2,
       resolveCareerCsvSource,
-      HIST_2025_STATS_URL
+      HIST_2025_STATS_URL,
+      CAREER_CSV_PUBLIC_URL
     } = require_sheetUrls();
     var { parsePlayerHistoricalStatsCsv, parse2025SeasonStatsCsv } = require_playerHistoricalStats();
     var { isTruthyRookie } = require_leagueLeaders();
@@ -3289,31 +3290,39 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const csvText = await fetchCsvText(HIST_2025_STATS_URL);
       return parse2025SeasonStatsCsv(csvText);
     }
+    function isBundledCareerCsvUrl(url) {
+      const u = safeText2(url);
+      return u === CAREER_CSV_PUBLIC_URL || u.endsWith("/data/csv/career.csv");
+    }
     async function loadCareerByPlayer() {
       const src = resolveCareerCsvSource();
-      let csvText;
       if (src.type === "file") {
         if (!nodeReadCareerCsv) {
           throw new Error("Career CSV file read is not configured (Node only).");
         }
-        csvText = await nodeReadCareerCsv(src.path);
-      } else {
-        const overrideUrl = src.type === "url" ? safeText2(src.url) : "";
-        const legacyStatic = overrideUrl === "/data/csv/career.csv" || overrideUrl.endsWith("/data/csv/career.csv");
-        const url = overrideUrl && !legacyStatic ? overrideUrl : await getAllTimeStatsCsvUrl();
+        const csvText = await nodeReadCareerCsv(src.path);
+        return parsePlayerHistoricalStatsCsv(csvText);
+      }
+      const overrideUrl = src.type === "url" ? safeText2(src.url) : "";
+      if (overrideUrl && !isBundledCareerCsvUrl(overrideUrl)) {
+        const csvText = await fetchCsvText(overrideUrl);
+        return parsePlayerHistoricalStatsCsv(csvText);
+      }
+      const staticFallbackUrl = overrideUrl && isBundledCareerCsvUrl(overrideUrl) ? overrideUrl : CAREER_CSV_PUBLIC_URL;
+      try {
+        const liveUrl = await getAllTimeStatsCsvUrl();
+        const csvText = await fetchCsvText(liveUrl);
+        return parsePlayerHistoricalStatsCsv(csvText);
+      } catch (liveErr) {
         try {
-          csvText = await fetchCsvText(url);
-        } catch (err) {
-          if (src.type === "file" && nodeReadCareerCsv) {
-            csvText = await nodeReadCareerCsv(src.path);
-          } else {
-            throw new Error(
-              `Failed to load all-time player stats (publish the All Time Stats sheet to the web). ${err.message || err}`
-            );
-          }
+          const csvText = await fetchCsvText(staticFallbackUrl);
+          return parsePlayerHistoricalStatsCsv(csvText);
+        } catch {
+          throw new Error(
+            `Failed to load all-time player stats (publish the All Time Stats sheet to the web). ${liveErr.message || liveErr}`
+          );
         }
       }
-      return parsePlayerHistoricalStatsCsv(csvText);
     }
     function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
       const paN = toNumber(pa);
