@@ -5,15 +5,8 @@ require("dotenv").config();
 
 const fs = require("fs/promises");
 const path = require("path");
-const { setNodeCareerReader } = require("../lib/dfsLeaderboardScoringContext");
-const { CSV_CAREER } = require("../lib/dataPaths");
-const { setCareerCsvFilePath } = require("../lib/sheetUrls");
 const { computeMatchupPredictorRecord } = require("../lib/matchupPredictorRecord");
 const { gatherMatchupSeasonRecordDeps } = require("../lib/matchupLiveSeasonRecord");
-
-setNodeCareerReader((filePath) => fs.readFile(filePath, "utf8"));
-delete process.env.CAREER_CSV_URL;
-setCareerCsvFilePath(path.resolve(CSV_CAREER));
 
 async function main() {
   const deps = await gatherMatchupSeasonRecordDeps();

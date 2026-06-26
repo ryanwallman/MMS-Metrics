@@ -17,6 +17,8 @@ const {
   getCachedDfsLeaderboardScoringContext,
   loadWeeklySchedule,
   setNodeCareerReader,
+  loadCareerByPlayer,
+  load2025HistoricalByPlayer,
 } = require("./lib/dfsLeaderboardScoringContext");
 const fsPromises = require("fs/promises");
 
@@ -83,6 +85,7 @@ const {
   buildStats2026ByPlayerFromGamelogsBefore,
 } = require("./lib/matchupHistoricalSnapshot");
 const { buildMatchupLeagueContext } = require("./lib/matchupLeagueContext");
+const { filterRegularSeasonScheduleGames } = require("./lib/regularSeasonSchedule");
 const {
   getMatchupPredictorAudit,
   getMatchupCalibrationForProjections,
@@ -147,18 +150,13 @@ app.get("/healthz", (_req, res) => {
 
 const {
   getStats2026CsvUrl,
-  HIST_2025_STATS_URL,
-  CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
-const { setCareerCsvFilePath } = require("./lib/sheetUrls");
 const {
   normalizeSiteBasePath,
   sitePath: buildSitePath,
   mapNavHrefs,
 } = require("./lib/sitePaths");
-
-setCareerCsvFilePath(CAREER_CSV_PATH);
 
 const SITE_BASE_PATH = normalizeSiteBasePath(process.env.SITE_BASE_PATH || "");
 const STATIC_EXPORT = process.env.STATIC_EXPORT === "1";
@@ -814,85 +812,6 @@ function sanitizeTeamRosterRowsForTeamStatPage(players) {
 
 function sanitizeTeamSnapshotForTeamStatPage(team) {
   return { ...team, players: sanitizeTeamRosterRowsForTeamStatPage(team.players) };
-}
-
-async function load2025HistoricalByPlayer() {
-  const rows = await fetchCsvRows(HIST_2025_STATS_URL);
-  const headers = (rows[0] || []).map((h) => safeText(h));
-  const dataRows = rows.slice(1);
-  const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
-  if (nameIndex === -1) {
-    throw new Error("2025 historical CSV missing Player column.");
-  }
-
-  const byPlayer = new Map();
-  for (const row of dataRows) {
-    const playerName = safeText(row[nameIndex]);
-    if (!playerName) continue;
-
-    const singles = toNumber(row[6]);
-    const doubles = toNumber(row[7]);
-    const triples = toNumber(row[8]);
-    const homers = toNumber(row[9]);
-    const bb = toNumber(row[10]);
-    const ab = toNumber(row[2]);
-
-    const stats = {
-      player: playerName,
-      team: safeText(row[1]),
-      pa: ab + bb, // proxy since PA is not explicitly present
-      ab,
-      h: toNumber(row[3]),
-      r: toNumber(row[4]),
-      rbi: toNumber(row[5]),
-      bb,
-      tb: singles + doubles * 2 + triples * 3 + homers * 4,
-    };
-
-    byPlayer.set(normalizePlayerName(playerName), stats);
-  }
-
-  return byPlayer;
-}
-
-async function loadCareerByPlayer() {
-  const csvText = await fs.readFile(CAREER_CSV_PATH, "utf8");
-  const rows = Papa.parse(csvText).data;
-  const headers = (rows[0] || []).map((h) => safeText(h).toLowerCase());
-  const dataRows = rows.slice(1);
-
-  const idx = {
-    name: headers.indexOf("player_name"),
-    seasons: headers.indexOf("seasons"),
-    pa: headers.indexOf("pa"),
-    ab: headers.indexOf("ab"),
-    h: headers.indexOf("h"),
-    r: headers.indexOf("r"),
-    rbi: headers.indexOf("rbi"),
-    bb: headers.indexOf("bb"),
-    tb: headers.indexOf("tb"),
-  };
-
-  if (idx.name === -1) {
-    throw new Error("data/csv/career.csv missing player_name column.");
-  }
-
-  const byPlayer = new Map();
-  for (const row of dataRows) {
-    const name = safeText(row[idx.name]);
-    if (!name) continue;
-    byPlayer.set(normalizePlayerName(name), {
-      seasons: toNumber(row[idx.seasons]),
-      pa: toNumber(row[idx.pa]),
-      ab: toNumber(row[idx.ab]),
-      h: toNumber(row[idx.h]),
-      r: toNumber(row[idx.r]),
-      rbi: toNumber(row[idx.rbi]),
-      bb: toNumber(row[idx.bb]),
-      tb: toNumber(row[idx.tb]),
-    });
-  }
-  return byPlayer;
 }
 
 /**
@@ -2050,9 +1969,10 @@ async function loadMatchupPredictorSeasonRecord() {
   const nameToTeamId = buildNameToTeamIdMap(teams);
   const rosterByTeamId = buildRosterByTeamId(teams);
   const parsedScheduleGames = payload.parsedGames || [];
+  const regularSeasonScheduleGames = filterRegularSeasonScheduleGames(parsedScheduleGames);
   const referenceIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
   const audit = await getMatchupPredictorAudit({
-    parsedScheduleGames,
+    parsedScheduleGames: regularSeasonScheduleGames,
     referenceIso,
     teams,
     rosterByTeamId,
@@ -2227,8 +2147,9 @@ async function renderMatchupPredictorPage(req, res) {
     const rosterByTeamId = buildRosterByTeamId(teams);
 
     const parsedScheduleGames = payload.parsedGames || [];
+    const regularSeasonScheduleGames = filterRegularSeasonScheduleGames(parsedScheduleGames);
     const auditInput = {
-      parsedScheduleGames,
+      parsedScheduleGames: regularSeasonScheduleGames,
       referenceIso: refIso,
       teams,
       rosterByTeamId,
@@ -2261,7 +2182,7 @@ async function renderMatchupPredictorPage(req, res) {
       careerByPlayer,
       hist2025ByPlayer,
       stats2026ByPlayer,
-      parsedScheduleGames,
+      parsedScheduleGames: regularSeasonScheduleGames,
       defenseMap,
       rosterByTeamId,
       byOriginalNorm,
@@ -2319,7 +2240,7 @@ async function renderMatchupPredictorPage(req, res) {
         );
 
         const parsedGameForMissing = findParsedGameForMatchup(
-          parsedScheduleGames,
+          regularSeasonScheduleGames,
           selectedGame,
           viewIso
         );
@@ -2331,7 +2252,7 @@ async function renderMatchupPredictorPage(req, res) {
             homeMissingSet,
             selectedGame,
             viewIso,
-            parsedScheduleGames,
+            parsedScheduleGames: regularSeasonScheduleGames,
             gamelogs,
             teamCodeById,
             awayEffectivePlayers,
@@ -2342,7 +2263,7 @@ async function renderMatchupPredictorPage(req, res) {
           const gameIso = safeText(selectedGame.isoDate || viewIso);
           if (gameIso && gamelogs?.byNorm?.size) {
             const histStats = buildStats2026ByPlayerFromGamelogsBefore(gamelogs, gameIso);
-            const histGames = filterScheduleGamesBeforeIso(parsedScheduleGames, gameIso);
+            const histGames = filterScheduleGamesBeforeIso(regularSeasonScheduleGames, gameIso);
             const histCtx = buildMatchupLeagueContext({
               teams,
               careerByPlayer,
@@ -2436,7 +2357,7 @@ async function renderMatchupPredictorPage(req, res) {
 
         if (awayProfile && homeProfile) {
           const parsedGame = findParsedGameForMatchup(
-            parsedScheduleGames,
+            regularSeasonScheduleGames,
             selectedGame,
             viewIso
           );

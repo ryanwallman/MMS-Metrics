@@ -1,7 +1,6 @@
 /**
  * Browser: load a saved lineup for leaderboard detail view (GitHub Pages).
  */
-import { configureCareerCsvForBrowser } from "../lib/sheetUrls.js";
 import { getCachedDfsLeaderboardScoringContext } from "../lib/dfsLeaderboardScoringContext.js";
 import {
   buildLineupDetailView,
@@ -10,11 +9,6 @@ import {
 import { referenceIsoForScheduleYear } from "../lib/dfs.js";
 import { SCHEDULE_CALENDAR_YEAR } from "../lib/sheetUrls.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-const careerCsvUrl =
-  (typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__) ||
-  "/data/csv/career.csv";
-configureCareerCsvForBrowser(careerCsvUrl);
 
 function lineupFromClientDoc(snap) {
   if (!snap.exists()) return null;

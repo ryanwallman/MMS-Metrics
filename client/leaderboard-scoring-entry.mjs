@@ -2,7 +2,6 @@
  * Browser bundle entry: score DFS leaderboard lineups using runtime sheet CSVs.
  */
 import { refreshLivePlayerReplacements } from "../lib/playerReplacements.js";
-import { configureCareerCsvForBrowser } from "../lib/sheetUrls.js";
 import { buildWeeklyLeaderboardResponse } from "../lib/dfsLeaderboardResponse.js";
 import { loadWeeklySchedule } from "../lib/dfsLeaderboardScoringContext.js";
 import {
@@ -28,11 +27,6 @@ function sitePath(path) {
 function formatWeekOptionLabel(opt) {
   return opt.isPast ? opt.label : `${opt.label} (upcoming)`;
 }
-
-const careerCsvUrl =
-  (typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__) ||
-  "/data/csv/career.csv";
-configureCareerCsvForBrowser(careerCsvUrl);
 
 export async function scoreWeeklyLeaderboard(selectedWeek, lineups) {
   await refreshLivePlayerReplacements();

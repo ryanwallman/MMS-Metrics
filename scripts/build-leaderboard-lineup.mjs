@@ -9,8 +9,6 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const base = (process.env.SITE_BASE_PATH || "").replace(/\/+$/, "");
-const careerPublic = base ? `${base}/data/csv/career.csv` : "/data/csv/career.csv";
 
 await esbuild.build({
   entryPoints: [path.join(root, "client/leaderboard-lineup-entry.mjs")],
@@ -26,7 +24,6 @@ await esbuild.build({
     "process.env.SCHEDULE_CALENDAR_YEAR": '"2026"',
     "process.env.GAMELOGS_2026_CSV_URL": '""',
     "process.env.STATS_2026_CSV_URL": '""',
-    "process.env.CAREER_CSV_URL": `"${careerPublic}"`,
     "process.env.CAPTAIN_MAPPING_CSV_URL": '""',
     "process.env.CSV_CACHE_TTL_MS": '"600000"',
     "process.env.SLATE_POINTS_CACHE_TTL_MS": '"600000"',
