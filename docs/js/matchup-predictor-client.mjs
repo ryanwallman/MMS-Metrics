@@ -837,7 +837,8 @@ var require_metricsSourcesRegistry = __commonJS({
       gamelogs2026: "gamelogs2026",
       stats2026: "stats2026",
       replacements: "replacements",
-      captainMapping: "captainMapping"
+      captainMapping: "captainMapping",
+      allTimeStats: "allTimeStats"
     });
     var REQUIRED_KEYS = Object.freeze([
       SOURCE_KEYS2.schedule,
@@ -846,7 +847,8 @@ var require_metricsSourcesRegistry = __commonJS({
       SOURCE_KEYS2.gamelogs2026,
       SOURCE_KEYS2.stats2026,
       SOURCE_KEYS2.replacements,
-      SOURCE_KEYS2.captainMapping
+      SOURCE_KEYS2.captainMapping,
+      SOURCE_KEYS2.allTimeStats
     ]);
     function safeText(value) {
       return (value || "").toString().trim();
@@ -866,6 +868,7 @@ var require_metricsSourcesRegistry = __commonJS({
       if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS2.stats2026;
       if (n.includes("replacement")) return SOURCE_KEYS2.replacements;
       if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS2.captainMapping;
+      if (n.includes("all time") || n.includes("all-time")) return SOURCE_KEYS2.allTimeStats;
       return null;
     }
     function browserUrlToCsvFetchUrl(input) {
@@ -998,6 +1001,11 @@ var require_sheetUrls = __commonJS({
     async function getReplacementsCsvUrl() {
       return getMetricsSourceUrl(SOURCE_KEYS2.replacements);
     }
+    async function getAllTimeStatsCsvUrl() {
+      const override = (process.env.ALL_TIME_STATS_CSV_URL || "").trim();
+      if (override) return override;
+      return getMetricsSourceUrl(SOURCE_KEYS2.allTimeStats);
+    }
     function setCareerCsvFilePath(filePath) {
       careerCsvFilePath = filePath ? String(filePath) : null;
     }
@@ -1046,12 +1054,49 @@ var require_sheetUrls = __commonJS({
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
       getReplacementsCsvUrl,
+      getAllTimeStatsCsvUrl,
       googleSheetCsvExportUrl,
       setCareerCsvFilePath,
       getCareerCsvSource,
       resolveCareerCsvSource,
       configureCareerCsvForBrowser
     };
+  }
+});
+
+// lib/leagueLeaders.js
+var require_leagueLeaders = __commonJS({
+  "lib/leagueLeaders.js"(exports, module) {
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function isTruthyRookie(value) {
+      const text = safeText(value).toLowerCase();
+      return text === "y" || text === "yes" || text === "true" || text === "1";
+    }
+    function buildLeagueLeaders(players) {
+      const topN = (items, field, n = 5, minAB = 0) => items.filter((p) => toNumber(p.AB) >= minAB).slice().sort((a, b) => toNumber(b[field]) - toNumber(a[field])).slice(0, n);
+      const leaders = [
+        { title: "OPS", field: "OPS", minAB: 0 },
+        { title: "AVG", field: "AVG", minAB: 0 },
+        { title: "OBP", field: "OBP", minAB: 0 },
+        { title: "SLG", field: "SLG", minAB: 0 },
+        { title: "Hits", field: "Hits", minAB: 0 },
+        { title: "Runs", field: "Runs", minAB: 0 },
+        { title: "RBI", field: "RBI", minAB: 0 },
+        { title: "HR", field: "HR", minAB: 0 }
+      ].map((category) => ({
+        ...category,
+        players: topN(players, category.field, 5, category.minAB)
+      }));
+      const topRookies = players.filter((p) => isTruthyRookie(p.IsRookie)).slice().sort((a, b) => toNumber(b.AVG) - toNumber(a.AVG)).slice(0, 5);
+      return { leaders, topRookies };
+    }
+    module.exports = { buildLeagueLeaders, isTruthyRookie };
   }
 });
 
@@ -1065,6 +1110,7 @@ var require_dfs = __commonJS({
     } = require_pitcherStats2026();
     var { getGamelogs2026CsvUrl } = require_sheetUrls();
     var { fetchCsvText } = require_fetchCsvText();
+    var { isTruthyRookie } = require_leagueLeaders();
     var DFS_LINEUP_SIZE = 8;
     var DFS_SALARY_CAP = 6e4;
     var DFS_SALARY_MIN = 5e3;
@@ -1077,8 +1123,9 @@ var require_dfs = __commonJS({
     var OFFENSE_SALARY_WEIGHT = 0.8;
     var OPP_RUNS_SALARY_WEIGHT = 0.12;
     var PITCHER_SALARY_WEIGHT = 0.08;
-    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.85;
-    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.15;
+    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.6;
+    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.4;
+    var DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA = 20;
     var DFS_DOUBLEHEADER_SALARY_BOOST = 1.18;
     var DFS_SCORING = Object.freeze({
       single: 3,
@@ -1802,6 +1849,7 @@ ${slice[1]}`;
             originalName: playerName,
             replacedName: repl ? repl.original : null,
             isReplacement: Boolean(repl),
+            isRookie: row26 ? isTruthyRookie(row26.IsRookie) : false,
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -2093,6 +2141,7 @@ ${slice[1]}`;
       PITCHER_SALARY_WEIGHT,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       DFS_OFFENSE_RATING_WEIGHT_2026,
+      DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA,
       buildTeamCodeById,
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
@@ -4436,6 +4485,120 @@ var require_matchupPredict = __commonJS({
   }
 });
 
+// lib/playerHistoricalStats.js
+var require_playerHistoricalStats = __commonJS({
+  "lib/playerHistoricalStats.js"(exports, module) {
+    "use strict";
+    var Papa = require_papaparse_min();
+    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(String(value ?? "").replace(/[^\d.-]/g, ""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function headerIndex(headers, candidates) {
+      const lower = headers.map((h) => safeText(h).toLowerCase());
+      for (const c of candidates) {
+        const i = lower.indexOf(c);
+        if (i >= 0) return i;
+      }
+      return -1;
+    }
+    function parsePlayerHistoricalStatsCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const headers = (rows[0] || []).map((h) => safeText(h));
+      const dataRows = rows.slice(1);
+      const idx = {
+        name: headerIndex(headers, ["player_name", "player", "name"]),
+        seasons: headerIndex(headers, ["seasons"]),
+        pa: headerIndex(headers, ["pa"]),
+        ab: headerIndex(headers, ["ab"]),
+        h: headerIndex(headers, ["h", "hits"]),
+        r: headerIndex(headers, ["r", "runs"]),
+        rbi: headerIndex(headers, ["rbi"]),
+        bb: headerIndex(headers, ["bb"]),
+        tb: headerIndex(headers, ["tb"]),
+        singles: headerIndex(headers, ["1b", "singles"]),
+        doubles: headerIndex(headers, ["2b", "doubles"]),
+        triples: headerIndex(headers, ["3b", "triples"]),
+        hr: headerIndex(headers, ["hr", "home runs"])
+      };
+      if (idx.name === -1) {
+        throw new Error("All-time stats CSV missing player name column.");
+      }
+      const byPlayer = /* @__PURE__ */ new Map();
+      for (const row of dataRows) {
+        const name = safeText(row[idx.name]);
+        if (!name) continue;
+        const ab = idx.ab >= 0 ? toNumber(row[idx.ab]) : 0;
+        const bb = idx.bb >= 0 ? toNumber(row[idx.bb]) : 0;
+        const h = idx.h >= 0 ? toNumber(row[idx.h]) : 0;
+        const r = idx.r >= 0 ? toNumber(row[idx.r]) : 0;
+        const rbi = idx.rbi >= 0 ? toNumber(row[idx.rbi]) : 0;
+        let tb = idx.tb >= 0 ? toNumber(row[idx.tb]) : 0;
+        if (tb <= 0 && idx.singles >= 0) {
+          const singles = toNumber(row[idx.singles]);
+          const doubles = idx.doubles >= 0 ? toNumber(row[idx.doubles]) : 0;
+          const triples = idx.triples >= 0 ? toNumber(row[idx.triples]) : 0;
+          const hr = idx.hr >= 0 ? toNumber(row[idx.hr]) : 0;
+          tb = singles + doubles * 2 + triples * 3 + hr * 4;
+        }
+        const pa = idx.pa >= 0 ? toNumber(row[idx.pa]) : ab + bb;
+        byPlayer.set(normalizePlayerName2(name), {
+          player: name,
+          seasons: idx.seasons >= 0 ? toNumber(row[idx.seasons]) : null,
+          pa,
+          ab,
+          h,
+          r,
+          rbi,
+          bb,
+          tb
+        });
+      }
+      return byPlayer;
+    }
+    function parse2025SeasonStatsCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const headers = (rows[0] || []).map((h) => safeText(h));
+      const dataRows = rows.slice(1);
+      const nameIndex = headerIndex(headers, ["player", "player_name", "name"]);
+      if (nameIndex === -1) {
+        throw new Error("2025 season stats CSV missing Player column.");
+      }
+      const byPlayer = /* @__PURE__ */ new Map();
+      for (const row of dataRows) {
+        const playerName = safeText(row[nameIndex]);
+        if (!playerName) continue;
+        const singles = toNumber(row[6]);
+        const doubles = toNumber(row[7]);
+        const triples = toNumber(row[8]);
+        const homers = toNumber(row[9]);
+        const bb = toNumber(row[10]);
+        const ab = toNumber(row[2]);
+        byPlayer.set(normalizePlayerName2(playerName), {
+          player: playerName,
+          team: safeText(row[1]),
+          pa: ab + bb,
+          ab,
+          h: toNumber(row[3]),
+          r: toNumber(row[4]),
+          rbi: toNumber(row[5]),
+          bb,
+          tb: singles + doubles * 2 + triples * 3 + homers * 4
+        });
+      }
+      return byPlayer;
+    }
+    module.exports = {
+      parsePlayerHistoricalStatsCsv,
+      parse2025SeasonStatsCsv
+    };
+  }
+});
+
 // lib/stats2026Loader.js
 var require_stats2026Loader = __commonJS({
   "lib/stats2026Loader.js"(exports, module) {
@@ -4471,368 +4634,6 @@ var require_stats2026Loader = __commonJS({
   }
 });
 
-// lib/offenseRankingsPage.js
-var require_offenseRankingsPage = __commonJS({
-  "lib/offenseRankingsPage.js"(exports, module) {
-    "use strict";
-    var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
-    var { normalizeScheduleTeamId } = require_teamRosters();
-    var { finishedScheduleGameDedupeKey } = require_matchupPredict();
-    function toNumber(v) {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-    var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
-    var OFFENSE_RATING_WEIGHT_2026 = 0.3;
-    var TEAM_OVERALL_WEIGHT_PLAYER = 0.5;
-    var TEAM_OVERALL_WEIGHT_RECORD = 0.4;
-    var TEAM_OVERALL_WEIGHT_SOS = 0.1;
-    var OFFENSE_METRIC_WEIGHTS = Object.freeze({
-      ops: 0.52,
-      iso: 0.16,
-      tbPerPa: 0.26,
-      runProd: 0.06
-    });
-    var OFFENSE_METRIC_KEYS = Object.keys(OFFENSE_METRIC_WEIGHTS);
-    function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
-      const paN = toNumber(pa);
-      if (paN <= 0) return null;
-      const abN = toNumber(ab);
-      const bbN = toNumber(bb);
-      const hN = toNumber(h);
-      const tbN = toNumber(tb);
-      const rN = toNumber(r);
-      const rbiN = toNumber(rbi);
-      if (abN + bbN <= 0) return null;
-      const slg = abN > 0 ? tbN / abN : 0;
-      const avg = abN > 0 ? hN / abN : 0;
-      const iso = slg - avg;
-      const ops = avg + slg;
-      const tbPerPa = tbN / paN;
-      const runProd = (rN + rbiN) / paN;
-      if (![ops, iso, tbPerPa, runProd].every((x) => Number.isFinite(x))) return null;
-      return { ops, iso, tbPerPa, runProd };
-    }
-    function collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer) {
-      const out = [];
-      for (const [, c] of careerByPlayer.entries()) {
-        const pa = toNumber(c.pa);
-        const b = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
-      for (const [, h] of hist2025ByPlayer.entries()) {
-        const pa = toNumber(h.pa);
-        const b = computeOffenseRateBundle(pa, h.ab, h.bb, h.h, h.tb, h.r, h.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
-      for (const [, row] of stats2026ByPlayer.entries()) {
-        const pa = toNumber(row.PA);
-        const b = computeOffenseRateBundle(pa, row.AB, row.BB, row.Hits, row.TB, row.Runs, row.RBI);
-        if (b) out.push({ pa, bundle: b });
-      }
-      return out;
-    }
-    function weightedMomentsPerMetric(observations) {
-      const totPa = observations.reduce((s, o) => s + o.pa, 0);
-      const moments = {};
-      if (totPa <= 0) {
-        for (const k of OFFENSE_METRIC_KEYS) {
-          moments[k] = { mu: 0, sigma: 1 };
-        }
-        return { moments, totPa };
-      }
-      for (const key of OFFENSE_METRIC_KEYS) {
-        const mu = observations.reduce((s, o) => s + o.pa * o.bundle[key], 0) / totPa;
-        const variance = observations.reduce((s, o) => s + o.pa * (o.bundle[key] - mu) ** 2, 0) / totPa;
-        const sigma = Math.sqrt(Math.max(variance, 1e-10));
-        moments[key] = { mu, sigma };
-      }
-      return { moments, totPa };
-    }
-    function zScoresFromBundle(bundle, moments) {
-      const z = {};
-      for (const key of OFFENSE_METRIC_KEYS) {
-        const { mu, sigma } = moments[key];
-        z[key] = (bundle[key] - mu) / sigma;
-      }
-      return z;
-    }
-    function compositeZFromZScores(zObj) {
-      let s = 0;
-      for (const key of OFFENSE_METRIC_KEYS) {
-        s += OFFENSE_METRIC_WEIGHTS[key] * zObj[key];
-      }
-      return s;
-    }
-    function historicalPaAndBundleForPlayer(normalizedKey, careerByPlayer, hist2025ByPlayer) {
-      const c = careerByPlayer.get(normalizedKey);
-      if (c && toNumber(c.pa) > 0) {
-        const pa = toNumber(c.pa);
-        const bundle = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (bundle) return { pa, bundle };
-      }
-      const h25 = hist2025ByPlayer.get(normalizedKey);
-      if (h25 && toNumber(h25.pa) > 0) {
-        const pa = toNumber(h25.pa);
-        const bundle = computeOffenseRateBundle(pa, h25.ab, h25.bb, h25.h, h25.tb, h25.r, h25.rbi);
-        if (bundle) return { pa, bundle };
-      }
-      return null;
-    }
-    function bundle2026FromRow(row2026) {
-      const pa = toNumber(row2026.PA);
-      if (pa <= 0) return null;
-      return computeOffenseRateBundle(pa, row2026.AB, row2026.BB, row2026.Hits, row2026.TB, row2026.Runs, row2026.RBI);
-    }
-    function neutralCompositeZ() {
-      return 0;
-    }
-    function blendedOffenseRating(composite26, compositeHist, has26, hasHist, blendWeights) {
-      const wHist = blendWeights?.historical ?? OFFENSE_RATING_WEIGHT_HISTORICAL;
-      const w26 = blendWeights?.y2026 ?? OFFENSE_RATING_WEIGHT_2026;
-      if (has26 && hasHist) {
-        return wHist * compositeHist + w26 * composite26;
-      }
-      if (has26) return composite26;
-      if (hasHist) return compositeHist;
-      return neutralCompositeZ();
-    }
-    var DFS_SALARY_RATING_BLEND = Object.freeze({
-      historical: OFFENSE_RATING_WEIGHT_HISTORICAL,
-      y2026: OFFENSE_RATING_WEIGHT_2026
-    });
-    function buildOffenseRatingForNorm(norm, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
-      const row2026 = stats2026ByPlayer.get(norm);
-      const pa26 = row2026 ? toNumber(row2026.PA) : 0;
-      const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
-      const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
-      const composite26 = z26 ? compositeZFromZScores(z26) : neutralCompositeZ();
-      const has26 = z26 != null;
-      const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
-      const rawHist = histSample?.bundle ?? null;
-      const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
-      const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
-      const hasHist = zHist != null;
-      const ratingRaw = blendedOffenseRating(
-        composite26,
-        compositeHist ?? 0,
-        has26,
-        hasHist,
-        blendWeights
-      );
-      return Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0;
-    }
-    function extendOffenseRatingsForReplacements(offenseRatingByNorm, byOriginalNorm, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
-      if (!offenseRatingByNorm || !byOriginalNorm?.size) return offenseRatingByNorm;
-      for (const entry of byOriginalNorm.values()) {
-        const norm = entry?.replacementNorm;
-        if (!norm) continue;
-        offenseRatingByNorm.set(
-          norm,
-          buildOffenseRatingForNorm(
-            norm,
-            careerByPlayer,
-            hist2025ByPlayer,
-            stats2026ByPlayer,
-            moments,
-            blendWeights
-          )
-        );
-      }
-      return offenseRatingByNorm;
-    }
-    function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
-      const rows = [];
-      for (const team of teams) {
-        for (const playerName of team.players) {
-          const norm = normalizePlayerName2(playerName);
-          const row2026 = stats2026ByPlayer.get(norm);
-          const pa26 = row2026 ? toNumber(row2026.PA) : 0;
-          const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
-          const ratingRounded = buildOffenseRatingForNorm(
-            norm,
-            careerByPlayer,
-            hist2025ByPlayer,
-            stats2026ByPlayer,
-            moments,
-            blendWeights
-          );
-          const opsDisplay26 = raw26 && Number.isFinite(raw26.ops) ? Math.round(raw26.ops * 1e3) / 1e3 : null;
-          const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
-          const composite26 = z26 ? compositeZFromZScores(z26) : neutralCompositeZ();
-          const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
-          const rawHist = histSample?.bundle ?? null;
-          const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
-          const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
-          rows.push({
-            playerName,
-            norm,
-            teamId: team.teamId,
-            teamName: team.teamName,
-            pa2026: pa26,
-            composite2026: Number.isFinite(composite26) ? Math.round(composite26 * 1e3) / 1e3 : 0,
-            compositeHist: compositeHist != null && Number.isFinite(compositeHist) ? Math.round(compositeHist * 1e3) / 1e3 : null,
-            ops2026Adj: opsDisplay26,
-            tbPerPa2026: raw26 && Number.isFinite(raw26.tbPerPa) ? Math.round(raw26.tbPerPa * 1e3) / 1e3 : null,
-            rating: ratingRounded
-          });
-        }
-      }
-      rows.sort((a, b) => b.rating - a.rating);
-      rows.forEach((r, i) => {
-        r.leagueRank = i + 1;
-      });
-      return rows;
-    }
-    function buildTeamStandingsFromScheduleGames(parsedGames, teams) {
-      const rec = /* @__PURE__ */ new Map();
-      for (const t of teams) {
-        const id = normalizeScheduleTeamId(t.teamId);
-        rec.set(id, { wins: 0, losses: 0, opponentIdsPerGame: [] });
-      }
-      const seen = /* @__PURE__ */ new Set();
-      for (const g of parsedGames) {
-        const awayId = normalizeScheduleTeamId(g.awayId);
-        const homeId = normalizeScheduleTeamId(g.homeId);
-        if (!rec.has(awayId) || !rec.has(homeId)) continue;
-        if (!Number.isFinite(g.awayScore) || !Number.isFinite(g.homeScore)) continue;
-        if (g.awayScore === g.homeScore) continue;
-        const dedupeKey = finishedScheduleGameDedupeKey(g);
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
-        if (g.awayScore > g.homeScore) {
-          rec.get(awayId).wins += 1;
-          rec.get(homeId).losses += 1;
-        } else {
-          rec.get(homeId).wins += 1;
-          rec.get(awayId).losses += 1;
-        }
-        rec.get(awayId).opponentIdsPerGame.push(homeId);
-        rec.get(homeId).opponentIdsPerGame.push(awayId);
-      }
-      const standings = /* @__PURE__ */ new Map();
-      for (const [id, r] of rec.entries()) {
-        const gamesPlayed = r.wins + r.losses;
-        const winPct = gamesPlayed > 0 ? r.wins / gamesPlayed : null;
-        standings.set(id, {
-          wins: r.wins,
-          losses: r.losses,
-          gamesPlayed,
-          winPct,
-          sosOppWinPct: null
-        });
-      }
-      for (const [id, r] of rec.entries()) {
-        let sosSum = 0;
-        let sosN = 0;
-        for (const oppId of r.opponentIdsPerGame) {
-          const opp = standings.get(oppId);
-          if (!opp || opp.gamesPlayed <= 0) continue;
-          sosSum += opp.winPct;
-          sosN += 1;
-        }
-        const row = standings.get(id);
-        if (row) row.sosOppWinPct = sosN > 0 ? sosSum / sosN : null;
-      }
-      return standings;
-    }
-    function zScoresFromStandingsMetric(standingsMap, pickValue) {
-      const z = /* @__PURE__ */ new Map();
-      const samples = [];
-      for (const [id, row] of standingsMap.entries()) {
-        const v = pickValue(row);
-        if (v != null && Number.isFinite(v)) samples.push({ id, v });
-      }
-      for (const id of standingsMap.keys()) z.set(id, 0);
-      if (!samples.length) return z;
-      const mu = samples.reduce((s, x) => s + x.v, 0) / samples.length;
-      const variance = samples.reduce((s, x) => s + (x.v - mu) ** 2, 0) / samples.length;
-      const sigma = Math.sqrt(Math.max(variance, 1e-10));
-      for (const { id, v } of samples) z.set(id, (v - mu) / sigma);
-      return z;
-    }
-    function buildTeamOffenseSections(teamsInOrder, rankedRows, standingsMap) {
-      const byTeam = /* @__PURE__ */ new Map();
-      for (const t of teamsInOrder) {
-        byTeam.set(t.teamId, {
-          teamId: t.teamId,
-          teamName: t.teamName,
-          jerseyColor: t.jerseyColor,
-          numberColor: t.numberColor,
-          players: []
-        });
-      }
-      for (const r of rankedRows) {
-        const b = byTeam.get(r.teamId);
-        if (b) b.players.push(r);
-      }
-      const recordZ = standingsMap ? zScoresFromStandingsMetric(standingsMap, (s) => s.winPct) : /* @__PURE__ */ new Map();
-      const sosZ = standingsMap ? zScoresFromStandingsMetric(standingsMap, (s) => s.sosOppWinPct) : /* @__PURE__ */ new Map();
-      const sections = teamsInOrder.map((t) => {
-        const b = byTeam.get(t.teamId);
-        if (!b) return null;
-        b.players.sort((a, c) => c.rating - a.rating);
-        const paSum = b.players.reduce((s, p) => s + p.pa2026, 0);
-        let teamPlayerRating = 0;
-        if (paSum > 0) {
-          teamPlayerRating = b.players.reduce((s, p) => s + p.rating * p.pa2026, 0) / paSum;
-        } else if (b.players.length) {
-          teamPlayerRating = b.players.reduce((s, p) => s + p.rating, 0) / b.players.length;
-        }
-        teamPlayerRating = Number.isFinite(teamPlayerRating) ? Math.round(teamPlayerRating * 100) / 100 : 0;
-        const sid = normalizeScheduleTeamId(t.teamId);
-        const st = standingsMap?.get(sid) || {
-          wins: 0,
-          losses: 0,
-          gamesPlayed: 0,
-          winPct: null,
-          sosOppWinPct: null
-        };
-        const rz = recordZ.get(sid) ?? 0;
-        const sz = sosZ.get(sid) ?? 0;
-        let teamOffenseRating = teamPlayerRating;
-        if (st.gamesPlayed > 0 && standingsMap) {
-          teamOffenseRating = TEAM_OVERALL_WEIGHT_PLAYER * teamPlayerRating + TEAM_OVERALL_WEIGHT_RECORD * rz + TEAM_OVERALL_WEIGHT_SOS * sz;
-        }
-        teamOffenseRating = Number.isFinite(teamOffenseRating) ? Math.round(teamOffenseRating * 100) / 100 : 0;
-        return {
-          ...b,
-          teamPlayerRating,
-          teamOffenseRating,
-          teamWins: st.wins,
-          teamLosses: st.losses,
-          teamWinPct: st.winPct,
-          teamSosOppWinPct: st.sosOppWinPct,
-          teamRecordZ: st.gamesPlayed > 0 ? Math.round(rz * 1e3) / 1e3 : null,
-          teamSosZ: st.sosOppWinPct != null ? Math.round(sz * 1e3) / 1e3 : null
-        };
-      }).filter(Boolean);
-      sections.sort((a, b) => {
-        const d = b.teamOffenseRating - a.teamOffenseRating;
-        if (d !== 0) return d;
-        return (a.teamId || 0) - (b.teamId || 0);
-      });
-      return sections;
-    }
-    module.exports = {
-      OFFENSE_RATING_WEIGHT_HISTORICAL,
-      OFFENSE_RATING_WEIGHT_2026,
-      DFS_SALARY_RATING_BLEND,
-      TEAM_OVERALL_WEIGHT_PLAYER,
-      TEAM_OVERALL_WEIGHT_RECORD,
-      TEAM_OVERALL_WEIGHT_SOS,
-      collectLeagueOffenseBundles,
-      weightedMomentsPerMetric,
-      buildOffenseRatingForNorm,
-      extendOffenseRatingsForReplacements,
-      buildOffensivePlayerRows,
-      buildTeamStandingsFromScheduleGames,
-      buildTeamOffenseSections,
-      historicalPaAndBundleForPlayer
-    };
-  }
-});
-
 // lib/dfsLeaderboardScoringContext.js
 var require_dfsLeaderboardScoringContext = __commonJS({
   "lib/dfsLeaderboardScoringContext.js"(exports, module) {
@@ -4844,16 +4645,18 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       load2026GamelogsByPlayer,
       normalizePlayerName: normalizePlayerName2,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
-      DFS_OFFENSE_RATING_WEIGHT_2026
+      DFS_OFFENSE_RATING_WEIGHT_2026,
+      DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA
     } = require_dfs();
     var {
       getScheduleUrl,
-      HIST_2025_STATS_URL,
+      getAllTimeStatsCsvUrl,
       SCHEDULE_CALENDAR_YEAR,
-      resolveCareerCsvSource
+      resolveCareerCsvSource,
+      HIST_2025_STATS_URL
     } = require_sheetUrls();
-    var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
-    var OFFENSE_RATING_WEIGHT_2026 = 0.3;
+    var { parsePlayerHistoricalStatsCsv, parse2025SeasonStatsCsv } = require_playerHistoricalStats();
+    var { isTruthyRookie } = require_leagueLeaders();
     var OFFENSE_METRIC_WEIGHTS = Object.freeze({
       ops: 0.52,
       iso: 0.16,
@@ -5188,36 +4991,9 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       };
     }
     var { load2026StatsByPlayer } = require_stats2026Loader();
-    var { extendOffenseRatingsForReplacements } = require_offenseRankingsPage();
     async function load2025HistoricalByPlayer() {
-      const rows = await fetchCsvRows(HIST_2025_STATS_URL);
-      const headers = (rows[0] || []).map((h) => safeText(h));
-      const dataRows = rows.slice(1);
-      const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
-      if (nameIndex === -1) throw new Error("2025 historical CSV missing Player column.");
-      const byPlayer = /* @__PURE__ */ new Map();
-      for (const row of dataRows) {
-        const playerName = safeText(row[nameIndex]);
-        if (!playerName) continue;
-        const singles = toNumber(row[6]);
-        const doubles = toNumber(row[7]);
-        const triples = toNumber(row[8]);
-        const homers = toNumber(row[9]);
-        const bb = toNumber(row[10]);
-        const ab = toNumber(row[2]);
-        byPlayer.set(normalizePlayerName2(playerName), {
-          player: playerName,
-          team: safeText(row[1]),
-          pa: ab + bb,
-          ab,
-          h: toNumber(row[3]),
-          r: toNumber(row[4]),
-          rbi: toNumber(row[5]),
-          bb,
-          tb: singles + doubles * 2 + triples * 3 + homers * 4
-        });
-      }
-      return byPlayer;
+      const csvText = await fetchCsvText(HIST_2025_STATS_URL);
+      return parse2025SeasonStatsCsv(csvText);
     }
     async function loadCareerByPlayer() {
       const src = resolveCareerCsvSource();
@@ -5228,38 +5004,22 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         }
         csvText = await nodeReadCareerCsv(src.path);
       } else {
-        csvText = await fetchCsvText(src.url);
+        const overrideUrl = src.type === "url" ? safeText(src.url) : "";
+        const legacyStatic = overrideUrl === "/data/csv/career.csv" || overrideUrl.endsWith("/data/csv/career.csv");
+        const url = overrideUrl && !legacyStatic ? overrideUrl : await getAllTimeStatsCsvUrl();
+        try {
+          csvText = await fetchCsvText(url);
+        } catch (err) {
+          if (src.type === "file" && nodeReadCareerCsv) {
+            csvText = await nodeReadCareerCsv(src.path);
+          } else {
+            throw new Error(
+              `Failed to load all-time player stats (publish the All Time Stats sheet to the web). ${err.message || err}`
+            );
+          }
+        }
       }
-      const rows = Papa.parse(csvText).data;
-      const headers = (rows[0] || []).map((h) => safeText(h).toLowerCase());
-      const dataRows = rows.slice(1);
-      const idx = {
-        name: headers.indexOf("player_name"),
-        pa: headers.indexOf("pa"),
-        ab: headers.indexOf("ab"),
-        h: headers.indexOf("h"),
-        r: headers.indexOf("r"),
-        rbi: headers.indexOf("rbi"),
-        bb: headers.indexOf("bb"),
-        tb: headers.indexOf("tb")
-      };
-      if (idx.name === -1) throw new Error("Career CSV missing player_name column.");
-      const byPlayer = /* @__PURE__ */ new Map();
-      for (const row of dataRows) {
-        const name = safeText(row[idx.name]);
-        if (!name) continue;
-        byPlayer.set(normalizePlayerName2(name), {
-          player: name,
-          pa: toNumber(row[idx.pa]),
-          ab: toNumber(row[idx.ab]),
-          h: toNumber(row[idx.h]),
-          r: toNumber(row[idx.r]),
-          rbi: toNumber(row[idx.rbi]),
-          bb: toNumber(row[idx.bb]),
-          tb: toNumber(row[idx.tb])
-        });
-      }
-      return byPlayer;
+      return parsePlayerHistoricalStatsCsv(csvText);
     }
     function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
       const paN = toNumber(pa);
@@ -5280,16 +5040,11 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       if (![ops, iso, tbPerPa, runProd].every((x) => Number.isFinite(x))) return null;
       return { ops, iso, tbPerPa, runProd };
     }
-    function collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer) {
+    function collectDfsSalaryLeagueBundles(careerByPlayer, stats2026ByPlayer) {
       const out = [];
       for (const [, c] of careerByPlayer.entries()) {
         const pa = toNumber(c.pa);
         const b = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
-      for (const [, h] of hist2025ByPlayer.entries()) {
-        const pa = toNumber(h.pa);
-        const b = computeOffenseRateBundle(pa, h.ab, h.bb, h.h, h.tb, h.r, h.rbi);
         if (b) out.push({ pa, bundle: b });
       }
       for (const [, row] of stats2026ByPlayer.entries()) {
@@ -5328,20 +5083,70 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       }
       return s;
     }
-    function historicalPaAndBundleForPlayer(normalizedKey, careerByPlayer, hist2025ByPlayer) {
+    function careerPaAndBundleForPlayer(normalizedKey, careerByPlayer) {
       const c = careerByPlayer.get(normalizedKey);
       if (c && toNumber(c.pa) > 0) {
         const pa = toNumber(c.pa);
         const bundle = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
         if (bundle) return { pa, bundle };
       }
-      const h25 = hist2025ByPlayer.get(normalizedKey);
-      if (h25 && toNumber(h25.pa) > 0) {
-        const pa = toNumber(h25.pa);
-        const bundle = computeOffenseRateBundle(pa, h25.ab, h25.bb, h25.h, h25.tb, h25.r, h25.rbi);
-        if (bundle) return { pa, bundle };
-      }
       return null;
+    }
+    function isDfsSalaryRookie(stats2026ByPlayer, norm) {
+      const row = stats2026ByPlayer.get(norm);
+      return row ? isTruthyRookie(row.IsRookie) : false;
+    }
+    function dfsSalaryEffectiveBlendWeights(pa26, blendWeights) {
+      const baseW26 = blendWeights?.y2026 ?? DFS_OFFENSE_RATING_WEIGHT_2026;
+      const paFactor = Math.min(1, pa26 / DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA);
+      const w26 = baseW26 * paFactor;
+      return { wHist: 1 - w26, w26 };
+    }
+    function buildDfsSalaryRatingForNorm(norm, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
+      const row2026 = stats2026ByPlayer.get(norm);
+      const pa26 = row2026 ? toNumber(row2026.PA) : 0;
+      const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
+      const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
+      const composite26 = z26 ? compositeZFromZScores(z26) : 0;
+      const has26 = z26 != null;
+      const rookie = isDfsSalaryRookie(stats2026ByPlayer, norm);
+      if (rookie) {
+        const ratingRaw2 = has26 ? composite26 : 0;
+        return Number.isFinite(ratingRaw2) ? Math.round(ratingRaw2 * 100) / 100 : 0;
+      }
+      const histSample = careerPaAndBundleForPlayer(norm, careerByPlayer);
+      const rawHist = histSample?.bundle ?? null;
+      const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
+      const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
+      const hasHist = zHist != null;
+      let ratingRaw = 0;
+      if (has26 && hasHist) {
+        const { wHist, w26 } = dfsSalaryEffectiveBlendWeights(pa26, blendWeights);
+        ratingRaw = wHist * compositeHist + w26 * composite26;
+      } else if (has26) {
+        ratingRaw = composite26;
+      } else if (hasHist) {
+        ratingRaw = compositeHist;
+      }
+      return Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0;
+    }
+    function extendDfsSalaryRatingsForReplacements(offenseRatingByNorm, byOriginalNorm, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
+      if (!offenseRatingByNorm || !byOriginalNorm?.size) return offenseRatingByNorm;
+      for (const entry of byOriginalNorm.values()) {
+        const norm = entry?.replacementNorm;
+        if (!norm) continue;
+        offenseRatingByNorm.set(
+          norm,
+          buildDfsSalaryRatingForNorm(
+            norm,
+            careerByPlayer,
+            stats2026ByPlayer,
+            moments,
+            blendWeights
+          )
+        );
+      }
+      return offenseRatingByNorm;
     }
     function bundle2026FromRow(row2026) {
       const pa = toNumber(row2026.PA);
@@ -5356,40 +5161,24 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         row2026.RBI
       );
     }
-    function blendedOffenseRating(composite26, compositeHist, has26, hasHist, blendWeights) {
-      const wHist = blendWeights?.historical ?? OFFENSE_RATING_WEIGHT_HISTORICAL;
-      const w26 = blendWeights?.y2026 ?? OFFENSE_RATING_WEIGHT_2026;
-      if (has26 && hasHist) {
-        return wHist * compositeHist + w26 * composite26;
-      }
-      if (has26) return composite26;
-      if (hasHist) return compositeHist;
-      return 0;
-    }
     var DFS_SALARY_RATING_BLEND = Object.freeze({
       historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       y2026: DFS_OFFENSE_RATING_WEIGHT_2026
     });
-    function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
+    function buildDfsSalaryPlayerRows(teams, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
       const rows = [];
       for (const team of teams) {
         for (const playerName of team.players) {
           const norm = normalizePlayerName2(playerName);
-          const row2026 = stats2026ByPlayer.get(norm);
-          const pa26 = row2026 ? toNumber(row2026.PA) : 0;
-          const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
-          const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
-          const composite26 = z26 ? compositeZFromZScores(z26) : 0;
-          const has26 = z26 != null;
-          const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
-          const rawHist = histSample?.bundle ?? null;
-          const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
-          const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
-          const hasHist = zHist != null;
-          const ratingRaw = blendedOffenseRating(composite26, compositeHist ?? 0, has26, hasHist);
           rows.push({
             norm,
-            rating: Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0
+            rating: buildDfsSalaryRatingForNorm(
+              norm,
+              careerByPlayer,
+              stats2026ByPlayer,
+              moments,
+              blendWeights
+            )
           });
         }
       }
@@ -5431,29 +5220,20 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       return rates;
     }
     async function loadDfsLeaderboardScoringContextBase() {
-      const [
-        teams,
-        careerByPlayer,
-        hist2025ByPlayer,
-        stats2026ByPlayer,
-        schedulePayload,
-        gamelogs
-      ] = await Promise.all([
+      const [teams, careerByPlayer, stats2026ByPlayer, schedulePayload, gamelogs] = await Promise.all([
         loadTeamRosters(),
         loadCareerByPlayer(),
-        load2025HistoricalByPlayer(),
         load2026StatsByPlayer(),
         loadWeeklySchedule2(),
         load2026GamelogsByPlayer()
       ]);
       const parsedScheduleGames = schedulePayload.parsedGames || [];
       const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
-      const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
+      const bundles = collectDfsSalaryLeagueBundles(careerByPlayer, stats2026ByPlayer);
       const { moments } = weightedMomentsPerMetric(bundles);
-      const leagueRows = buildOffensivePlayerRows(
+      const leagueRows = buildDfsSalaryPlayerRows(
         teams,
         careerByPlayer,
-        hist2025ByPlayer,
         stats2026ByPlayer,
         moments,
         DFS_SALARY_RATING_BLEND
@@ -5466,7 +5246,6 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         gamelogs,
         ratingExtendInputs: {
           careerByPlayer,
-          hist2025ByPlayer,
           stats2026ByPlayer,
           moments,
           baseOffenseRatingByNorm
@@ -5483,11 +5262,10 @@ var require_dfsLeaderboardScoringContext = __commonJS({
     function buildScoringDepsWithReplacements(base, replacements) {
       const { ratingExtendInputs, scoringDepsBase } = base;
       const offenseRatingByNorm = new Map(ratingExtendInputs.baseOffenseRatingByNorm);
-      extendOffenseRatingsForReplacements(
+      extendDfsSalaryRatingsForReplacements(
         offenseRatingByNorm,
         replacements?.byOriginalNorm,
         ratingExtendInputs.careerByPlayer,
-        ratingExtendInputs.hist2025ByPlayer,
         ratingExtendInputs.stats2026ByPlayer,
         ratingExtendInputs.moments,
         DFS_SALARY_RATING_BLEND
@@ -5532,7 +5310,12 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       loadCareerByPlayer,
       load2025HistoricalByPlayer,
       buildParsedScheduleGames,
-      fetchCsvRows
+      fetchCsvRows,
+      collectDfsSalaryLeagueBundles,
+      buildDfsSalaryRatingForNorm,
+      extendDfsSalaryRatingsForReplacements,
+      weightedMomentsPerMetric,
+      DFS_SALARY_RATING_BLEND
     };
   }
 });
@@ -5654,6 +5437,11 @@ var require_powerRankingsCore = __commonJS({
       if (safeText(g?.isoDate) > ref) return false;
       return isPlayedScheduleGame(g);
     }
+    function isUnplayedScheduleGame(g, referenceIso) {
+      if (isPastPlayedScheduleGame(g, referenceIso)) return false;
+      if (isPlayedScheduleGame(g)) return false;
+      return true;
+    }
     function filterPastPlayedScheduleGames(parsedGames, referenceIso) {
       const ref = safeText(referenceIso) || defaultScheduleReferenceIso();
       return (parsedGames || []).filter((g) => isPastPlayedScheduleGame(g, ref));
@@ -5663,7 +5451,7 @@ var require_powerRankingsCore = __commonJS({
       const seen = /* @__PURE__ */ new Set();
       const remaining = [];
       for (const g of parsedGames) {
-        if (isPastPlayedScheduleGame(g, ref)) continue;
+        if (!isUnplayedScheduleGame(g, ref)) continue;
         const awayId = normalizeScheduleTeamId(g.awayId);
         const homeId = normalizeScheduleTeamId(g.homeId);
         const gid = safeText(g.gameId);
@@ -5770,43 +5558,58 @@ var require_powerRankingsCore = __commonJS({
         const awayProfile = teamProfiles.get(g.awayId);
         const homeProfile = teamProfiles.get(g.homeId);
         if (!awayProfile || !homeProfile) continue;
+        const awayRow = rowsById.get(g.awayId);
+        const homeRow = rowsById.get(g.homeId);
+        if (!awayRow || !homeRow) continue;
+        const awaySlotsLeft = REGULAR_SEASON_GAMES - awayRow.gamesPlayed - awayRow.scheduledRemaining;
+        const homeSlotsLeft = REGULAR_SEASON_GAMES - homeRow.gamesPlayed - homeRow.scheduledRemaining;
+        if (awaySlotsLeft <= 0 || homeSlotsLeft <= 0) continue;
         const { away: pAway, home: pHome } = predictSeasonGameWinProbs(
           awayProfile,
           homeProfile,
           leagueNorms,
           runBase
         );
-        const awayRow = rowsById.get(g.awayId);
-        const homeRow = rowsById.get(g.homeId);
-        if (awayRow) {
-          awayRow.expFutureWins += pAway;
-          awayRow.expFutureLosses += pHome;
-          awayRow.scheduledRemaining += 1;
-        }
-        if (homeRow) {
-          homeRow.expFutureWins += pHome;
-          homeRow.expFutureLosses += pAway;
-          homeRow.scheduledRemaining += 1;
-        }
+        awayRow.expFutureWins += pAway;
+        awayRow.expFutureLosses += pHome;
+        awayRow.scheduledRemaining += 1;
+        homeRow.expFutureWins += pHome;
+        homeRow.expFutureLosses += pAway;
+        homeRow.scheduledRemaining += 1;
         remainingGamesSimulated += 1;
       }
       const rows = [];
       for (const row of rowsById.values()) {
-        const projWins = row.currentWins + row.expFutureWins;
-        const projLosses = row.currentLosses + row.expFutureLosses;
+        const seasonGames = Math.min(
+          REGULAR_SEASON_GAMES,
+          row.gamesPlayed + row.scheduledRemaining
+        );
+        let projWins = row.currentWins + row.expFutureWins;
+        let projLosses = row.currentLosses + row.expFutureLosses;
         const projGames = projWins + projLosses;
-        const roundedWins = Math.round(projWins);
-        const roundedLosses = Math.round(projLosses);
+        if (projGames > seasonGames && projGames > 0) {
+          const scale = seasonGames / projGames;
+          projWins *= scale;
+          projLosses *= scale;
+        }
+        let roundedWins = Math.round(projWins);
+        let roundedLosses = Math.round(projLosses);
+        if (roundedWins + roundedLosses !== seasonGames && seasonGames > 0) {
+          roundedWins = Math.round(projWins / (projWins + projLosses) * seasonGames);
+          roundedLosses = seasonGames - roundedWins;
+        }
         const expRestWins = roundedWins - row.currentWins;
         const expRestLosses = roundedLosses - row.currentLosses;
+        const finalProjGames = projWins + projLosses;
         rows.push({
           ...row,
           projectedWins: roundMatchupN(projWins, 1),
           projectedLosses: roundMatchupN(projLosses, 1),
           projectedRecord: `${roundedWins}-${roundedLosses}`,
-          projectedWinPct: projGames > 0 ? roundMatchupN(projWins / projGames * 100, 1) : null,
+          projectedWinPct: finalProjGames > 0 ? roundMatchupN(projWins / finalProjGames * 100, 1) : null,
           expRestRecord: `${expRestWins}-${expRestLosses}`,
-          gamesToReachSeason: Math.max(0, REGULAR_SEASON_GAMES - row.gamesPlayed)
+          gamesToReachSeason: Math.max(0, REGULAR_SEASON_GAMES - row.gamesPlayed),
+          seasonGames
         });
       }
       rows.sort((a, b) => {
@@ -5849,6 +5652,7 @@ var require_powerRankingsCore = __commonJS({
       attachCaptainsToProjectionRows,
       isPlayedScheduleGame,
       isPastPlayedScheduleGame,
+      isUnplayedScheduleGame,
       filterPastPlayedScheduleGames,
       defaultScheduleReferenceIso,
       buildRemainingScheduleGames,
