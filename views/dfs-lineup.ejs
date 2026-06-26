@@ -452,7 +452,6 @@
     <% if (typeof clientSidePool !== 'undefined' && clientSidePool) { %>
     <script>
       window.__STATIC_SITE__ = <%= (typeof staticSite !== 'undefined' && staticSite) ? 'true' : 'false' %>;
-      window.__MMS_CAREER_CSV_URL__ = "<%= sitePath('/data/csv/career.csv') %>";
       window.__DFS_LINEUP_PAGE__ = <%- JSON.stringify({
         slateToken: selectedSlate,
         lineupNorms: lineupNorms || [],

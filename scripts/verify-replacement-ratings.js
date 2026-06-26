@@ -5,14 +5,9 @@
  */
 require("dotenv").config();
 
-const fs = require("fs/promises");
-const path = require("path");
 const { normalizePlayerName, DFS_OFFENSE_RATING_WEIGHT_HISTORICAL, DFS_OFFENSE_RATING_WEIGHT_2026 } = require("../lib/dfs");
-const { CSV_CAREER: CAREER_CSV_PATH } = require("../lib/dataPaths");
-const { setCareerCsvFilePath } = require("../lib/sheetUrls");
 const { getCachedPlayerReplacements } = require("../lib/playerReplacements");
 const {
-  setNodeCareerReader,
   loadDfsLeaderboardScoringContext,
   loadCareerByPlayer,
   collectDfsSalaryLeagueBundles,
@@ -24,9 +19,6 @@ const DFS_SCORING_BLEND = Object.freeze({
   historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
   y2026: DFS_OFFENSE_RATING_WEIGHT_2026,
 });
-
-setNodeCareerReader((filePath) => fs.readFile(filePath, "utf8"));
-setCareerCsvFilePath(path.resolve(CAREER_CSV_PATH));
 
 async function main() {
   const [replacements, scoring, careerByPlayer] = await Promise.all([

@@ -119,11 +119,6 @@ async function main() {
   await runNpm("build:matchup-predictor-nav");
   await runNpm("build:matchup-predictor-live");
 
-  const careerSrc = path.join(root, "data/csv/career.csv");
-  const careerDest = path.join(root, "public/data/csv/career.csv");
-  await fs.mkdir(path.dirname(careerDest), { recursive: true });
-  await fs.copyFile(careerSrc, careerDest);
-
   const server = spawn("node", ["server.js"], {
     cwd: root,
     env: {

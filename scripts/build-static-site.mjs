@@ -271,11 +271,6 @@ async function main() {
     child.on("exit", (code) => (code === 0 ? resolve() : reject(new Error("build:dfs-landing failed"))));
   });
 
-  const careerSrc = path.join(root, "data/csv/career.csv");
-  const careerDest = path.join(root, "public/data/csv/career.csv");
-  await fs.mkdir(path.dirname(careerDest), { recursive: true });
-  await fs.copyFile(careerSrc, careerDest);
-
   const preserveDir = path.join(outDir, "static-firebase");
   let preserved = null;
   try {

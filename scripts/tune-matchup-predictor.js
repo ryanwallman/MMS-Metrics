@@ -3,14 +3,11 @@
 
 require("dotenv").config();
 
-const fs = require("fs/promises");
 const {
-  setNodeCareerReader,
   loadCareerByPlayer,
   load2025HistoricalByPlayer,
   loadWeeklySchedule,
 } = require("../lib/dfsLeaderboardScoringContext");
-setNodeCareerReader((filePath) => fs.readFile(filePath, "utf8"));
 
 const { load2026StatsByPlayer } = require("../lib/stats2026Loader");
 const {
@@ -21,11 +18,6 @@ const {
 const { loadCaptainTeamCodeById } = require("../lib/powerRankingsCaptains");
 const { getCachedPlayerReplacements } = require("../lib/playerReplacements");
 const { load2026GamelogsByPlayer, buildTeamCodeById, normalizePlayerName } = require("../lib/dfs");
-const path = require("path");
-const { CSV_CAREER: CAREER_CSV_PATH } = require("../lib/dataPaths");
-const { setCareerCsvFilePath } = require("../lib/sheetUrls");
-delete process.env.CAREER_CSV_URL;
-setCareerCsvFilePath(path.resolve(CAREER_CSV_PATH));
 const { computeMatchupPredictorAudit } = require("../lib/matchupPredictorAudit");
 const {
   evaluateCalibratedRow,

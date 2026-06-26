@@ -16,13 +16,9 @@ const { buildWeeklyLeaderboardResponse } = require("./lib/dfsLeaderboardResponse
 const {
   getCachedDfsLeaderboardScoringContext,
   loadWeeklySchedule,
-  setNodeCareerReader,
   loadCareerByPlayer,
   load2025HistoricalByPlayer,
 } = require("./lib/dfsLeaderboardScoringContext");
-const fsPromises = require("fs/promises");
-
-setNodeCareerReader((filePath) => fsPromises.readFile(filePath, "utf8"));
 const { fetchCsvText } = require("./lib/fetchCsvText");
 const { publicErrorMessage } = require("./lib/publicErrorMessage");
 const { load2026StatsByPlayer } = require("./lib/stats2026Loader");
@@ -154,12 +150,8 @@ app.get("/healthz", (_req, res) => {
 
 const {
   getStats2026CsvUrl,
-  CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
-const { setCareerCsvFilePath } = require("./lib/sheetUrls");
-
-setCareerCsvFilePath(CAREER_CSV_PATH);
 const {
   normalizeSiteBasePath,
   sitePath: buildSitePath,

@@ -780,9 +780,7 @@ var require_sheetUrls = __commonJS({
       if (u && u.trim()) return u.trim();
       return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
     }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR = Number("2026") || 2026;
-    var careerCsvFilePath = null;
     function googleSheetCsvExportUrl(spreadsheetId, gid) {
       return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
     }
@@ -809,25 +807,6 @@ var require_sheetUrls = __commonJS({
       if (override) return override;
       return getMetricsSourceUrl(SOURCE_KEYS.allTimeStats);
     }
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function getCareerCsvSource() {
-      const url = (process.env.CAREER_CSV_URL || "").trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
-    }
     async function invalidateSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
@@ -841,7 +820,6 @@ var require_sheetUrls = __commonJS({
     }
     module.exports = {
       HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
       SCHEDULE_CALENDAR_YEAR,
       SOURCE_KEYS,
       metricsSourcesRegistryCsvUrl,
@@ -858,11 +836,7 @@ var require_sheetUrls = __commonJS({
       getCaptainMappingCsvUrl,
       getReplacementsCsvUrl,
       getAllTimeStatsCsvUrl,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser
+      googleSheetCsvExportUrl
     };
   }
 });
@@ -2946,9 +2920,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       getScheduleUrl,
       getAllTimeStatsCsvUrl,
       SCHEDULE_CALENDAR_YEAR,
-      resolveCareerCsvSource,
-      HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL
+      HIST_2025_STATS_URL
     } = require_sheetUrls();
     var { parsePlayerHistoricalStatsCsv, parse2025SeasonStatsCsv } = require_playerHistoricalStats();
     var { isTruthyRookie } = require_leagueLeaders();
@@ -2959,10 +2931,6 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       runProd: 0.06
     });
     var OFFENSE_METRIC_KEYS = Object.keys(OFFENSE_METRIC_WEIGHTS);
-    var nodeReadCareerCsv = null;
-    function setNodeCareerReader(fn) {
-      nodeReadCareerCsv = typeof fn === "function" ? fn : null;
-    }
     function safeText(value) {
       return (value || "").toString().trim();
     }
@@ -3290,39 +3258,10 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const csvText = await fetchCsvText(HIST_2025_STATS_URL);
       return parse2025SeasonStatsCsv(csvText);
     }
-    function isBundledCareerCsvUrl(url) {
-      const u = safeText(url);
-      return u === CAREER_CSV_PUBLIC_URL || u.endsWith("/data/csv/career.csv");
-    }
     async function loadCareerByPlayer() {
-      const src = resolveCareerCsvSource();
-      if (src.type === "file") {
-        if (!nodeReadCareerCsv) {
-          throw new Error("Career CSV file read is not configured (Node only).");
-        }
-        const csvText = await nodeReadCareerCsv(src.path);
-        return parsePlayerHistoricalStatsCsv(csvText);
-      }
-      const overrideUrl = src.type === "url" ? safeText(src.url) : "";
-      if (overrideUrl && !isBundledCareerCsvUrl(overrideUrl)) {
-        const csvText = await fetchCsvText(overrideUrl);
-        return parsePlayerHistoricalStatsCsv(csvText);
-      }
-      const staticFallbackUrl = overrideUrl && isBundledCareerCsvUrl(overrideUrl) ? overrideUrl : CAREER_CSV_PUBLIC_URL;
-      try {
-        const liveUrl = await getAllTimeStatsCsvUrl();
-        const csvText = await fetchCsvText(liveUrl);
-        return parsePlayerHistoricalStatsCsv(csvText);
-      } catch (liveErr) {
-        try {
-          const csvText = await fetchCsvText(staticFallbackUrl);
-          return parsePlayerHistoricalStatsCsv(csvText);
-        } catch {
-          throw new Error(
-            `Failed to load all-time player stats (publish the All Time Stats sheet to the web). ${liveErr.message || liveErr}`
-          );
-        }
-      }
+      const url = await getAllTimeStatsCsvUrl();
+      const csvText = await fetchCsvText(url);
+      return parsePlayerHistoricalStatsCsv(csvText);
     }
     function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
       const paN = toNumber(pa);
@@ -3609,7 +3548,6 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       loadDfsLeaderboardScoringContext,
       getCachedDfsLeaderboardScoringContext,
       loadWeeklySchedule,
-      setNodeCareerReader,
       loadCareerByPlayer,
       load2025HistoricalByPlayer,
       buildParsedScheduleGames,

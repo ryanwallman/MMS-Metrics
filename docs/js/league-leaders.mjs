@@ -640,7 +640,8 @@ var require_metricsSourcesRegistry = __commonJS({
       gamelogs2026: "gamelogs2026",
       stats2026: "stats2026",
       replacements: "replacements",
-      captainMapping: "captainMapping"
+      captainMapping: "captainMapping",
+      allTimeStats: "allTimeStats"
     });
     var REQUIRED_KEYS = Object.freeze([
       SOURCE_KEYS.schedule,
@@ -649,7 +650,8 @@ var require_metricsSourcesRegistry = __commonJS({
       SOURCE_KEYS.gamelogs2026,
       SOURCE_KEYS.stats2026,
       SOURCE_KEYS.replacements,
-      SOURCE_KEYS.captainMapping
+      SOURCE_KEYS.captainMapping,
+      SOURCE_KEYS.allTimeStats
     ]);
     function safeText(value) {
       return (value || "").toString().trim();
@@ -669,6 +671,7 @@ var require_metricsSourcesRegistry = __commonJS({
       if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
       if (n.includes("replacement")) return SOURCE_KEYS.replacements;
       if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS.captainMapping;
+      if (n.includes("all time") || n.includes("all-time")) return SOURCE_KEYS.allTimeStats;
       return null;
     }
     function browserUrlToCsvFetchUrl(input) {
@@ -777,9 +780,7 @@ var require_sheetUrls = __commonJS({
       if (u && u.trim()) return u.trim();
       return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
     }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
     var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
-    var careerCsvFilePath = null;
     function googleSheetCsvExportUrl(spreadsheetId, gid) {
       return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
     }
@@ -801,24 +802,10 @@ var require_sheetUrls = __commonJS({
     async function getReplacementsCsvUrl() {
       return getMetricsSourceUrl(SOURCE_KEYS.replacements);
     }
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function getCareerCsvSource() {
-      const url = (process.env.CAREER_CSV_URL || "").trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
+    async function getAllTimeStatsCsvUrl() {
+      const override = (process.env.ALL_TIME_STATS_CSV_URL || "").trim();
+      if (override) return override;
+      return getMetricsSourceUrl(SOURCE_KEYS.allTimeStats);
     }
     async function invalidateSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
@@ -833,7 +820,6 @@ var require_sheetUrls = __commonJS({
     }
     module.exports = {
       HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
       SCHEDULE_CALENDAR_YEAR,
       SOURCE_KEYS,
       metricsSourcesRegistryCsvUrl,
@@ -849,11 +835,8 @@ var require_sheetUrls = __commonJS({
       getStats2026CsvUrl,
       getCaptainMappingCsvUrl,
       getReplacementsCsvUrl,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser
+      getAllTimeStatsCsvUrl,
+      googleSheetCsvExportUrl
     };
   }
 });
@@ -1055,6 +1038,42 @@ var require_pitcherStats2026 = __commonJS({
   }
 });
 
+// lib/leagueLeaders.js
+var require_leagueLeaders = __commonJS({
+  "lib/leagueLeaders.js"(exports, module) {
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function isTruthyRookie(value) {
+      const text = safeText(value).toLowerCase();
+      return text === "y" || text === "yes" || text === "true" || text === "1";
+    }
+    function buildLeagueLeaders2(players) {
+      const topN = (items, field, n = 5, minAB = 0) => items.filter((p) => toNumber(p.AB) >= minAB).slice().sort((a, b) => toNumber(b[field]) - toNumber(a[field])).slice(0, n);
+      const leaders = [
+        { title: "OPS", field: "OPS", minAB: 0 },
+        { title: "AVG", field: "AVG", minAB: 0 },
+        { title: "OBP", field: "OBP", minAB: 0 },
+        { title: "SLG", field: "SLG", minAB: 0 },
+        { title: "Hits", field: "Hits", minAB: 0 },
+        { title: "Runs", field: "Runs", minAB: 0 },
+        { title: "RBI", field: "RBI", minAB: 0 },
+        { title: "HR", field: "HR", minAB: 0 }
+      ].map((category) => ({
+        ...category,
+        players: topN(players, category.field, 5, category.minAB)
+      }));
+      const topRookies = players.filter((p) => isTruthyRookie(p.IsRookie)).slice().sort((a, b) => toNumber(b.AVG) - toNumber(a.AVG)).slice(0, 5);
+      return { leaders, topRookies };
+    }
+    module.exports = { buildLeagueLeaders: buildLeagueLeaders2, isTruthyRookie };
+  }
+});
+
 // lib/dfs.js
 var require_dfs = __commonJS({
   "lib/dfs.js"(exports, module) {
@@ -1065,6 +1084,7 @@ var require_dfs = __commonJS({
     } = require_pitcherStats2026();
     var { getGamelogs2026CsvUrl } = require_sheetUrls();
     var { fetchCsvText } = require_fetchCsvText();
+    var { isTruthyRookie } = require_leagueLeaders();
     var DFS_LINEUP_SIZE = 8;
     var DFS_SALARY_CAP = 6e4;
     var DFS_SALARY_MIN = 5e3;
@@ -1077,8 +1097,9 @@ var require_dfs = __commonJS({
     var OFFENSE_SALARY_WEIGHT = 0.8;
     var OPP_RUNS_SALARY_WEIGHT = 0.12;
     var PITCHER_SALARY_WEIGHT = 0.08;
-    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.85;
-    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.15;
+    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.6;
+    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.4;
+    var DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA = 20;
     var DFS_DOUBLEHEADER_SALARY_BOOST = 1.18;
     var DFS_SCORING = Object.freeze({
       single: 3,
@@ -1802,6 +1823,7 @@ ${slice[1]}`;
             originalName: playerName,
             replacedName: repl ? repl.original : null,
             isReplacement: Boolean(repl),
+            isRookie: row26 ? isTruthyRookie(row26.IsRookie) : false,
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -2093,6 +2115,7 @@ ${slice[1]}`;
       PITCHER_SALARY_WEIGHT,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       DFS_OFFENSE_RATING_WEIGHT_2026,
+      DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA,
       buildTeamCodeById,
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
@@ -2171,42 +2194,6 @@ var require_stats2026Loader = __commonJS({
       return statsByPlayer;
     }
     module.exports = { load2026StatsByPlayer: load2026StatsByPlayer2 };
-  }
-});
-
-// lib/leagueLeaders.js
-var require_leagueLeaders = __commonJS({
-  "lib/leagueLeaders.js"(exports, module) {
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function toNumber(value) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : 0;
-    }
-    function isTruthyRookie(value) {
-      const text = safeText(value).toLowerCase();
-      return text === "y" || text === "yes" || text === "true" || text === "1";
-    }
-    function buildLeagueLeaders2(players) {
-      const topN = (items, field, n = 5, minAB = 0) => items.filter((p) => toNumber(p.AB) >= minAB).slice().sort((a, b) => toNumber(b[field]) - toNumber(a[field])).slice(0, n);
-      const leaders = [
-        { title: "OPS", field: "OPS", minAB: 0 },
-        { title: "AVG", field: "AVG", minAB: 0 },
-        { title: "OBP", field: "OBP", minAB: 0 },
-        { title: "SLG", field: "SLG", minAB: 0 },
-        { title: "Hits", field: "Hits", minAB: 0 },
-        { title: "Runs", field: "Runs", minAB: 0 },
-        { title: "RBI", field: "RBI", minAB: 0 },
-        { title: "HR", field: "HR", minAB: 0 }
-      ].map((category) => ({
-        ...category,
-        players: topN(players, category.field, 5, category.minAB)
-      }));
-      const topRookies = players.filter((p) => isTruthyRookie(p.IsRookie)).slice().sort((a, b) => toNumber(b.AVG) - toNumber(a.AVG)).slice(0, 5);
-      return { leaders, topRookies };
-    }
-    module.exports = { buildLeagueLeaders: buildLeagueLeaders2, isTruthyRookie };
   }
 });
 
