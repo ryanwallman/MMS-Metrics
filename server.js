@@ -2050,8 +2050,10 @@ async function loadMatchupPredictorSeasonRecord() {
   const nameToTeamId = buildNameToTeamIdMap(teams);
   const rosterByTeamId = buildRosterByTeamId(teams);
   const parsedScheduleGames = payload.parsedGames || [];
+  const referenceIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
   const audit = await getMatchupPredictorAudit({
     parsedScheduleGames,
+    referenceIso,
     teams,
     rosterByTeamId,
     nameToTeamId,
@@ -2227,6 +2229,7 @@ async function renderMatchupPredictorPage(req, res) {
     const parsedScheduleGames = payload.parsedGames || [];
     const auditInput = {
       parsedScheduleGames,
+      referenceIso: refIso,
       teams,
       rosterByTeamId,
       nameToTeamId,
@@ -2262,6 +2265,7 @@ async function renderMatchupPredictorPage(req, res) {
       defenseMap,
       rosterByTeamId,
       byOriginalNorm,
+      referenceIso: refIso,
     });
     let activeStats2026 = stats2026ByPlayer;
 
@@ -2348,6 +2352,7 @@ async function renderMatchupPredictorPage(req, res) {
               defenseMap,
               rosterByTeamId,
               byOriginalNorm,
+              referenceIso: refIso,
             });
             runBase = histCtx.runBase;
             offenseRatingByNorm = histCtx.offenseRatingByNorm;

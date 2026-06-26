@@ -5698,12 +5698,333 @@ var require_matchupPredictorStaticNav = __commonJS({
   }
 });
 
+// lib/powerRankingsCaptains.js
+var require_powerRankingsCaptains = __commonJS({
+  "lib/powerRankingsCaptains.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText } = require_fetchCsvText();
+    var { getCaptainMappingCsvUrl } = require_sheetUrls();
+    var { createMemoryCache } = require_memoryCache();
+    var { normalizeScheduleTeamId } = require_teamRosters();
+    var captainMapCache = createMemoryCache(
+      Number(process.env.CAPTAIN_MAPPING_CACHE_TTL_MS) || Number("600000") || 10 * 60 * 1e3,
+      "power-rankings-captains"
+    );
+    function safeText2(value) {
+      return (value || "").toString().trim();
+    }
+    function extractTeamIdFromLabel(label) {
+      const m = safeText2(label).match(/\(#\s*(\d{1,2})\s*\)/i);
+      if (!m) return "";
+      const n = Number(m[1]);
+      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : "";
+    }
+    function normalizeCaptainLookupLabel(label) {
+      return safeText2(label).replace(/&amp;/gi, "&").toLowerCase().replace(/\s+/g, " ").trim();
+    }
+    function parseCaptainMappingRows(rows) {
+      const byTeamId = /* @__PURE__ */ new Map();
+      const byLabel = /* @__PURE__ */ new Map();
+      const teamCodeById = /* @__PURE__ */ new Map();
+      if (!rows?.length) return { byTeamId, byLabel, teamCodeById };
+      const header = (rows[0] || []).map((x) => safeText2(x));
+      const hasNamedHeader = header.some((h) => /team name/i.test(h) || /team id/i.test(h));
+      let startRow = hasNamedHeader ? 1 : 0;
+      let colTeamLabel = 0;
+      let colCaptain = 1;
+      let colTeamCode = -1;
+      if (hasNamedHeader) {
+        colTeamLabel = header.findIndex((h) => /team name/i.test(h));
+        colCaptain = header.findIndex((h) => /^captain$/i.test(h));
+        colTeamCode = header.findIndex((h) => /team id/i.test(h));
+        if (colTeamLabel < 0) colTeamLabel = 0;
+        if (colCaptain < 0) colCaptain = 1;
+      }
+      for (let i = startRow; i < rows.length; i += 1) {
+        const row = rows[i];
+        if (!row || !row.length) continue;
+        const teamLabel = safeText2(row[colTeamLabel]);
+        const captain = safeText2(row[colCaptain]);
+        if (!teamLabel || !captain) continue;
+        const teamId = extractTeamIdFromLabel(teamLabel);
+        if (teamId) byTeamId.set(teamId, captain);
+        byLabel.set(normalizeCaptainLookupLabel(teamLabel), captain);
+        const teamCode = colTeamCode >= 0 ? safeText2(row[colTeamCode]).toUpperCase() : "";
+        if (teamId && teamCode) teamCodeById.set(teamId, teamCode);
+      }
+      return { byTeamId, byLabel, teamCodeById };
+    }
+    async function loadCaptainTeamCodeById2() {
+      const map = await loadPowerRankingsCaptainMap();
+      return map?.teamCodeById || /* @__PURE__ */ new Map();
+    }
+    async function loadPowerRankingsCaptainMap() {
+      return captainMapCache.get("map", async () => {
+        const url = await getCaptainMappingCsvUrl();
+        const csvText = await fetchCsvText(url);
+        const rows = Papa.parse(csvText).data;
+        return parseCaptainMappingRows(rows);
+      });
+    }
+    function lookupPowerRankingsCaptain(captainMap, teamId, teamName) {
+      if (!captainMap) return "";
+      const id = normalizeScheduleTeamId(teamId);
+      if (id && captainMap.byTeamId.has(id)) {
+        return captainMap.byTeamId.get(id);
+      }
+      const displayLabel = `${safeText2(teamName)} (#${id})`;
+      const byDisplay = captainMap.byLabel.get(normalizeCaptainLookupLabel(displayLabel));
+      if (byDisplay) return byDisplay;
+      const byName = captainMap.byLabel.get(normalizeCaptainLookupLabel(teamName));
+      return byName || "";
+    }
+    module.exports = {
+      loadPowerRankingsCaptainMap,
+      loadCaptainTeamCodeById: loadCaptainTeamCodeById2,
+      lookupPowerRankingsCaptain,
+      parseCaptainMappingRows,
+      extractTeamIdFromLabel
+    };
+  }
+});
+
+// lib/powerRankingsCore.js
+var require_powerRankingsCore = __commonJS({
+  "lib/powerRankingsCore.js"(exports, module) {
+    "use strict";
+    var { normalizeScheduleTeamId } = require_teamRosters();
+    var { lookupPowerRankingsCaptain } = require_powerRankingsCaptains();
+    var { referenceIsoForScheduleYear: referenceIsoForScheduleYear2 } = require_dfs();
+    var { SCHEDULE_CALENDAR_YEAR: SCHEDULE_CALENDAR_YEAR2 } = require_sheetUrls();
+    var {
+      predictSeasonGameWinProbs,
+      roundMatchupN
+    } = require_matchupPredict();
+    function safeText2(v) {
+      return (v || "").toString().trim();
+    }
+    var REGULAR_SEASON_GAMES = 22;
+    function defaultScheduleReferenceIso() {
+      return referenceIsoForScheduleYear2(SCHEDULE_CALENDAR_YEAR2);
+    }
+    function isPlayedScheduleGame(g) {
+      return Number.isFinite(g.awayScore) && Number.isFinite(g.homeScore) && g.awayScore !== g.homeScore;
+    }
+    function isPastPlayedScheduleGame(g, referenceIso) {
+      const ref = safeText2(referenceIso) || defaultScheduleReferenceIso();
+      if (safeText2(g?.isoDate) > ref) return false;
+      return isPlayedScheduleGame(g);
+    }
+    function filterPastPlayedScheduleGames(parsedGames, referenceIso) {
+      const ref = safeText2(referenceIso) || defaultScheduleReferenceIso();
+      return (parsedGames || []).filter((g) => isPastPlayedScheduleGame(g, ref));
+    }
+    function buildRemainingScheduleGames(parsedGames, referenceIso) {
+      const ref = safeText2(referenceIso) || defaultScheduleReferenceIso();
+      const seen = /* @__PURE__ */ new Set();
+      const remaining = [];
+      for (const g of parsedGames) {
+        if (isPastPlayedScheduleGame(g, ref)) continue;
+        const awayId = normalizeScheduleTeamId(g.awayId);
+        const homeId = normalizeScheduleTeamId(g.homeId);
+        const gid = safeText2(g.gameId);
+        const key = gid ? `gid|${gid}` : `u|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        remaining.push({ ...g, awayId, homeId });
+      }
+      remaining.sort((a, b) => {
+        const d = (a.isoDate || "").localeCompare(b.isoDate || "");
+        if (d !== 0) return d;
+        return (a.rowIndex || 0) - (b.rowIndex || 0);
+      });
+      return remaining;
+    }
+    function heatMapRgb(t) {
+      const clamped = Math.max(0, Math.min(1, t));
+      const red = { r: 248, g: 113, b: 113 };
+      const mid = { r: 254, g: 243, b: 199 };
+      const green = { r: 74, g: 222, b: 128 };
+      let r;
+      let g;
+      let b;
+      if (clamped < 0.5) {
+        const u = clamped / 0.5;
+        r = red.r + (mid.r - red.r) * u;
+        g = red.g + (mid.g - red.g) * u;
+        b = red.b + (mid.b - red.b) * u;
+      } else {
+        const u = (clamped - 0.5) / 0.5;
+        r = mid.r + (green.r - mid.r) * u;
+        g = mid.g + (green.g - mid.g) * u;
+        b = mid.b + (green.b - mid.b) * u;
+      }
+      return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    }
+    function heatMapBackground(value, min, max, invert = false) {
+      if (value == null || !Number.isFinite(value) || min == null || !Number.isFinite(min) || max == null || !Number.isFinite(max)) {
+        return "";
+      }
+      if (max === min) return "background-color: #f3f4f6";
+      let t = (value - min) / (max - min);
+      if (invert) t = 1 - t;
+      return `background-color: ${heatMapRgb(t)}`;
+    }
+    function applyPowerRankingsHeatMaps(rows) {
+      const winVals = rows.map((r) => r.winPct).filter((v) => Number.isFinite(v));
+      const sosVals = rows.map((r) => r.sosOppWinPct).filter((v) => Number.isFinite(v));
+      const winMin = winVals.length ? Math.min(...winVals) : 0;
+      const winMax = winVals.length ? Math.max(...winVals) : 1;
+      const sosMin = sosVals.length ? Math.min(...sosVals) : 0;
+      const sosMax = sosVals.length ? Math.max(...sosVals) : 1;
+      return rows.map((r) => ({
+        ...r,
+        winPctHeatStyle: heatMapBackground(r.winPct, winMin, winMax, false),
+        sosHeatStyle: heatMapBackground(r.sosOppWinPct, sosMin, sosMax, true)
+      }));
+    }
+    function buildPowerRankingsCurrentRows(teamSections, captainMap) {
+      const rows = teamSections.map((t, i) => ({
+        rank: i + 1,
+        teamId: t.teamId,
+        teamName: t.teamName,
+        captain: lookupPowerRankingsCaptain(captainMap, t.teamId, t.teamName),
+        powerRating: t.teamOffenseRating,
+        rosterRating: t.teamPlayerRating,
+        wins: t.teamWins,
+        losses: t.teamLosses,
+        gamesPlayed: t.teamWins + t.teamLosses,
+        winPct: t.teamWinPct,
+        sosOppWinPct: t.teamSosOppWinPct
+      }));
+      return applyPowerRankingsHeatMaps(rows);
+    }
+    function attachCaptainsToProjectionRows(rows, captainMap) {
+      for (const row of rows) {
+        row.captain = lookupPowerRankingsCaptain(captainMap, row.teamId, row.teamName);
+      }
+      return rows;
+    }
+    function projectSeasonStandings(teams, standingsMap, teamProfiles, leagueNorms, runBase, parsedGames, referenceIso) {
+      const remaining = buildRemainingScheduleGames(parsedGames, referenceIso);
+      const rowsById = /* @__PURE__ */ new Map();
+      for (const t of teams) {
+        const sid = normalizeScheduleTeamId(t.teamId);
+        const st = standingsMap.get(sid) || {
+          wins: 0,
+          losses: 0,
+          gamesPlayed: 0
+        };
+        rowsById.set(sid, {
+          teamId: sid,
+          teamName: t.teamName,
+          currentWins: st.wins,
+          currentLosses: st.losses,
+          gamesPlayed: st.gamesPlayed,
+          expFutureWins: 0,
+          expFutureLosses: 0,
+          scheduledRemaining: 0
+        });
+      }
+      let remainingGamesSimulated = 0;
+      for (const g of remaining) {
+        const awayProfile = teamProfiles.get(g.awayId);
+        const homeProfile = teamProfiles.get(g.homeId);
+        if (!awayProfile || !homeProfile) continue;
+        const { away: pAway, home: pHome } = predictSeasonGameWinProbs(
+          awayProfile,
+          homeProfile,
+          leagueNorms,
+          runBase
+        );
+        const awayRow = rowsById.get(g.awayId);
+        const homeRow = rowsById.get(g.homeId);
+        if (awayRow) {
+          awayRow.expFutureWins += pAway;
+          awayRow.expFutureLosses += pHome;
+          awayRow.scheduledRemaining += 1;
+        }
+        if (homeRow) {
+          homeRow.expFutureWins += pHome;
+          homeRow.expFutureLosses += pAway;
+          homeRow.scheduledRemaining += 1;
+        }
+        remainingGamesSimulated += 1;
+      }
+      const rows = [];
+      for (const row of rowsById.values()) {
+        const projWins = row.currentWins + row.expFutureWins;
+        const projLosses = row.currentLosses + row.expFutureLosses;
+        const projGames = projWins + projLosses;
+        const roundedWins = Math.round(projWins);
+        const roundedLosses = Math.round(projLosses);
+        const expRestWins = roundedWins - row.currentWins;
+        const expRestLosses = roundedLosses - row.currentLosses;
+        rows.push({
+          ...row,
+          projectedWins: roundMatchupN(projWins, 1),
+          projectedLosses: roundMatchupN(projLosses, 1),
+          projectedRecord: `${roundedWins}-${roundedLosses}`,
+          projectedWinPct: projGames > 0 ? roundMatchupN(projWins / projGames * 100, 1) : null,
+          expRestRecord: `${expRestWins}-${expRestLosses}`,
+          gamesToReachSeason: Math.max(0, REGULAR_SEASON_GAMES - row.gamesPlayed)
+        });
+      }
+      rows.sort((a, b) => {
+        const d = b.projectedWins - a.projectedWins;
+        if (d !== 0) return d;
+        const wp = (b.projectedWinPct ?? 0) - (a.projectedWinPct ?? 0);
+        if (wp !== 0) return wp;
+        return String(a.teamId).localeCompare(String(b.teamId), void 0, { numeric: true });
+      });
+      rows.forEach((r, i) => {
+        r.projectedRank = i + 1;
+      });
+      return {
+        rows,
+        remainingGamesSimulated,
+        remainingGamesTotal: remaining.length
+      };
+    }
+    function attachPowerRatingsToProjections(projectionRows, teamSections) {
+      const powerById = /* @__PURE__ */ new Map();
+      const currentRankById = /* @__PURE__ */ new Map();
+      for (const t of teamSections) {
+        const sid = normalizeScheduleTeamId(t.teamId);
+        powerById.set(sid, t.teamOffenseRating);
+      }
+      teamSections.forEach((t, i) => {
+        currentRankById.set(normalizeScheduleTeamId(t.teamId), i + 1);
+      });
+      for (const r of projectionRows) {
+        r.powerRating = powerById.get(r.teamId) ?? null;
+        r.currentPowerRank = currentRankById.get(r.teamId) ?? null;
+      }
+      return projectionRows;
+    }
+    module.exports = {
+      REGULAR_SEASON_GAMES,
+      buildPowerRankingsCurrentRows,
+      projectSeasonStandings,
+      attachPowerRatingsToProjections,
+      attachCaptainsToProjectionRows,
+      isPlayedScheduleGame,
+      isPastPlayedScheduleGame,
+      filterPastPlayedScheduleGames,
+      defaultScheduleReferenceIso,
+      buildRemainingScheduleGames,
+      heatMapBackground
+    };
+  }
+});
+
 // lib/matchupGameResult.js
 var require_matchupGameResult = __commonJS({
   "lib/matchupGameResult.js"(exports, module) {
     "use strict";
     var { normalizeScheduleTeamId } = require_teamRosters();
     var { enrichMatchupPredictionLines } = require_matchupPredict();
+    var { defaultScheduleReferenceIso } = require_powerRankingsCore();
     function safeText2(value) {
       return (value || "").toString().trim();
     }
@@ -5711,8 +6032,13 @@ var require_matchupGameResult = __commonJS({
       const n = Number(String(value ?? "").replace(/[^\d.-]/g, ""));
       return Number.isFinite(n) ? n : null;
     }
-    function isParsedGameFinished2(game) {
-      return game != null && Number.isFinite(game.awayScore) && Number.isFinite(game.homeScore);
+    function isParsedGameFinished2(game, referenceIso) {
+      if (game == null || !Number.isFinite(game.awayScore) || !Number.isFinite(game.homeScore) || game.awayScore === game.homeScore) {
+        return false;
+      }
+      const ref = safeText2(referenceIso) || defaultScheduleReferenceIso();
+      if (safeText2(game.isoDate) > ref) return false;
+      return true;
     }
     function findParsedGameForMatchup2(parsedGames, selectedGame, viewIso = null) {
       if (!selectedGame || !parsedGames?.length) return null;
@@ -5982,6 +6308,10 @@ var require_matchupLeagueContext = __commonJS({
       buildMatchupLeagueNorms
     } = require_matchupPredict();
     var { normalizeScheduleTeamId } = require_teamRosters();
+    var {
+      filterPastPlayedScheduleGames,
+      defaultScheduleReferenceIso
+    } = require_powerRankingsCore();
     function buildMatchupLeagueContext({
       teams,
       careerByPlayer,
@@ -5990,11 +6320,14 @@ var require_matchupLeagueContext = __commonJS({
       parsedScheduleGames,
       defenseMap,
       rosterByTeamId,
-      byOriginalNorm = null
+      byOriginalNorm = null,
+      referenceIso = null
     }) {
-      const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
-      const runBase = leagueRunScoringBaseline(parsedScheduleGames);
-      const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
+      const refIso = referenceIso || defaultScheduleReferenceIso();
+      const gamesForRecord = filterPastPlayedScheduleGames(parsedScheduleGames, refIso);
+      const standingsMap = buildTeamStandingsFromScheduleGames(gamesForRecord, teams);
+      const runBase = leagueRunScoringBaseline(gamesForRecord);
+      const scheduleRunRates = buildTeamScheduleRunRates(gamesForRecord, teams);
       const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
       const { moments } = weightedMomentsPerMetric(bundles);
       const leagueRows = buildOffensivePlayerRows(
@@ -6387,7 +6720,6 @@ var require_matchupPredictorRecord = __commonJS({
     var { normalizePlayerName: normalizePlayerName2 } = require_dfs();
     var { buildMatchupLeagueContext } = require_matchupLeagueContext();
     var { predictMatchupGame } = require_matchupPredict();
-    var { isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
     var { applyMissingPlayersToProfile } = require_matchupMissingPlayers();
     var {
       filterScheduleGamesBeforeIso,
@@ -6411,6 +6743,10 @@ var require_matchupPredictorRecord = __commonJS({
       favoredWinPctFromHomeProb,
       isCloseCallWinPct
     } = require_matchupWinProbCalibration();
+    var {
+      isPastPlayedScheduleGame,
+      defaultScheduleReferenceIso
+    } = require_powerRankingsCore();
     function safeText2(value) {
       return (value || "").toString().trim();
     }
@@ -6439,11 +6775,12 @@ var require_matchupPredictorRecord = __commonJS({
       if (gid) return `gid|${gid}`;
       return `m|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
     }
-    function listUniqueFinishedGames(parsedGames) {
+    function listUniqueFinishedGames(parsedGames, referenceIso) {
+      const ref = safeText2(referenceIso) || defaultScheduleReferenceIso();
       const seen = /* @__PURE__ */ new Set();
       const out = [];
       for (const g of parsedGames || []) {
-        if (!isParsedGameFinished2(g)) continue;
+        if (!isPastPlayedScheduleGame(g, ref)) continue;
         const key = finishedScheduleGameDedupeKey(g);
         if (seen.has(key)) continue;
         seen.add(key);
@@ -6508,9 +6845,10 @@ var require_matchupPredictorRecord = __commonJS({
       gamelogs,
       teamCodeById,
       replacementByOriginalNorm,
-      sundayIsosSorted
+      sundayIsosSorted,
+      referenceIso
     }) {
-      const finished = listUniqueFinishedGames(parsedScheduleGames);
+      const finished = listUniqueFinishedGames(parsedScheduleGames, referenceIso);
       const contextByIso = /* @__PURE__ */ new Map();
       const rows = [];
       for (const game of finished) {
@@ -6784,96 +7122,6 @@ var require_matchupPredictorAudit = __commonJS({
   }
 });
 
-// lib/powerRankingsCaptains.js
-var require_powerRankingsCaptains = __commonJS({
-  "lib/powerRankingsCaptains.js"(exports, module) {
-    var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
-    var { getCaptainMappingCsvUrl } = require_sheetUrls();
-    var { createMemoryCache } = require_memoryCache();
-    var { normalizeScheduleTeamId } = require_teamRosters();
-    var captainMapCache = createMemoryCache(
-      Number(process.env.CAPTAIN_MAPPING_CACHE_TTL_MS) || Number("600000") || 10 * 60 * 1e3,
-      "power-rankings-captains"
-    );
-    function safeText2(value) {
-      return (value || "").toString().trim();
-    }
-    function extractTeamIdFromLabel(label) {
-      const m = safeText2(label).match(/\(#\s*(\d{1,2})\s*\)/i);
-      if (!m) return "";
-      const n = Number(m[1]);
-      return Number.isInteger(n) && n >= 1 && n <= 18 ? String(n) : "";
-    }
-    function normalizeCaptainLookupLabel(label) {
-      return safeText2(label).replace(/&amp;/gi, "&").toLowerCase().replace(/\s+/g, " ").trim();
-    }
-    function parseCaptainMappingRows(rows) {
-      const byTeamId = /* @__PURE__ */ new Map();
-      const byLabel = /* @__PURE__ */ new Map();
-      const teamCodeById = /* @__PURE__ */ new Map();
-      if (!rows?.length) return { byTeamId, byLabel, teamCodeById };
-      const header = (rows[0] || []).map((x) => safeText2(x));
-      const hasNamedHeader = header.some((h) => /team name/i.test(h) || /team id/i.test(h));
-      let startRow = hasNamedHeader ? 1 : 0;
-      let colTeamLabel = 0;
-      let colCaptain = 1;
-      let colTeamCode = -1;
-      if (hasNamedHeader) {
-        colTeamLabel = header.findIndex((h) => /team name/i.test(h));
-        colCaptain = header.findIndex((h) => /^captain$/i.test(h));
-        colTeamCode = header.findIndex((h) => /team id/i.test(h));
-        if (colTeamLabel < 0) colTeamLabel = 0;
-        if (colCaptain < 0) colCaptain = 1;
-      }
-      for (let i = startRow; i < rows.length; i += 1) {
-        const row = rows[i];
-        if (!row || !row.length) continue;
-        const teamLabel = safeText2(row[colTeamLabel]);
-        const captain = safeText2(row[colCaptain]);
-        if (!teamLabel || !captain) continue;
-        const teamId = extractTeamIdFromLabel(teamLabel);
-        if (teamId) byTeamId.set(teamId, captain);
-        byLabel.set(normalizeCaptainLookupLabel(teamLabel), captain);
-        const teamCode = colTeamCode >= 0 ? safeText2(row[colTeamCode]).toUpperCase() : "";
-        if (teamId && teamCode) teamCodeById.set(teamId, teamCode);
-      }
-      return { byTeamId, byLabel, teamCodeById };
-    }
-    async function loadCaptainTeamCodeById2() {
-      const map = await loadPowerRankingsCaptainMap();
-      return map?.teamCodeById || /* @__PURE__ */ new Map();
-    }
-    async function loadPowerRankingsCaptainMap() {
-      return captainMapCache.get("map", async () => {
-        const url = await getCaptainMappingCsvUrl();
-        const csvText = await fetchCsvText(url);
-        const rows = Papa.parse(csvText).data;
-        return parseCaptainMappingRows(rows);
-      });
-    }
-    function lookupPowerRankingsCaptain(captainMap, teamId, teamName) {
-      if (!captainMap) return "";
-      const id = normalizeScheduleTeamId(teamId);
-      if (id && captainMap.byTeamId.has(id)) {
-        return captainMap.byTeamId.get(id);
-      }
-      const displayLabel = `${safeText2(teamName)} (#${id})`;
-      const byDisplay = captainMap.byLabel.get(normalizeCaptainLookupLabel(displayLabel));
-      if (byDisplay) return byDisplay;
-      const byName = captainMap.byLabel.get(normalizeCaptainLookupLabel(teamName));
-      return byName || "";
-    }
-    module.exports = {
-      loadPowerRankingsCaptainMap,
-      loadCaptainTeamCodeById: loadCaptainTeamCodeById2,
-      lookupPowerRankingsCaptain,
-      parseCaptainMappingRows,
-      extractTeamIdFromLabel
-    };
-  }
-});
-
 // lib/matchupLiveSeasonRecord.js
 var require_matchupLiveSeasonRecord = __commonJS({
   "lib/matchupLiveSeasonRecord.js"(exports, module) {
@@ -6881,7 +7129,7 @@ var require_matchupLiveSeasonRecord = __commonJS({
     var { normalizePlayerName: normalizePlayerName2, buildTeamCodeById: buildTeamCodeById2, load2026GamelogsByPlayer: load2026GamelogsByPlayer2 } = require_dfs();
     var { computeMatchupPredictorRecord } = require_matchupPredictorRecord();
     var { computeMatchupPredictorAudit } = require_matchupPredictorAudit();
-    var { isParsedGameFinished: isParsedGameFinished2 } = require_matchupGameResult();
+    var { isPastPlayedScheduleGame, defaultScheduleReferenceIso } = require_powerRankingsCore();
     var { invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
     var {
       loadWeeklySchedule: loadWeeklySchedule2,
@@ -6908,10 +7156,11 @@ var require_matchupLiveSeasonRecord = __commonJS({
       }
       return map;
     }
-    function countFinishedScheduleGames2(parsedGames) {
+    function countFinishedScheduleGames2(parsedGames, referenceIso) {
+      const ref = referenceIso || defaultScheduleReferenceIso();
       let n = 0;
       for (const g of parsedGames || []) {
-        if (isParsedGameFinished2(g)) n += 1;
+        if (isPastPlayedScheduleGame(g, ref)) n += 1;
       }
       return n;
     }
@@ -6943,8 +7192,10 @@ var require_matchupLiveSeasonRecord = __commonJS({
         ...buildTeamCodeById2(teams, stats2026ByPlayer),
         ...captainTeamCodeById
       ]);
+      const referenceIso = defaultScheduleReferenceIso();
       return {
         parsedScheduleGames: schedulePayload.parsedGames || [],
+        referenceIso,
         teams,
         rosterByTeamId: buildRosterByTeamId(teams),
         nameToTeamId: buildNameToTeamIdMap(teams),

@@ -5575,6 +5575,8 @@ var require_powerRankingsCore = __commonJS({
     "use strict";
     var { normalizeScheduleTeamId } = require_teamRosters();
     var { lookupPowerRankingsCaptain } = require_powerRankingsCaptains();
+    var { referenceIsoForScheduleYear } = require_dfs();
+    var { SCHEDULE_CALENDAR_YEAR } = require_sheetUrls();
     var {
       predictSeasonGameWinProbs,
       roundMatchupN
@@ -5583,14 +5585,27 @@ var require_powerRankingsCore = __commonJS({
       return (v || "").toString().trim();
     }
     var REGULAR_SEASON_GAMES = 22;
+    function defaultScheduleReferenceIso() {
+      return referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
+    }
     function isPlayedScheduleGame(g) {
       return Number.isFinite(g.awayScore) && Number.isFinite(g.homeScore) && g.awayScore !== g.homeScore;
     }
-    function buildRemainingScheduleGames(parsedGames) {
+    function isPastPlayedScheduleGame(g, referenceIso) {
+      const ref = safeText(referenceIso) || defaultScheduleReferenceIso();
+      if (safeText(g?.isoDate) > ref) return false;
+      return isPlayedScheduleGame(g);
+    }
+    function filterPastPlayedScheduleGames(parsedGames, referenceIso) {
+      const ref = safeText(referenceIso) || defaultScheduleReferenceIso();
+      return (parsedGames || []).filter((g) => isPastPlayedScheduleGame(g, ref));
+    }
+    function buildRemainingScheduleGames(parsedGames, referenceIso) {
+      const ref = safeText(referenceIso) || defaultScheduleReferenceIso();
       const seen = /* @__PURE__ */ new Set();
       const remaining = [];
       for (const g of parsedGames) {
-        if (isPlayedScheduleGame(g)) continue;
+        if (isPastPlayedScheduleGame(g, ref)) continue;
         const awayId = normalizeScheduleTeamId(g.awayId);
         const homeId = normalizeScheduleTeamId(g.homeId);
         const gid = safeText(g.gameId);
@@ -5671,8 +5686,8 @@ var require_powerRankingsCore = __commonJS({
       }
       return rows;
     }
-    function projectSeasonStandings(teams, standingsMap, teamProfiles, leagueNorms, runBase, parsedGames) {
-      const remaining = buildRemainingScheduleGames(parsedGames);
+    function projectSeasonStandings(teams, standingsMap, teamProfiles, leagueNorms, runBase, parsedGames, referenceIso) {
+      const remaining = buildRemainingScheduleGames(parsedGames, referenceIso);
       const rowsById = /* @__PURE__ */ new Map();
       for (const t of teams) {
         const sid = normalizeScheduleTeamId(t.teamId);
@@ -5775,6 +5790,10 @@ var require_powerRankingsCore = __commonJS({
       attachPowerRatingsToProjections,
       attachCaptainsToProjectionRows,
       isPlayedScheduleGame,
+      isPastPlayedScheduleGame,
+      filterPastPlayedScheduleGames,
+      defaultScheduleReferenceIso,
+      buildRemainingScheduleGames,
       heatMapBackground
     };
   }
@@ -6062,7 +6081,9 @@ var require_powerRankingsPageData = __commonJS({
       buildPowerRankingsCurrentRows,
       projectSeasonStandings,
       attachPowerRatingsToProjections,
-      attachCaptainsToProjectionRows
+      attachCaptainsToProjectionRows,
+      filterPastPlayedScheduleGames,
+      defaultScheduleReferenceIso
     } = require_powerRankingsCore();
     var { buildPlayoffBracketFirstRound } = require_playoffBracket();
     var {
@@ -6116,11 +6137,13 @@ var require_powerRankingsPageData = __commonJS({
         moments
       );
       const parsedScheduleGames = schedulePayload.parsedGames || [];
-      const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
+      const referenceIso = defaultScheduleReferenceIso();
+      const pastPlayedGames = filterPastPlayedScheduleGames(parsedScheduleGames, referenceIso);
+      const standingsMap = buildTeamStandingsFromScheduleGames(pastPlayedGames, teams);
       const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
       const currentRankings = buildPowerRankingsCurrentRows(teamSections, captainMap);
-      const runBase = leagueRunScoringBaseline(parsedScheduleGames);
-      const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
+      const runBase = leagueRunScoringBaseline(pastPlayedGames);
+      const scheduleRunRates = buildTeamScheduleRunRates(pastPlayedGames, teams);
       const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
       const teamOverallById = /* @__PURE__ */ new Map();
       for (const sec of teamSections) {
@@ -6148,7 +6171,8 @@ var require_powerRankingsPageData = __commonJS({
         teamProfiles,
         leagueNorms,
         runBase,
-        parsedScheduleGames
+        parsedScheduleGames,
+        referenceIso
       );
       attachPowerRatingsToProjections(projection.rows, teamSections);
       attachCaptainsToProjectionRows(projection.rows, captainMap);
