@@ -25,166 +25,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
-// lib/memoryCache.js
-var require_memoryCache = __commonJS({
-  "lib/memoryCache.js"(exports, module) {
-    function createMemoryCache(ttlMs, label = "cache") {
-      const store = /* @__PURE__ */ new Map();
-      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
-      return {
-        async get(key, loader) {
-          const k = String(key);
-          const hit = store.get(k);
-          if (hit && Date.now() < hit.expiresAt) {
-            return hit.value;
-          }
-          const value = await loader();
-          store.set(k, { value, expiresAt: Date.now() + ttl });
-          return value;
-        },
-        clear() {
-          store.clear();
-        },
-        invalidate(key) {
-          store.delete(String(key));
-        },
-        stats() {
-          return { label, entries: store.size, ttlMs: ttl };
-        }
-      };
-    }
-    module.exports = { createMemoryCache };
-  }
-});
-
-// lib/fetchCsvText.js
-var require_fetchCsvText = __commonJS({
-  "lib/fetchCsvText.js"(exports, module) {
-    var { createMemoryCache } = require_memoryCache();
-    var csvTextCache = createMemoryCache(
-      Number("600000") || 10 * 60 * 1e3,
-      "csv-text"
-    );
-    var fetchCsvTextOverride = null;
-    function setFetchCsvTextOverride(fn) {
-      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
-    }
-    function csvFetchTimeoutMs() {
-      const fromEnv = Number("90000");
-      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (true) return 9e4;
-      return 0;
-    }
-    function logCsvFetchFailure(kind, url, detail) {
-      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
-      if (typeof console !== "undefined" && console.error) {
-        console.error(msg, url);
-      }
-    }
-    function csvFetchUserError(kind) {
-      if (kind === "timeout") {
-        return new Error(
-          "League data took too long to load. Check your connection and try again."
-        );
-      }
-      if (kind === "http") {
-        return new Error("Could not load league data right now. Please try again in a moment.");
-      }
-      if (kind === "empty") {
-        return new Error("Could not load league data. Please try again.");
-      }
-      return new Error("Could not load league data. Please try again.");
-    }
-    async function fetchUrlText(url) {
-      const timeoutMs = csvFetchTimeoutMs();
-      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
-      try {
-        const res = await fetch(url, opts);
-        if (!res.ok) {
-          logCsvFetchFailure("HTTP", url, String(res.status));
-          throw csvFetchUserError("http");
-        }
-        let text = await res.text();
-        text = text.replace(/^\ufeff/, "");
-        return text;
-      } catch (err) {
-        if (err.name === "TimeoutError" || err.name === "AbortError") {
-          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
-          throw csvFetchUserError("timeout");
-        }
-        if (err.message && !/https?:\/\//i.test(err.message)) {
-          throw err;
-        }
-        logCsvFetchFailure("error", url, err.message || err);
-        throw csvFetchUserError("error");
-      }
-    }
-    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
-    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
-    function browserCsvStorageKey(url) {
-      return BROWSER_CSV_STORAGE_PREFIX + url;
-    }
-    function readBrowserCsvCache(url) {
-      if (typeof sessionStorage === "undefined") return null;
-      try {
-        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        if (Date.now() > parsed.expiresAt) {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        return parsed.text;
-      } catch {
-        return null;
-      }
-    }
-    function writeBrowserCsvCache(url, text) {
-      if (typeof sessionStorage === "undefined") return;
-      try {
-        sessionStorage.setItem(
-          browserCsvStorageKey(url),
-          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
-        );
-      } catch {
-      }
-    }
-    function invalidateCsvUrlCache(url) {
-      const safeUrl = (url || "").toString().trim();
-      if (!safeUrl) return;
-      csvTextCache.invalidate(safeUrl);
-      if (typeof sessionStorage !== "undefined") {
-        try {
-          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
-        } catch {
-        }
-      }
-    }
-    async function fetchCsvText(url) {
-      const safeUrl = (url || "").toString().trim();
-      if (!safeUrl) {
-        logCsvFetchFailure("empty-url", safeUrl);
-        throw csvFetchUserError("empty");
-      }
-      if (fetchCsvTextOverride) {
-        return fetchCsvTextOverride(safeUrl);
-      }
-      const browserCached = readBrowserCsvCache(safeUrl);
-      if (browserCached) return browserCached;
-      return csvTextCache.get(safeUrl, async () => {
-        const text = await fetchUrlText(safeUrl);
-        writeBrowserCsvCache(safeUrl, text);
-        return text;
-      });
-    }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride, invalidateCsvUrlCache };
-  }
-});
-
 // node_modules/papaparse/papaparse.min.js
 var require_papaparse_min = __commonJS({
   "node_modules/papaparse/papaparse.min.js"(exports, module) {
@@ -601,240 +441,6 @@ var require_papaparse_min = __commonJS({
   }
 });
 
-// lib/metricsSourcesRegistry.js
-var require_metricsSourcesRegistry = __commonJS({
-  "lib/metricsSourcesRegistry.js"(exports, module) {
-    "use strict";
-    var Papa = require_papaparse_min();
-    var { csvTextCache } = require_fetchCsvText();
-    var { createMemoryCache } = require_memoryCache();
-    var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
-    var METRICS_SOURCES_GID = "0";
-    var SOURCE_KEYS = Object.freeze({
-      schedule: "schedule",
-      index: "index",
-      rosters: "rosters",
-      gamelogs2026: "gamelogs2026",
-      stats2026: "stats2026",
-      replacements: "replacements",
-      captainMapping: "captainMapping"
-    });
-    var REQUIRED_KEYS = Object.freeze([
-      SOURCE_KEYS.schedule,
-      SOURCE_KEYS.index,
-      SOURCE_KEYS.rosters,
-      SOURCE_KEYS.gamelogs2026,
-      SOURCE_KEYS.stats2026,
-      SOURCE_KEYS.replacements,
-      SOURCE_KEYS.captainMapping
-    ]);
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function metricsSourcesRegistryCsvUrl() {
-      const override = (process.env.METRICS_SOURCES_REGISTRY_CSV_URL || "").trim();
-      if (override) return override;
-      return `https://docs.google.com/spreadsheets/d/${METRICS_SOURCES_SHEET_ID}/export?format=csv&gid=${METRICS_SOURCES_GID}`;
-    }
-    function resolveSourceKey(name) {
-      const n = safeText(name).toLowerCase();
-      if (!n) return null;
-      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS.schedule;
-      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS.index;
-      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS.rosters;
-      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS.gamelogs2026;
-      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
-      if (n.includes("replacement")) return SOURCE_KEYS.replacements;
-      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS.captainMapping;
-      return null;
-    }
-    function browserUrlToCsvFetchUrl(input) {
-      const url = safeText(input);
-      if (!url) return "";
-      if (/output=csv|format=csv/i.test(url)) return url;
-      if (url.includes("/pubhtml")) {
-        const gidMatch = url.match(/[?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `${url.split("/pubhtml")[0]}/pub?gid=${gid}&single=true&output=csv`;
-      }
-      const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/edit/);
-      if (editMatch) {
-        const id = editMatch[1];
-        const gidMatch = url.match(/[#?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-      }
-      const pubMatch = url.match(/\/spreadsheets\/d\/(e\/[a-zA-Z0-9_-]+)/);
-      if (pubMatch && !url.includes("/edit")) {
-        const id = pubMatch[1];
-        const gidMatch = url.match(/[?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `https://docs.google.com/spreadsheets/d/${id}/pub?gid=${gid}&single=true&output=csv`;
-      }
-      return url;
-    }
-    function parseRegistryCsv(csvText) {
-      const rows = Papa.parse(csvText).data;
-      const out = {};
-      for (let i = 1; i < rows.length; i += 1) {
-        const name = safeText(rows[i][0]);
-        const rawUrl = safeText(rows[i][1]);
-        if (!name || !rawUrl) continue;
-        if (rawUrl.includes("console.firebase.google.com")) continue;
-        const key = resolveSourceKey(name);
-        if (!key) continue;
-        out[key] = browserUrlToCsvFetchUrl(rawUrl);
-      }
-      return out;
-    }
-    var REGISTRY_CACHE_TTL_MS = Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 60 * 1e3;
-    async function fetchRegistryCsvText() {
-      const base = metricsSourcesRegistryCsvUrl();
-      const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
-      const timeoutMs = Number("90000") || 0;
-      const opts = { cache: "no-store" };
-      if (timeoutMs > 0) opts.signal = AbortSignal.timeout(timeoutMs);
-      const res = await fetch(url, opts);
-      if (!res.ok) {
-        throw new Error(`Metrics sources registry fetch failed (${res.status})`);
-      }
-      return (await res.text()).replace(/^\ufeff/, "");
-    }
-    var registryCache = createMemoryCache(REGISTRY_CACHE_TTL_MS, "metrics-sources");
-    async function loadMetricsSourcesRegistry(force = false) {
-      if (force) registryCache.invalidate("registry");
-      return registryCache.get("registry", async () => {
-        const csvText = await fetchRegistryCsvText();
-        const registry = parseRegistryCsv(csvText);
-        for (const key of REQUIRED_KEYS) {
-          if (!registry[key]) {
-            throw new Error(`Metrics sources registry missing required row: ${key}`);
-          }
-        }
-        return registry;
-      });
-    }
-    function invalidateMetricsSourcesRegistry() {
-      registryCache.invalidate("registry");
-      csvTextCache.invalidate(metricsSourcesRegistryCsvUrl());
-    }
-    async function getMetricsSourceUrl(key) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[key];
-      if (!url) throw new Error(`Metrics sources registry missing URL for: ${key}`);
-      return url;
-    }
-    module.exports = {
-      SOURCE_KEYS,
-      METRICS_SOURCES_SHEET_ID,
-      metricsSourcesRegistryCsvUrl,
-      browserUrlToCsvFetchUrl,
-      loadMetricsSourcesRegistry,
-      invalidateMetricsSourcesRegistry,
-      getMetricsSourceUrl
-    };
-  }
-});
-
-// lib/sheetUrls.js
-var require_sheetUrls = __commonJS({
-  "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
-    var {
-      SOURCE_KEYS,
-      getMetricsSourceUrl,
-      invalidateMetricsSourcesRegistry,
-      loadMetricsSourcesRegistry,
-      browserUrlToCsvFetchUrl,
-      metricsSourcesRegistryCsvUrl
-    } = require_metricsSourcesRegistry();
-    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
-    async function getCaptainMappingCsvUrl() {
-      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
-    }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
-    var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
-    var careerCsvFilePath = null;
-    function googleSheetCsvExportUrl(spreadsheetId, gid) {
-      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    }
-    async function getScheduleUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.schedule);
-    }
-    async function getIndexUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.index);
-    }
-    async function getRosterUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.rosters);
-    }
-    async function getGamelogs2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.gamelogs2026);
-    }
-    async function getStats2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.stats2026);
-    }
-    async function getReplacementsCsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.replacements);
-    }
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function getCareerCsvSource() {
-      const url = "/data/csv/career.csv".trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser2(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
-    }
-    async function invalidateSourceCsvCache(sourceKey) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[sourceKey];
-      if (url) invalidateCsvUrlCache(url);
-    }
-    async function invalidateLiveSourceCsvCache(sourceKey) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[sourceKey];
-      invalidateMetricsSourcesRegistry();
-      if (url) invalidateCsvUrlCache(url);
-    }
-    module.exports = {
-      HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
-      SCHEDULE_CALENDAR_YEAR,
-      SOURCE_KEYS,
-      metricsSourcesRegistryCsvUrl,
-      browserUrlToCsvFetchUrl,
-      loadMetricsSourcesRegistry,
-      invalidateMetricsSourcesRegistry,
-      invalidateSourceCsvCache,
-      invalidateLiveSourceCsvCache,
-      getScheduleUrl,
-      getIndexUrl,
-      getRosterUrl,
-      getGamelogs2026CsvUrl,
-      getStats2026CsvUrl,
-      getCaptainMappingCsvUrl,
-      getReplacementsCsvUrl,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser: configureCareerCsvForBrowser2
-    };
-  }
-});
-
 // data/customRosters2026.js
 var require_customRosters2026 = __commonJS({
   "data/customRosters2026.js"(exports, module) {
@@ -1087,6 +693,406 @@ Pat Ciaglia
     });
     module.exports = {
       canonicalRostersByTeamId
+    };
+  }
+});
+
+// lib/memoryCache.js
+var require_memoryCache = __commonJS({
+  "lib/memoryCache.js"(exports, module) {
+    function createMemoryCache(ttlMs, label = "cache") {
+      const store = /* @__PURE__ */ new Map();
+      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
+      return {
+        async get(key, loader) {
+          const k = String(key);
+          const hit = store.get(k);
+          if (hit && Date.now() < hit.expiresAt) {
+            return hit.value;
+          }
+          const value = await loader();
+          store.set(k, { value, expiresAt: Date.now() + ttl });
+          return value;
+        },
+        clear() {
+          store.clear();
+        },
+        invalidate(key) {
+          store.delete(String(key));
+        },
+        stats() {
+          return { label, entries: store.size, ttlMs: ttl };
+        }
+      };
+    }
+    module.exports = { createMemoryCache };
+  }
+});
+
+// lib/fetchCsvText.js
+var require_fetchCsvText = __commonJS({
+  "lib/fetchCsvText.js"(exports, module) {
+    var { createMemoryCache } = require_memoryCache();
+    var csvTextCache = createMemoryCache(
+      Number("600000") || 10 * 60 * 1e3,
+      "csv-text"
+    );
+    var fetchCsvTextOverride = null;
+    function setFetchCsvTextOverride(fn) {
+      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
+    }
+    function csvFetchTimeoutMs() {
+      const fromEnv = Number("90000");
+      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+      if (true) return 9e4;
+      return 0;
+    }
+    function logCsvFetchFailure(kind, url, detail) {
+      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
+      if (typeof console !== "undefined" && console.error) {
+        console.error(msg, url);
+      }
+    }
+    function csvFetchUserError(kind) {
+      if (kind === "timeout") {
+        return new Error(
+          "League data took too long to load. Check your connection and try again."
+        );
+      }
+      if (kind === "http") {
+        return new Error("Could not load league data right now. Please try again in a moment.");
+      }
+      if (kind === "empty") {
+        return new Error("Could not load league data. Please try again.");
+      }
+      return new Error("Could not load league data. Please try again.");
+    }
+    async function fetchUrlText(url) {
+      const timeoutMs = csvFetchTimeoutMs();
+      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+      try {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+          logCsvFetchFailure("HTTP", url, String(res.status));
+          throw csvFetchUserError("http");
+        }
+        let text = await res.text();
+        text = text.replace(/^\ufeff/, "");
+        return text;
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
+          throw csvFetchUserError("timeout");
+        }
+        if (err.message && !/https?:\/\//i.test(err.message)) {
+          throw err;
+        }
+        logCsvFetchFailure("error", url, err.message || err);
+        throw csvFetchUserError("error");
+      }
+    }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
+    async function fetchCsvText(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
+    }
+    async function fetchCsvTextFresh(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      invalidateCsvUrlCache(safeUrl);
+      const bustUrl = `${safeUrl}${safeUrl.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const text = await fetchUrlText(bustUrl);
+      writeBrowserCsvCache(safeUrl, text);
+      csvTextCache.invalidate(safeUrl);
+      await csvTextCache.get(safeUrl, async () => text);
+      return text;
+    }
+    module.exports = {
+      fetchCsvText,
+      fetchCsvTextFresh,
+      csvTextCache,
+      setFetchCsvTextOverride,
+      invalidateCsvUrlCache
+    };
+  }
+});
+
+// lib/metricsSourcesRegistry.js
+var require_metricsSourcesRegistry = __commonJS({
+  "lib/metricsSourcesRegistry.js"(exports, module) {
+    "use strict";
+    var Papa = require_papaparse_min();
+    var { csvTextCache } = require_fetchCsvText();
+    var { createMemoryCache } = require_memoryCache();
+    var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
+    var METRICS_SOURCES_GID = "0";
+    var SOURCE_KEYS = Object.freeze({
+      schedule: "schedule",
+      index: "index",
+      rosters: "rosters",
+      gamelogs2026: "gamelogs2026",
+      stats2026: "stats2026",
+      replacements: "replacements",
+      captainMapping: "captainMapping",
+      allTimeStats: "allTimeStats"
+    });
+    var REQUIRED_KEYS = Object.freeze([
+      SOURCE_KEYS.schedule,
+      SOURCE_KEYS.index,
+      SOURCE_KEYS.rosters,
+      SOURCE_KEYS.gamelogs2026,
+      SOURCE_KEYS.stats2026,
+      SOURCE_KEYS.replacements,
+      SOURCE_KEYS.captainMapping,
+      SOURCE_KEYS.allTimeStats
+    ]);
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function metricsSourcesRegistryCsvUrl() {
+      const override = (process.env.METRICS_SOURCES_REGISTRY_CSV_URL || "").trim();
+      if (override) return override;
+      return `https://docs.google.com/spreadsheets/d/${METRICS_SOURCES_SHEET_ID}/export?format=csv&gid=${METRICS_SOURCES_GID}`;
+    }
+    function resolveSourceKey(name) {
+      const n = safeText(name).toLowerCase();
+      if (!n) return null;
+      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS.schedule;
+      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS.index;
+      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS.rosters;
+      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS.gamelogs2026;
+      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
+      if (n.includes("replacement")) return SOURCE_KEYS.replacements;
+      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS.captainMapping;
+      if (n.includes("all time") || n.includes("all-time")) return SOURCE_KEYS.allTimeStats;
+      return null;
+    }
+    function browserUrlToCsvFetchUrl(input) {
+      const url = safeText(input);
+      if (!url) return "";
+      if (/output=csv|format=csv/i.test(url)) return url;
+      if (url.includes("/pubhtml")) {
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `${url.split("/pubhtml")[0]}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/edit/);
+      if (editMatch) {
+        const id = editMatch[1];
+        const gidMatch = url.match(/[#?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+      }
+      const pubMatch = url.match(/\/spreadsheets\/d\/(e\/[a-zA-Z0-9_-]+)/);
+      if (pubMatch && !url.includes("/edit")) {
+        const id = pubMatch[1];
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      return url;
+    }
+    function parseRegistryCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const out = {};
+      for (let i = 1; i < rows.length; i += 1) {
+        const name = safeText(rows[i][0]);
+        const rawUrl = safeText(rows[i][1]);
+        if (!name || !rawUrl) continue;
+        if (rawUrl.includes("console.firebase.google.com")) continue;
+        const key = resolveSourceKey(name);
+        if (!key) continue;
+        out[key] = browserUrlToCsvFetchUrl(rawUrl);
+      }
+      return out;
+    }
+    var REGISTRY_CACHE_TTL_MS = Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 60 * 1e3;
+    async function fetchRegistryCsvText() {
+      const base = metricsSourcesRegistryCsvUrl();
+      const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const timeoutMs = Number("90000") || 0;
+      const opts = { cache: "no-store" };
+      if (timeoutMs > 0) opts.signal = AbortSignal.timeout(timeoutMs);
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        throw new Error(`Metrics sources registry fetch failed (${res.status})`);
+      }
+      return (await res.text()).replace(/^\ufeff/, "");
+    }
+    var registryCache = createMemoryCache(REGISTRY_CACHE_TTL_MS, "metrics-sources");
+    async function loadMetricsSourcesRegistry(force = false) {
+      if (force) registryCache.invalidate("registry");
+      return registryCache.get("registry", async () => {
+        const csvText = await fetchRegistryCsvText();
+        const registry = parseRegistryCsv(csvText);
+        for (const key of REQUIRED_KEYS) {
+          if (!registry[key]) {
+            throw new Error(`Metrics sources registry missing required row: ${key}`);
+          }
+        }
+        return registry;
+      });
+    }
+    function invalidateMetricsSourcesRegistry() {
+      registryCache.invalidate("registry");
+      csvTextCache.invalidate(metricsSourcesRegistryCsvUrl());
+    }
+    async function getMetricsSourceUrl(key) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[key];
+      if (!url) throw new Error(`Metrics sources registry missing URL for: ${key}`);
+      return url;
+    }
+    module.exports = {
+      SOURCE_KEYS,
+      METRICS_SOURCES_SHEET_ID,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      getMetricsSourceUrl
+    };
+  }
+});
+
+// lib/sheetUrls.js
+var require_sheetUrls = __commonJS({
+  "lib/sheetUrls.js"(exports, module) {
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
+    var {
+      SOURCE_KEYS,
+      getMetricsSourceUrl,
+      invalidateMetricsSourcesRegistry,
+      loadMetricsSourcesRegistry,
+      browserUrlToCsvFetchUrl,
+      metricsSourcesRegistryCsvUrl
+    } = require_metricsSourcesRegistry();
+    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
+    async function getCaptainMappingCsvUrl() {
+      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
+    }
+    var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
+    function googleSheetCsvExportUrl(spreadsheetId, gid) {
+      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+    }
+    async function getScheduleUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.schedule);
+    }
+    async function getIndexUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.index);
+    }
+    async function getRosterUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.rosters);
+    }
+    async function getGamelogs2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.gamelogs2026);
+    }
+    async function getStats2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.stats2026);
+    }
+    async function getReplacementsCsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS.replacements);
+    }
+    async function getAllTimeStatsCsvUrl() {
+      const override = (process.env.ALL_TIME_STATS_CSV_URL || "").trim();
+      if (override) return override;
+      return getMetricsSourceUrl(SOURCE_KEYS.allTimeStats);
+    }
+    async function invalidateSourceCsvCache(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      if (url) invalidateCsvUrlCache(url);
+    }
+    async function invalidateLiveSourceCsvCache(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      invalidateMetricsSourcesRegistry();
+      if (url) invalidateCsvUrlCache(url);
+    }
+    module.exports = {
+      HIST_2025_STATS_URL,
+      SCHEDULE_CALENDAR_YEAR,
+      SOURCE_KEYS,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      invalidateSourceCsvCache,
+      invalidateLiveSourceCsvCache,
+      getScheduleUrl,
+      getIndexUrl,
+      getRosterUrl,
+      getGamelogs2026CsvUrl,
+      getStats2026CsvUrl,
+      getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
+      getAllTimeStatsCsvUrl,
+      googleSheetCsvExportUrl
     };
   }
 });
@@ -1428,6 +1434,42 @@ var require_pitcherStats2026 = __commonJS({
   }
 });
 
+// lib/leagueLeaders.js
+var require_leagueLeaders = __commonJS({
+  "lib/leagueLeaders.js"(exports, module) {
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+    function isTruthyRookie(value) {
+      const text = safeText(value).toLowerCase();
+      return text === "y" || text === "yes" || text === "true" || text === "1";
+    }
+    function buildLeagueLeaders(players) {
+      const topN = (items, field, n = 5, minAB = 0) => items.filter((p) => toNumber(p.AB) >= minAB).slice().sort((a, b) => toNumber(b[field]) - toNumber(a[field])).slice(0, n);
+      const leaders = [
+        { title: "OPS", field: "OPS", minAB: 0 },
+        { title: "AVG", field: "AVG", minAB: 0 },
+        { title: "OBP", field: "OBP", minAB: 0 },
+        { title: "SLG", field: "SLG", minAB: 0 },
+        { title: "Hits", field: "Hits", minAB: 0 },
+        { title: "Runs", field: "Runs", minAB: 0 },
+        { title: "RBI", field: "RBI", minAB: 0 },
+        { title: "HR", field: "HR", minAB: 0 }
+      ].map((category) => ({
+        ...category,
+        players: topN(players, category.field, 5, category.minAB)
+      }));
+      const topRookies = players.filter((p) => isTruthyRookie(p.IsRookie)).slice().sort((a, b) => toNumber(b.AVG) - toNumber(a.AVG)).slice(0, 5);
+      return { leaders, topRookies };
+    }
+    module.exports = { buildLeagueLeaders, isTruthyRookie };
+  }
+});
+
 // lib/dfs.js
 var require_dfs = __commonJS({
   "lib/dfs.js"(exports, module) {
@@ -1438,6 +1480,7 @@ var require_dfs = __commonJS({
     } = require_pitcherStats2026();
     var { getGamelogs2026CsvUrl } = require_sheetUrls();
     var { fetchCsvText } = require_fetchCsvText();
+    var { isTruthyRookie } = require_leagueLeaders();
     var DFS_LINEUP_SIZE = 8;
     var DFS_SALARY_CAP = 6e4;
     var DFS_SALARY_MIN = 5e3;
@@ -1450,8 +1493,9 @@ var require_dfs = __commonJS({
     var OFFENSE_SALARY_WEIGHT = 0.8;
     var OPP_RUNS_SALARY_WEIGHT = 0.12;
     var PITCHER_SALARY_WEIGHT = 0.08;
-    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.85;
-    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.15;
+    var DFS_OFFENSE_RATING_WEIGHT_HISTORICAL = 0.6;
+    var DFS_OFFENSE_RATING_WEIGHT_2026 = 0.4;
+    var DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA = 20;
     var DFS_DOUBLEHEADER_SALARY_BOOST = 1.18;
     var DFS_SCORING = Object.freeze({
       single: 3,
@@ -2175,6 +2219,7 @@ ${slice[1]}`;
             originalName: playerName,
             replacedName: repl ? repl.original : null,
             isReplacement: Boolean(repl),
+            isRookie: row26 ? isTruthyRookie(row26.IsRookie) : false,
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -2466,6 +2511,7 @@ ${slice[1]}`;
       PITCHER_SALARY_WEIGHT,
       DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
       DFS_OFFENSE_RATING_WEIGHT_2026,
+      DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA,
       buildTeamCodeById,
       buildCodeToTeamId,
       resolveUpcomingDfsSlate,
@@ -2738,6 +2784,779 @@ var require_playerReplacements = __commonJS({
       activeReplacementsSignature,
       emptyReplacementContext,
       serializeReplacementsForClient
+    };
+  }
+});
+
+// lib/playerHistoricalStats.js
+var require_playerHistoricalStats = __commonJS({
+  "lib/playerHistoricalStats.js"(exports, module) {
+    "use strict";
+    var Papa = require_papaparse_min();
+    var { normalizePlayerName } = require_dfs();
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(String(value ?? "").replace(/[^\d.-]/g, ""));
+      return Number.isFinite(n) ? n : 0;
+    }
+    function headerIndex(headers, candidates) {
+      const lower = headers.map((h) => safeText(h).toLowerCase());
+      for (const c of candidates) {
+        const i = lower.indexOf(c);
+        if (i >= 0) return i;
+      }
+      return -1;
+    }
+    function parsePlayerHistoricalStatsCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const headers = (rows[0] || []).map((h) => safeText(h));
+      const dataRows = rows.slice(1);
+      const idx = {
+        name: headerIndex(headers, ["player_name", "player", "name"]),
+        seasons: headerIndex(headers, ["seasons"]),
+        pa: headerIndex(headers, ["pa"]),
+        ab: headerIndex(headers, ["ab"]),
+        h: headerIndex(headers, ["h", "hits"]),
+        r: headerIndex(headers, ["r", "runs"]),
+        rbi: headerIndex(headers, ["rbi"]),
+        bb: headerIndex(headers, ["bb"]),
+        tb: headerIndex(headers, ["tb"]),
+        singles: headerIndex(headers, ["1b", "singles"]),
+        doubles: headerIndex(headers, ["2b", "doubles"]),
+        triples: headerIndex(headers, ["3b", "triples"]),
+        hr: headerIndex(headers, ["hr", "home runs"])
+      };
+      if (idx.name === -1) {
+        throw new Error("All-time stats CSV missing player name column.");
+      }
+      const byPlayer = /* @__PURE__ */ new Map();
+      for (const row of dataRows) {
+        const name = safeText(row[idx.name]);
+        if (!name) continue;
+        const ab = idx.ab >= 0 ? toNumber(row[idx.ab]) : 0;
+        const bb = idx.bb >= 0 ? toNumber(row[idx.bb]) : 0;
+        const h = idx.h >= 0 ? toNumber(row[idx.h]) : 0;
+        const r = idx.r >= 0 ? toNumber(row[idx.r]) : 0;
+        const rbi = idx.rbi >= 0 ? toNumber(row[idx.rbi]) : 0;
+        let tb = idx.tb >= 0 ? toNumber(row[idx.tb]) : 0;
+        if (tb <= 0 && idx.singles >= 0) {
+          const singles = toNumber(row[idx.singles]);
+          const doubles = idx.doubles >= 0 ? toNumber(row[idx.doubles]) : 0;
+          const triples = idx.triples >= 0 ? toNumber(row[idx.triples]) : 0;
+          const hr = idx.hr >= 0 ? toNumber(row[idx.hr]) : 0;
+          tb = singles + doubles * 2 + triples * 3 + hr * 4;
+        }
+        const pa = idx.pa >= 0 ? toNumber(row[idx.pa]) : ab + bb;
+        byPlayer.set(normalizePlayerName(name), {
+          player: name,
+          seasons: idx.seasons >= 0 ? toNumber(row[idx.seasons]) : null,
+          pa,
+          ab,
+          h,
+          r,
+          rbi,
+          bb,
+          tb
+        });
+      }
+      return byPlayer;
+    }
+    function parse2025SeasonStatsCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const headers = (rows[0] || []).map((h) => safeText(h));
+      const dataRows = rows.slice(1);
+      const nameIndex = headerIndex(headers, ["player", "player_name", "name"]);
+      if (nameIndex === -1) {
+        throw new Error("2025 season stats CSV missing Player column.");
+      }
+      const byPlayer = /* @__PURE__ */ new Map();
+      for (const row of dataRows) {
+        const playerName = safeText(row[nameIndex]);
+        if (!playerName) continue;
+        const singles = toNumber(row[6]);
+        const doubles = toNumber(row[7]);
+        const triples = toNumber(row[8]);
+        const homers = toNumber(row[9]);
+        const bb = toNumber(row[10]);
+        const ab = toNumber(row[2]);
+        byPlayer.set(normalizePlayerName(playerName), {
+          player: playerName,
+          team: safeText(row[1]),
+          pa: ab + bb,
+          ab,
+          h: toNumber(row[3]),
+          r: toNumber(row[4]),
+          rbi: toNumber(row[5]),
+          bb,
+          tb: singles + doubles * 2 + triples * 3 + homers * 4
+        });
+      }
+      return byPlayer;
+    }
+    module.exports = {
+      parsePlayerHistoricalStatsCsv,
+      parse2025SeasonStatsCsv
+    };
+  }
+});
+
+// lib/dfsLeaderboardScoringContext.js
+var require_dfsLeaderboardScoringContext = __commonJS({
+  "lib/dfsLeaderboardScoringContext.js"(exports, module) {
+    var Papa = require_papaparse_min();
+    var { fetchCsvText, fetchCsvTextFresh } = require_fetchCsvText();
+    var { createMemoryCache } = require_memoryCache();
+    var {
+      buildTeamCodeById,
+      load2026GamelogsByPlayer,
+      normalizePlayerName,
+      DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+      DFS_OFFENSE_RATING_WEIGHT_2026,
+      DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA
+    } = require_dfs();
+    var {
+      getScheduleUrl,
+      getAllTimeStatsCsvUrl,
+      SCHEDULE_CALENDAR_YEAR,
+      HIST_2025_STATS_URL
+    } = require_sheetUrls();
+    var { parsePlayerHistoricalStatsCsv, parse2025SeasonStatsCsv } = require_playerHistoricalStats();
+    var { isTruthyRookie } = require_leagueLeaders();
+    var OFFENSE_METRIC_WEIGHTS = Object.freeze({
+      ops: 0.52,
+      iso: 0.16,
+      tbPerPa: 0.26,
+      runProd: 0.06
+    });
+    var OFFENSE_METRIC_KEYS = Object.keys(OFFENSE_METRIC_WEIGHTS);
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function toNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
+    async function fetchCsvRows(url) {
+      const csvText = await fetchCsvText(url);
+      return Papa.parse(csvText).data;
+    }
+    var { loadTeamRosters } = require_teamRosters();
+    var { getCachedPlayerReplacements } = require_playerReplacements();
+    function parseScheduleSheetDate(displayDate) {
+      const s = safeText(displayDate);
+      if (!s) return null;
+      const match = /^([A-Za-z]{3}),\s*(\d{1,2})-([A-Za-z]{3})$/.exec(s);
+      if (!match) return null;
+      const monthAbbrToNum = {
+        jan: 1,
+        feb: 2,
+        mar: 3,
+        apr: 4,
+        may: 5,
+        jun: 6,
+        jul: 7,
+        aug: 8,
+        sep: 9,
+        oct: 10,
+        nov: 11,
+        dec: 12
+      };
+      const day = Number(match[2]);
+      const monthNum = monthAbbrToNum[match[3].slice(0, 3).toLowerCase()];
+      if (!monthNum || !Number.isFinite(day) || day < 1 || day > 31) return null;
+      const dt = new Date(SCHEDULE_CALENDAR_YEAR, monthNum - 1, day);
+      if (dt.getFullYear() !== SCHEDULE_CALENDAR_YEAR || dt.getMonth() !== monthNum - 1 || dt.getDate() !== day) {
+        return null;
+      }
+      const iso = `${String(SCHEDULE_CALENDAR_YEAR)}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      return { iso, label: s };
+    }
+    function weekdayFromIso(iso) {
+      const [y, m, d] = iso.split("-").map(Number);
+      return new Date(y, m - 1, d, 12, 0, 0).getDay();
+    }
+    function scheduleIsoToCompactDigits(isoDate) {
+      return safeText(isoDate).replace(/\D+/g, "");
+    }
+    function scheduleStartTimeSortKey(timeStr) {
+      const compact = safeText(timeStr).toLowerCase().replace(/\./g, "").replace(/\s+/g, "").trim();
+      if (!compact || compact === "-" || compact === "ppd" || compact === "tbd" || compact === "postponed") {
+        return 1e9;
+      }
+      const m12 = compact.match(/^(\d{1,2}):(\d{2})(am|pm)$/);
+      if (m12) {
+        let h = Number(m12[1]);
+        const min = Number(m12[2]);
+        if (m12[3] === "pm" && h < 12) h += 12;
+        if (m12[3] === "am" && h === 12) h = 0;
+        return h * 60 + min;
+      }
+      const m24 = compact.match(/^(\d{1,2}):(\d{2})$/);
+      if (m24) {
+        const h = Number(m24[1]);
+        const min = Number(m24[2]);
+        if (h >= 0 && h <= 23 && min >= 0 && min <= 59) return h * 60 + min;
+      }
+      return 1e9 - 1;
+    }
+    function sortScheduleGameRows(rows) {
+      return rows.slice().sort((a, b) => {
+        const ka = scheduleStartTimeSortKey(a.time);
+        const kb = scheduleStartTimeSortKey(b.time);
+        if (ka !== kb) return ka - kb;
+        return safeText(a.home).localeCompare(safeText(b.home));
+      });
+    }
+    function optionalScheduleScore(cell) {
+      const t = safeText(cell);
+      if (!t || /^#?n\/?a$/i.test(t) || /^ppd$/i.test(t)) return NaN;
+      const n = Number(t);
+      return Number.isFinite(n) ? n : NaN;
+    }
+    function resolveParsedGameScores(row, idx) {
+      let awayScore = optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : "");
+      let homeScore = optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : "");
+      if (Number.isFinite(awayScore) && Number.isFinite(homeScore)) {
+        return { awayScore, homeScore };
+      }
+      const resultCsv = idx.result >= 0 ? safeText(row[idx.result]) : "";
+      const winnerCsv = idx.winner >= 0 ? safeText(row[idx.winner]) : "";
+      const m = /^(\d+)\s*[-–]\s*(\d+)/.exec(resultCsv);
+      if (!m) return { awayScore, homeScore };
+      const first = Number(m[1]);
+      const second = Number(m[2]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return { awayScore, homeScore };
+      const awayCaptain = idx.awayCaptain >= 0 ? safeText(row[idx.awayCaptain]) : "";
+      const homeCaptain = idx.homeCaptain >= 0 ? safeText(row[idx.homeCaptain]) : "";
+      const winner = winnerCsv.toLowerCase();
+      if (winner && awayCaptain && winner === awayCaptain.toLowerCase()) {
+        awayScore = first;
+        homeScore = second;
+      } else if (winner && homeCaptain && winner === homeCaptain.toLowerCase()) {
+        homeScore = first;
+        awayScore = second;
+      } else if (!Number.isFinite(awayScore) && !Number.isFinite(homeScore)) {
+        awayScore = first;
+        homeScore = second;
+      }
+      return { awayScore, homeScore };
+    }
+    function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
+      if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
+      const rs = safeText(resultCell).trim();
+      if (!/^#?n\/?a$/i.test(rs) && !/^-$/.test(rs) && rs) return rs;
+      const w = safeText(winnerCell);
+      if (!/^#?n\/?a$/i.test(w) && w !== "-") return `${awayScore}\u2013${homeScore} (${w})`;
+      return `${awayScore}\u2013${homeScore}`;
+    }
+    function isValidScheduleTeamNumber(value) {
+      const raw = safeText(value).replace(/\s+/g, "");
+      if (/^n\/?a$/i.test(raw) || /^#+$/.test(raw)) return false;
+      const n = Number(raw);
+      return Number.isInteger(n) && n >= 1 && n <= 18;
+    }
+    function normalizeScheduleTeamId(id) {
+      const n = Number(safeText(id).replace(/\s+/g, ""));
+      return Number.isInteger(n) ? String(n) : safeText(id);
+    }
+    function scheduleHeaderRowNormalized(headers) {
+      return (headers || []).map(
+        (x) => safeText(x).replace(/^\ufeff/g, "").toLowerCase()
+      );
+    }
+    function scheduleColumnFirstOf(normalizedHeaders, candidates) {
+      const h = normalizedHeaders;
+      for (const c of candidates) {
+        const i = h.indexOf(c);
+        if (i >= 0) return i;
+      }
+      return -1;
+    }
+    function buildScheduleDiamondLocationLabel(fieldMain, fieldShort) {
+      const parts = [];
+      for (const p of [fieldMain, fieldShort]) {
+        const t = safeText(p);
+        if (!t || t === "-") continue;
+        if (parts.length && parts[parts.length - 1] === t) continue;
+        parts.push(t);
+      }
+      return parts.join(" \xB7 ");
+    }
+    function scheduleCsvColumnIndex(headers) {
+      const h = scheduleHeaderRowNormalized(headers);
+      return {
+        date: h.indexOf("date"),
+        awayId: h.indexOf("away #"),
+        awayTeam: h.indexOf("away team"),
+        awayCaptain: scheduleColumnFirstOf(h, ["away captain", "away captains"]),
+        homeId: h.indexOf("home #"),
+        homeTeam: h.indexOf("home team"),
+        homeCaptain: scheduleColumnFirstOf(h, ["home captain", "home captains"]),
+        field: scheduleColumnFirstOf(h, ["field", "diamond"]),
+        shortField: scheduleColumnFirstOf(h, ["short field"]),
+        time: h.indexOf("time"),
+        gameId: h.indexOf("gameid"),
+        awayScore: h.indexOf("away score"),
+        homeScore: h.indexOf("home score"),
+        winner: h.indexOf("winner"),
+        result: h.indexOf("result")
+      };
+    }
+    function buildParsedScheduleGames(scheduleRows, teams) {
+      const headers = (scheduleRows[0] || []).map((h) => safeText(h));
+      const rows = scheduleRows.slice(1);
+      const idx = scheduleCsvColumnIndex(headers);
+      if (idx.date === -1 || idx.awayId === -1 || idx.homeId === -1) {
+        throw new Error("Schedule CSV missing required columns.");
+      }
+      const teamNameById = new Map(
+        teams.map((t) => [safeText(t.teamId), safeText(t.teamName) || `Team ${t.teamId}`])
+      );
+      const parsedGames = [];
+      for (let i = 0; i < rows.length; i += 1) {
+        const row = rows[i];
+        const awayId = safeText(row[idx.awayId]);
+        const homeId = safeText(row[idx.homeId]);
+        if (!isValidScheduleTeamNumber(awayId) || !isValidScheduleTeamNumber(homeId)) continue;
+        const dateDisplay = safeText(row[idx.date]);
+        const parsedDate = parseScheduleSheetDate(dateDisplay);
+        if (!parsedDate) continue;
+        const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
+        const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
+        const { awayScore, homeScore } = resolveParsedGameScores(row, idx);
+        parsedGames.push({
+          awayId,
+          homeId,
+          awayName: safeText(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`,
+          homeName: safeText(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`,
+          dateDisplay,
+          isoDate: parsedDate.iso,
+          field,
+          venueLabel: buildScheduleDiamondLocationLabel(field, fieldShort),
+          time: idx.time >= 0 ? safeText(row[idx.time]) : "",
+          gameId: idx.gameId >= 0 ? safeText(row[idx.gameId]) : "",
+          rowIndex: i,
+          awayScore,
+          homeScore,
+          winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
+          resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : ""
+        });
+      }
+      return parsedGames;
+    }
+    function finishedScheduleGameDedupeKey(g) {
+      const awayId = normalizeScheduleTeamId(g.awayId);
+      const homeId = normalizeScheduleTeamId(g.homeId);
+      const gid = safeText(g.gameId);
+      if (gid) return `gid|${gid}`;
+      return `m|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
+    }
+    function normalizeScheduleTeamLabel(value) {
+      return safeText(value).toLowerCase().replace(/\s+/g, " ");
+    }
+    function buildScheduleRosterPayloadB64(rosterByTeamId, teams) {
+      const nameToTeamId = {};
+      for (const t of teams) {
+        const key = normalizeScheduleTeamLabel(t.teamName);
+        if (key && !nameToTeamId[key]) nameToTeamId[key] = t.teamId;
+      }
+      const body = JSON.stringify({ byTeamId: rosterByTeamId, nameToTeamId });
+      if (typeof Buffer !== "undefined") {
+        return Buffer.from(body, "utf8").toString("base64");
+      }
+      const bytes = new TextEncoder().encode(body);
+      let binary = "";
+      for (const b of bytes) binary += String.fromCharCode(b);
+      return btoa(binary);
+    }
+    async function fetchFreshScheduleRows() {
+      const scheduleUrl = await getScheduleUrl();
+      const csvText = await fetchCsvTextFresh(scheduleUrl);
+      return Papa.parse(csvText).data;
+    }
+    async function loadWeeklySchedule() {
+      const [scheduleRows, teams] = await Promise.all([fetchFreshScheduleRows(), loadTeamRosters()]);
+      const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
+      const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
+        (a, b) => a.localeCompare(b)
+      );
+      const dateLabelByIso = /* @__PURE__ */ new Map();
+      for (const g of parsedGames) {
+        if (!dateLabelByIso.has(g.isoDate)) dateLabelByIso.set(g.isoDate, g.dateDisplay);
+      }
+      const seen = /* @__PURE__ */ new Set();
+      const gamesByIso = /* @__PURE__ */ new Map();
+      for (const g of parsedGames) {
+        const wd = weekdayFromIso(g.isoDate);
+        if (wd !== 0 && wd !== 3) continue;
+        const matchupIds = [g.awayId, g.homeId].sort((a, b) => a.localeCompare(b));
+        const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}|${g.venueLabel}`;
+        if (seen.has(dedupeKey)) continue;
+        seen.add(dedupeKey);
+        const awayTeamId = String(Number(safeText(g.awayId).replace(/\s+/g, "")));
+        const homeTeamId = String(Number(safeText(g.homeId).replace(/\s+/g, "")));
+        const row = {
+          home: g.homeName,
+          away: g.awayName,
+          awayTeamId,
+          homeTeamId,
+          location: g.venueLabel && g.venueLabel.trim() || g.field || "-",
+          time: g.time || "-",
+          date: g.dateDisplay || "",
+          result: formatFinishedScheduleResult(g.awayScore, g.homeScore, g.resultCsv, g.winnerCsv),
+          gameId: g.gameId,
+          isoDate: g.isoDate,
+          _iso: g.isoDate
+        };
+        if (!gamesByIso.has(g.isoDate)) gamesByIso.set(g.isoDate, []);
+        gamesByIso.get(g.isoDate).push(row);
+      }
+      for (const iso of gamesByIso.keys()) {
+        gamesByIso.set(iso, sortScheduleGameRows(gamesByIso.get(iso)));
+      }
+      const scheduleOptions = [];
+      let sundayCounter = 0;
+      for (const iso of uniqueIsosSorted) {
+        const wd = weekdayFromIso(iso);
+        const dl = dateLabelByIso.get(iso) || iso;
+        if (wd === 0) {
+          sundayCounter += 1;
+          scheduleOptions.push({ value: `W${sundayCounter}`, label: `${dl} \u2022 Week ${sundayCounter}` });
+        } else if (wd === 3) {
+          scheduleOptions.push({
+            value: `D${scheduleIsoToCompactDigits(iso)}`,
+            label: dl
+          });
+        }
+      }
+      const rosterByTeamId = {};
+      for (const t of teams) {
+        rosterByTeamId[t.teamId] = {
+          teamName: t.teamName,
+          captain: t.captain,
+          jerseyColor: t.jerseyColor,
+          numberColor: t.numberColor,
+          players: Array.isArray(t.players) ? t.players : []
+        };
+      }
+      return {
+        scheduleOptions,
+        allScheduleViews: scheduleOptions.map((o) => o.value),
+        gamesByIso,
+        sundayIsosSorted: uniqueIsosSorted.filter((iso) => weekdayFromIso(iso) === 0),
+        uniqueIsosSorted,
+        dateLabelByIso,
+        rosterByTeamId,
+        scheduleRosterPayloadB64: buildScheduleRosterPayloadB64(rosterByTeamId, teams),
+        parsedGames
+      };
+    }
+    var { load2026StatsByPlayer } = require_stats2026Loader();
+    async function load2025HistoricalByPlayer() {
+      const csvText = await fetchCsvText(HIST_2025_STATS_URL);
+      return parse2025SeasonStatsCsv(csvText);
+    }
+    async function loadCareerByPlayer() {
+      const url = await getAllTimeStatsCsvUrl();
+      const csvText = await fetchCsvText(url);
+      return parsePlayerHistoricalStatsCsv(csvText);
+    }
+    function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
+      const paN = toNumber(pa);
+      if (paN <= 0) return null;
+      const abN = toNumber(ab);
+      const bbN = toNumber(bb);
+      const hN = toNumber(h);
+      const tbN = toNumber(tb);
+      const rN = toNumber(r);
+      const rbiN = toNumber(rbi);
+      if (abN + bbN <= 0) return null;
+      const slg = abN > 0 ? tbN / abN : 0;
+      const avg = abN > 0 ? hN / abN : 0;
+      const iso = slg - avg;
+      const ops = avg + slg;
+      const tbPerPa = tbN / paN;
+      const runProd = (rN + rbiN) / paN;
+      if (![ops, iso, tbPerPa, runProd].every((x) => Number.isFinite(x))) return null;
+      return { ops, iso, tbPerPa, runProd };
+    }
+    function collectDfsSalaryLeagueBundles(careerByPlayer, stats2026ByPlayer) {
+      const out = [];
+      for (const [, c] of careerByPlayer.entries()) {
+        const pa = toNumber(c.pa);
+        const b = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
+        if (b) out.push({ pa, bundle: b });
+      }
+      for (const [, row] of stats2026ByPlayer.entries()) {
+        const pa = toNumber(row.PA);
+        const b = computeOffenseRateBundle(pa, row.AB, row.BB, row.Hits, row.TB, row.Runs, row.RBI);
+        if (b) out.push({ pa, bundle: b });
+      }
+      return out;
+    }
+    function weightedMomentsPerMetric(observations) {
+      const totPa = observations.reduce((s, o) => s + o.pa, 0);
+      const moments = {};
+      if (totPa <= 0) {
+        for (const k of OFFENSE_METRIC_KEYS) moments[k] = { mu: 0, sigma: 1 };
+        return { moments, totPa };
+      }
+      for (const key of OFFENSE_METRIC_KEYS) {
+        const mu = observations.reduce((s, o) => s + o.pa * o.bundle[key], 0) / totPa;
+        const variance = observations.reduce((s, o) => s + o.pa * (o.bundle[key] - mu) ** 2, 0) / totPa;
+        moments[key] = { mu, sigma: Math.sqrt(Math.max(variance, 1e-10)) };
+      }
+      return { moments, totPa };
+    }
+    function zScoresFromBundle(bundle, moments) {
+      const z = {};
+      for (const key of OFFENSE_METRIC_KEYS) {
+        const { mu, sigma } = moments[key];
+        z[key] = (bundle[key] - mu) / sigma;
+      }
+      return z;
+    }
+    function compositeZFromZScores(zObj) {
+      let s = 0;
+      for (const key of OFFENSE_METRIC_KEYS) {
+        s += OFFENSE_METRIC_WEIGHTS[key] * zObj[key];
+      }
+      return s;
+    }
+    function careerPaAndBundleForPlayer(normalizedKey, careerByPlayer) {
+      const c = careerByPlayer.get(normalizedKey);
+      if (c && toNumber(c.pa) > 0) {
+        const pa = toNumber(c.pa);
+        const bundle = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
+        if (bundle) return { pa, bundle };
+      }
+      return null;
+    }
+    function isDfsSalaryRookie(stats2026ByPlayer, norm) {
+      const row = stats2026ByPlayer.get(norm);
+      return row ? isTruthyRookie(row.IsRookie) : false;
+    }
+    function dfsSalaryEffectiveBlendWeights(pa26, blendWeights) {
+      const baseW26 = blendWeights?.y2026 ?? DFS_OFFENSE_RATING_WEIGHT_2026;
+      const paFactor = Math.min(1, pa26 / DFS_SALARY_CURRENT_YEAR_BLEND_FULL_PA);
+      const w26 = baseW26 * paFactor;
+      return { wHist: 1 - w26, w26 };
+    }
+    function buildDfsSalaryRatingForNorm(norm, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
+      const row2026 = stats2026ByPlayer.get(norm);
+      const pa26 = row2026 ? toNumber(row2026.PA) : 0;
+      const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
+      const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
+      const composite26 = z26 ? compositeZFromZScores(z26) : 0;
+      const has26 = z26 != null;
+      const rookie = isDfsSalaryRookie(stats2026ByPlayer, norm);
+      if (rookie) {
+        const ratingRaw2 = has26 ? composite26 : 0;
+        return Number.isFinite(ratingRaw2) ? Math.round(ratingRaw2 * 100) / 100 : 0;
+      }
+      const histSample = careerPaAndBundleForPlayer(norm, careerByPlayer);
+      const rawHist = histSample?.bundle ?? null;
+      const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
+      const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
+      const hasHist = zHist != null;
+      let ratingRaw = 0;
+      if (has26 && hasHist) {
+        const { wHist, w26 } = dfsSalaryEffectiveBlendWeights(pa26, blendWeights);
+        ratingRaw = wHist * compositeHist + w26 * composite26;
+      } else if (has26) {
+        ratingRaw = composite26;
+      } else if (hasHist) {
+        ratingRaw = compositeHist;
+      }
+      return Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0;
+    }
+    function extendDfsSalaryRatingsForReplacements(offenseRatingByNorm, byOriginalNorm, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
+      if (!offenseRatingByNorm || !byOriginalNorm?.size) return offenseRatingByNorm;
+      for (const entry of byOriginalNorm.values()) {
+        const norm = entry?.replacementNorm;
+        if (!norm) continue;
+        offenseRatingByNorm.set(
+          norm,
+          buildDfsSalaryRatingForNorm(
+            norm,
+            careerByPlayer,
+            stats2026ByPlayer,
+            moments,
+            blendWeights
+          )
+        );
+      }
+      return offenseRatingByNorm;
+    }
+    function bundle2026FromRow(row2026) {
+      const pa = toNumber(row2026.PA);
+      if (pa <= 0) return null;
+      return computeOffenseRateBundle(
+        pa,
+        row2026.AB,
+        row2026.BB,
+        row2026.Hits,
+        row2026.TB,
+        row2026.Runs,
+        row2026.RBI
+      );
+    }
+    var DFS_SALARY_RATING_BLEND = Object.freeze({
+      historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
+      y2026: DFS_OFFENSE_RATING_WEIGHT_2026
+    });
+    function buildDfsSalaryPlayerRows(teams, careerByPlayer, stats2026ByPlayer, moments, blendWeights) {
+      const rows = [];
+      for (const team of teams) {
+        for (const playerName of team.players) {
+          const norm = normalizePlayerName(playerName);
+          rows.push({
+            norm,
+            rating: buildDfsSalaryRatingForNorm(
+              norm,
+              careerByPlayer,
+              stats2026ByPlayer,
+              moments,
+              blendWeights
+            )
+          });
+        }
+      }
+      return rows;
+    }
+    function buildTeamScheduleRunRates(parsedGames, teams) {
+      const rec = /* @__PURE__ */ new Map();
+      for (const t of teams) {
+        const id = normalizeScheduleTeamId(t.teamId);
+        rec.set(id, { runsFor: 0, runsAgainst: 0, games: 0 });
+      }
+      const seen = /* @__PURE__ */ new Set();
+      for (const g of parsedGames) {
+        if (!Number.isFinite(g.awayScore) || !Number.isFinite(g.homeScore)) continue;
+        const key = finishedScheduleGameDedupeKey(g);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const awayId = normalizeScheduleTeamId(g.awayId);
+        const homeId = normalizeScheduleTeamId(g.homeId);
+        if (!rec.has(awayId) || !rec.has(homeId)) continue;
+        rec.get(awayId).runsFor += g.awayScore;
+        rec.get(awayId).runsAgainst += g.homeScore;
+        rec.get(awayId).games += 1;
+        rec.get(homeId).runsFor += g.homeScore;
+        rec.get(homeId).runsAgainst += g.awayScore;
+        rec.get(homeId).games += 1;
+      }
+      const rates = /* @__PURE__ */ new Map();
+      for (const [id, r] of rec.entries()) {
+        const g = r.games;
+        rates.set(id, {
+          gamesPlayed: g,
+          runsFor: r.runsFor,
+          runsAgainst: r.runsAgainst,
+          runsPerGame: g > 0 ? r.runsFor / g : null,
+          runsAgainstPerGame: g > 0 ? r.runsAgainst / g : null
+        });
+      }
+      return rates;
+    }
+    async function loadDfsLeaderboardScoringContextBase() {
+      const [teams, careerByPlayer, stats2026ByPlayer, schedulePayload, gamelogs] = await Promise.all([
+        loadTeamRosters(),
+        loadCareerByPlayer(),
+        load2026StatsByPlayer(),
+        loadWeeklySchedule(),
+        load2026GamelogsByPlayer()
+      ]);
+      const parsedScheduleGames = schedulePayload.parsedGames || [];
+      const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
+      const bundles = collectDfsSalaryLeagueBundles(careerByPlayer, stats2026ByPlayer);
+      const { moments } = weightedMomentsPerMetric(bundles);
+      const leagueRows = buildDfsSalaryPlayerRows(
+        teams,
+        careerByPlayer,
+        stats2026ByPlayer,
+        moments,
+        DFS_SALARY_RATING_BLEND
+      );
+      const baseOffenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
+      const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
+      const { parsedGames: _pg, ...scheduleForClient } = schedulePayload;
+      return {
+        schedulePayload: scheduleForClient,
+        gamelogs,
+        ratingExtendInputs: {
+          careerByPlayer,
+          stats2026ByPlayer,
+          moments,
+          baseOffenseRatingByNorm
+        },
+        scoringDepsBase: {
+          teams,
+          scheduleRunRates,
+          stats2026ByPlayer,
+          teamCodeById,
+          gamelogs
+        }
+      };
+    }
+    function buildScoringDepsWithReplacements(base, replacements) {
+      const { ratingExtendInputs, scoringDepsBase } = base;
+      const offenseRatingByNorm = new Map(ratingExtendInputs.baseOffenseRatingByNorm);
+      extendDfsSalaryRatingsForReplacements(
+        offenseRatingByNorm,
+        replacements?.byOriginalNorm,
+        ratingExtendInputs.careerByPlayer,
+        ratingExtendInputs.stats2026ByPlayer,
+        ratingExtendInputs.moments,
+        DFS_SALARY_RATING_BLEND
+      );
+      return {
+        ...scoringDepsBase,
+        offenseRatingByNorm,
+        replacementByOriginalNorm: replacements?.byOriginalNorm || /* @__PURE__ */ new Map()
+      };
+    }
+    async function loadDfsLeaderboardScoringContext() {
+      const [base, replacements] = await Promise.all([
+        loadDfsLeaderboardScoringContextBase(),
+        getCachedPlayerReplacements()
+      ]);
+      return {
+        schedulePayload: base.schedulePayload,
+        gamelogs: base.gamelogs,
+        scoringDeps: buildScoringDepsWithReplacements(base, replacements)
+      };
+    }
+    var dfsScoringContextCache = createMemoryCache(
+      Number(process.env.DFS_SCORING_CACHE_TTL_MS) || 10 * 60 * 1e3,
+      "dfs-scoring"
+    );
+    async function getCachedDfsLeaderboardScoringContext() {
+      const [base, replacements] = await Promise.all([
+        dfsScoringContextCache.get("leaderboard-scoring-base", loadDfsLeaderboardScoringContextBase),
+        getCachedPlayerReplacements()
+      ]);
+      return {
+        schedulePayload: base.schedulePayload,
+        gamelogs: base.gamelogs,
+        scoringDeps: buildScoringDepsWithReplacements(base, replacements)
+      };
+    }
+    module.exports = {
+      loadDfsLeaderboardScoringContext,
+      getCachedDfsLeaderboardScoringContext,
+      loadWeeklySchedule,
+      loadCareerByPlayer,
+      load2025HistoricalByPlayer,
+      buildParsedScheduleGames,
+      fetchCsvRows,
+      collectDfsSalaryLeagueBundles,
+      buildDfsSalaryRatingForNorm,
+      extendDfsSalaryRatingsForReplacements,
+      weightedMomentsPerMetric,
+      DFS_SALARY_RATING_BLEND
     };
   }
 });
@@ -4433,11 +5252,6 @@ var require_offenseRankingsPage = __commonJS({
         const b = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
         if (b) out.push({ pa, bundle: b });
       }
-      for (const [, h] of hist2025ByPlayer.entries()) {
-        const pa = toNumber(h.pa);
-        const b = computeOffenseRateBundle(pa, h.ab, h.bb, h.h, h.tb, h.r, h.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
       for (const [, row] of stats2026ByPlayer.entries()) {
         const pa = toNumber(row.PA);
         const b = computeOffenseRateBundle(pa, row.AB, row.BB, row.Hits, row.TB, row.Runs, row.RBI);
@@ -4477,17 +5291,11 @@ var require_offenseRankingsPage = __commonJS({
       }
       return s;
     }
-    function historicalPaAndBundleForPlayer(normalizedKey, careerByPlayer, hist2025ByPlayer) {
+    function historicalPaAndBundleForPlayer(normalizedKey, careerByPlayer, _hist2025ByPlayer) {
       const c = careerByPlayer.get(normalizedKey);
       if (c && toNumber(c.pa) > 0) {
         const pa = toNumber(c.pa);
         const bundle = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (bundle) return { pa, bundle };
-      }
-      const h25 = hist2025ByPlayer.get(normalizedKey);
-      if (h25 && toNumber(h25.pa) > 0) {
-        const pa = toNumber(h25.pa);
-        const bundle = computeOffenseRateBundle(pa, h25.ab, h25.bb, h25.h, h25.tb, h25.r, h25.rbi);
         if (bundle) return { pa, bundle };
       }
       return null;
@@ -4554,66 +5362,41 @@ var require_offenseRankingsPage = __commonJS({
       }
       return offenseRatingByNorm;
     }
-    function buildSinglePlayerRatingRow({
-      playerName,
-      norm,
-      teamId,
-      teamName,
-      careerByPlayer,
-      hist2025ByPlayer,
-      stats2026ByPlayer,
-      moments,
-      blendWeights
-    }) {
-      const row2026 = stats2026ByPlayer.get(norm);
-      const pa26 = row2026 ? toNumber(row2026.PA) : 0;
-      const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
-      const ratingRounded = buildOffenseRatingForNorm(
-        norm,
-        careerByPlayer,
-        hist2025ByPlayer,
-        stats2026ByPlayer,
-        moments,
-        blendWeights
-      );
-      const opsDisplay26 = raw26 && Number.isFinite(raw26.ops) ? Math.round(raw26.ops * 1e3) / 1e3 : null;
-      const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
-      const composite26 = z26 ? compositeZFromZScores(z26) : neutralCompositeZ();
-      const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
-      const rawHist = histSample?.bundle ?? null;
-      const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
-      const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
-      return {
-        playerName,
-        norm,
-        teamId,
-        teamName,
-        pa2026: pa26,
-        composite2026: Number.isFinite(composite26) ? Math.round(composite26 * 1e3) / 1e3 : 0,
-        compositeHist: compositeHist != null && Number.isFinite(compositeHist) ? Math.round(compositeHist * 1e3) / 1e3 : null,
-        ops2026Adj: opsDisplay26,
-        tbPerPa2026: raw26 && Number.isFinite(raw26.tbPerPa) ? Math.round(raw26.tbPerPa * 1e3) / 1e3 : null,
-        rating: ratingRounded
-      };
-    }
     function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
       const rows = [];
       for (const team of teams) {
         for (const playerName of team.players) {
           const norm = normalizePlayerName(playerName);
-          rows.push(
-            buildSinglePlayerRatingRow({
-              playerName,
-              norm,
-              teamId: team.teamId,
-              teamName: team.teamName,
-              careerByPlayer,
-              hist2025ByPlayer,
-              stats2026ByPlayer,
-              moments,
-              blendWeights
-            })
+          const row2026 = stats2026ByPlayer.get(norm);
+          const pa26 = row2026 ? toNumber(row2026.PA) : 0;
+          const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
+          const ratingRounded = buildOffenseRatingForNorm(
+            norm,
+            careerByPlayer,
+            hist2025ByPlayer,
+            stats2026ByPlayer,
+            moments,
+            blendWeights
           );
+          const opsDisplay26 = raw26 && Number.isFinite(raw26.ops) ? Math.round(raw26.ops * 1e3) / 1e3 : null;
+          const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
+          const composite26 = z26 ? compositeZFromZScores(z26) : neutralCompositeZ();
+          const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
+          const rawHist = histSample?.bundle ?? null;
+          const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
+          const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
+          rows.push({
+            playerName,
+            norm,
+            teamId: team.teamId,
+            teamName: team.teamName,
+            pa2026: pa26,
+            composite2026: Number.isFinite(composite26) ? Math.round(composite26 * 1e3) / 1e3 : 0,
+            compositeHist: compositeHist != null && Number.isFinite(compositeHist) ? Math.round(compositeHist * 1e3) / 1e3 : null,
+            ops2026Adj: opsDisplay26,
+            tbPerPa2026: raw26 && Number.isFinite(raw26.tbPerPa) ? Math.round(raw26.tbPerPa * 1e3) / 1e3 : null,
+            rating: ratingRounded
+          });
         }
       }
       rows.sort((a, b) => b.rating - a.rating);
@@ -4762,680 +5545,11 @@ var require_offenseRankingsPage = __commonJS({
       collectLeagueOffenseBundles,
       weightedMomentsPerMetric,
       buildOffenseRatingForNorm,
-      buildSinglePlayerRatingRow,
       extendOffenseRatingsForReplacements,
       buildOffensivePlayerRows,
       buildTeamStandingsFromScheduleGames,
       buildTeamOffenseSections,
       historicalPaAndBundleForPlayer
-    };
-  }
-});
-
-// lib/dfsLeaderboardScoringContext.js
-var require_dfsLeaderboardScoringContext = __commonJS({
-  "lib/dfsLeaderboardScoringContext.js"(exports, module) {
-    var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
-    var { createMemoryCache } = require_memoryCache();
-    var {
-      buildTeamCodeById,
-      load2026GamelogsByPlayer,
-      normalizePlayerName,
-      DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
-      DFS_OFFENSE_RATING_WEIGHT_2026
-    } = require_dfs();
-    var {
-      getScheduleUrl,
-      HIST_2025_STATS_URL,
-      SCHEDULE_CALENDAR_YEAR,
-      resolveCareerCsvSource
-    } = require_sheetUrls();
-    var OFFENSE_RATING_WEIGHT_HISTORICAL = 0.7;
-    var OFFENSE_RATING_WEIGHT_2026 = 0.3;
-    var OFFENSE_METRIC_WEIGHTS = Object.freeze({
-      ops: 0.52,
-      iso: 0.16,
-      tbPerPa: 0.26,
-      runProd: 0.06
-    });
-    var OFFENSE_METRIC_KEYS = Object.keys(OFFENSE_METRIC_WEIGHTS);
-    var nodeReadCareerCsv = null;
-    function setNodeCareerReader(fn) {
-      nodeReadCareerCsv = typeof fn === "function" ? fn : null;
-    }
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function toNumber(value) {
-      const n = Number(value);
-      return Number.isFinite(n) ? n : 0;
-    }
-    async function fetchCsvRows(url) {
-      const csvText = await fetchCsvText(url);
-      return Papa.parse(csvText).data;
-    }
-    var { loadTeamRosters } = require_teamRosters();
-    var { getCachedPlayerReplacements } = require_playerReplacements();
-    function parseScheduleSheetDate(displayDate) {
-      const s = safeText(displayDate);
-      if (!s) return null;
-      const match = /^([A-Za-z]{3}),\s*(\d{1,2})-([A-Za-z]{3})$/.exec(s);
-      if (!match) return null;
-      const monthAbbrToNum = {
-        jan: 1,
-        feb: 2,
-        mar: 3,
-        apr: 4,
-        may: 5,
-        jun: 6,
-        jul: 7,
-        aug: 8,
-        sep: 9,
-        oct: 10,
-        nov: 11,
-        dec: 12
-      };
-      const day = Number(match[2]);
-      const monthNum = monthAbbrToNum[match[3].slice(0, 3).toLowerCase()];
-      if (!monthNum || !Number.isFinite(day) || day < 1 || day > 31) return null;
-      const dt = new Date(SCHEDULE_CALENDAR_YEAR, monthNum - 1, day);
-      if (dt.getFullYear() !== SCHEDULE_CALENDAR_YEAR || dt.getMonth() !== monthNum - 1 || dt.getDate() !== day) {
-        return null;
-      }
-      const iso = `${String(SCHEDULE_CALENDAR_YEAR)}-${String(monthNum).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      return { iso, label: s };
-    }
-    function weekdayFromIso(iso) {
-      const [y, m, d] = iso.split("-").map(Number);
-      return new Date(y, m - 1, d, 12, 0, 0).getDay();
-    }
-    function scheduleIsoToCompactDigits(isoDate) {
-      return safeText(isoDate).replace(/\D+/g, "");
-    }
-    function scheduleStartTimeSortKey(timeStr) {
-      const compact = safeText(timeStr).toLowerCase().replace(/\./g, "").replace(/\s+/g, "").trim();
-      if (!compact || compact === "-" || compact === "ppd" || compact === "tbd" || compact === "postponed") {
-        return 1e9;
-      }
-      const m12 = compact.match(/^(\d{1,2}):(\d{2})(am|pm)$/);
-      if (m12) {
-        let h = Number(m12[1]);
-        const min = Number(m12[2]);
-        if (m12[3] === "pm" && h < 12) h += 12;
-        if (m12[3] === "am" && h === 12) h = 0;
-        return h * 60 + min;
-      }
-      const m24 = compact.match(/^(\d{1,2}):(\d{2})$/);
-      if (m24) {
-        const h = Number(m24[1]);
-        const min = Number(m24[2]);
-        if (h >= 0 && h <= 23 && min >= 0 && min <= 59) return h * 60 + min;
-      }
-      return 1e9 - 1;
-    }
-    function sortScheduleGameRows(rows) {
-      return rows.slice().sort((a, b) => {
-        const ka = scheduleStartTimeSortKey(a.time);
-        const kb = scheduleStartTimeSortKey(b.time);
-        if (ka !== kb) return ka - kb;
-        return safeText(a.home).localeCompare(safeText(b.home));
-      });
-    }
-    function optionalScheduleScore(cell) {
-      const t = safeText(cell);
-      if (!t || /^#?n\/?a$/i.test(t) || /^ppd$/i.test(t)) return NaN;
-      const n = Number(t);
-      return Number.isFinite(n) ? n : NaN;
-    }
-    function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
-      if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
-      const rs = safeText(resultCell).trim();
-      if (!/^#?n\/?a$/i.test(rs) && !/^-$/.test(rs) && rs) return rs;
-      const w = safeText(winnerCell);
-      if (!/^#?n\/?a$/i.test(w) && w !== "-") return `${awayScore}\u2013${homeScore} (${w})`;
-      return `${awayScore}\u2013${homeScore}`;
-    }
-    function isValidScheduleTeamNumber(value) {
-      const raw = safeText(value).replace(/\s+/g, "");
-      if (/^n\/?a$/i.test(raw) || /^#+$/.test(raw)) return false;
-      const n = Number(raw);
-      return Number.isInteger(n) && n >= 1 && n <= 18;
-    }
-    function normalizeScheduleTeamId(id) {
-      const n = Number(safeText(id).replace(/\s+/g, ""));
-      return Number.isInteger(n) ? String(n) : safeText(id);
-    }
-    function scheduleHeaderRowNormalized(headers) {
-      return (headers || []).map(
-        (x) => safeText(x).replace(/^\ufeff/g, "").toLowerCase()
-      );
-    }
-    function scheduleColumnFirstOf(normalizedHeaders, candidates) {
-      const h = normalizedHeaders;
-      for (const c of candidates) {
-        const i = h.indexOf(c);
-        if (i >= 0) return i;
-      }
-      return -1;
-    }
-    function buildScheduleDiamondLocationLabel(fieldMain, fieldShort) {
-      const parts = [];
-      for (const p of [fieldMain, fieldShort]) {
-        const t = safeText(p);
-        if (!t || t === "-") continue;
-        if (parts.length && parts[parts.length - 1] === t) continue;
-        parts.push(t);
-      }
-      return parts.join(" \xB7 ");
-    }
-    function scheduleCsvColumnIndex(headers) {
-      const h = scheduleHeaderRowNormalized(headers);
-      return {
-        date: h.indexOf("date"),
-        awayId: h.indexOf("away #"),
-        awayTeam: h.indexOf("away team"),
-        homeId: h.indexOf("home #"),
-        homeTeam: h.indexOf("home team"),
-        field: scheduleColumnFirstOf(h, ["field", "diamond"]),
-        shortField: scheduleColumnFirstOf(h, ["short field"]),
-        time: h.indexOf("time"),
-        gameId: h.indexOf("gameid"),
-        awayScore: h.indexOf("away score"),
-        homeScore: h.indexOf("home score"),
-        winner: h.indexOf("winner"),
-        result: h.indexOf("result")
-      };
-    }
-    function buildParsedScheduleGames(scheduleRows, teams) {
-      const headers = (scheduleRows[0] || []).map((h) => safeText(h));
-      const rows = scheduleRows.slice(1);
-      const idx = scheduleCsvColumnIndex(headers);
-      if (idx.date === -1 || idx.awayId === -1 || idx.homeId === -1) {
-        throw new Error("Schedule CSV missing required columns.");
-      }
-      const teamNameById = new Map(
-        teams.map((t) => [safeText(t.teamId), safeText(t.teamName) || `Team ${t.teamId}`])
-      );
-      const parsedGames = [];
-      for (let i = 0; i < rows.length; i += 1) {
-        const row = rows[i];
-        const awayId = safeText(row[idx.awayId]);
-        const homeId = safeText(row[idx.homeId]);
-        if (!isValidScheduleTeamNumber(awayId) || !isValidScheduleTeamNumber(homeId)) continue;
-        const dateDisplay = safeText(row[idx.date]);
-        const parsedDate = parseScheduleSheetDate(dateDisplay);
-        if (!parsedDate) continue;
-        const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
-        const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
-        parsedGames.push({
-          awayId,
-          homeId,
-          awayName: safeText(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`,
-          homeName: safeText(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`,
-          dateDisplay,
-          isoDate: parsedDate.iso,
-          field,
-          venueLabel: buildScheduleDiamondLocationLabel(field, fieldShort),
-          time: idx.time >= 0 ? safeText(row[idx.time]) : "",
-          gameId: idx.gameId >= 0 ? safeText(row[idx.gameId]) : "",
-          rowIndex: i,
-          awayScore: optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : ""),
-          homeScore: optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : ""),
-          winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
-          resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : ""
-        });
-      }
-      return parsedGames;
-    }
-    function finishedScheduleGameDedupeKey(g) {
-      const awayId = normalizeScheduleTeamId(g.awayId);
-      const homeId = normalizeScheduleTeamId(g.homeId);
-      const gid = safeText(g.gameId);
-      if (gid) return `gid|${gid}`;
-      return `m|${g.isoDate || ""}|${[awayId, homeId].sort().join("|")}`;
-    }
-    function normalizeScheduleTeamLabel(value) {
-      return safeText(value).toLowerCase().replace(/\s+/g, " ");
-    }
-    function buildScheduleRosterPayloadB64(rosterByTeamId, teams) {
-      const nameToTeamId = {};
-      for (const t of teams) {
-        const key = normalizeScheduleTeamLabel(t.teamName);
-        if (key && !nameToTeamId[key]) nameToTeamId[key] = t.teamId;
-      }
-      const body = JSON.stringify({ byTeamId: rosterByTeamId, nameToTeamId });
-      if (typeof Buffer !== "undefined") {
-        return Buffer.from(body, "utf8").toString("base64");
-      }
-      const bytes = new TextEncoder().encode(body);
-      let binary = "";
-      for (const b of bytes) binary += String.fromCharCode(b);
-      return btoa(binary);
-    }
-    async function loadWeeklySchedule() {
-      const scheduleUrl = await getScheduleUrl();
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(scheduleUrl), loadTeamRosters()]);
-      const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
-      const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
-        (a, b) => a.localeCompare(b)
-      );
-      const dateLabelByIso = /* @__PURE__ */ new Map();
-      for (const g of parsedGames) {
-        if (!dateLabelByIso.has(g.isoDate)) dateLabelByIso.set(g.isoDate, g.dateDisplay);
-      }
-      const seen = /* @__PURE__ */ new Set();
-      const gamesByIso = /* @__PURE__ */ new Map();
-      for (const g of parsedGames) {
-        const wd = weekdayFromIso(g.isoDate);
-        if (wd !== 0 && wd !== 3) continue;
-        const matchupIds = [g.awayId, g.homeId].sort((a, b) => a.localeCompare(b));
-        const dedupeKey = `${g.isoDate}|${matchupIds[0]}|${matchupIds[1]}|${g.time}|${g.field}|${g.venueLabel}`;
-        if (seen.has(dedupeKey)) continue;
-        seen.add(dedupeKey);
-        const awayTeamId = String(Number(safeText(g.awayId).replace(/\s+/g, "")));
-        const homeTeamId = String(Number(safeText(g.homeId).replace(/\s+/g, "")));
-        const row = {
-          home: g.homeName,
-          away: g.awayName,
-          awayTeamId,
-          homeTeamId,
-          location: g.venueLabel && g.venueLabel.trim() || g.field || "-",
-          time: g.time || "-",
-          date: g.dateDisplay || "",
-          result: formatFinishedScheduleResult(g.awayScore, g.homeScore, g.resultCsv, g.winnerCsv),
-          gameId: g.gameId,
-          _iso: g.isoDate
-        };
-        if (!gamesByIso.has(g.isoDate)) gamesByIso.set(g.isoDate, []);
-        gamesByIso.get(g.isoDate).push(row);
-      }
-      for (const iso of gamesByIso.keys()) {
-        gamesByIso.set(iso, sortScheduleGameRows(gamesByIso.get(iso)));
-      }
-      const scheduleOptions = [];
-      let sundayCounter = 0;
-      for (const iso of uniqueIsosSorted) {
-        const wd = weekdayFromIso(iso);
-        const dl = dateLabelByIso.get(iso) || iso;
-        if (wd === 0) {
-          sundayCounter += 1;
-          scheduleOptions.push({ value: `W${sundayCounter}`, label: `${dl} \u2022 Week ${sundayCounter}` });
-        } else if (wd === 3) {
-          scheduleOptions.push({
-            value: `D${scheduleIsoToCompactDigits(iso)}`,
-            label: dl
-          });
-        }
-      }
-      const rosterByTeamId = {};
-      for (const t of teams) {
-        rosterByTeamId[t.teamId] = {
-          teamName: t.teamName,
-          captain: t.captain,
-          jerseyColor: t.jerseyColor,
-          numberColor: t.numberColor,
-          players: Array.isArray(t.players) ? t.players : []
-        };
-      }
-      return {
-        scheduleOptions,
-        allScheduleViews: scheduleOptions.map((o) => o.value),
-        gamesByIso,
-        sundayIsosSorted: uniqueIsosSorted.filter((iso) => weekdayFromIso(iso) === 0),
-        uniqueIsosSorted,
-        dateLabelByIso,
-        rosterByTeamId,
-        scheduleRosterPayloadB64: buildScheduleRosterPayloadB64(rosterByTeamId, teams),
-        parsedGames
-      };
-    }
-    var { load2026StatsByPlayer } = require_stats2026Loader();
-    var { extendOffenseRatingsForReplacements } = require_offenseRankingsPage();
-    async function load2025HistoricalByPlayer() {
-      const rows = await fetchCsvRows(HIST_2025_STATS_URL);
-      const headers = (rows[0] || []).map((h) => safeText(h));
-      const dataRows = rows.slice(1);
-      const nameIndex = headers.findIndex((h) => h.toLowerCase() === "player");
-      if (nameIndex === -1) throw new Error("2025 historical CSV missing Player column.");
-      const byPlayer = /* @__PURE__ */ new Map();
-      for (const row of dataRows) {
-        const playerName = safeText(row[nameIndex]);
-        if (!playerName) continue;
-        const singles = toNumber(row[6]);
-        const doubles = toNumber(row[7]);
-        const triples = toNumber(row[8]);
-        const homers = toNumber(row[9]);
-        const bb = toNumber(row[10]);
-        const ab = toNumber(row[2]);
-        byPlayer.set(normalizePlayerName(playerName), {
-          player: playerName,
-          team: safeText(row[1]),
-          pa: ab + bb,
-          ab,
-          h: toNumber(row[3]),
-          r: toNumber(row[4]),
-          rbi: toNumber(row[5]),
-          bb,
-          tb: singles + doubles * 2 + triples * 3 + homers * 4
-        });
-      }
-      return byPlayer;
-    }
-    async function loadCareerByPlayer() {
-      const src = resolveCareerCsvSource();
-      let csvText;
-      if (src.type === "file") {
-        if (!nodeReadCareerCsv) {
-          throw new Error("Career CSV file read is not configured (Node only).");
-        }
-        csvText = await nodeReadCareerCsv(src.path);
-      } else {
-        csvText = await fetchCsvText(src.url);
-      }
-      const rows = Papa.parse(csvText).data;
-      const headers = (rows[0] || []).map((h) => safeText(h).toLowerCase());
-      const dataRows = rows.slice(1);
-      const idx = {
-        name: headers.indexOf("player_name"),
-        pa: headers.indexOf("pa"),
-        ab: headers.indexOf("ab"),
-        h: headers.indexOf("h"),
-        r: headers.indexOf("r"),
-        rbi: headers.indexOf("rbi"),
-        bb: headers.indexOf("bb"),
-        tb: headers.indexOf("tb")
-      };
-      if (idx.name === -1) throw new Error("Career CSV missing player_name column.");
-      const byPlayer = /* @__PURE__ */ new Map();
-      for (const row of dataRows) {
-        const name = safeText(row[idx.name]);
-        if (!name) continue;
-        byPlayer.set(normalizePlayerName(name), {
-          player: name,
-          pa: toNumber(row[idx.pa]),
-          ab: toNumber(row[idx.ab]),
-          h: toNumber(row[idx.h]),
-          r: toNumber(row[idx.r]),
-          rbi: toNumber(row[idx.rbi]),
-          bb: toNumber(row[idx.bb]),
-          tb: toNumber(row[idx.tb])
-        });
-      }
-      return byPlayer;
-    }
-    function computeOffenseRateBundle(pa, ab, bb, h, tb, r, rbi) {
-      const paN = toNumber(pa);
-      if (paN <= 0) return null;
-      const abN = toNumber(ab);
-      const bbN = toNumber(bb);
-      const hN = toNumber(h);
-      const tbN = toNumber(tb);
-      const rN = toNumber(r);
-      const rbiN = toNumber(rbi);
-      if (abN + bbN <= 0) return null;
-      const slg = abN > 0 ? tbN / abN : 0;
-      const avg = abN > 0 ? hN / abN : 0;
-      const iso = slg - avg;
-      const ops = avg + slg;
-      const tbPerPa = tbN / paN;
-      const runProd = (rN + rbiN) / paN;
-      if (![ops, iso, tbPerPa, runProd].every((x) => Number.isFinite(x))) return null;
-      return { ops, iso, tbPerPa, runProd };
-    }
-    function collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer) {
-      const out = [];
-      for (const [, c] of careerByPlayer.entries()) {
-        const pa = toNumber(c.pa);
-        const b = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
-      for (const [, h] of hist2025ByPlayer.entries()) {
-        const pa = toNumber(h.pa);
-        const b = computeOffenseRateBundle(pa, h.ab, h.bb, h.h, h.tb, h.r, h.rbi);
-        if (b) out.push({ pa, bundle: b });
-      }
-      for (const [, row] of stats2026ByPlayer.entries()) {
-        const pa = toNumber(row.PA);
-        const b = computeOffenseRateBundle(pa, row.AB, row.BB, row.Hits, row.TB, row.Runs, row.RBI);
-        if (b) out.push({ pa, bundle: b });
-      }
-      return out;
-    }
-    function weightedMomentsPerMetric(observations) {
-      const totPa = observations.reduce((s, o) => s + o.pa, 0);
-      const moments = {};
-      if (totPa <= 0) {
-        for (const k of OFFENSE_METRIC_KEYS) moments[k] = { mu: 0, sigma: 1 };
-        return { moments, totPa };
-      }
-      for (const key of OFFENSE_METRIC_KEYS) {
-        const mu = observations.reduce((s, o) => s + o.pa * o.bundle[key], 0) / totPa;
-        const variance = observations.reduce((s, o) => s + o.pa * (o.bundle[key] - mu) ** 2, 0) / totPa;
-        moments[key] = { mu, sigma: Math.sqrt(Math.max(variance, 1e-10)) };
-      }
-      return { moments, totPa };
-    }
-    function zScoresFromBundle(bundle, moments) {
-      const z = {};
-      for (const key of OFFENSE_METRIC_KEYS) {
-        const { mu, sigma } = moments[key];
-        z[key] = (bundle[key] - mu) / sigma;
-      }
-      return z;
-    }
-    function compositeZFromZScores(zObj) {
-      let s = 0;
-      for (const key of OFFENSE_METRIC_KEYS) {
-        s += OFFENSE_METRIC_WEIGHTS[key] * zObj[key];
-      }
-      return s;
-    }
-    function historicalPaAndBundleForPlayer(normalizedKey, careerByPlayer, hist2025ByPlayer) {
-      const c = careerByPlayer.get(normalizedKey);
-      if (c && toNumber(c.pa) > 0) {
-        const pa = toNumber(c.pa);
-        const bundle = computeOffenseRateBundle(pa, c.ab, c.bb, c.h, c.tb, c.r, c.rbi);
-        if (bundle) return { pa, bundle };
-      }
-      const h25 = hist2025ByPlayer.get(normalizedKey);
-      if (h25 && toNumber(h25.pa) > 0) {
-        const pa = toNumber(h25.pa);
-        const bundle = computeOffenseRateBundle(pa, h25.ab, h25.bb, h25.h, h25.tb, h25.r, h25.rbi);
-        if (bundle) return { pa, bundle };
-      }
-      return null;
-    }
-    function bundle2026FromRow(row2026) {
-      const pa = toNumber(row2026.PA);
-      if (pa <= 0) return null;
-      return computeOffenseRateBundle(
-        pa,
-        row2026.AB,
-        row2026.BB,
-        row2026.Hits,
-        row2026.TB,
-        row2026.Runs,
-        row2026.RBI
-      );
-    }
-    function blendedOffenseRating(composite26, compositeHist, has26, hasHist, blendWeights) {
-      const wHist = blendWeights?.historical ?? OFFENSE_RATING_WEIGHT_HISTORICAL;
-      const w26 = blendWeights?.y2026 ?? OFFENSE_RATING_WEIGHT_2026;
-      if (has26 && hasHist) {
-        return wHist * compositeHist + w26 * composite26;
-      }
-      if (has26) return composite26;
-      if (hasHist) return compositeHist;
-      return 0;
-    }
-    var DFS_SALARY_RATING_BLEND = Object.freeze({
-      historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
-      y2026: DFS_OFFENSE_RATING_WEIGHT_2026
-    });
-    function buildOffensivePlayerRows(teams, careerByPlayer, hist2025ByPlayer, stats2026ByPlayer, moments, blendWeights) {
-      const rows = [];
-      for (const team of teams) {
-        for (const playerName of team.players) {
-          const norm = normalizePlayerName(playerName);
-          const row2026 = stats2026ByPlayer.get(norm);
-          const pa26 = row2026 ? toNumber(row2026.PA) : 0;
-          const raw26 = row2026 && pa26 > 0 ? bundle2026FromRow(row2026) : null;
-          const z26 = raw26 ? zScoresFromBundle(raw26, moments) : null;
-          const composite26 = z26 ? compositeZFromZScores(z26) : 0;
-          const has26 = z26 != null;
-          const histSample = historicalPaAndBundleForPlayer(norm, careerByPlayer, hist2025ByPlayer);
-          const rawHist = histSample?.bundle ?? null;
-          const zHist = rawHist ? zScoresFromBundle(rawHist, moments) : null;
-          const compositeHist = zHist ? compositeZFromZScores(zHist) : null;
-          const hasHist = zHist != null;
-          const ratingRaw = blendedOffenseRating(composite26, compositeHist ?? 0, has26, hasHist);
-          rows.push({
-            norm,
-            rating: Number.isFinite(ratingRaw) ? Math.round(ratingRaw * 100) / 100 : 0
-          });
-        }
-      }
-      return rows;
-    }
-    function buildTeamScheduleRunRates(parsedGames, teams) {
-      const rec = /* @__PURE__ */ new Map();
-      for (const t of teams) {
-        const id = normalizeScheduleTeamId(t.teamId);
-        rec.set(id, { runsFor: 0, runsAgainst: 0, games: 0 });
-      }
-      const seen = /* @__PURE__ */ new Set();
-      for (const g of parsedGames) {
-        if (!Number.isFinite(g.awayScore) || !Number.isFinite(g.homeScore)) continue;
-        const key = finishedScheduleGameDedupeKey(g);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const awayId = normalizeScheduleTeamId(g.awayId);
-        const homeId = normalizeScheduleTeamId(g.homeId);
-        if (!rec.has(awayId) || !rec.has(homeId)) continue;
-        rec.get(awayId).runsFor += g.awayScore;
-        rec.get(awayId).runsAgainst += g.homeScore;
-        rec.get(awayId).games += 1;
-        rec.get(homeId).runsFor += g.homeScore;
-        rec.get(homeId).runsAgainst += g.awayScore;
-        rec.get(homeId).games += 1;
-      }
-      const rates = /* @__PURE__ */ new Map();
-      for (const [id, r] of rec.entries()) {
-        const g = r.games;
-        rates.set(id, {
-          gamesPlayed: g,
-          runsFor: r.runsFor,
-          runsAgainst: r.runsAgainst,
-          runsPerGame: g > 0 ? r.runsFor / g : null,
-          runsAgainstPerGame: g > 0 ? r.runsAgainst / g : null
-        });
-      }
-      return rates;
-    }
-    async function loadDfsLeaderboardScoringContextBase() {
-      const [
-        teams,
-        careerByPlayer,
-        hist2025ByPlayer,
-        stats2026ByPlayer,
-        schedulePayload,
-        gamelogs
-      ] = await Promise.all([
-        loadTeamRosters(),
-        loadCareerByPlayer(),
-        load2025HistoricalByPlayer(),
-        load2026StatsByPlayer(),
-        loadWeeklySchedule(),
-        load2026GamelogsByPlayer()
-      ]);
-      const parsedScheduleGames = schedulePayload.parsedGames || [];
-      const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
-      const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
-      const { moments } = weightedMomentsPerMetric(bundles);
-      const leagueRows = buildOffensivePlayerRows(
-        teams,
-        careerByPlayer,
-        hist2025ByPlayer,
-        stats2026ByPlayer,
-        moments,
-        DFS_SALARY_RATING_BLEND
-      );
-      const baseOffenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-      const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
-      const { parsedGames: _pg, ...scheduleForClient } = schedulePayload;
-      return {
-        schedulePayload: scheduleForClient,
-        gamelogs,
-        ratingExtendInputs: {
-          careerByPlayer,
-          hist2025ByPlayer,
-          stats2026ByPlayer,
-          moments,
-          baseOffenseRatingByNorm
-        },
-        scoringDepsBase: {
-          teams,
-          scheduleRunRates,
-          stats2026ByPlayer,
-          teamCodeById,
-          gamelogs
-        }
-      };
-    }
-    function buildScoringDepsWithReplacements(base, replacements) {
-      const { ratingExtendInputs, scoringDepsBase } = base;
-      const offenseRatingByNorm = new Map(ratingExtendInputs.baseOffenseRatingByNorm);
-      extendOffenseRatingsForReplacements(
-        offenseRatingByNorm,
-        replacements?.byOriginalNorm,
-        ratingExtendInputs.careerByPlayer,
-        ratingExtendInputs.hist2025ByPlayer,
-        ratingExtendInputs.stats2026ByPlayer,
-        ratingExtendInputs.moments,
-        DFS_SALARY_RATING_BLEND
-      );
-      return {
-        ...scoringDepsBase,
-        offenseRatingByNorm,
-        replacementByOriginalNorm: replacements?.byOriginalNorm || /* @__PURE__ */ new Map()
-      };
-    }
-    async function loadDfsLeaderboardScoringContext() {
-      const [base, replacements] = await Promise.all([
-        loadDfsLeaderboardScoringContextBase(),
-        getCachedPlayerReplacements()
-      ]);
-      return {
-        schedulePayload: base.schedulePayload,
-        gamelogs: base.gamelogs,
-        scoringDeps: buildScoringDepsWithReplacements(base, replacements)
-      };
-    }
-    var dfsScoringContextCache = createMemoryCache(
-      Number(process.env.DFS_SCORING_CACHE_TTL_MS) || 10 * 60 * 1e3,
-      "dfs-scoring"
-    );
-    async function getCachedDfsLeaderboardScoringContext() {
-      const [base, replacements] = await Promise.all([
-        dfsScoringContextCache.get("leaderboard-scoring-base", loadDfsLeaderboardScoringContextBase),
-        getCachedPlayerReplacements()
-      ]);
-      return {
-        schedulePayload: base.schedulePayload,
-        gamelogs: base.gamelogs,
-        scoringDeps: buildScoringDepsWithReplacements(base, replacements)
-      };
-    }
-    module.exports = {
-      loadDfsLeaderboardScoringContext,
-      getCachedDfsLeaderboardScoringContext,
-      loadWeeklySchedule,
-      setNodeCareerReader,
-      loadCareerByPlayer,
-      load2025HistoricalByPlayer,
-      buildParsedScheduleGames,
-      fetchCsvRows
     };
   }
 });
@@ -5597,10 +5711,7 @@ var require_plusMinusPage = __commonJS({
 });
 
 // client/plus-minus-entry.mjs
-var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_plusMinusPage = __toESM(require_plusMinusPage(), 1);
-var careerCsvUrl = typeof window !== "undefined" && window.__MMS_CAREER_CSV_URL__ || "/data/csv/career.csv";
-(0, import_sheetUrls.configureCareerCsvForBrowser)(careerCsvUrl);
 async function fetchPlusMinusData() {
   return (0, import_plusMinusPage.buildPlusMinusPageData)();
 }
