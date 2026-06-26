@@ -128,6 +128,10 @@ const {
   filterScheduleOptionsToDfsVisibility,
   resolveNextLineupLockDeadline,
 } = require("./lib/dfs");
+const {
+  formatDfsPlayerNameHtml,
+  formatDfsOpposingPitcherHtml,
+} = require("./lib/dfsPlayerDisplay");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -150,8 +154,12 @@ app.get("/healthz", (_req, res) => {
 
 const {
   getStats2026CsvUrl,
+  CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
 } = require("./lib/dataPaths");
+const { setCareerCsvFilePath } = require("./lib/sheetUrls");
+
+setCareerCsvFilePath(CAREER_CSV_PATH);
 const {
   normalizeSiteBasePath,
   sitePath: buildSitePath,
@@ -1560,39 +1568,24 @@ app.get("/defense-rankings", (req, res) => {
 
 app.get("/dfs", async (req, res) => {
   try {
-    const [
-      teams,
-      careerByPlayer,
-      hist2025ByPlayer,
-      stats2026ByPlayer,
-      schedulePayload,
-      gamelogs,
-      replacements,
-    ] = await Promise.all([
-      loadTeamRosters(),
-      loadCareerByPlayer(),
-      load2025HistoricalByPlayer(),
-      load2026StatsByPlayer(),
-      loadWeeklySchedule(),
-      load2026GamelogsByPlayer(),
-      getCachedPlayerReplacements(),
-    ]);
+    const [{ schedulePayload: scheduleLite, gamelogs, scoringDeps }, scheduleFull, replacements] =
+      await Promise.all([
+        getCachedDfsLeaderboardScoringContext(),
+        getCachedWeeklySchedule(),
+        getCachedPlayerReplacements(),
+      ]);
 
-    const parsedScheduleGames = schedulePayload.parsedGames || [];
-    const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
+    const schedulePayload = scheduleFull.parsedGames?.length
+      ? scheduleFull
+      : { ...scheduleLite, parsedGames: scheduleFull.parsedGames || [] };
 
-    const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
-    const { moments } = weightedMomentsPerMetric(bundles);
-    const leagueRows = buildOffensivePlayerRows(
+    const {
       teams,
-      careerByPlayer,
-      hist2025ByPlayer,
+      offenseRatingByNorm,
+      scheduleRunRates,
       stats2026ByPlayer,
-      moments,
-      DFS_SALARY_RATING_BLEND
-    );
-    const offenseRatingByNorm = new Map(leagueRows.map((r) => [r.norm, r.rating]));
-    const teamCodeById = buildTeamCodeById(teams, stats2026ByPlayer);
+      teamCodeById,
+    } = scoringDeps;
 
     const refIso = referenceIsoForScheduleYear(SCHEDULE_CALENDAR_YEAR);
     const nowMs = Date.now();
@@ -1647,6 +1640,12 @@ app.get("/dfs", async (req, res) => {
     }
     const canEdit = slate.canEdit ?? false;
 
+    const slateRefIso = slate.isoDates?.length ? [...slate.isoDates].sort().pop() : null;
+    const activeReplacements = filterReplacementsForDate(
+      replacements.byOriginalNorm,
+      slateRefIso
+    );
+
     const playerPool = buildDfsPlayerPool({
       teams,
       slate,
@@ -1654,13 +1653,13 @@ app.get("/dfs", async (req, res) => {
       scheduleRunRates,
       stats2026ByPlayer,
       teamCodeById,
-      replacementByOriginalNorm: replacements.byOriginalNorm,
+      replacementByOriginalNorm: activeReplacements,
     });
 
     const poolByNorm = new Map(playerPool.map((p) => [p.norm, p]));
     const lineupNorms = remapLineupNorms(
       safeText(req.query.lineup).split(",").filter(Boolean),
-      replacements.byOriginalNorm
+      activeReplacements
     )
       .filter((n) => poolByNorm.has(n))
       .slice(0, DFS_LINEUP_SIZE);
@@ -1713,6 +1712,8 @@ app.get("/dfs", async (req, res) => {
 
     renderPage(res, "dfs-lineup", {
       navActive: "dfs",
+      formatDfsPlayerNameHtml,
+      formatDfsOpposingPitcherHtml,
       refIso,
       slate,
       slateOptions,

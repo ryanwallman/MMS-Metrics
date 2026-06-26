@@ -48,7 +48,7 @@
                   Build an <strong><%= lineupSize %>-player</strong> lineup for the next slate with a
                   <strong>$<%= salaryCap.toLocaleString() %></strong> salary cap. Salaries weight <strong>offensive rating</strong> (~80%),
                   <strong>opponent runs allowed</strong> (~12%), and the <strong>opposing primary pitcher</strong> (~8%).
-                  Player rating leans on <strong>career stats</strong> when available (about 85% career / 15% 2026 when both exist).
+                  Player rating leans on <strong>career stats</strong> when available (about 40% 2026 / 60% career at a full season sample; less 2026 weight when plate appearances are still low).
                   <strong>Offensive rating</strong> is a <strong>composition of statistical rates</strong> (e.g. damage and run-production measures): each piece is compared to league baselines, then combined with <strong>fixed formula weights</strong>—not a scout’s eye or anyone’s opinion.
                   <strong>Nothing subjective</strong> sets player rankings or DFS prices: no votes, manual tiers, or discretionary ordering—only the underlying stats and the math applied to them.
                   The bottom <strong>20%</strong> of the slate by salary are all priced at <strong>$5,000</strong>. Everyone else is priced on a smooth ladder from <strong>$5,100</strong> up to <strong>$12,000</strong> by offensive rating (no big jumps after the minimum tier).
@@ -401,7 +401,7 @@
                 <% } else { playerPool.forEach((p) => { %>
                 <% const inLineup = lineupNorms.includes(p.norm); %>
                 <tr
-                  class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %>"
+                  class="dfs-player-row<%= inLineup ? ' dfs-player-row--selected' : '' %><%= p.isReplacement ? ' dfs-player-row--replacement' : '' %>"
                   data-norm="<%= p.norm %>"
                   data-name="<%= p.name %>"
                   data-team="<%= p.teamName %>"
@@ -420,9 +420,7 @@
                     ><%= inLineup ? '−' : '+' %></button>
                   </td>
                   <% } %>
-                  <td class="dfs-player-name">
-                    <%= p.name %><% if (p.doubleHeader) { %><span class="dfs-doubleheader-tag" title="Two games this slate">2G</span><% } %>
-                  </td>
+                  <td class="dfs-player-name"><%- formatDfsPlayerNameHtml(p) %><% if (p.doubleHeader) { %><span class="dfs-doubleheader-tag" title="Two games this slate">2G</span><% } %></td>
                   <td class="dfs-salary-cell">$<%= p.salary.toLocaleString() %></td>
                   <td><%= p.teamName %></td>
                   <td class="dfs-field-cell dfs-cell-preline" title="Diamond / short-field from schedule (Field, Short Field)"><%= p.gameField || "—" %></td>
@@ -431,7 +429,7 @@
                   <td class="dfs-games-cell"><%= p.slateGames %></td>
                   <% } %>
                   <td class="dfs-opp-cell dfs-cell-preline"><%= p.opponentName %></td>
-                  <td class="dfs-pitcher-cell dfs-cell-preline" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%= p.opposingPitcher %></td>
+                  <td class="dfs-pitcher-cell dfs-cell-preline" title="<%= p.pitcherBaa != null ? 'BAA ' + p.pitcherBaa + ', Runs/G ' + p.pitcherRunsG : '' %>"><%- formatDfsOpposingPitcherHtml(p.opposingPitcher) %></td>
                 </tr>
                 <% }); } %>
               </tbody>

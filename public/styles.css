@@ -1759,6 +1759,21 @@ body > main.page-main {
   vertical-align: middle;
 }
 
+.dfs-rookie-tag {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 4px;
+  vertical-align: middle;
+}
+
 .matchup-roster-double-badge {
   flex: 0 0 auto;
   padding: 2px 8px;

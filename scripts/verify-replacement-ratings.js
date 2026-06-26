@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Verifies replacement players get career/2025/2026 blended POR ratings.
+ * Verifies replacement players get career/2026 blended DFS salary ratings.
  * Run: node scripts/verify-replacement-ratings.js
  */
 require("dotenv").config();
@@ -15,14 +15,10 @@ const {
   setNodeCareerReader,
   loadDfsLeaderboardScoringContext,
   loadCareerByPlayer,
-  load2025HistoricalByPlayer,
-} = require("../lib/dfsLeaderboardScoringContext");
-const {
-  buildOffenseRatingForNorm,
-  collectLeagueOffenseBundles,
+  collectDfsSalaryLeagueBundles,
+  buildDfsSalaryRatingForNorm,
   weightedMomentsPerMetric,
-  DFS_SALARY_RATING_BLEND,
-} = require("../lib/offenseRankingsPage");
+} = require("../lib/dfsLeaderboardScoringContext");
 
 const DFS_SCORING_BLEND = Object.freeze({
   historical: DFS_OFFENSE_RATING_WEIGHT_HISTORICAL,
@@ -33,16 +29,15 @@ setNodeCareerReader((filePath) => fs.readFile(filePath, "utf8"));
 setCareerCsvFilePath(path.resolve(CAREER_CSV_PATH));
 
 async function main() {
-  const [replacements, scoring, careerByPlayer, hist2025ByPlayer] = await Promise.all([
+  const [replacements, scoring, careerByPlayer] = await Promise.all([
     getCachedPlayerReplacements(),
     loadDfsLeaderboardScoringContext(),
     loadCareerByPlayer(),
-    load2025HistoricalByPlayer(),
   ]);
 
   const { byOriginalNorm } = replacements;
   const { offenseRatingByNorm, stats2026ByPlayer } = scoring.scoringDeps;
-  const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
+  const bundles = collectDfsSalaryLeagueBundles(careerByPlayer, stats2026ByPlayer);
   const { moments } = weightedMomentsPerMetric(bundles);
 
   console.log(`Loaded ${byOriginalNorm.size} replacement(s) from sheet.\n`);
@@ -55,10 +50,9 @@ async function main() {
     const hasRating = offenseRatingByNorm.has(replacementNorm);
     const stats2026 = stats2026ByPlayer.get(replacementNorm);
     const pa2026 = stats2026 ? Number(stats2026.PA) || 0 : 0;
-    const expected = buildOffenseRatingForNorm(
+    const expected = buildDfsSalaryRatingForNorm(
       replacementNorm,
       careerByPlayer,
-      hist2025ByPlayer,
       stats2026ByPlayer,
       moments,
       DFS_SCORING_BLEND
@@ -71,9 +65,7 @@ async function main() {
     console.log(`  offenseRatingByNorm: ${hasRating ? rating : "(missing)"}`);
     console.log(`  expected rating: ${expected}`);
     console.log(`  2026 PA: ${pa2026}`);
-    console.log(
-      `  sources: career=${careerByPlayer.has(replacementNorm)}, 2025=${hist2025ByPlayer.has(replacementNorm)}`
-    );
+    console.log(`  sources: career=${careerByPlayer.has(replacementNorm)}`);
 
     if (!hasRating) {
       console.log("  FAIL: no rating entry for replacement norm");
@@ -95,7 +87,7 @@ async function main() {
       );
     }
 
-    console.log("  OK: replacement rating matches career/2025/2026 blend");
+    console.log("  OK: replacement rating matches career/2026 blend");
     console.log("");
   }
 

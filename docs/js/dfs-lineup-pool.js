@@ -74,13 +74,24 @@ function updateSiteUpdated(iso) {
 
 function renderDfsPlayerName(p) {
   if (p.isReplacement && p.replacedName) {
-    return (
+    let html =
       `<span class="dfs-roster-replaced-name">${esc(p.replacedName)}</span> ` +
       `${esc(p.name)}` +
-      '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>'
-    );
+      '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>';
+    if (p.isRookie) {
+      html += '<span class="dfs-rookie-tag" title="First-year player">Rookie</span>';
+    }
+    return html;
   }
-  return esc(p.name);
+  let html = esc(p.name);
+  if (p.isReplacement) {
+    html +=
+      '<span class="matchup-replacement-tag" title="Mid-season replacement">Replacement</span>';
+  }
+  if (p.isRookie) {
+    html += '<span class="dfs-rookie-tag" title="First-year player">Rookie</span>';
+  }
+  return html;
 }
 
 function renderPoolRows(data) {
