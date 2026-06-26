@@ -896,6 +896,17 @@ var require_metricsSourcesRegistry = __commonJS({
       }
       return url;
     }
+    function googleSheetPublishedCsvUrl(spreadsheetId, gid = "0") {
+      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/pub?gid=${gid}&single=true&output=csv`;
+    }
+    function publishedCsvUrlFromSheetLink(input) {
+      const url = safeText(input);
+      const idMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      if (!idMatch) return browserUrlToCsvFetchUrl(input);
+      const gidMatch = url.match(/[#?&]gid=(\d+)/);
+      const gid = gidMatch ? gidMatch[1] : "0";
+      return googleSheetPublishedCsvUrl(idMatch[1], gid);
+    }
     function parseRegistryCsv(csvText) {
       const rows = Papa.parse(csvText).data;
       const out = {};
@@ -906,7 +917,7 @@ var require_metricsSourcesRegistry = __commonJS({
         if (rawUrl.includes("console.firebase.google.com")) continue;
         const key = resolveSourceKey(name);
         if (!key) continue;
-        out[key] = browserUrlToCsvFetchUrl(rawUrl);
+        out[key] = key === SOURCE_KEYS.allTimeStats ? publishedCsvUrlFromSheetLink(rawUrl) : browserUrlToCsvFetchUrl(rawUrl);
       }
       return out;
     }
@@ -952,6 +963,7 @@ var require_metricsSourcesRegistry = __commonJS({
       METRICS_SOURCES_SHEET_ID,
       metricsSourcesRegistryCsvUrl,
       browserUrlToCsvFetchUrl,
+      publishedCsvUrlFromSheetLink,
       loadMetricsSourcesRegistry,
       invalidateMetricsSourcesRegistry,
       getMetricsSourceUrl
@@ -969,7 +981,8 @@ var require_sheetUrls = __commonJS({
       invalidateMetricsSourcesRegistry,
       loadMetricsSourcesRegistry,
       browserUrlToCsvFetchUrl,
-      metricsSourcesRegistryCsvUrl
+      metricsSourcesRegistryCsvUrl,
+      publishedCsvUrlFromSheetLink
     } = require_metricsSourcesRegistry();
     var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
     async function getCaptainMappingCsvUrl() {
@@ -1001,7 +1014,7 @@ var require_sheetUrls = __commonJS({
     }
     async function getAllTimeStatsCsvUrl() {
       const override = (process.env.ALL_TIME_STATS_CSV_URL || "").trim();
-      if (override) return override;
+      if (override) return publishedCsvUrlFromSheetLink(override);
       return getMetricsSourceUrl(SOURCE_KEYS.allTimeStats);
     }
     async function invalidateSourceCsvCache(sourceKey) {
