@@ -143,7 +143,7 @@
       <p class="page-note dfs-intro">
         Saved lineups for the selected slate are loaded from Firebase and ranked by total fantasy points.
         Scoring uses the same per-player slate points shown on the <a href="/dfs">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
-         Tap a name to view that player’s saved lineup.
+         Salary stays hidden until the slate locks.
       </p>
 
       
@@ -249,7 +249,7 @@
               data-href="/dfs/leaderboard/week/D20260610"
               
             >
-              Wed, 10-Jun (upcoming)
+              Wed, 10-Jun
             </option>
             
             <option
@@ -257,7 +257,7 @@
               data-href="/dfs/leaderboard/week/W7"
               
             >
-              Sun, 14-Jun • Week 7 (upcoming)
+              Sun, 14-Jun • Week 7
             </option>
             
             <option
@@ -265,7 +265,7 @@
               data-href="/dfs/leaderboard/week/D20260617"
               
             >
-              Wed, 17-Jun (upcoming)
+              Wed, 17-Jun
             </option>
             
             <option
@@ -273,7 +273,7 @@
               data-href="/dfs/leaderboard/week/W8"
               
             >
-              Sun, 21-Jun • Week 8 (upcoming)
+              Sun, 21-Jun • Week 8
             </option>
             
             <option
@@ -281,7 +281,7 @@
               data-href="/dfs/leaderboard/week/D20260624"
               
             >
-              Wed, 24-Jun (upcoming)
+              Wed, 24-Jun
             </option>
             
             <option
@@ -412,6 +412,38 @@
               Sun, 30-Aug • Week 18 (upcoming)
             </option>
             
+            <option
+              value="D20260909"
+              data-href="/dfs/leaderboard/week/D20260909"
+              
+            >
+              Wed, 9-Sep (upcoming)
+            </option>
+            
+            <option
+              value="W19"
+              data-href="/dfs/leaderboard/week/W19"
+              
+            >
+              Sun, 13-Sep • Week 19 (upcoming)
+            </option>
+            
+            <option
+              value="W20"
+              data-href="/dfs/leaderboard/week/W20"
+              
+            >
+              Sun, 20-Sep • Week 20 (upcoming)
+            </option>
+            
+            <option
+              value="W21"
+              data-href="/dfs/leaderboard/week/W21"
+              
+            >
+              Sun, 27-Sep • Week 21 (upcoming)
+            </option>
+            
           </select>
         </label>
       </div>
@@ -433,13 +465,13 @@
               <th scope="col">Rank</th>
               <th scope="col">Player</th>
               <th scope="col">Points</th>
-              <th scope="col">Salary at save</th>
+              
             </tr>
           </thead>
           <tbody id="leaderboardWeeklyBody">
             
             <tr>
-              <td colspan="4" class="dfs-leaderboard-empty">Loading...</td>
+              <td colspan="3" class="dfs-leaderboard-empty">Loading...</td>
             </tr>
             
           </tbody>
@@ -464,7 +496,7 @@
     <script>
       window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};
       window.__MMS_CAREER_CSV_URL__ = "/data/csv/career.csv";
-      window.__LEADERBOARD_PAGE__ = {"selectedWeek":"W9","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":true,"slate":{"label":"Sun, 28-Jun • Week 9","isPast":false,"viewToken":"W9","slateType":"sunday","canEdit":false,"isLocked":true}};
+      window.__LEADERBOARD_PAGE__ = {"selectedWeek":"W9","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":false,"slate":{"label":"Sun, 28-Jun • Week 9","isPast":false,"viewToken":"W9","slateType":"sunday","canEdit":true,"isLocked":false}};
     </script>
     <script>
       window.addEventListener("error", function (ev) {

@@ -569,6 +569,17 @@ var require_fetchCsvText = __commonJS({
       } catch {
       }
     }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -586,7 +597,30 @@ var require_fetchCsvText = __commonJS({
         return text;
       });
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    async function fetchCsvTextFresh(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      invalidateCsvUrlCache(safeUrl);
+      const bustUrl = `${safeUrl}${safeUrl.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const text = await fetchUrlText(bustUrl);
+      writeBrowserCsvCache(safeUrl, text);
+      csvTextCache.invalidate(safeUrl);
+      await csvTextCache.get(safeUrl, async () => text);
+      return text;
+    }
+    module.exports = {
+      fetchCsvText,
+      fetchCsvTextFresh,
+      csvTextCache,
+      setFetchCsvTextOverride,
+      invalidateCsvUrlCache
+    };
   }
 });
 
@@ -728,7 +762,7 @@ var require_metricsSourcesRegistry = __commonJS({
 // lib/sheetUrls.js
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
     var {
       SOURCE_KEYS,
       getMetricsSourceUrl,
@@ -789,13 +823,13 @@ var require_sheetUrls = __commonJS({
     async function invalidateSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     async function invalidateLiveSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     module.exports = {
       HIST_2025_STATS_URL,
@@ -1765,6 +1799,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,

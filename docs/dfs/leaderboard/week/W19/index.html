@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+
+
+
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>MMS</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=5" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=5" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
+<script defer src="/js/site-chrome.js?v=5"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+  rel="stylesheet"
+/>
+<script>window.__SITE_BASE_PATH__ = "";</script>
+<script>
+(function () {
+  var h = location.hostname;
+  if ((h === "mmsmetrics.com" || h === "www.mmsmetrics.com") && location.protocol === "http:") {
+    location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+  }
+})();
+</script>
+<link rel="preload" href="/styles.css?v=5" as="style" />
+<link rel="stylesheet" href="/styles.css?v=5" />
+
+    <title>DFS Leaderboard — Marlboro Men's Softball</title>
+  </head>
+  <body class="dfs-leaderboard-page">
+    <header class="site-header">
+  <div class="site-header-inner">
+    <div class="site-header-top">
+      <div class="site-brand-block">
+        <a href="/" class="site-brand">
+          <img
+            src="/mms-stats-logo.png?v=5"
+            alt="MMS Stats"
+            class="site-brand-logo"
+            width="80"
+            height="80"
+            decoding="async"
+          />
+          <span class="site-brand-text">Marlboro Men's Softball</span>
+        </a>
+      </div>
+      <button
+        type="button"
+        class="site-nav-toggle"
+        aria-expanded="false"
+        aria-controls="site-main-nav"
+      >
+        <span class="site-sr-only">Menu</span>
+        <span class="site-nav-toggle-bars" aria-hidden="true"></span>
+      </button>
+    </div>
+    <nav id="site-main-nav" class="site-nav" aria-label="Main">
+      
+      <a
+        href="/"
+        class="site-nav-link"
+        
+      >
+        League Leaders
+      </a>
+      
+      <a
+        href="/matchup-predictor/future"
+        class="site-nav-link"
+        
+      >
+        Matchup Predictor
+      </a>
+      
+      <a
+        href="/dfs"
+        class="site-nav-link is-active"
+        aria-current=&#34;page&#34;
+      >
+        DFS Lineup
+      </a>
+      
+      <a
+        href="/rankings/power"
+        class="site-nav-link"
+        
+      >
+        Power Rankings
+      </a>
+      
+      <a
+        href="/team-analytics"
+        class="site-nav-link"
+        
+      >
+        Team Analytics
+      </a>
+      
+    </nav>
+    <div class="site-header-meta">
+      
+      
+      <p class="site-disclaimer">This site uses current and career stats for calculations. The algorithm isn’t perfect and will often be wrong, so please don’t use it to seriously compare players or teams.</p>
+      
+    </div>
+  </div>
+</header>
+
+
+    
+    
+<div
+  id="mmsLoadingScreen"
+  class="mms-loading-screen"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  aria-label="Loading..."
+>
+  <div class="mms-loading-screen__panel">
+    <div class="mms-loading-screen__spinner" aria-hidden="true"></div>
+    <h2 class="mms-loading-screen__title">Loading...</h2>
+  </div>
+</div>
+
+
+    
+
+    <main class="page-main dfs-page dfs-leaderboard-page dfs-leaderboard-page--loading mms-page-main--loading">
+      <div class="dfs-page-head">
+        <h1 class="page-title">DFS Leaderboard</h1>
+        <p class="dfs-page-head-actions">
+          <a href="/dfs" class="dfs-btn">← Lineup builder</a>
+        </p>
+      </div>
+
+      <p class="page-note dfs-intro">
+        Saved lineups for the selected slate are loaded from Firebase and ranked by total fantasy points.
+        Scoring uses the same per-player slate points shown on the <a href="/dfs">DFS Lineup Builder</a> player pool (sum of those eight values per lineup).
+         Tap a name to view that player’s saved lineup.
+      </p>
+
+      
+
+      <section class="dfs-leaderboard-alert" id="leaderboardStatus" role="status" aria-live="polite" hidden></section>
+
+      
+      <div class="dfs-slate-form dfs-leaderboard-week-form">
+        <label for="week">
+          <strong>Slate</strong>
+          <select id="week" name="week" onchange="location.assign(this.options[this.selectedIndex].dataset.href)">
+            
+            <option
+              value="W1"
+              data-href="/dfs/leaderboard/week/W1"
+              
+            >
+              Sun, 26-Apr • Week 1
+            </option>
+            
+            <option
+              value="D20260429"
+              data-href="/dfs/leaderboard/week/D20260429"
+              
+            >
+              Wed, 29-Apr
+            </option>
+            
+            <option
+              value="W2"
+              data-href="/dfs/leaderboard/week/W2"
+              
+            >
+              Sun, 3-May • Week 2
+            </option>
+            
+            <option
+              value="D20260506"
+              data-href="/dfs/leaderboard/week/D20260506"
+              
+            >
+              Wed, 6-May
+            </option>
+            
+            <option
+              value="W3"
+              data-href="/dfs/leaderboard/week/W3"
+              
+            >
+              Sun, 10-May • Week 3
+            </option>
+            
+            <option
+              value="D20260513"
+              data-href="/dfs/leaderboard/week/D20260513"
+              
+            >
+              Wed, 13-May
+            </option>
+            
+            <option
+              value="W4"
+              data-href="/dfs/leaderboard/week/W4"
+              
+            >
+              Sun, 17-May • Week 4
+            </option>
+            
+            <option
+              value="D20260527"
+              data-href="/dfs/leaderboard/week/D20260527"
+              
+            >
+              Wed, 27-May
+            </option>
+            
+            <option
+              value="W5"
+              data-href="/dfs/leaderboard/week/W5"
+              
+            >
+              Sun, 31-May • Week 5
+            </option>
+            
+            <option
+              value="D20260603"
+              data-href="/dfs/leaderboard/week/D20260603"
+              
+            >
+              Wed, 3-Jun
+            </option>
+            
+            <option
+              value="W6"
+              data-href="/dfs/leaderboard/week/W6"
+              
+            >
+              Sun, 7-Jun • Week 6
+            </option>
+            
+            <option
+              value="D20260610"
+              data-href="/dfs/leaderboard/week/D20260610"
+              
+            >
+              Wed, 10-Jun
+            </option>
+            
+            <option
+              value="W7"
+              data-href="/dfs/leaderboard/week/W7"
+              
+            >
+              Sun, 14-Jun • Week 7
+            </option>
+            
+            <option
+              value="D20260617"
+              data-href="/dfs/leaderboard/week/D20260617"
+              
+            >
+              Wed, 17-Jun
+            </option>
+            
+            <option
+              value="W8"
+              data-href="/dfs/leaderboard/week/W8"
+              
+            >
+              Sun, 21-Jun • Week 8
+            </option>
+            
+            <option
+              value="D20260624"
+              data-href="/dfs/leaderboard/week/D20260624"
+              
+            >
+              Wed, 24-Jun
+            </option>
+            
+            <option
+              value="W9"
+              data-href="/dfs/leaderboard/week/W9"
+              
+            >
+              Sun, 28-Jun • Week 9 (upcoming)
+            </option>
+            
+            <option
+              value="D20260701"
+              data-href="/dfs/leaderboard/week/D20260701"
+              
+            >
+              Wed, 1-Jul (upcoming)
+            </option>
+            
+            <option
+              value="W10"
+              data-href="/dfs/leaderboard/week/W10"
+              
+            >
+              Sun, 5-Jul • Week 10 (upcoming)
+            </option>
+            
+            <option
+              value="D20260708"
+              data-href="/dfs/leaderboard/week/D20260708"
+              
+            >
+              Wed, 8-Jul (upcoming)
+            </option>
+            
+            <option
+              value="W11"
+              data-href="/dfs/leaderboard/week/W11"
+              
+            >
+              Sun, 12-Jul • Week 11 (upcoming)
+            </option>
+            
+            <option
+              value="D20260715"
+              data-href="/dfs/leaderboard/week/D20260715"
+              
+            >
+              Wed, 15-Jul (upcoming)
+            </option>
+            
+            <option
+              value="W12"
+              data-href="/dfs/leaderboard/week/W12"
+              
+            >
+              Sun, 19-Jul • Week 12 (upcoming)
+            </option>
+            
+            <option
+              value="D20260722"
+              data-href="/dfs/leaderboard/week/D20260722"
+              
+            >
+              Wed, 22-Jul (upcoming)
+            </option>
+            
+            <option
+              value="W13"
+              data-href="/dfs/leaderboard/week/W13"
+              
+            >
+              Sun, 26-Jul • Week 13 (upcoming)
+            </option>
+            
+            <option
+              value="D20260729"
+              data-href="/dfs/leaderboard/week/D20260729"
+              
+            >
+              Wed, 29-Jul (upcoming)
+            </option>
+            
+            <option
+              value="W14"
+              data-href="/dfs/leaderboard/week/W14"
+              
+            >
+              Sun, 2-Aug • Week 14 (upcoming)
+            </option>
+            
+            <option
+              value="D20260805"
+              data-href="/dfs/leaderboard/week/D20260805"
+              
+            >
+              Wed, 5-Aug (upcoming)
+            </option>
+            
+            <option
+              value="W15"
+              data-href="/dfs/leaderboard/week/W15"
+              
+            >
+              Sun, 9-Aug • Week 15 (upcoming)
+            </option>
+            
+            <option
+              value="W16"
+              data-href="/dfs/leaderboard/week/W16"
+              
+            >
+              Sun, 16-Aug • Week 16 (upcoming)
+            </option>
+            
+            <option
+              value="W17"
+              data-href="/dfs/leaderboard/week/W17"
+              
+            >
+              Sun, 23-Aug • Week 17 (upcoming)
+            </option>
+            
+            <option
+              value="W18"
+              data-href="/dfs/leaderboard/week/W18"
+              
+            >
+              Sun, 30-Aug • Week 18 (upcoming)
+            </option>
+            
+            <option
+              value="D20260909"
+              data-href="/dfs/leaderboard/week/D20260909"
+              
+            >
+              Wed, 9-Sep (upcoming)
+            </option>
+            
+            <option
+              value="W19"
+              data-href="/dfs/leaderboard/week/W19"
+              selected
+            >
+              Sun, 13-Sep • Week 19 (upcoming)
+            </option>
+            
+            <option
+              value="W20"
+              data-href="/dfs/leaderboard/week/W20"
+              
+            >
+              Sun, 20-Sep • Week 20 (upcoming)
+            </option>
+            
+            <option
+              value="W21"
+              data-href="/dfs/leaderboard/week/W21"
+              
+            >
+              Sun, 27-Sep • Week 21 (upcoming)
+            </option>
+            
+          </select>
+        </label>
+      </div>
+      
+
+      
+      <section class="dfs-slate-banner" aria-label="Selected slate">
+        <h2 class="dfs-slate-title">Sun, 13-Sep • Week 19</h2>
+        
+        <p class="dfs-slate-status" id="weeklySlateStatus">This week has not finished yet — points appear after Sunday’s games.</p>
+        
+      </section>
+      
+
+      <div class="dfs-leaderboard-table-wrap">
+        <table class="dfs-leaderboard-table page-table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Player</th>
+              <th scope="col">Points</th>
+              <th scope="col">Salary at save</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardWeeklyBody">
+            
+            <tr>
+              <td colspan="4" class="dfs-leaderboard-empty">Loading...</td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+
+      <section class="dfs-scoring-rules">
+        <h2 class="section-heading">Scoring</h2>
+        <ul class="dfs-rules-list">
+          <li>Single: 3 pts</li>
+          <li>Double: 5 pts</li>
+          <li>Triple: 8 pts</li>
+          <li>Home run: 10 pts</li>
+          <li>RBI: 2 pts</li>
+          <li>Run: 2 pts</li>
+          <li>Walk: 2 pts</li>
+        </ul>
+      </section>
+    </main>
+
+    
+    <script>
+      window.__FIREBASE_CONFIG__ = {"apiKey":"AIzaSyA_fVWbFPAqtmAEla9fxO30bSgVvzhi8HQ","authDomain":"marlboro-mms-dfs.firebaseapp.com","projectId":"marlboro-mms-dfs","storageBucket":"marlboro-mms-dfs.firebasestorage.app","messagingSenderId":"1026338286702","appId":"1:1026338286702:web:2d6a90ac3c097a54af8a7f","measurementId":"G-5H2BBS7PSC"};
+      window.__MMS_CAREER_CSV_URL__ = "/data/csv/career.csv";
+      window.__LEADERBOARD_PAGE__ = {"selectedWeek":"W19","leaderboardServerRead":false,"serverRendered":false,"useClientScoring":true,"slateLocked":true,"slate":{"label":"Sun, 13-Sep • Week 19","isPast":false,"viewToken":"W19","slateType":"sunday","canEdit":false,"isLocked":true}};
+    </script>
+    <script>
+      window.addEventListener("error", function (ev) {
+        var src = ev.filename || "";
+        if (src.indexOf("dfs-leaderboard") === -1) return;
+        var screen = document.getElementById("mmsLoadingScreen");
+        if (screen) screen.hidden = true;
+        document.body.classList.add("mms-page-ready", "leaderboard-ready");
+        var status = document.getElementById("leaderboardStatus");
+        if (status) {
+          status.hidden = false;
+          status.className = "dfs-leaderboard-alert dfs-leaderboard-alert--error";
+          status.innerHTML =
+            "<p>Leaderboard script failed to load. Hard-refresh (Cmd+Shift+R) or check the browser console.</p>";
+        }
+      });
+    </script>
+    <script type="module" src="/js/dfs-leaderboard-scoring.mjs?v=5"></script>
+    <script type="module" src="/js/dfs-leaderboard.js?v=5"></script>
+    
+  </body>
+</html>

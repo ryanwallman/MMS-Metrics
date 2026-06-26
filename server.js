@@ -147,7 +147,6 @@ app.get("/healthz", (_req, res) => {
 
 const {
   getStats2026CsvUrl,
-  getScheduleUrl,
   HIST_2025_STATS_URL,
   CSV_CAREER: CAREER_CSV_PATH,
   XLSX_DEFENSIVE_TEMPLATE,
@@ -688,14 +687,6 @@ function sortScheduleGameRows(rows) {
   });
 }
 
-/** Score cell NaN unless a real number (not blank / #N/A / PPD). */
-function optionalScheduleScore(cell) {
-  const t = safeText(cell);
-  if (!t || /^#?n\/?a$/i.test(t) || /^ppd$/i.test(t)) return NaN;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : NaN;
-}
-
 function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
   if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
   const rs = safeText(resultCell).trim();
@@ -726,116 +717,6 @@ function isValidScheduleTeamNumber(value) {
 function normalizeScheduleTeamId(id) {
   const n = Number(safeText(id).replace(/\s+/g, ""));
   return Number.isInteger(n) ? String(n) : safeText(id);
-}
-
-function scheduleHeaderRowNormalized(headers) {
-  return (headers || []).map((x) =>
-    safeText(x)
-      .replace(/^\ufeff/g, "")
-      .toLowerCase()
-  );
-}
-
-/** First column index whose normalized header matches one of `candidates` (exact). */
-function scheduleColumnFirstOf(normalizedHeaders, candidates) {
-  const h = normalizedHeaders;
-  for (const c of candidates) {
-    const i = h.indexOf(c);
-    if (i >= 0) return i;
-  }
-  return -1;
-}
-
-function buildScheduleVenueLabel(parts) {
-  const out = [];
-  for (const p of parts) {
-    const t = safeText(p);
-    if (!t || t === "-") continue;
-    if (out.length && out[out.length - 1] === t) continue;
-    out.push(t);
-  }
-  return out.join(" · ");
-}
-
-/** Diamond / short-field locations only (e.g. MIDDLE, SWIM, UH Left) — not turf or class. */
-function buildScheduleDiamondLocationLabel(fieldMain, fieldShort) {
-  return buildScheduleVenueLabel([fieldMain, fieldShort]);
-}
-
-function scheduleCsvColumnIndex(headers) {
-  const h = scheduleHeaderRowNormalized(headers);
-  return {
-    date: h.indexOf("date"),
-    awayId: h.indexOf("away #"),
-    awayTeam: h.indexOf("away team"),
-    homeId: h.indexOf("home #"),
-    homeTeam: h.indexOf("home team"),
-    field: scheduleColumnFirstOf(h, ["field", "diamond"]),
-    shortField: scheduleColumnFirstOf(h, ["short field"]),
-    time: h.indexOf("time"),
-    gameId: h.indexOf("gameid"),
-    awayScore: h.indexOf("away score"),
-    homeScore: h.indexOf("home score"),
-    winner: h.indexOf("winner"),
-    result: h.indexOf("result"),
-  };
-}
-
-/** All schedule rows with scores (for standings / SOS), not filtered to Wed/Sun display slates. */
-function buildParsedScheduleGames(scheduleRows, teams) {
-  const headers = (scheduleRows[0] || []).map((h) => safeText(h));
-  const rows = scheduleRows.slice(1);
-  const idx = scheduleCsvColumnIndex(headers);
-
-  if (idx.date === -1 || idx.awayId === -1 || idx.homeId === -1) {
-    throw new Error("Schedule CSV missing required columns.");
-  }
-
-  const teamNameById = new Map(
-    teams.map((t) => [safeText(t.teamId), safeText(t.teamName) || `Team ${t.teamId}`])
-  );
-  const parsedGames = [];
-
-  for (let i = 0; i < rows.length; i += 1) {
-    const row = rows[i];
-    const awayId = safeText(row[idx.awayId]);
-    const homeId = safeText(row[idx.homeId]);
-    if (!isValidScheduleTeamNumber(awayId) || !isValidScheduleTeamNumber(homeId)) continue;
-
-    const dateDisplay = safeText(row[idx.date]);
-    const parsedDate = parseScheduleSheetDate(dateDisplay);
-    if (!parsedDate) continue;
-
-    const gameId = idx.gameId >= 0 ? safeText(row[idx.gameId]) : "";
-    const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
-    const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
-    const venueLabel = buildScheduleDiamondLocationLabel(field, fieldShort);
-    const time = idx.time >= 0 ? safeText(row[idx.time]) : "";
-    const awayName = safeText(row[idx.awayTeam]) || teamNameById.get(awayId) || `Team ${awayId}`;
-    const homeName = safeText(row[idx.homeTeam]) || teamNameById.get(homeId) || `Team ${homeId}`;
-
-    const rawAwayScore = idx.awayScore >= 0 ? row[idx.awayScore] : "";
-    const rawHomeScore = idx.homeScore >= 0 ? row[idx.homeScore] : "";
-    parsedGames.push({
-      awayId,
-      homeId,
-      awayName,
-      homeName,
-      dateDisplay,
-      isoDate: parsedDate.iso,
-      field,
-      venueLabel,
-      time,
-      gameId,
-      rowIndex: i,
-      awayScore: optionalScheduleScore(rawAwayScore),
-      homeScore: optionalScheduleScore(rawHomeScore),
-      winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
-      resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : "",
-    });
-  }
-
-  return parsedGames;
 }
 
 function finishedScheduleGameDedupeKey(g) {
@@ -1778,8 +1659,7 @@ app.get("/dfs", async (req, res) => {
       getCachedPlayerReplacements(),
     ]);
 
-    const scheduleRows = await fetchCsvRows(await getScheduleUrl());
-    const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
+    const parsedScheduleGames = schedulePayload.parsedGames || [];
     const scheduleRunRates = buildTeamScheduleRunRates(parsedScheduleGames, teams);
 
     const bundles = collectLeagueOffenseBundles(careerByPlayer, hist2025ByPlayer, stats2026ByPlayer);
@@ -2146,7 +2026,7 @@ async function loadMatchupPredictorSeasonRecord() {
     careerByPlayer,
     hist2025ByPlayer,
     stats2026ByPlayer,
-    scheduleRows,
+    payload,
     defenseMap,
     replacements,
     gamelogs,
@@ -2156,7 +2036,7 @@ async function loadMatchupPredictorSeasonRecord() {
     loadCareerByPlayer(),
     load2025HistoricalByPlayer(),
     load2026StatsByPlayer(),
-    fetchCsvRows(await getScheduleUrl()),
+    loadWeeklySchedule(),
     loadDefensiveRatingsNormalizedMap(),
     getCachedPlayerReplacements(),
     load2026GamelogsByPlayer(),
@@ -2169,8 +2049,7 @@ async function loadMatchupPredictorSeasonRecord() {
   ]);
   const nameToTeamId = buildNameToTeamIdMap(teams);
   const rosterByTeamId = buildRosterByTeamId(teams);
-  const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
-  const payload = await loadWeeklySchedule();
+  const parsedScheduleGames = payload.parsedGames || [];
   const audit = await getMatchupPredictorAudit({
     parsedScheduleGames,
     teams,
@@ -2259,7 +2138,6 @@ async function renderMatchupPredictorPage(req, res) {
       careerByPlayer,
       hist2025ByPlayer,
       stats2026ByPlayer,
-      scheduleRows,
       defenseMap,
       replacements,
       gamelogs,
@@ -2270,7 +2148,6 @@ async function renderMatchupPredictorPage(req, res) {
       loadCareerByPlayer(),
       load2025HistoricalByPlayer(),
       load2026StatsByPlayer(),
-      fetchCsvRows(await getScheduleUrl()),
       loadDefensiveRatingsNormalizedMap(),
       getCachedPlayerReplacements(),
       load2026GamelogsByPlayer(),
@@ -2347,7 +2224,7 @@ async function renderMatchupPredictorPage(req, res) {
     const nameToTeamId = buildNameToTeamIdMap(teams);
     const rosterByTeamId = buildRosterByTeamId(teams);
 
-    const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
+    const parsedScheduleGames = payload.parsedGames || [];
     const auditInput = {
       parsedScheduleGames,
       teams,

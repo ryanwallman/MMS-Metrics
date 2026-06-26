@@ -569,6 +569,17 @@ var require_fetchCsvText = __commonJS({
       } catch {
       }
     }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
     async function fetchCsvText(url) {
       const safeUrl = (url || "").toString().trim();
       if (!safeUrl) {
@@ -586,7 +597,30 @@ var require_fetchCsvText = __commonJS({
         return text;
       });
     }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
+    async function fetchCsvTextFresh(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      invalidateCsvUrlCache(safeUrl);
+      const bustUrl = `${safeUrl}${safeUrl.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const text = await fetchUrlText(bustUrl);
+      writeBrowserCsvCache(safeUrl, text);
+      csvTextCache.invalidate(safeUrl);
+      await csvTextCache.get(safeUrl, async () => text);
+      return text;
+    }
+    module.exports = {
+      fetchCsvText,
+      fetchCsvTextFresh,
+      csvTextCache,
+      setFetchCsvTextOverride,
+      invalidateCsvUrlCache
+    };
   }
 });
 
@@ -728,7 +762,7 @@ var require_metricsSourcesRegistry = __commonJS({
 // lib/sheetUrls.js
 var require_sheetUrls = __commonJS({
   "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
     var {
       SOURCE_KEYS: SOURCE_KEYS2,
       getMetricsSourceUrl,
@@ -789,13 +823,13 @@ var require_sheetUrls = __commonJS({
     async function invalidateSourceCsvCache2(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     async function invalidateLiveSourceCsvCache(sourceKey) {
       const registry = await loadMetricsSourcesRegistry();
       const url = registry[sourceKey];
       invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
+      if (url) invalidateCsvUrlCache(url);
     }
     module.exports = {
       HIST_2025_STATS_URL,
@@ -1765,6 +1799,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -5132,7 +5169,7 @@ var require_offenseRankingsPage = __commonJS({
 var require_dfsLeaderboardScoringContext = __commonJS({
   "lib/dfsLeaderboardScoringContext.js"(exports, module) {
     var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
+    var { fetchCsvText, fetchCsvTextFresh } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
     var {
       buildTeamCodeById,
@@ -5244,6 +5281,34 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const n = Number(t);
       return Number.isFinite(n) ? n : NaN;
     }
+    function resolveParsedGameScores(row, idx) {
+      let awayScore = optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : "");
+      let homeScore = optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : "");
+      if (Number.isFinite(awayScore) && Number.isFinite(homeScore)) {
+        return { awayScore, homeScore };
+      }
+      const resultCsv = idx.result >= 0 ? safeText(row[idx.result]) : "";
+      const winnerCsv = idx.winner >= 0 ? safeText(row[idx.winner]) : "";
+      const m = /^(\d+)\s*[-–]\s*(\d+)/.exec(resultCsv);
+      if (!m) return { awayScore, homeScore };
+      const first = Number(m[1]);
+      const second = Number(m[2]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return { awayScore, homeScore };
+      const awayCaptain = idx.awayCaptain >= 0 ? safeText(row[idx.awayCaptain]) : "";
+      const homeCaptain = idx.homeCaptain >= 0 ? safeText(row[idx.homeCaptain]) : "";
+      const winner = winnerCsv.toLowerCase();
+      if (winner && awayCaptain && winner === awayCaptain.toLowerCase()) {
+        awayScore = first;
+        homeScore = second;
+      } else if (winner && homeCaptain && winner === homeCaptain.toLowerCase()) {
+        homeScore = first;
+        awayScore = second;
+      } else if (!Number.isFinite(awayScore) && !Number.isFinite(homeScore)) {
+        awayScore = first;
+        homeScore = second;
+      }
+      return { awayScore, homeScore };
+    }
     function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
       if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
       const rs = safeText(resultCell).trim();
@@ -5291,8 +5356,10 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         date: h.indexOf("date"),
         awayId: h.indexOf("away #"),
         awayTeam: h.indexOf("away team"),
+        awayCaptain: scheduleColumnFirstOf(h, ["away captain", "away captains"]),
         homeId: h.indexOf("home #"),
         homeTeam: h.indexOf("home team"),
+        homeCaptain: scheduleColumnFirstOf(h, ["home captain", "home captains"]),
         field: scheduleColumnFirstOf(h, ["field", "diamond"]),
         shortField: scheduleColumnFirstOf(h, ["short field"]),
         time: h.indexOf("time"),
@@ -5324,6 +5391,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         if (!parsedDate) continue;
         const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
         const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
+        const { awayScore, homeScore } = resolveParsedGameScores(row, idx);
         parsedGames.push({
           awayId,
           homeId,
@@ -5336,8 +5404,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
           time: idx.time >= 0 ? safeText(row[idx.time]) : "",
           gameId: idx.gameId >= 0 ? safeText(row[idx.gameId]) : "",
           rowIndex: i,
-          awayScore: optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : ""),
-          homeScore: optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : ""),
+          awayScore,
+          homeScore,
           winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
           resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : ""
         });
@@ -5369,9 +5437,13 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       for (const b of bytes) binary += String.fromCharCode(b);
       return btoa(binary);
     }
-    async function loadWeeklySchedule2() {
+    async function fetchFreshScheduleRows() {
       const scheduleUrl = await getScheduleUrl();
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(scheduleUrl), loadTeamRosters()]);
+      const csvText = await fetchCsvTextFresh(scheduleUrl);
+      return Papa.parse(csvText).data;
+    }
+    async function loadWeeklySchedule2() {
+      const [scheduleRows, teams] = await Promise.all([fetchFreshScheduleRows(), loadTeamRosters()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
         (a, b) => a.localeCompare(b)
@@ -5401,6 +5473,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
           date: g.dateDisplay || "",
           result: formatFinishedScheduleResult(g.awayScore, g.homeScore, g.resultCsv, g.winnerCsv),
           gameId: g.gameId,
+          isoDate: g.isoDate,
           _iso: g.isoDate
         };
         if (!gamesByIso.has(g.isoDate)) gamesByIso.set(g.isoDate, []);

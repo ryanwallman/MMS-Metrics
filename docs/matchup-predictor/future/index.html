@@ -25,27 +25,10 @@
 </script>
 <link rel="preload" href="/styles.css?v=5" as="style" />
 <link rel="stylesheet" href="/styles.css?v=5" />
-    <script>window.__STATIC_SITE__ = true;</script>
 
-    <script>
-    (function () {
-      var base = typeof window.__SITE_BASE_PATH__ !== "undefined" ? String(window.__SITE_BASE_PATH__ || "") : "";
-      function sitePath(p) { return base + (p.charAt(0) === "/" ? p : "/" + p); }
-      var path = location.pathname || "";
-      if (path.indexOf("/view/") >= 0) return;
-      var q = new URLSearchParams(location.search);
-      if (q.get("view") || q.get("week") || /^\d{8}$/.test((q.get("wed") || "").replace(/^D/i, ""))) return;
-      var mode = /\/matchup-predictor\/past(?:\/|$)/i.test(path) ? "past" : "future";
-      if (/\/matchup-predictor\/view\//i.test(path) && !/\/matchup-predictor\/(?:past|future)\//i.test(path)) {
-        location.replace(path.replace("/matchup-predictor/view/", "/matchup-predictor/future/view/"));
-        return;
-      }
-      if (path.replace(/\/$/, "") === sitePath("/matchup-predictor")) {
-        location.replace(sitePath("/matchup-predictor/future"));
-        return;
-      }
-      })();
-    </script>
+    
+    <script>window.__STATIC_SITE__ = true;</script>
+    
   </head>
   
   <body class=&#34;mms-page-ready&#34;>
@@ -159,11 +142,11 @@
       <input type="hidden" name="homeMissing" id="homeMissing" value="" />
 
       
-      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":40,"losses":26,"decided":66,"winPct":60.6};</script>
+      <script>window.__MATCHUP_PREDICTOR_RECORD__ = {"wins":57,"losses":56,"decided":113,"winPct":50.4};</script>
       <div class="matchup-predictor-record-block matchup-predictor-panel" id="matchupPredictorRecord">
         <span class="matchup-predictor-record-label">Season pick record</span>
         <span class="matchup-predictor-record-value">
-          40–26<span class="matchup-predictor-record-pct"> (60.6%)</span>
+          57–56<span class="matchup-predictor-record-pct"> (50.4%)</span>
         </span>
       </div>
       
@@ -174,27 +157,7 @@
           <select id="view" name="view" class="schedule-view-select">
             
             
-            <option value="D20260610" selected>
-              Wed, 10-Jun
-            </option>
-            
-            <option value="W7" >
-              Sun, 14-Jun • Week 7
-            </option>
-            
-            <option value="D20260617" >
-              Wed, 17-Jun
-            </option>
-            
-            <option value="W8" >
-              Sun, 21-Jun • Week 8
-            </option>
-            
-            <option value="D20260624" >
-              Wed, 24-Jun
-            </option>
-            
-            <option value="W9" >
+            <option value="W9" selected>
               Sun, 28-Jun • Week 9
             </option>
             
@@ -258,6 +221,22 @@
               Sun, 30-Aug • Week 18
             </option>
             
+            <option value="D20260909" >
+              Wed, 9-Sep
+            </option>
+            
+            <option value="W19" >
+              Sun, 13-Sep • Week 19
+            </option>
+            
+            <option value="W20" >
+              Sun, 20-Sep • Week 20
+            </option>
+            
+            <option value="W21" >
+              Sun, 27-Sep • Week 21
+            </option>
+            
           </select>
         </label>
 
@@ -271,12 +250,40 @@
           >
             <option value="" selected>— Select a game —</option>
             
-            <option value="2|18" >
-              FREEHOLD GMC @ CG TAX · 8:15 PM
+            <option value="7|17" >
+              FRADKIN LAW @ EB CONSTRUCTION · 8:30 AM
             </option>
             
-            <option value="10|5" >
-              GAME CHANGER @ GODDARD HOME · 8:15 PM
+            <option value="12|2" >
+              LHRGC LAW @ FREEHOLD GMC · 8:30 AM
+            </option>
+            
+            <option value="18|8" >
+              CG TAX @ JERSEY ALLSTARS · 9:00 AM
+            </option>
+            
+            <option value="5|13" >
+              GODDARD HOME @ MONMOUTH GYM · 9:00 AM
+            </option>
+            
+            <option value="10|3" >
+              GAME CHANGER @ PRINCETON BRAIN · 9:00 AM
+            </option>
+            
+            <option value="14|6" >
+              NEW HORIZON @ PROCARE · 9:30 AM
+            </option>
+            
+            <option value="16|9" >
+              TUSCANYROSE @ ACE ALUMINUM · 10:30 AM
+            </option>
+            
+            <option value="15|4" >
+              TEC-TEL @ URWAY HEALTH · 10:30 AM
+            </option>
+            
+            <option value="1|11" >
+              ENGAGE PEO @ SHORE SMILE · 11:30 AM
             </option>
             
           </select>
@@ -285,7 +292,7 @@
       <noscript><button type="submit">Go</button></noscript>
 
     
-    <p class="matchup-predictor-summary">Wed, 10-Jun</p>
+    <p class="matchup-predictor-summary">Week 9 (Sun, 28-Jun games only)</p>
     
 
     
@@ -306,7 +313,7 @@
       <details class="matchup-audit-details">
         <summary class="matchup-audit-summary">
           <span class="matchup-audit-summary-title">Model accuracy report</span>
-          <span class="matchup-audit-summary-meta">66 graded games · 7 close misses</span>
+          <span class="matchup-audit-summary-meta">113 graded games · 17 close misses</span>
         </summary>
 
         <p class="matchup-audit-note">
@@ -330,15 +337,15 @@
               <tr>
                 <td>W1</td>
                 <td>8</td>
-                <td>6–1</td>
-                <td>1</td>
+                <td>6–2</td>
+                <td>2</td>
               </tr>
               
               <tr>
                 <td>W2</td>
                 <td>11</td>
-                <td>8–3</td>
-                <td>1</td>
+                <td>9–2</td>
+                <td>0</td>
               </tr>
               
               <tr>
@@ -365,8 +372,43 @@
               <tr>
                 <td>W6</td>
                 <td>13</td>
-                <td>7–5</td>
+                <td>7–6</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W7</td>
+                <td>13</td>
+                <td>8–5</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W8</td>
+                <td>11</td>
+                <td>5–6</td>
+                <td>4</td>
+              </tr>
+              
+              <tr>
+                <td>W9</td>
                 <td>2</td>
+                <td>0–2</td>
+                <td>1</td>
+              </tr>
+              
+              <tr>
+                <td>W19</td>
+                <td>18</td>
+                <td>3–15</td>
+                <td>2</td>
+              </tr>
+              
+              <tr>
+                <td>W20</td>
+                <td>1</td>
+                <td>0–1</td>
+                <td>0</td>
               </tr>
               
             </tbody>
@@ -398,22 +440,22 @@
                   
                 </td>
                 <td>FRADKIN LAW</td>
-                <td>53.2%</td>
+                <td>53.4%</td>
                 <td>JERSEY ALLSTARS</td>
                 <td>4–11</td>
               </tr>
               
               <tr>
-                <td>W2</td>
+                <td>W1</td>
                 <td>
                   
-                  <a href="/matchup-predictor/past/view/D20260429/matchup/13-9">MONMOUTH GYM @ ACE ALUMINUM</a>
+                  <a href="/matchup-predictor/past/view/W1/matchup/12-11">LHRGC LAW @ SHORE SMILE</a>
                   
                 </td>
-                <td>ACE ALUMINUM</td>
-                <td>54.3%</td>
-                <td>MONMOUTH GYM</td>
-                <td>23–9</td>
+                <td>SHORE SMILE</td>
+                <td>53.4%</td>
+                <td>LHRGC LAW</td>
+                <td>24–5</td>
               </tr>
               
               <tr>
@@ -424,7 +466,7 @@
                   
                 </td>
                 <td>GAME CHANGER</td>
-                <td>51.9%</td>
+                <td>53.4%</td>
                 <td>PROCARE</td>
                 <td>9–10</td>
               </tr>
@@ -437,7 +479,7 @@
                   
                 </td>
                 <td>PROCARE</td>
-                <td>50.4%</td>
+                <td>51.7%</td>
                 <td>URWAY HEALTH</td>
                 <td>1–13</td>
               </tr>
@@ -446,39 +488,169 @@
                 <td>W5</td>
                 <td>
                   
-                  <a href="/matchup-predictor/past/view/W5/matchup/5-1">GODDARD HOME @ ENGAGE PEO</a>
-                  
-                </td>
-                <td>ENGAGE PEO</td>
-                <td>52.3%</td>
-                <td>GODDARD HOME</td>
-                <td>16–10</td>
-              </tr>
-              
-              <tr>
-                <td>W6</td>
-                <td>
-                  
-                  <a href="/matchup-predictor/past/view/W6/matchup/7-3">FRADKIN LAW @ PRINCETON BRAIN</a>
+                  <a href="/matchup-predictor/past/view/W5/matchup/7-1">FRADKIN LAW @ ENGAGE PEO</a>
                   
                 </td>
                 <td>FRADKIN LAW</td>
-                <td>52.8%</td>
-                <td>PRINCETON BRAIN</td>
-                <td>7–10</td>
+                <td>53.4%</td>
+                <td>ENGAGE PEO</td>
+                <td>2–4</td>
               </tr>
               
               <tr>
                 <td>W6</td>
                 <td>
                   
-                  <a href="/matchup-predictor/past/view/W6/matchup/13-12">MONMOUTH GYM @ LHRGC LAW</a>
+                  <a href="/matchup-predictor/past/view/W6/matchup/4-18">URWAY HEALTH @ CG TAX</a>
+                  
+                </td>
+                <td>URWAY HEALTH</td>
+                <td>51.7%</td>
+                <td>CG TAX</td>
+                <td>12–15</td>
+              </tr>
+              
+              <tr>
+                <td>W7</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W7/matchup/8-3">JERSEY ALLSTARS @ PRINCETON BRAIN</a>
+                  
+                </td>
+                <td>PRINCETON BRAIN</td>
+                <td>51.7%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>13–8</td>
+              </tr>
+              
+              <tr>
+                <td>W7</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W7/matchup/12-14">LHRGC LAW @ NEW HORIZON</a>
+                  
+                </td>
+                <td>NEW HORIZON</td>
+                <td>51.7%</td>
+                <td>LHRGC LAW</td>
+                <td>17–16</td>
+              </tr>
+              
+              <tr>
+                <td>W7</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W7/matchup/18-5">CG TAX @ GODDARD HOME</a>
+                  
+                </td>
+                <td>CG TAX</td>
+                <td>51.7%</td>
+                <td>GODDARD HOME</td>
+                <td>7–12</td>
+              </tr>
+              
+              <tr>
+                <td>W7</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W7/matchup/9-1">ACE ALUMINUM @ ENGAGE PEO</a>
+                  
+                </td>
+                <td>ENGAGE PEO</td>
+                <td>51.7%</td>
+                <td>ACE ALUMINUM</td>
+                <td>12–5</td>
+              </tr>
+              
+              <tr>
+                <td>W8</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/D20260617/matchup/6-11">PROCARE @ SHORE SMILE</a>
+                  
+                </td>
+                <td>PROCARE</td>
+                <td>51.7%</td>
+                <td>SHORE SMILE</td>
+                <td>8–13</td>
+              </tr>
+              
+              <tr>
+                <td>W8</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W8/matchup/4-13">URWAY HEALTH @ MONMOUTH GYM</a>
                   
                 </td>
                 <td>MONMOUTH GYM</td>
-                <td>53%</td>
+                <td>51.7%</td>
+                <td>URWAY HEALTH</td>
+                <td>14–7</td>
+              </tr>
+              
+              <tr>
+                <td>W8</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W8/matchup/3-12">PRINCETON BRAIN @ LHRGC LAW</a>
+                  
+                </td>
                 <td>LHRGC LAW</td>
-                <td>8–16</td>
+                <td>51.7%</td>
+                <td>PRINCETON BRAIN</td>
+                <td>18–2</td>
+              </tr>
+              
+              <tr>
+                <td>W8</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W8/matchup/11-2">SHORE SMILE @ FREEHOLD GMC</a>
+                  
+                </td>
+                <td>FREEHOLD GMC</td>
+                <td>53.4%</td>
+                <td>SHORE SMILE</td>
+                <td>7–4</td>
+              </tr>
+              
+              <tr>
+                <td>W9</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/D20260624/matchup/9-14">ACE ALUMINUM @ NEW HORIZON</a>
+                  
+                </td>
+                <td>NEW HORIZON</td>
+                <td>51.7%</td>
+                <td>ACE ALUMINUM</td>
+                <td>29–13</td>
+              </tr>
+              
+              <tr>
+                <td>W19</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/D20260909/matchup/10-14">GAME CHANGER @ NEW HORIZON</a>
+                  
+                </td>
+                <td>NEW HORIZON</td>
+                <td>51.7%</td>
+                <td>GAME CHANGER</td>
+                <td>9–8</td>
+              </tr>
+              
+              <tr>
+                <td>W19</td>
+                <td>
+                  
+                  <a href="/matchup-predictor/past/view/W19/matchup/15-8">TEC-TEL @ JERSEY ALLSTARS</a>
+                  
+                </td>
+                <td>TEC-TEL</td>
+                <td>51.7%</td>
+                <td>JERSEY ALLSTARS</td>
+                <td>5–10</td>
               </tr>
               
             </tbody>
@@ -599,6 +771,10 @@
           }
           const view = (viewSelect.value || "").trim();
           const matchup = (matchupSelect.value || "").trim();
+          const params = new URLSearchParams();
+          if (awayInput.value) params.set("awayMissing", awayInput.value);
+          if (homeInput.value) params.set("homeMissing", homeInput.value);
+          const qs = params.toString();
 
           let path = "/matchup-predictor/future";
           if (window.MmsMatchupPredictorNav?.navigateMatchupPredictorView) {
@@ -791,6 +967,18 @@
           }
 
           if (
+            isStaticSite &&
+            matchupCtx &&
+            window.MmsMatchupPredictor?.refreshMatchupReplacementsLive
+          ) {
+            try {
+              await window.MmsMatchupPredictor.refreshMatchupReplacementsLive(matchupCtx, {
+                force: true,
+              });
+            } catch (err) {
+              console.error("Matchup replacement hydrate failed", err);
+            }
+          } else if (
             isStaticSite &&
             matchupCtx &&
             window.MmsMatchupPredictor?.hydrateMatchupReplacements

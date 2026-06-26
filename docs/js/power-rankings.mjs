@@ -31,6 +31,189 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// lib/memoryCache.js
+var require_memoryCache = __commonJS({
+  "lib/memoryCache.js"(exports, module) {
+    function createMemoryCache(ttlMs, label = "cache") {
+      const store = /* @__PURE__ */ new Map();
+      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
+      return {
+        async get(key, loader) {
+          const k = String(key);
+          const hit = store.get(k);
+          if (hit && Date.now() < hit.expiresAt) {
+            return hit.value;
+          }
+          const value = await loader();
+          store.set(k, { value, expiresAt: Date.now() + ttl });
+          return value;
+        },
+        clear() {
+          store.clear();
+        },
+        invalidate(key) {
+          store.delete(String(key));
+        },
+        stats() {
+          return { label, entries: store.size, ttlMs: ttl };
+        }
+      };
+    }
+    module.exports = { createMemoryCache };
+  }
+});
+
+// lib/fetchCsvText.js
+var require_fetchCsvText = __commonJS({
+  "lib/fetchCsvText.js"(exports, module) {
+    var { createMemoryCache } = require_memoryCache();
+    var csvTextCache = createMemoryCache(
+      Number("600000") || 10 * 60 * 1e3,
+      "csv-text"
+    );
+    var fetchCsvTextOverride = null;
+    function setFetchCsvTextOverride(fn) {
+      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
+    }
+    function csvFetchTimeoutMs() {
+      const fromEnv = Number("90000");
+      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
+      if (true) return 9e4;
+      return 0;
+    }
+    function logCsvFetchFailure(kind, url, detail) {
+      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
+      if (typeof console !== "undefined" && console.error) {
+        console.error(msg, url);
+      }
+    }
+    function csvFetchUserError(kind) {
+      if (kind === "timeout") {
+        return new Error(
+          "League data took too long to load. Check your connection and try again."
+        );
+      }
+      if (kind === "http") {
+        return new Error("Could not load league data right now. Please try again in a moment.");
+      }
+      if (kind === "empty") {
+        return new Error("Could not load league data. Please try again.");
+      }
+      return new Error("Could not load league data. Please try again.");
+    }
+    async function fetchUrlText(url) {
+      const timeoutMs = csvFetchTimeoutMs();
+      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
+      try {
+        const res = await fetch(url, opts);
+        if (!res.ok) {
+          logCsvFetchFailure("HTTP", url, String(res.status));
+          throw csvFetchUserError("http");
+        }
+        let text = await res.text();
+        text = text.replace(/^\ufeff/, "");
+        return text;
+      } catch (err) {
+        if (err.name === "TimeoutError" || err.name === "AbortError") {
+          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
+          throw csvFetchUserError("timeout");
+        }
+        if (err.message && !/https?:\/\//i.test(err.message)) {
+          throw err;
+        }
+        logCsvFetchFailure("error", url, err.message || err);
+        throw csvFetchUserError("error");
+      }
+    }
+    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
+    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
+    function browserCsvStorageKey(url) {
+      return BROWSER_CSV_STORAGE_PREFIX + url;
+    }
+    function readBrowserCsvCache(url) {
+      if (typeof sessionStorage === "undefined") return null;
+      try {
+        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        if (Date.now() > parsed.expiresAt) {
+          sessionStorage.removeItem(browserCsvStorageKey(url));
+          return null;
+        }
+        return parsed.text;
+      } catch {
+        return null;
+      }
+    }
+    function writeBrowserCsvCache(url, text) {
+      if (typeof sessionStorage === "undefined") return;
+      try {
+        sessionStorage.setItem(
+          browserCsvStorageKey(url),
+          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
+        );
+      } catch {
+      }
+    }
+    function invalidateCsvUrlCache(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) return;
+      csvTextCache.invalidate(safeUrl);
+      if (typeof sessionStorage !== "undefined") {
+        try {
+          sessionStorage.removeItem(browserCsvStorageKey(safeUrl));
+        } catch {
+        }
+      }
+    }
+    async function fetchCsvText(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      const browserCached = readBrowserCsvCache(safeUrl);
+      if (browserCached) return browserCached;
+      return csvTextCache.get(safeUrl, async () => {
+        const text = await fetchUrlText(safeUrl);
+        writeBrowserCsvCache(safeUrl, text);
+        return text;
+      });
+    }
+    async function fetchCsvTextFresh(url) {
+      const safeUrl = (url || "").toString().trim();
+      if (!safeUrl) {
+        logCsvFetchFailure("empty-url", safeUrl);
+        throw csvFetchUserError("empty");
+      }
+      if (fetchCsvTextOverride) {
+        return fetchCsvTextOverride(safeUrl);
+      }
+      invalidateCsvUrlCache(safeUrl);
+      const bustUrl = `${safeUrl}${safeUrl.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const text = await fetchUrlText(bustUrl);
+      writeBrowserCsvCache(safeUrl, text);
+      csvTextCache.invalidate(safeUrl);
+      await csvTextCache.get(safeUrl, async () => text);
+      return text;
+    }
+    module.exports = {
+      fetchCsvText,
+      fetchCsvTextFresh,
+      csvTextCache,
+      setFetchCsvTextOverride,
+      invalidateCsvUrlCache
+    };
+  }
+});
+
 // node_modules/papaparse/papaparse.min.js
 var require_papaparse_min = __commonJS({
   "node_modules/papaparse/papaparse.min.js"(exports, module) {
@@ -447,6 +630,240 @@ var require_papaparse_min = __commonJS({
   }
 });
 
+// lib/metricsSourcesRegistry.js
+var require_metricsSourcesRegistry = __commonJS({
+  "lib/metricsSourcesRegistry.js"(exports, module) {
+    "use strict";
+    var Papa = require_papaparse_min();
+    var { csvTextCache } = require_fetchCsvText();
+    var { createMemoryCache } = require_memoryCache();
+    var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
+    var METRICS_SOURCES_GID = "0";
+    var SOURCE_KEYS2 = Object.freeze({
+      schedule: "schedule",
+      index: "index",
+      rosters: "rosters",
+      gamelogs2026: "gamelogs2026",
+      stats2026: "stats2026",
+      replacements: "replacements",
+      captainMapping: "captainMapping"
+    });
+    var REQUIRED_KEYS = Object.freeze([
+      SOURCE_KEYS2.schedule,
+      SOURCE_KEYS2.index,
+      SOURCE_KEYS2.rosters,
+      SOURCE_KEYS2.gamelogs2026,
+      SOURCE_KEYS2.stats2026,
+      SOURCE_KEYS2.replacements,
+      SOURCE_KEYS2.captainMapping
+    ]);
+    function safeText(value) {
+      return (value || "").toString().trim();
+    }
+    function metricsSourcesRegistryCsvUrl() {
+      const override = (process.env.METRICS_SOURCES_REGISTRY_CSV_URL || "").trim();
+      if (override) return override;
+      return `https://docs.google.com/spreadsheets/d/${METRICS_SOURCES_SHEET_ID}/export?format=csv&gid=${METRICS_SOURCES_GID}`;
+    }
+    function resolveSourceKey(name) {
+      const n = safeText(name).toLowerCase();
+      if (!n) return null;
+      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS2.schedule;
+      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS2.index;
+      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS2.rosters;
+      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS2.gamelogs2026;
+      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS2.stats2026;
+      if (n.includes("replacement")) return SOURCE_KEYS2.replacements;
+      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS2.captainMapping;
+      return null;
+    }
+    function browserUrlToCsvFetchUrl(input) {
+      const url = safeText(input);
+      if (!url) return "";
+      if (/output=csv|format=csv/i.test(url)) return url;
+      if (url.includes("/pubhtml")) {
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `${url.split("/pubhtml")[0]}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/edit/);
+      if (editMatch) {
+        const id = editMatch[1];
+        const gidMatch = url.match(/[#?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+      }
+      const pubMatch = url.match(/\/spreadsheets\/d\/(e\/[a-zA-Z0-9_-]+)/);
+      if (pubMatch && !url.includes("/edit")) {
+        const id = pubMatch[1];
+        const gidMatch = url.match(/[?&]gid=(\d+)/);
+        const gid = gidMatch ? gidMatch[1] : "0";
+        return `https://docs.google.com/spreadsheets/d/${id}/pub?gid=${gid}&single=true&output=csv`;
+      }
+      return url;
+    }
+    function parseRegistryCsv(csvText) {
+      const rows = Papa.parse(csvText).data;
+      const out = {};
+      for (let i = 1; i < rows.length; i += 1) {
+        const name = safeText(rows[i][0]);
+        const rawUrl = safeText(rows[i][1]);
+        if (!name || !rawUrl) continue;
+        if (rawUrl.includes("console.firebase.google.com")) continue;
+        const key = resolveSourceKey(name);
+        if (!key) continue;
+        out[key] = browserUrlToCsvFetchUrl(rawUrl);
+      }
+      return out;
+    }
+    var REGISTRY_CACHE_TTL_MS = Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 60 * 1e3;
+    async function fetchRegistryCsvText() {
+      const base = metricsSourcesRegistryCsvUrl();
+      const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
+      const timeoutMs = Number("90000") || 0;
+      const opts = { cache: "no-store" };
+      if (timeoutMs > 0) opts.signal = AbortSignal.timeout(timeoutMs);
+      const res = await fetch(url, opts);
+      if (!res.ok) {
+        throw new Error(`Metrics sources registry fetch failed (${res.status})`);
+      }
+      return (await res.text()).replace(/^\ufeff/, "");
+    }
+    var registryCache = createMemoryCache(REGISTRY_CACHE_TTL_MS, "metrics-sources");
+    async function loadMetricsSourcesRegistry(force = false) {
+      if (force) registryCache.invalidate("registry");
+      return registryCache.get("registry", async () => {
+        const csvText = await fetchRegistryCsvText();
+        const registry = parseRegistryCsv(csvText);
+        for (const key of REQUIRED_KEYS) {
+          if (!registry[key]) {
+            throw new Error(`Metrics sources registry missing required row: ${key}`);
+          }
+        }
+        return registry;
+      });
+    }
+    function invalidateMetricsSourcesRegistry() {
+      registryCache.invalidate("registry");
+      csvTextCache.invalidate(metricsSourcesRegistryCsvUrl());
+    }
+    async function getMetricsSourceUrl(key) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[key];
+      if (!url) throw new Error(`Metrics sources registry missing URL for: ${key}`);
+      return url;
+    }
+    module.exports = {
+      SOURCE_KEYS: SOURCE_KEYS2,
+      METRICS_SOURCES_SHEET_ID,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      getMetricsSourceUrl
+    };
+  }
+});
+
+// lib/sheetUrls.js
+var require_sheetUrls = __commonJS({
+  "lib/sheetUrls.js"(exports, module) {
+    var { csvTextCache, invalidateCsvUrlCache } = require_fetchCsvText();
+    var {
+      SOURCE_KEYS: SOURCE_KEYS2,
+      getMetricsSourceUrl,
+      invalidateMetricsSourcesRegistry,
+      loadMetricsSourcesRegistry,
+      browserUrlToCsvFetchUrl,
+      metricsSourcesRegistryCsvUrl
+    } = require_metricsSourcesRegistry();
+    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
+    async function getCaptainMappingCsvUrl() {
+      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
+      if (u && u.trim()) return u.trim();
+      return getMetricsSourceUrl(SOURCE_KEYS2.captainMapping);
+    }
+    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
+    var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
+    var careerCsvFilePath = null;
+    function googleSheetCsvExportUrl(spreadsheetId, gid) {
+      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
+    }
+    async function getScheduleUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.schedule);
+    }
+    async function getIndexUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.index);
+    }
+    async function getRosterUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.rosters);
+    }
+    async function getGamelogs2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.gamelogs2026);
+    }
+    async function getStats2026CsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.stats2026);
+    }
+    async function getReplacementsCsvUrl() {
+      return getMetricsSourceUrl(SOURCE_KEYS2.replacements);
+    }
+    function setCareerCsvFilePath(filePath) {
+      careerCsvFilePath = filePath ? String(filePath) : null;
+    }
+    function getCareerCsvSource() {
+      const url = (process.env.CAREER_CSV_URL || "").trim();
+      if (url) return { type: "url", url };
+      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
+      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
+    }
+    function configureCareerCsvForBrowser(publicUrl = CAREER_CSV_PUBLIC_URL) {
+      if (typeof globalThis !== "undefined") {
+        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
+      }
+    }
+    function resolveCareerCsvSource() {
+      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
+      if (override) return { type: "url", url: override };
+      return getCareerCsvSource();
+    }
+    async function invalidateSourceCsvCache2(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      if (url) invalidateCsvUrlCache(url);
+    }
+    async function invalidateLiveSourceCsvCache(sourceKey) {
+      const registry = await loadMetricsSourcesRegistry();
+      const url = registry[sourceKey];
+      invalidateMetricsSourcesRegistry();
+      if (url) invalidateCsvUrlCache(url);
+    }
+    module.exports = {
+      HIST_2025_STATS_URL,
+      CAREER_CSV_PUBLIC_URL,
+      SCHEDULE_CALENDAR_YEAR,
+      SOURCE_KEYS: SOURCE_KEYS2,
+      metricsSourcesRegistryCsvUrl,
+      browserUrlToCsvFetchUrl,
+      loadMetricsSourcesRegistry,
+      invalidateMetricsSourcesRegistry,
+      invalidateSourceCsvCache: invalidateSourceCsvCache2,
+      invalidateLiveSourceCsvCache,
+      getScheduleUrl,
+      getIndexUrl,
+      getRosterUrl,
+      getGamelogs2026CsvUrl,
+      getStats2026CsvUrl,
+      getCaptainMappingCsvUrl,
+      getReplacementsCsvUrl,
+      googleSheetCsvExportUrl,
+      setCareerCsvFilePath,
+      getCareerCsvSource,
+      resolveCareerCsvSource,
+      configureCareerCsvForBrowser
+    };
+  }
+});
+
 // data/pitcherStats2026.js
 var require_pitcherStats2026 = __commonJS({
   "data/pitcherStats2026.js"(exports, module) {
@@ -640,389 +1057,6 @@ var require_pitcherStats2026 = __commonJS({
     module.exports = {
       PITCHER_STATS_BY_TEAM_KEY,
       PITCHER_LEAGUE_AVG
-    };
-  }
-});
-
-// lib/memoryCache.js
-var require_memoryCache = __commonJS({
-  "lib/memoryCache.js"(exports, module) {
-    function createMemoryCache(ttlMs, label = "cache") {
-      const store = /* @__PURE__ */ new Map();
-      const ttl = Math.max(1e3, Number(ttlMs) || 6e4);
-      return {
-        async get(key, loader) {
-          const k = String(key);
-          const hit = store.get(k);
-          if (hit && Date.now() < hit.expiresAt) {
-            return hit.value;
-          }
-          const value = await loader();
-          store.set(k, { value, expiresAt: Date.now() + ttl });
-          return value;
-        },
-        clear() {
-          store.clear();
-        },
-        invalidate(key) {
-          store.delete(String(key));
-        },
-        stats() {
-          return { label, entries: store.size, ttlMs: ttl };
-        }
-      };
-    }
-    module.exports = { createMemoryCache };
-  }
-});
-
-// lib/fetchCsvText.js
-var require_fetchCsvText = __commonJS({
-  "lib/fetchCsvText.js"(exports, module) {
-    var { createMemoryCache } = require_memoryCache();
-    var csvTextCache = createMemoryCache(
-      Number("600000") || 10 * 60 * 1e3,
-      "csv-text"
-    );
-    var fetchCsvTextOverride = null;
-    function setFetchCsvTextOverride(fn) {
-      fetchCsvTextOverride = typeof fn === "function" ? fn : null;
-    }
-    function csvFetchTimeoutMs() {
-      const fromEnv = Number("90000");
-      if (Number.isFinite(fromEnv) && fromEnv > 0) return fromEnv;
-      if (true) return 9e4;
-      return 0;
-    }
-    function logCsvFetchFailure(kind, url, detail) {
-      const msg = `[MMS] CSV fetch ${kind}${detail ? `: ${detail}` : ""}`;
-      if (typeof console !== "undefined" && console.error) {
-        console.error(msg, url);
-      }
-    }
-    function csvFetchUserError(kind) {
-      if (kind === "timeout") {
-        return new Error(
-          "League data took too long to load. Check your connection and try again."
-        );
-      }
-      if (kind === "http") {
-        return new Error("Could not load league data right now. Please try again in a moment.");
-      }
-      if (kind === "empty") {
-        return new Error("Could not load league data. Please try again.");
-      }
-      return new Error("Could not load league data. Please try again.");
-    }
-    async function fetchUrlText(url) {
-      const timeoutMs = csvFetchTimeoutMs();
-      const opts = timeoutMs > 0 ? { signal: AbortSignal.timeout(timeoutMs) } : {};
-      try {
-        const res = await fetch(url, opts);
-        if (!res.ok) {
-          logCsvFetchFailure("HTTP", url, String(res.status));
-          throw csvFetchUserError("http");
-        }
-        let text = await res.text();
-        text = text.replace(/^\ufeff/, "");
-        return text;
-      } catch (err) {
-        if (err.name === "TimeoutError" || err.name === "AbortError") {
-          logCsvFetchFailure("timeout", url, `${timeoutMs / 1e3}s`);
-          throw csvFetchUserError("timeout");
-        }
-        if (err.message && !/https?:\/\//i.test(err.message)) {
-          throw err;
-        }
-        logCsvFetchFailure("error", url, err.message || err);
-        throw csvFetchUserError("error");
-      }
-    }
-    var BROWSER_CSV_STORAGE_PREFIX = "mms-csv:";
-    var BROWSER_CSV_STORAGE_TTL_MS = Number("600000") || 10 * 60 * 1e3;
-    function browserCsvStorageKey(url) {
-      return BROWSER_CSV_STORAGE_PREFIX + url;
-    }
-    function readBrowserCsvCache(url) {
-      if (typeof sessionStorage === "undefined") return null;
-      try {
-        const raw = sessionStorage.getItem(browserCsvStorageKey(url));
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed.text !== "string" || typeof parsed.expiresAt !== "number") {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        if (Date.now() > parsed.expiresAt) {
-          sessionStorage.removeItem(browserCsvStorageKey(url));
-          return null;
-        }
-        return parsed.text;
-      } catch {
-        return null;
-      }
-    }
-    function writeBrowserCsvCache(url, text) {
-      if (typeof sessionStorage === "undefined") return;
-      try {
-        sessionStorage.setItem(
-          browserCsvStorageKey(url),
-          JSON.stringify({ text, expiresAt: Date.now() + BROWSER_CSV_STORAGE_TTL_MS })
-        );
-      } catch {
-      }
-    }
-    async function fetchCsvText(url) {
-      const safeUrl = (url || "").toString().trim();
-      if (!safeUrl) {
-        logCsvFetchFailure("empty-url", safeUrl);
-        throw csvFetchUserError("empty");
-      }
-      if (fetchCsvTextOverride) {
-        return fetchCsvTextOverride(safeUrl);
-      }
-      const browserCached = readBrowserCsvCache(safeUrl);
-      if (browserCached) return browserCached;
-      return csvTextCache.get(safeUrl, async () => {
-        const text = await fetchUrlText(safeUrl);
-        writeBrowserCsvCache(safeUrl, text);
-        return text;
-      });
-    }
-    module.exports = { fetchCsvText, csvTextCache, setFetchCsvTextOverride };
-  }
-});
-
-// lib/metricsSourcesRegistry.js
-var require_metricsSourcesRegistry = __commonJS({
-  "lib/metricsSourcesRegistry.js"(exports, module) {
-    "use strict";
-    var Papa = require_papaparse_min();
-    var { csvTextCache } = require_fetchCsvText();
-    var { createMemoryCache } = require_memoryCache();
-    var METRICS_SOURCES_SHEET_ID = "1ZHYmP92Gr5mM8jH6N3q0js3zbdNjb9gnB_29o7fBRd4";
-    var METRICS_SOURCES_GID = "0";
-    var SOURCE_KEYS = Object.freeze({
-      schedule: "schedule",
-      index: "index",
-      rosters: "rosters",
-      gamelogs2026: "gamelogs2026",
-      stats2026: "stats2026",
-      replacements: "replacements",
-      captainMapping: "captainMapping"
-    });
-    var REQUIRED_KEYS = Object.freeze([
-      SOURCE_KEYS.schedule,
-      SOURCE_KEYS.index,
-      SOURCE_KEYS.rosters,
-      SOURCE_KEYS.gamelogs2026,
-      SOURCE_KEYS.stats2026,
-      SOURCE_KEYS.replacements,
-      SOURCE_KEYS.captainMapping
-    ]);
-    function safeText(value) {
-      return (value || "").toString().trim();
-    }
-    function metricsSourcesRegistryCsvUrl() {
-      const override = (process.env.METRICS_SOURCES_REGISTRY_CSV_URL || "").trim();
-      if (override) return override;
-      return `https://docs.google.com/spreadsheets/d/${METRICS_SOURCES_SHEET_ID}/export?format=csv&gid=${METRICS_SOURCES_GID}`;
-    }
-    function resolveSourceKey(name) {
-      const n = safeText(name).toLowerCase();
-      if (!n) return null;
-      if (n === "schedule" || n.startsWith("schedule")) return SOURCE_KEYS.schedule;
-      if (n.includes("league index") || n.includes("week / date")) return SOURCE_KEYS.index;
-      if (n.includes("team rosters") || n === "rosters") return SOURCE_KEYS.rosters;
-      if (n.includes("game log") || n.includes("gamelog")) return SOURCE_KEYS.gamelogs2026;
-      if (n.includes("player / team stats") || n.includes("2026 player")) return SOURCE_KEYS.stats2026;
-      if (n.includes("replacement")) return SOURCE_KEYS.replacements;
-      if (n.includes("captain mapping") || n.includes("captain map")) return SOURCE_KEYS.captainMapping;
-      return null;
-    }
-    function browserUrlToCsvFetchUrl(input) {
-      const url = safeText(input);
-      if (!url) return "";
-      if (/output=csv|format=csv/i.test(url)) return url;
-      if (url.includes("/pubhtml")) {
-        const gidMatch = url.match(/[?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `${url.split("/pubhtml")[0]}/pub?gid=${gid}&single=true&output=csv`;
-      }
-      const editMatch = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)\/edit/);
-      if (editMatch) {
-        const id = editMatch[1];
-        const gidMatch = url.match(/[#?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-      }
-      const pubMatch = url.match(/\/spreadsheets\/d\/(e\/[a-zA-Z0-9_-]+)/);
-      if (pubMatch && !url.includes("/edit")) {
-        const id = pubMatch[1];
-        const gidMatch = url.match(/[?&]gid=(\d+)/);
-        const gid = gidMatch ? gidMatch[1] : "0";
-        return `https://docs.google.com/spreadsheets/d/${id}/pub?gid=${gid}&single=true&output=csv`;
-      }
-      return url;
-    }
-    function parseRegistryCsv(csvText) {
-      const rows = Papa.parse(csvText).data;
-      const out = {};
-      for (let i = 1; i < rows.length; i += 1) {
-        const name = safeText(rows[i][0]);
-        const rawUrl = safeText(rows[i][1]);
-        if (!name || !rawUrl) continue;
-        if (rawUrl.includes("console.firebase.google.com")) continue;
-        const key = resolveSourceKey(name);
-        if (!key) continue;
-        out[key] = browserUrlToCsvFetchUrl(rawUrl);
-      }
-      return out;
-    }
-    var REGISTRY_CACHE_TTL_MS = Number(process.env.METRICS_SOURCES_CACHE_TTL_MS) || 60 * 1e3;
-    async function fetchRegistryCsvText() {
-      const base = metricsSourcesRegistryCsvUrl();
-      const url = `${base}${base.includes("?") ? "&" : "?"}_=${Date.now()}`;
-      const timeoutMs = Number("90000") || 0;
-      const opts = { cache: "no-store" };
-      if (timeoutMs > 0) opts.signal = AbortSignal.timeout(timeoutMs);
-      const res = await fetch(url, opts);
-      if (!res.ok) {
-        throw new Error(`Metrics sources registry fetch failed (${res.status})`);
-      }
-      return (await res.text()).replace(/^\ufeff/, "");
-    }
-    var registryCache = createMemoryCache(REGISTRY_CACHE_TTL_MS, "metrics-sources");
-    async function loadMetricsSourcesRegistry(force = false) {
-      if (force) registryCache.invalidate("registry");
-      return registryCache.get("registry", async () => {
-        const csvText = await fetchRegistryCsvText();
-        const registry = parseRegistryCsv(csvText);
-        for (const key of REQUIRED_KEYS) {
-          if (!registry[key]) {
-            throw new Error(`Metrics sources registry missing required row: ${key}`);
-          }
-        }
-        return registry;
-      });
-    }
-    function invalidateMetricsSourcesRegistry() {
-      registryCache.invalidate("registry");
-      csvTextCache.invalidate(metricsSourcesRegistryCsvUrl());
-    }
-    async function getMetricsSourceUrl(key) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[key];
-      if (!url) throw new Error(`Metrics sources registry missing URL for: ${key}`);
-      return url;
-    }
-    module.exports = {
-      SOURCE_KEYS,
-      METRICS_SOURCES_SHEET_ID,
-      metricsSourcesRegistryCsvUrl,
-      browserUrlToCsvFetchUrl,
-      loadMetricsSourcesRegistry,
-      invalidateMetricsSourcesRegistry,
-      getMetricsSourceUrl
-    };
-  }
-});
-
-// lib/sheetUrls.js
-var require_sheetUrls = __commonJS({
-  "lib/sheetUrls.js"(exports, module) {
-    var { csvTextCache } = require_fetchCsvText();
-    var {
-      SOURCE_KEYS,
-      getMetricsSourceUrl,
-      invalidateMetricsSourcesRegistry,
-      loadMetricsSourcesRegistry,
-      browserUrlToCsvFetchUrl,
-      metricsSourcesRegistryCsvUrl
-    } = require_metricsSourcesRegistry();
-    var HIST_2025_STATS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTj9_UhD3MyWbDfD3zlwO7mcOOjpcmSc2OrPYXa6UEeii422rpHFBBn2AXkf5KP_OKtJrcobvlT_J7d/pub?output=csv";
-    async function getCaptainMappingCsvUrl() {
-      const u = process.env.CAPTAIN_MAPPING_CSV_URL;
-      if (u && u.trim()) return u.trim();
-      return getMetricsSourceUrl(SOURCE_KEYS.captainMapping);
-    }
-    var CAREER_CSV_PUBLIC_URL = "/data/csv/career.csv";
-    var SCHEDULE_CALENDAR_YEAR = Number(process.env.SCHEDULE_CALENDAR_YEAR) || 2026;
-    var careerCsvFilePath = null;
-    function googleSheetCsvExportUrl(spreadsheetId, gid) {
-      return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
-    }
-    async function getScheduleUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.schedule);
-    }
-    async function getIndexUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.index);
-    }
-    async function getRosterUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.rosters);
-    }
-    async function getGamelogs2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.gamelogs2026);
-    }
-    async function getStats2026CsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.stats2026);
-    }
-    async function getReplacementsCsvUrl() {
-      return getMetricsSourceUrl(SOURCE_KEYS.replacements);
-    }
-    function setCareerCsvFilePath(filePath) {
-      careerCsvFilePath = filePath ? String(filePath) : null;
-    }
-    function getCareerCsvSource() {
-      const url = (process.env.CAREER_CSV_URL || "").trim();
-      if (url) return { type: "url", url };
-      if (careerCsvFilePath) return { type: "file", path: careerCsvFilePath };
-      return { type: "url", url: CAREER_CSV_PUBLIC_URL };
-    }
-    function configureCareerCsvForBrowser(publicUrl = CAREER_CSV_PUBLIC_URL) {
-      if (typeof globalThis !== "undefined") {
-        globalThis.__MMS_CAREER_CSV_URL__ = publicUrl;
-      }
-    }
-    function resolveCareerCsvSource() {
-      const override = typeof globalThis !== "undefined" && globalThis.__MMS_CAREER_CSV_URL__ ? String(globalThis.__MMS_CAREER_CSV_URL__).trim() : "";
-      if (override) return { type: "url", url: override };
-      return getCareerCsvSource();
-    }
-    async function invalidateSourceCsvCache(sourceKey) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[sourceKey];
-      if (url) csvTextCache.invalidate(url);
-    }
-    async function invalidateLiveSourceCsvCache(sourceKey) {
-      const registry = await loadMetricsSourcesRegistry();
-      const url = registry[sourceKey];
-      invalidateMetricsSourcesRegistry();
-      if (url) csvTextCache.invalidate(url);
-    }
-    module.exports = {
-      HIST_2025_STATS_URL,
-      CAREER_CSV_PUBLIC_URL,
-      SCHEDULE_CALENDAR_YEAR,
-      SOURCE_KEYS,
-      metricsSourcesRegistryCsvUrl,
-      browserUrlToCsvFetchUrl,
-      loadMetricsSourcesRegistry,
-      invalidateMetricsSourcesRegistry,
-      invalidateSourceCsvCache,
-      invalidateLiveSourceCsvCache,
-      getScheduleUrl,
-      getIndexUrl,
-      getRosterUrl,
-      getGamelogs2026CsvUrl,
-      getStats2026CsvUrl,
-      getCaptainMappingCsvUrl,
-      getReplacementsCsvUrl,
-      googleSheetCsvExportUrl,
-      setCareerCsvFilePath,
-      getCareerCsvSource,
-      resolveCareerCsvSource,
-      configureCareerCsvForBrowser
     };
   }
 });
@@ -1771,6 +1805,9 @@ ${slice[1]}`;
           pool.push({
             norm,
             name: effectiveName,
+            originalName: playerName,
+            replacedName: repl ? repl.original : null,
+            isReplacement: Boolean(repl),
             teamId: tid,
             teamName: t.teamName,
             teamCode,
@@ -2634,7 +2671,7 @@ var require_playerReplacements = __commonJS({
   "lib/playerReplacements.js"(exports, module) {
     var Papa = require_papaparse_min();
     var { fetchCsvText } = require_fetchCsvText();
-    var { getReplacementsCsvUrl } = require_sheetUrls();
+    var { getReplacementsCsvUrl, invalidateSourceCsvCache: invalidateSourceCsvCache2, SOURCE_KEYS: SOURCE_KEYS2 } = require_sheetUrls();
     var { createMemoryCache } = require_memoryCache();
     var { normalizePlayerName } = require_dfs();
     function safeText(value) {
@@ -2770,6 +2807,26 @@ var require_playerReplacements = __commonJS({
     function getCachedPlayerReplacements() {
       return replacementsCache.get("player-replacements", loadPlayerReplacements);
     }
+    async function refreshLivePlayerReplacements() {
+      await invalidateSourceCsvCache2(SOURCE_KEYS2.replacements);
+      replacementsCache.invalidate("player-replacements");
+      return loadPlayerReplacements();
+    }
+    function replacementsSignature(byOriginalNorm) {
+      if (!byOriginalNorm?.size) return "";
+      const parts = [];
+      for (const [norm, entry] of [...byOriginalNorm.entries()].sort(
+        (a, b) => a[0].localeCompare(b[0])
+      )) {
+        parts.push(
+          `${norm}:${entry.replacementNorm}:${entry.replacementDateIso || ""}:${entry.replacement || ""}`
+        );
+      }
+      return parts.join("|");
+    }
+    function activeReplacementsSignature(byOriginalNorm, gameIsoDate) {
+      return replacementsSignature(filterReplacementsForDate(byOriginalNorm, gameIsoDate));
+    }
     function serializeReplacementsForClient(byOriginalNorm) {
       const out = {};
       if (!byOriginalNorm) return out;
@@ -2795,6 +2852,9 @@ var require_playerReplacements = __commonJS({
       buildRosterEntriesWithReplacements,
       loadPlayerReplacements,
       getCachedPlayerReplacements,
+      refreshLivePlayerReplacements,
+      replacementsSignature,
+      activeReplacementsSignature,
       emptyReplacementContext,
       serializeReplacementsForClient
     };
@@ -4809,7 +4869,7 @@ var require_offenseRankingsPage = __commonJS({
 var require_dfsLeaderboardScoringContext = __commonJS({
   "lib/dfsLeaderboardScoringContext.js"(exports, module) {
     var Papa = require_papaparse_min();
-    var { fetchCsvText } = require_fetchCsvText();
+    var { fetchCsvText, fetchCsvTextFresh } = require_fetchCsvText();
     var { createMemoryCache } = require_memoryCache();
     var {
       buildTeamCodeById,
@@ -4921,6 +4981,34 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       const n = Number(t);
       return Number.isFinite(n) ? n : NaN;
     }
+    function resolveParsedGameScores(row, idx) {
+      let awayScore = optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : "");
+      let homeScore = optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : "");
+      if (Number.isFinite(awayScore) && Number.isFinite(homeScore)) {
+        return { awayScore, homeScore };
+      }
+      const resultCsv = idx.result >= 0 ? safeText(row[idx.result]) : "";
+      const winnerCsv = idx.winner >= 0 ? safeText(row[idx.winner]) : "";
+      const m = /^(\d+)\s*[-–]\s*(\d+)/.exec(resultCsv);
+      if (!m) return { awayScore, homeScore };
+      const first = Number(m[1]);
+      const second = Number(m[2]);
+      if (!Number.isFinite(first) || !Number.isFinite(second)) return { awayScore, homeScore };
+      const awayCaptain = idx.awayCaptain >= 0 ? safeText(row[idx.awayCaptain]) : "";
+      const homeCaptain = idx.homeCaptain >= 0 ? safeText(row[idx.homeCaptain]) : "";
+      const winner = winnerCsv.toLowerCase();
+      if (winner && awayCaptain && winner === awayCaptain.toLowerCase()) {
+        awayScore = first;
+        homeScore = second;
+      } else if (winner && homeCaptain && winner === homeCaptain.toLowerCase()) {
+        homeScore = first;
+        awayScore = second;
+      } else if (!Number.isFinite(awayScore) && !Number.isFinite(homeScore)) {
+        awayScore = first;
+        homeScore = second;
+      }
+      return { awayScore, homeScore };
+    }
     function formatFinishedScheduleResult(awayScore, homeScore, resultCell, winnerCell) {
       if (!Number.isFinite(awayScore) || !Number.isFinite(homeScore)) return "";
       const rs = safeText(resultCell).trim();
@@ -4968,8 +5056,10 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         date: h.indexOf("date"),
         awayId: h.indexOf("away #"),
         awayTeam: h.indexOf("away team"),
+        awayCaptain: scheduleColumnFirstOf(h, ["away captain", "away captains"]),
         homeId: h.indexOf("home #"),
         homeTeam: h.indexOf("home team"),
+        homeCaptain: scheduleColumnFirstOf(h, ["home captain", "home captains"]),
         field: scheduleColumnFirstOf(h, ["field", "diamond"]),
         shortField: scheduleColumnFirstOf(h, ["short field"]),
         time: h.indexOf("time"),
@@ -5001,6 +5091,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
         if (!parsedDate) continue;
         const field = idx.field >= 0 ? safeText(row[idx.field]) : "";
         const fieldShort = idx.shortField >= 0 ? safeText(row[idx.shortField]) : "";
+        const { awayScore, homeScore } = resolveParsedGameScores(row, idx);
         parsedGames.push({
           awayId,
           homeId,
@@ -5013,8 +5104,8 @@ var require_dfsLeaderboardScoringContext = __commonJS({
           time: idx.time >= 0 ? safeText(row[idx.time]) : "",
           gameId: idx.gameId >= 0 ? safeText(row[idx.gameId]) : "",
           rowIndex: i,
-          awayScore: optionalScheduleScore(idx.awayScore >= 0 ? row[idx.awayScore] : ""),
-          homeScore: optionalScheduleScore(idx.homeScore >= 0 ? row[idx.homeScore] : ""),
+          awayScore,
+          homeScore,
           winnerCsv: idx.winner >= 0 ? safeText(row[idx.winner]) : "",
           resultCsv: idx.result >= 0 ? safeText(row[idx.result]) : ""
         });
@@ -5046,9 +5137,13 @@ var require_dfsLeaderboardScoringContext = __commonJS({
       for (const b of bytes) binary += String.fromCharCode(b);
       return btoa(binary);
     }
-    async function loadWeeklySchedule() {
+    async function fetchFreshScheduleRows() {
       const scheduleUrl = await getScheduleUrl();
-      const [scheduleRows, teams] = await Promise.all([fetchCsvRows(scheduleUrl), loadTeamRosters()]);
+      const csvText = await fetchCsvTextFresh(scheduleUrl);
+      return Papa.parse(csvText).data;
+    }
+    async function loadWeeklySchedule() {
+      const [scheduleRows, teams] = await Promise.all([fetchFreshScheduleRows(), loadTeamRosters()]);
       const parsedGames = buildParsedScheduleGames(scheduleRows, teams);
       const uniqueIsosSorted = Array.from(new Set(parsedGames.map((g) => g.isoDate))).sort(
         (a, b) => a.localeCompare(b)
@@ -5078,6 +5173,7 @@ var require_dfsLeaderboardScoringContext = __commonJS({
           date: g.dateDisplay || "",
           result: formatFinishedScheduleResult(g.awayScore, g.homeScore, g.resultCsv, g.winnerCsv),
           gameId: g.gameId,
+          isoDate: g.isoDate,
           _iso: g.isoDate
         };
         if (!gamesByIso.has(g.isoDate)) gamesByIso.set(g.isoDate, []);
@@ -5944,14 +6040,11 @@ var require_powerRankingsPageData = __commonJS({
   "lib/powerRankingsPageData.js"(exports, module) {
     var { normalizePlayerName } = require_dfs();
     var { loadTeamRosters, normalizeScheduleTeamId } = require_teamRosters();
-    var { getScheduleUrl } = require_sheetUrls();
     var { load2026StatsByPlayer } = require_stats2026Loader();
     var { loadPowerRankingsCaptainMap } = require_powerRankingsCaptains();
     var {
       loadCareerByPlayer,
       load2025HistoricalByPlayer,
-      buildParsedScheduleGames,
-      fetchCsvRows,
       loadWeeklySchedule
     } = require_dfsLeaderboardScoringContext();
     var {
@@ -6001,7 +6094,6 @@ var require_powerRankingsPageData = __commonJS({
         careerByPlayer,
         hist2025ByPlayer,
         stats2026ByPlayer,
-        scheduleRows,
         defenseMap,
         captainMap,
         schedulePayload
@@ -6010,7 +6102,6 @@ var require_powerRankingsPageData = __commonJS({
         loadCareerByPlayer(),
         load2025HistoricalByPlayer(),
         load2026StatsByPlayer(),
-        fetchCsvRows(await getScheduleUrl()),
         Promise.resolve(loadDefensiveRatingsNormalizedMap()),
         loadPowerRankingsCaptainMap(),
         loadWeeklySchedule()
@@ -6024,7 +6115,7 @@ var require_powerRankingsPageData = __commonJS({
         stats2026ByPlayer,
         moments
       );
-      const parsedScheduleGames = buildParsedScheduleGames(scheduleRows, teams);
+      const parsedScheduleGames = schedulePayload.parsedGames || [];
       const standingsMap = buildTeamStandingsFromScheduleGames(parsedScheduleGames, teams);
       const teamSections = buildTeamOffenseSections(teams, leagueRows, standingsMap);
       const currentRankings = buildPowerRankingsCurrentRows(teamSections, captainMap);
@@ -6091,8 +6182,10 @@ var require_powerRankingsPageData = __commonJS({
 });
 
 // client/power-rankings-entry.mjs
+var import_sheetUrls = __toESM(require_sheetUrls(), 1);
 var import_powerRankingsPageData = __toESM(require_powerRankingsPageData(), 1);
 async function fetchPowerRankingsData() {
+  await (0, import_sheetUrls.invalidateSourceCsvCache)(import_sheetUrls.SOURCE_KEYS.schedule);
   return (0, import_powerRankingsPageData.buildPowerRankingsPageData)();
 }
 if (typeof window !== "undefined") {
